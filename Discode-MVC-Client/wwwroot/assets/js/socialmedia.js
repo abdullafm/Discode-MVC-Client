@@ -1,0 +1,2305 @@
+"use strict";
+var micO = false;
+var headO = false;
+var STORE_KEY = "discode-social";
+var ME = "Anonymou5";
+var currentView = "explore";
+var pendingImage = "";
+var friendsOnly = false;
+var openCommentPost = null;
+
+window.onload = function () {
+    setTimeout(function () {
+        var loader = document.getElementById("loader");
+        if (loader) {
+            loader.remove();
+        }
+    }, 2000);
+    showView("explore");
+};
+
+var x = new Audio("./assets/css/audio/discordmute_IZNcLx2.mp3");
+var y = new Audio("./assets/css/audio/discord-unmute-sound.mp3");
+
+function mic() {
+    if (!micO) {
+        x.play();
+        document.getElementById("mic").className = "fa-solid fa-microphone-slash mute";
+        micO = true;
+    } else {
+        y.play();
+        document.getElementById("mic").className = "fa-solid fa-microphone";
+        micO = false;
+        if (headO) {
+            document.getElementById("head").className = "fa-solid fa-headphones";
+            headO = false;
+        }
+    }
+}
+
+function headp() {
+    if (!headO) {
+        x.play();
+        document.getElementById("head").className = "fa-solid fa-headphones mute";
+        headO = true;
+        if (!micO) {
+            document.getElementById("mic").className = "fa-solid fa-microphone-slash mute";
+            micO = true;
+        }
+    } else {
+        document.getElementById("head").className = "fa-solid fa-headphones";
+        y.play();
+        headO = false;
+        if (micO) {
+            document.getElementById("mic").className = "fa-solid fa-microphone";
+            micO = false;
+        }
+    }
+}
+
+function openToggle() {
+    if (!window.matchMedia("(max-width: 720px)").matches) return;
+    document.querySelector("main").classList.toggle("show-main");
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    updateMicHeadphoneIcon();
+});
+
+var STORY_MS = 5000;
+var STORY_W = 540;
+var STORY_H = 960;
+var STORY_FILTERS = [
+    { id: "none", label: "Normal", css: "none" },
+    { id: "vivid", label: "Vivid", css: "contrast(1.15) saturate(1.4)" },
+    { id: "warm", label: "Warm", css: "sepia(0.28) saturate(1.25)" },
+    { id: "cool", label: "Cool", css: "saturate(0.9) hue-rotate(14deg)" },
+    { id: "fade", label: "Fade", css: "contrast(0.9) brightness(1.08) saturate(0.75)" },
+    { id: "mono", label: "Mono", css: "grayscale(1) contrast(1.08)" }
+];
+var emojiField = null;
+var storyGroups = [];
+var storyCursor = 0;
+var storyIndex = 0;
+var storyTimer = null;
+var storyDraft = null;
+
+function loadState() {
+    try {
+        var saved = JSON.parse(localStorage.getItem(STORE_KEY)) || {};
+        return {
+            posts: Array.isArray(saved.posts) ? saved.posts : [],
+            stories: Array.isArray(saved.stories) ? saved.stories : []
+        };
+    } catch (err) {
+        return { posts: [], stories: [] };
+    }
+}
+
+function saveState(state) {
+    localStorage.setItem(STORE_KEY, JSON.stringify(state));
+}
+
+function loadPosts() {
+    return loadState().posts;
+}
+
+function savePosts(posts) {
+    var state = loadState();
+    state.posts = posts;
+    saveState(state);
+}
+
+function loadStories() {
+    var limit = 24 * 60 * 60 * 1000;
+    return loadState().stories.filter(function (story) {
+        return Date.now() - story.createdAt < limit && story.image && story.image.indexOf("data:image/") === 0;
+    });
+}
+
+function saveStories(stories) {
+    var state = loadState();
+    state.stories = stories;
+    saveState(state);
+}
+
+function nextId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+function friendNames() {
+    var names = [];
+    var rows = document.querySelectorAll(".friend-item:not([data-group]) p, .new-msg-friend > span");
+    for (var i = 0; i < rows.length; i++) {
+        var name = rows[i].textContent.trim();
+        if (name && names.indexOf(name) === -1) names.push(name);
+    }
+    return names;
+}
+
+function timeAgo(stamp) {
+    var seconds = Math.max(1, Math.floor((Date.now() - stamp) / 1000));
+    if (seconds < 60) return seconds + "s";
+    var minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return minutes + "m";
+    var hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours + "h";
+    var days = Math.floor(hours / 24);
+    return days + "d";
+}
+
+function initial(name) {
+    var letter = (name || "?").trim().charAt(0).toUpperCase();
+    return letter || "?";
+}
+
+function isPublic(post) {
+    return post.visibility !== "friends";
+}
+
+function isFriend(name) {
+    return friendNames().indexOf(name) !== -1;
+}
+
+function postsFor(view) {
+    return loadPosts().filter(function (post) {
+        if (view === "explore") return isPublic(post);
+        if (isFriend(post.author)) return true;
+        return post.author === ME;
+    });
+}
+
+function showView(view) {
+    currentView = view;
+    document.getElementById("view-explore").hidden = view !== "explore";
+    document.getElementById("view-friends").hidden = view !== "friends";
+    document.getElementById("view-live").hidden = view !== "live";
+    document.getElementById("view-compose").hidden = view !== "compose";
+    document.getElementById("social-title").textContent = view === "compose" ? "Post" : view === "friends" ? "Friends" : view === "live" ? "Live" : "Explore";
+    var buttons = document.querySelectorAll(".social-rail button");
+    for (var i = 0; i < buttons.length; i++) {
+        buttons[i].classList.toggle("active", buttons[i].getAttribute("data-view") === view);
+    }
+    if (view === "friends") renderStories();
+    if (view === "live" || view === "explore") renderLiveStreams();
+    if (view !== "compose") renderFeed();
+}
+
+function readImage(file, done) {
+    var reader = new FileReader();
+    reader.onload = function () {
+        var img = new Image();
+        img.onload = function () {
+            var max = 900;
+            var scale = Math.min(1, max / Math.max(img.width, img.height));
+            var canvas = document.createElement("canvas");
+            canvas.width = Math.round(img.width * scale);
+            canvas.height = Math.round(img.height * scale);
+            canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+            done(canvas.toDataURL("image/jpeg", 0.72));
+        };
+        img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearPhoto() {
+    pendingImage = "";
+    document.getElementById("post-image").value = "";
+    var preview = document.getElementById("photo-preview");
+    var image = document.getElementById("photo-preview-img");
+    preview.hidden = true;
+    if (image) image.removeAttribute("src");
+}
+
+function setPersonFace(img, letter, name) {
+    var src = avatarFor(name);
+    if (src && img) {
+        img.hidden = false;
+        img.src = src;
+        if (letter) letter.hidden = true;
+        return;
+    }
+    if (img) img.hidden = true;
+    if (letter) {
+        letter.hidden = false;
+        letter.textContent = initial(name);
+    }
+}
+
+function setLike(button, liked, count) {
+    button.classList.toggle("liked", !!liked);
+    var icon = button.querySelector("i");
+    if (icon) icon.className = (liked ? "fa-solid" : "fa-regular") + " fa-heart";
+    var total = button.querySelector("span");
+    if (total) total.textContent = String(count || 0);
+}
+
+function fillText(el, value) {
+    while (el.firstChild) el.removeChild(el.firstChild);
+    var text = String(value || "");
+    var last = 0;
+    FLAG_RE.lastIndex = 0;
+    text.replace(FLAG_RE, function (flag, index) {
+        if (index > last) el.appendChild(document.createTextNode(text.slice(last, index)));
+        var picture = cloneTpl("flag-img");
+        if (picture) {
+            picture.alt = countryLabel(flag) || "";
+            picture.title = picture.alt;
+            picture.src = flagPicture(flag);
+            if (flagCode(flag)) {
+                picture.onerror = function () {
+                    picture.onerror = null;
+                    picture.src = twemojiSrc(flag);
+                };
+            }
+            el.appendChild(picture);
+        }
+        last = index + flag.length;
+        return flag;
+    });
+    if (last < text.length) el.appendChild(document.createTextNode(text.slice(last)));
+    FLAG_RE.lastIndex = 0;
+}
+
+function renderFeed() {
+    closeEmojiPanel();
+    var view = currentView === "friends" ? "friends" : "explore";
+    var list = document.getElementById(view === "friends" ? "friends-list" : "explore-list");
+    var empty = document.getElementById(view === "friends" ? "friends-empty" : "explore-empty");
+    var posts = postsFor(view);
+    while (list.firstChild) list.removeChild(list.firstChild);
+    if (empty) empty.hidden = posts.length > 0;
+    if (!posts.length) return;
+    var postTpl = document.getElementById("post-card");
+    var commentTpl = document.getElementById("comment-card");
+    posts.forEach(function (post) {
+        if (!postTpl) return;
+        var card = postTpl.content.firstElementChild.cloneNode(true);
+        var mine = post.author === ME;
+        card.setAttribute("data-post", post.id);
+        setPersonFace(card.querySelector(".post-author > img"), card.querySelector(".post-author > .avatar-letter"), post.author);
+        var formFaces = card.querySelectorAll(".comment-form > img, .comment-form > .avatar-letter");
+        setPersonFace(formFaces[0], formFaces[1], ME);
+        var name = card.querySelector(".post-name strong");
+        var when = card.querySelector(".post-name time");
+        if (name) name.textContent = post.author;
+        if (when) when.textContent = timeAgo(post.createdAt);
+        var lock = card.querySelector(".post-lock");
+        if (lock) lock.hidden = post.visibility !== "friends";
+        var menu = card.querySelector(".post-author .item-menu");
+        if (menu) {
+            menu.hidden = !mine;
+            var remove = menu.querySelector("[data-delete-post]");
+            if (remove) remove.setAttribute("data-delete-post", post.id);
+        }
+        var body = card.querySelector(".post-text");
+        if (body) {
+            body.hidden = !post.text;
+            if (post.text) fillText(body, post.text);
+        }
+        var photo = card.querySelector(".post-photo");
+        if (photo) {
+            var showPhoto = post.image && post.image.indexOf("data:image/") === 0;
+            photo.hidden = !showPhoto;
+            if (showPhoto) photo.src = post.image;
+        }
+        var like = card.querySelector("[data-like-post]");
+        if (like) {
+            like.setAttribute("data-like-post", post.id);
+            setLike(like, post.liked, post.likes || 0);
+        }
+        var commentOpen = card.querySelector("[data-comment-post]");
+        if (commentOpen) commentOpen.setAttribute("data-comment-post", post.id);
+        var comments = card.querySelector(".comment-list");
+        (post.comments || []).forEach(function (comment) {
+            if (!commentTpl || !comments) return;
+            var item = commentTpl.content.firstElementChild.cloneNode(true);
+            setPersonFace(item.querySelector("img"), item.querySelector(".avatar-letter"), comment.author);
+            var who = item.querySelector("strong");
+            var said = item.querySelector("p");
+            var at = item.querySelector("time");
+            if (who) who.textContent = comment.author;
+            if (said) fillText(said, comment.text);
+            if (at) at.textContent = timeAgo(comment.createdAt);
+            var heart = item.querySelector("[data-like]");
+            if (heart) {
+                heart.setAttribute("data-like", comment.id);
+                heart.setAttribute("data-post", post.id);
+                setLike(heart, comment.liked, comment.likes);
+            }
+            var commentMenu = item.querySelector(".item-menu");
+            var canDelete = mine || comment.author === ME;
+            if (commentMenu) {
+                commentMenu.hidden = !canDelete;
+                var drop = commentMenu.querySelector("[data-delete-comment]");
+                if (drop) {
+                    drop.setAttribute("data-delete-comment", comment.id);
+                    drop.setAttribute("data-post", post.id);
+                }
+            }
+            comments.appendChild(item);
+        });
+        var form = card.querySelector(".comment-form");
+        if (form) {
+            form.setAttribute("data-post", post.id);
+            form.hidden = openCommentPost !== post.id;
+        }
+        list.appendChild(card);
+    });
+}
+
+document.getElementById("post-composer").addEventListener("submit", function (event) {
+    event.preventDefault();
+    var author = event.target.author.value.trim() || "Anonymou5";
+    var textBox = document.getElementById("post-text");
+    var text = fieldValue(textBox).trim();
+    if (!text && !pendingImage) return;
+
+    var posts = loadPosts();
+    posts.unshift({
+        id: nextId(),
+        author: author,
+        text: text,
+        image: pendingImage,
+        visibility: friendsOnly ? "friends" : "public",
+        createdAt: Date.now(),
+        comments: [],
+        likes: 0,
+        liked: false
+    });
+    savePosts(posts);
+    while (textBox.firstChild) textBox.removeChild(textBox.firstChild);
+    textBox.setAttribute("data-empty", "1");
+    clearPhoto();
+    showView(friendsOnly ? "friends" : "explore");
+});
+
+document.querySelector(".social-view").addEventListener("submit", function (event) {
+    if (!event.target.classList.contains("comment-form")) return;
+    event.preventDefault();
+    var postId = event.target.getAttribute("data-post");
+    var text = fieldValue(event.target.querySelector(".rich-text")).trim();
+    if (!text) return;
+
+    var posts = loadPosts();
+    posts.forEach(function (post) {
+        if (post.id !== postId) return;
+        post.comments = post.comments || [];
+        post.comments.push({
+            id: nextId(),
+            author: ME,
+            text: text,
+            createdAt: Date.now(),
+            likes: 0,
+            liked: false
+        });
+    });
+    savePosts(posts);
+    renderFeed();
+});
+
+function groupedStories() {
+    var groups = {};
+    loadStories().forEach(function (story) {
+        if (!groups[story.author]) groups[story.author] = [];
+        groups[story.author].push(story);
+    });
+    Object.keys(groups).forEach(function (name) {
+        groups[name].sort(function (a, b) { return a.createdAt - b.createdAt; });
+    });
+    return groups;
+}
+
+function myName() {
+    var me = document.querySelector("#user-panel .me-display");
+    return me ? me.textContent.trim() : ME;
+}
+
+function myPhoto() {
+    var img = document.querySelector("#user-panel .avatar img");
+    return img ? img.getAttribute("src") || "" : "";
+}
+
+function avatarFor(name) {
+    if (name === ME || name === myName()) {
+        var mine = myPhoto();
+        if (mine) return mine;
+    }
+    var rows = document.querySelectorAll(".friend-list .friend-item:not([data-group])");
+    for (var i = 0; i < rows.length; i++) {
+        var label = rows[i].querySelector("p");
+        var img = rows[i].querySelector("img");
+        if (label && img && label.textContent.trim() === name) return img.getAttribute("src") || "";
+    }
+    return "";
+}
+
+function renderStories() {
+    var row = document.getElementById("story-row");
+    var mineTpl = document.getElementById("story-mine");
+    var friendTpl = document.getElementById("story-friend");
+    if (!row || !mineTpl) return;
+    while (row.firstChild) row.removeChild(row.firstChild);
+    var groups = groupedStories();
+    var mine = groups[ME] || [];
+    var mineSeen = mine.length && mine.every(function (story) { return story.seen; });
+    var mineButton = mineTpl.content.firstElementChild.cloneNode(true);
+    mineButton.classList.toggle("fresh", mine.length > 0 && !mineSeen);
+    mineButton.classList.toggle("seen", mine.length > 0 && mineSeen);
+    mineButton.setAttribute("data-story", mine.length ? ME : "");
+    var mineImg = mineButton.querySelector("img");
+    if (mineImg) mineImg.src = avatarFor(ME);
+    row.appendChild(mineButton);
+    // Instagram Live story bubbles at the beginning of stories row
+    var publicLive = (typeof loadLiveStreams === "function" ? loadLiveStreams() : []).filter(function (s) {
+        return s.visibility === "public";
+    });
+    publicLive.forEach(function (stream) {
+        var liveBubble = document.createElement("button");
+        liveBubble.type = "button";
+        liveBubble.className = "story-bubble is-live";
+        liveBubble.setAttribute("data-live-stream", stream.id);
+
+        var badgeText = (typeof t === "function" && t("LIVE")) || "LIVE";
+        var safeStreamer = stream.streamer.replace(/[<>&"]/g, function (c) {
+            return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c];
+        });
+        var safeAvatar = (stream.avatar || "./assets/img/img-icon-profile.jpeg").replace(/"/g, "&quot;");
+
+        liveBubble.innerHTML =
+            '<span class="story-ring"><img src="' + safeAvatar + '" alt="' + safeStreamer + '"></span>' +
+            '<span class="story-live-badge">' + badgeText + '</span>' +
+            '<span class="story-label">' + safeStreamer + '</span>';
+
+        liveBubble.addEventListener("click", function () {
+            openLiveWatchModal(stream);
+        });
+        row.appendChild(liveBubble);
+    });
+
+    friendNames().forEach(function (name) {
+        var items = groups[name];
+        if (!items || !friendTpl) return;
+        var seen = items.every(function (story) { return story.seen; });
+        var button = friendTpl.content.firstElementChild.cloneNode(true);
+        button.classList.add(seen ? "seen" : "fresh");
+        button.setAttribute("data-story", name);
+        var img = button.querySelector("img");
+        var label = button.querySelector(".story-label");
+        if (img) img.src = avatarFor(name);
+        if (label) label.textContent = name;
+        row.appendChild(button);
+    });
+}
+
+function closeStoryMenu() {
+    document.getElementById("story-delete").hidden = true;
+    document.getElementById("story-progress").classList.remove("paused");
+}
+
+function closeStories() {
+    clearTimeout(storyTimer);
+    closeStoryMenu();
+    document.getElementById("story-viewer").hidden = true;
+}
+
+function paintStory() {
+    var group = storyGroups[storyCursor];
+    if (!group) {
+        closeStories();
+        return;
+    }
+    var story = group.items[storyIndex];
+    if (!story.seen) {
+        var all = loadState().stories;
+        all.forEach(function (item) {
+            if (item.id === story.id) item.seen = true;
+        });
+        saveState({ posts: loadPosts(), stories: all });
+        story.seen = true;
+    }
+
+    var progress = document.getElementById("story-progress");
+    var barTpl = document.getElementById("story-bar");
+    while (progress.firstChild) progress.removeChild(progress.firstChild);
+    for (var i = 0; i < group.items.length; i++) {
+        if (!barTpl) break;
+        var bar = barTpl.content.firstElementChild.cloneNode(true);
+        if (i < storyIndex) bar.className = "done";
+        else if (i === storyIndex) bar.className = "current";
+        progress.appendChild(bar);
+    }
+    document.getElementById("story-avatar").src = avatarFor(group.author);
+    document.getElementById("story-name").textContent = group.author;
+    document.getElementById("story-time").textContent = timeAgo(story.createdAt);
+    document.getElementById("story-photo").src = story.image;
+    document.getElementById("story-caption").textContent = story.text || "";
+    document.getElementById("story-menu").hidden = group.author !== ME;
+    closeStoryMenu();
+    document.getElementById("story-viewer").hidden = false;
+
+    clearTimeout(storyTimer);
+    storyTimer = setTimeout(nextStory, STORY_MS);
+}
+
+function openStories(author) {
+    var groups = groupedStories();
+    var order = [ME].concat(friendNames()).filter(function (name) { return groups[name]; });
+    var start = order.indexOf(author);
+    if (start < 0) return;
+    storyGroups = order.map(function (name) {
+        return { author: name, items: groups[name] };
+    });
+    storyCursor = start;
+    var items = storyGroups[start].items;
+    storyIndex = 0;
+    for (var i = 0; i < items.length; i++) {
+        if (!items[i].seen) {
+            storyIndex = i;
+            break;
+        }
+    }
+    paintStory();
+}
+
+function nextStory() {
+    var group = storyGroups[storyCursor];
+    if (!group) return closeStories();
+    if (storyIndex < group.items.length - 1) {
+        storyIndex++;
+        paintStory();
+        return;
+    }
+    if (storyCursor < storyGroups.length - 1) {
+        storyCursor++;
+        storyIndex = 0;
+        paintStory();
+        return;
+    }
+    closeStories();
+    renderStories();
+}
+
+function prevStory() {
+    if (storyIndex > 0) {
+        storyIndex--;
+        paintStory();
+        return;
+    }
+    if (storyCursor > 0) {
+        storyCursor--;
+        storyIndex = storyGroups[storyCursor].items.length - 1;
+        paintStory();
+    }
+}
+
+document.getElementById("story-row").addEventListener("click", function (event) {
+    if (event.target.closest("#story-add")) {
+        event.stopPropagation();
+        document.getElementById("story-modal").hidden = false;
+        return;
+    }
+    var bubble = event.target.closest("[data-story]");
+    if (!bubble) return;
+    var author = bubble.getAttribute("data-story");
+    if (!author) {
+        document.getElementById("story-file").click();
+        return;
+    }
+    openStories(author);
+});
+
+function filterCss(id) {
+    for (var i = 0; i < STORY_FILTERS.length; i++) {
+        if (STORY_FILTERS[i].id === id) return STORY_FILTERS[i].css;
+    }
+    return "none";
+}
+
+function canvasPoint(event) {
+    var canvas = document.getElementById("story-canvas");
+    var rect = canvas.getBoundingClientRect();
+    return {
+        x: (event.clientX - rect.left) * (canvas.width / rect.width),
+        y: (event.clientY - rect.top) * (canvas.height / rect.height)
+    };
+}
+
+function wrapText(ctx, text, max) {
+    var words = String(text).split(" ");
+    var lines = [];
+    var line = "";
+    words.forEach(function (word) {
+        var test = line ? line + " " + word : word;
+        if (ctx.measureText(test).width > max && line) {
+            lines.push(line);
+            line = word;
+        } else {
+            line = test;
+        }
+    });
+    if (line) lines.push(line);
+    return lines.length ? lines : [""];
+}
+
+function itemFont(item) {
+    return item.type === "sticker"
+        ? item.size + "px sans-serif"
+        : "700 " + item.size + "px Nunito Sans, sans-serif";
+}
+
+function itemBox(ctx, item) {
+    ctx.font = itemFont(item);
+    var lines = item.type === "sticker" ? [item.text] : wrapText(ctx, item.text, STORY_W - 80);
+    var lineH = item.size * 1.15;
+    var width = 0;
+    lines.forEach(function (line) {
+        width = Math.max(width, ctx.measureText(line).width);
+    });
+    return { lines: lines, width: width, height: lines.length * lineH, lineH: lineH };
+}
+
+function drawStroke(ctx, stroke) {
+    if (!stroke.points.length) return;
+    ctx.save();
+    ctx.strokeStyle = stroke.color;
+    ctx.lineWidth = stroke.size;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    if (stroke.points.length === 1) {
+        ctx.fillStyle = stroke.color;
+        ctx.arc(stroke.points[0].x, stroke.points[0].y, stroke.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+    } else {
+        ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+        for (var i = 1; i < stroke.points.length; i++) {
+            ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+        }
+        ctx.stroke();
+    }
+    ctx.restore();
+}
+
+function drawItem(ctx, item, selected) {
+    var box = itemBox(ctx, item);
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = itemFont(item);
+    if (selected) {
+        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect(item.x - box.width / 2 - 12, item.y - box.height / 2 - 8, box.width + 24, box.height + 16);
+        ctx.setLineDash([]);
+    }
+    box.lines.forEach(function (line, index) {
+        var y = item.y - box.height / 2 + box.lineH / 2 + index * box.lineH;
+        if (item.type === "text") {
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = item.color === "#111111" ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.55)";
+            ctx.strokeText(line, item.x, y);
+            ctx.fillStyle = item.color;
+            ctx.fillText(line, item.x, y);
+        } else {
+            ctx.fillText(line, item.x, y);
+        }
+    });
+    ctx.restore();
+    return box;
+}
+
+function paintDraft() {
+    if (!storyDraft) return;
+    var canvas = document.getElementById("story-canvas");
+    var ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, STORY_W, STORY_H);
+    ctx.fillStyle = "#111";
+    ctx.fillRect(0, 0, STORY_W, STORY_H);
+    var img = storyDraft.img;
+    var scale = Math.max(STORY_W / img.width, STORY_H / img.height);
+    var width = img.width * scale;
+    var height = img.height * scale;
+    ctx.save();
+    ctx.filter = filterCss(storyDraft.filter);
+    ctx.drawImage(img, (STORY_W - width) / 2, (STORY_H - height) / 2, width, height);
+    ctx.restore();
+    storyDraft.strokes.forEach(function (stroke) { drawStroke(ctx, stroke); });
+    if (storyDraft.drawing) drawStroke(ctx, storyDraft.drawing);
+    storyDraft.items.forEach(function (item, index) {
+        var box = drawItem(ctx, item, index === storyDraft.selected);
+        item.box = box;
+    });
+}
+
+function markColors(box, current) {
+    if (!box) return;
+    var dots = box.querySelectorAll("[data-color]");
+    for (var i = 0; i < dots.length; i++) dots[i].classList.toggle("on", dots[i].getAttribute("data-color") === current);
+}
+
+function renderToolPanel() {
+    var panel = document.getElementById("story-edit-panel");
+    var tool = storyDraft && storyDraft.tool;
+    var buttons = document.querySelectorAll(".story-edit-tools [data-tool]");
+    for (var i = 0; i < buttons.length; i++) {
+        buttons[i].classList.toggle("on", buttons[i].getAttribute("data-tool") === tool);
+    }
+    document.getElementById("story-editor").classList.toggle("drawing", tool === "draw");
+    var textTool = document.getElementById("story-tool-text");
+    var drawTool = document.getElementById("story-tool-draw");
+    var stickerTool = document.getElementById("story-tool-sticker");
+    if (textTool) textTool.hidden = tool !== "text";
+    if (drawTool) drawTool.hidden = tool !== "draw";
+    if (stickerTool) stickerTool.hidden = tool !== "sticker";
+    panel.hidden = !tool;
+    if (tool === "text") {
+        markColors(textTool, storyDraft.textColor);
+        document.getElementById("story-text").focus();
+    } else if (tool === "draw") {
+        markColors(drawTool, storyDraft.ink);
+    }
+}
+
+function renderFilters() {
+    var buttons = document.querySelectorAll("#story-filters [data-filter]");
+    for (var i = 0; i < buttons.length; i++) {
+        buttons[i].classList.toggle("on", buttons[i].getAttribute("data-filter") === storyDraft.filter);
+    }
+}
+
+function closeEditor() {
+    storyDraft = null;
+    var editor = document.getElementById("story-editor");
+    editor.hidden = true;
+    editor.classList.remove("drawing");
+    document.getElementById("story-edit-panel").hidden = true;
+}
+
+function openStoryEditor(url) {
+    var img = new Image();
+    img.onload = function () {
+        closeStories();
+        storyDraft = {
+            img: img,
+            filter: "none",
+            strokes: [],
+            items: [],
+            tool: null,
+            drawing: null,
+            drag: null,
+            selected: -1,
+            undo: [],
+            ink: "#ffffff",
+            textColor: "#ffffff"
+        };
+        document.getElementById("story-share-avatar").src = avatarFor(ME);
+        document.getElementById("story-editor").hidden = false;
+        renderFilters();
+        renderToolPanel();
+        paintDraft();
+    };
+    img.src = url;
+}
+
+function hitItem(point) {
+    var ctx = document.getElementById("story-canvas").getContext("2d");
+    for (var i = storyDraft.items.length - 1; i >= 0; i--) {
+        var item = storyDraft.items[i];
+        var box = item.box || itemBox(ctx, item);
+        if (Math.abs(point.x - item.x) <= box.width / 2 + 16 && Math.abs(point.y - item.y) <= box.height / 2 + 16) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+function addStoryText() {
+    var input = document.getElementById("story-text");
+    if (!input) return;
+    var text = input.value.trim();
+    if (!text) return;
+    storyDraft.items.push({
+        type: "text",
+        text: text,
+        x: STORY_W / 2,
+        y: STORY_H / 2 + (storyDraft.items.length % 3) * 64 - 64,
+        size: 42,
+        color: storyDraft.textColor
+    });
+    storyDraft.undo.push("item");
+    storyDraft.selected = storyDraft.items.length - 1;
+    input.value = "";
+    paintDraft();
+}
+
+function publishStory() {
+    if (!storyDraft) return;
+    storyDraft.selected = -1;
+    storyDraft.drawing = null;
+    paintDraft();
+    var url = document.getElementById("story-canvas").toDataURL("image/jpeg", 0.82);
+    var state = loadState();
+    state.stories.push({
+        id: nextId(),
+        author: ME,
+        image: url,
+        text: "",
+        createdAt: Date.now(),
+        seen: false
+    });
+    saveState(state);
+    closeEditor();
+    showView("friends");
+}
+
+document.getElementById("story-file").addEventListener("change", function () {
+    var file = this.files && this.files[0];
+    this.value = "";
+    if (!file) return;
+    readImage(file, openStoryEditor);
+});
+
+document.getElementById("story-discard").addEventListener("click", closeEditor);
+document.getElementById("story-share").addEventListener("click", publishStory);
+
+document.querySelector(".story-edit-tools").addEventListener("click", function (event) {
+    if (!storyDraft) return;
+    if (event.target.closest("#story-undo")) {
+        var kind = storyDraft.undo.pop();
+        if (kind === "stroke") storyDraft.strokes.pop();
+        if (kind === "item") storyDraft.items.pop();
+        storyDraft.selected = -1;
+        paintDraft();
+        return;
+    }
+    var button = event.target.closest("[data-tool]");
+    if (!button) return;
+    var tool = button.getAttribute("data-tool");
+    storyDraft.tool = storyDraft.tool === tool ? null : tool;
+    renderToolPanel();
+});
+
+document.getElementById("story-edit-panel").addEventListener("click", function (event) {
+    if (!storyDraft) return;
+    var color = event.target.closest("[data-color]");
+    if (color) {
+        var value = color.getAttribute("data-color");
+        if (storyDraft.tool === "draw") storyDraft.ink = value;
+        else storyDraft.textColor = value;
+        var dots = color.parentNode.children;
+        for (var i = 0; i < dots.length; i++) dots[i].classList.toggle("on", dots[i] === color);
+        return;
+    }
+    var sticker = event.target.closest("[data-sticker]");
+    if (sticker) {
+        storyDraft.items.push({
+            type: "sticker",
+            text: sticker.getAttribute("data-sticker"),
+            x: STORY_W / 2,
+            y: STORY_H / 2,
+            size: 78,
+            color: "#ffffff"
+        });
+        storyDraft.undo.push("item");
+        storyDraft.selected = storyDraft.items.length - 1;
+        paintDraft();
+        return;
+    }
+    if (event.target.closest("#story-text-add")) addStoryText();
+});
+
+document.getElementById("story-edit-panel").addEventListener("keydown", function (event) {
+    if (event.key === "Enter" && event.target.id === "story-text") {
+        event.preventDefault();
+        addStoryText();
+    }
+});
+
+document.getElementById("story-filters").addEventListener("click", function (event) {
+    var button = event.target.closest("[data-filter]");
+    if (!button || !storyDraft) return;
+    storyDraft.filter = button.getAttribute("data-filter");
+    var buttons = button.parentNode.children;
+    for (var i = 0; i < buttons.length; i++) buttons[i].classList.toggle("on", buttons[i] === button);
+    paintDraft();
+});
+
+document.getElementById("story-canvas").addEventListener("pointerdown", function (event) {
+    if (!storyDraft) return;
+    this.setPointerCapture(event.pointerId);
+    var point = canvasPoint(event);
+    if (storyDraft.tool === "draw") {
+        storyDraft.drawing = { color: storyDraft.ink, size: 10, points: [point] };
+        storyDraft.selected = -1;
+        paintDraft();
+        return;
+    }
+    var hit = hitItem(point);
+    storyDraft.selected = hit;
+    storyDraft.drag = hit < 0 ? null : {
+        index: hit,
+        dx: point.x - storyDraft.items[hit].x,
+        dy: point.y - storyDraft.items[hit].y
+    };
+    paintDraft();
+});
+
+document.getElementById("story-canvas").addEventListener("pointermove", function (event) {
+    if (!storyDraft) return;
+    var point = canvasPoint(event);
+    if (storyDraft.drawing) {
+        storyDraft.drawing.points.push(point);
+        paintDraft();
+        return;
+    }
+    if (!storyDraft.drag) return;
+    var item = storyDraft.items[storyDraft.drag.index];
+    item.x = point.x - storyDraft.drag.dx;
+    item.y = point.y - storyDraft.drag.dy;
+    paintDraft();
+});
+
+document.getElementById("story-canvas").addEventListener("pointerup", function () {
+    if (!storyDraft) return;
+    if (storyDraft.drawing && storyDraft.drawing.points.length) {
+        storyDraft.strokes.push(storyDraft.drawing);
+        storyDraft.undo.push("stroke");
+    }
+    storyDraft.drawing = null;
+    storyDraft.drag = null;
+});
+
+document.getElementById("story-close").addEventListener("click", function () {
+    closeStories();
+    renderStories();
+});
+
+document.getElementById("story-menu").addEventListener("click", function () {
+    var menu = document.getElementById("story-delete");
+    var opening = menu.hidden;
+    menu.hidden = !opening;
+    if (opening) {
+        clearTimeout(storyTimer);
+        document.getElementById("story-progress").classList.add("paused");
+    } else {
+        document.getElementById("story-progress").classList.remove("paused");
+        storyTimer = setTimeout(nextStory, STORY_MS);
+    }
+});
+
+document.getElementById("story-delete-btn").addEventListener("click", function () {
+    var group = storyGroups[storyCursor];
+    if (!group || group.author !== ME) return;
+    var story = group.items[storyIndex];
+    if (!story) return;
+    var state = loadState();
+    state.stories = state.stories.filter(function (item) { return item.id !== story.id; });
+    saveState(state);
+    group.items.splice(storyIndex, 1);
+    closeStoryMenu();
+    if (!group.items.length) {
+        storyGroups.splice(storyCursor, 1);
+        if (!storyGroups.length) {
+            closeStories();
+            renderStories();
+            return;
+        }
+        if (storyCursor >= storyGroups.length) storyCursor = storyGroups.length - 1;
+        storyIndex = 0;
+    } else if (storyIndex >= group.items.length) {
+        storyIndex = 0;
+    }
+    renderStories();
+    paintStory();
+});
+document.getElementById("story-next").addEventListener("click", nextStory);
+document.getElementById("story-prev").addEventListener("click", prevStory);
+
+document.querySelector(".social-rail").addEventListener("click", function (event) {
+    var button = event.target.closest("button");
+    if (!button) return;
+    showView(button.getAttribute("data-view"));
+});
+
+document.getElementById("post-lock").addEventListener("click", function () {
+    friendsOnly = !friendsOnly;
+    this.setAttribute("aria-pressed", friendsOnly ? "true" : "false");
+    this.title = friendsOnly ? "Friends only" : "Public";
+    var icon = this.querySelector("i");
+    if (icon) icon.className = "fa-solid " + (friendsOnly ? "fa-lock" : "fa-lock-open");
+});
+
+document.getElementById("post-image").addEventListener("change", function () {
+    var file = this.files && this.files[0];
+    if (!file) return;
+    readImage(file, function (url) {
+        pendingImage = url;
+        var preview = document.getElementById("photo-preview");
+        preview.hidden = false;
+        var image = document.getElementById("photo-preview-img");
+        if (image) image.src = url;
+    });
+});
+
+document.getElementById("photo-preview").addEventListener("click", function (event) {
+    if (event.target.closest("#photo-remove")) clearPhoto();
+});
+
+function flagCode(emoji) {
+    var chars = Array.from(emoji);
+    if (chars.length !== 2) return "";
+    var first = chars[0].codePointAt(0);
+    var second = chars[1].codePointAt(0);
+    if (first < 0x1F1E6 || first > 0x1F1FF || second < 0x1F1E6 || second > 0x1F1FF) return "";
+    return String.fromCharCode(first - 0x1F1E6 + 65, second - 0x1F1E6 + 65);
+}
+
+var FLAG_LABELS = {
+    "🏁": "Chequered flag",
+    "🚩": "Triangular flag",
+    "🎌": "Crossed flags",
+    "🏴": "Black flag",
+    "🏳️": "White flag",
+    "🏳️‍🌈": "Rainbow flag",
+    "🏳️‍⚧️": "Transgender flag",
+    "🏴‍☠️": "Pirate flag",
+    "🏴󠁧󠁢󠁥󠁮󠁧󠁿": "England",
+    "🏴󠁧󠁢󠁳󠁣󠁴󠁿": "Scotland",
+    "🏴󠁧󠁢󠁷󠁬󠁳󠁿": "Wales"
+};
+
+var regionNames = null;
+
+function countryLabel(emoji) {
+    if (FLAG_LABELS[emoji]) return FLAG_LABELS[emoji];
+    var code = flagCode(emoji);
+    if (!code) return "";
+    if (!regionNames) regionNames = new Intl.DisplayNames(["tr"], { type: "region" });
+    return regionNames.of(code) || code;
+}
+
+function flagSrc(emoji) {
+    var code = flagCode(emoji);
+    if (!code) return "";
+    return "https://flagcdn.com/w80/" + code.toLowerCase() + ".png";
+}
+
+function twemojiSrc(emoji) {
+    var text = emoji.indexOf("\u200D") < 0 ? emoji.replace(/\uFE0F/g, "") : emoji;
+    var parts = [];
+    Array.from(text).forEach(function (ch) {
+        parts.push(ch.codePointAt(0).toString(16));
+    });
+    return "https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0/assets/72x72/" + parts.join("-") + ".png";
+}
+
+var FLAG_RE = /\uD83C\uDFF4(?:\uDB40[\uDC00-\uDCFF])+\uDB40\uDC7F|\uD83C\uDFF3\uFE0F\u200D\uD83C\uDF08|\uD83C\uDFF3\uFE0F\u200D\u26A7\uFE0F|\uD83C\uDFF4\u200D\u2620\uFE0F|\uD83C[\uDDE6-\uDDFF]\uD83C[\uDDE6-\uDDFF]|\uD83C\uDFC1|\uD83D\uDEA9|\uD83C\uDF8C|\uD83C\uDFF4|\uD83C\uDFF3\uFE0F?/g;
+
+function flagPicture(emoji) {
+    if (flagCode(emoji)) return flagSrc(emoji);
+    return twemojiSrc(emoji);
+}
+
+function fieldValue(el) {
+    if (!el) return "";
+    var parts = [];
+    function walk(node) {
+        node.childNodes.forEach(function (child) {
+            if (child.nodeType === 3) parts.push(child.textContent);
+            else if (child.nodeName === "IMG") parts.push(child.getAttribute("data-emoji") || "");
+            else if (child.nodeName === "BR") parts.push("\n");
+            else if (child.nodeType === 1) {
+                if (/^(DIV|P)$/.test(child.nodeName) && parts.length && parts[parts.length - 1] !== "\n") parts.push("\n");
+                walk(child);
+            }
+        });
+    }
+    walk(el);
+    return parts.join("");
+}
+
+function markEmpty(el) {
+    var empty = !fieldValue(el).replace(/\n/g, "").trim();
+    el.setAttribute("data-empty", empty ? "1" : "0");
+    if (empty && document.activeElement !== el) while (el.firstChild) el.removeChild(el.firstChild);
+}
+
+var savedRange = null;
+
+function rememberCaret() {
+    var sel = window.getSelection();
+    var active = document.activeElement;
+    if (!active || !active.classList || !active.classList.contains("rich-text") || !sel.rangeCount) return;
+    if (active.contains(sel.anchorNode)) savedRange = { field: active, range: sel.getRangeAt(0).cloneRange() };
+}
+
+function closeEmojiPanel() {
+    emojiField = null;
+    var panel = document.getElementById("emoji-panel");
+    if (panel) panel.hidden = true;
+}
+
+function openEmojiPanel(button, field) {
+    var panel = document.getElementById("emoji-panel");
+    if (emojiField === field && !panel.hidden) {
+        closeEmojiPanel();
+        return;
+    }
+    emojiField = field;
+    if (!panel.childElementCount && typeof fillEmojiPanel === "function") {
+        fillEmojiPanel(panel, "emoji", function (choice, emoji) {
+            var img = choice.querySelector("img");
+            if (!img) return;
+            img.alt = countryLabel(emoji) || "";
+            img.src = flagCode(emoji) ? flagSrc(emoji) : twemojiSrc(emoji);
+            if (flagCode(emoji)) {
+                img.onerror = function () {
+                    img.onerror = null;
+                    img.src = twemojiSrc(emoji);
+                };
+            }
+        });
+    }
+    placeEmojiPanel(button);
+}
+
+function placeEmojiPanel(button) {
+    var panel = document.getElementById("emoji-panel");
+    var gap = 8;
+    var parent = button.closest(".composer-fields") || button.closest(".comment-form") || button.parentNode;
+    if (panel.parentNode !== parent) parent.appendChild(panel);
+    panel.hidden = false;
+    panel.style.width = "";
+    var maxWidth = Math.min(340, Math.max(220, parent.clientWidth - 8));
+    panel.style.width = maxWidth + "px";
+    var parentRect = parent.getBoundingClientRect();
+    var buttonRect = button.getBoundingClientRect();
+    var width = panel.offsetWidth;
+    var left = buttonRect.left - parentRect.left;
+    if (left + width > parent.clientWidth - 4) left = Math.max(0, parent.clientWidth - width - 4);
+    if (left < 0) left = 0;
+    var top = buttonRect.bottom - parentRect.top + gap;
+    if (buttonRect.bottom + panel.offsetHeight + gap > window.innerHeight) {
+        top = buttonRect.top - parentRect.top - panel.offsetHeight - gap;
+    }
+    panel.style.left = left + "px";
+    panel.style.top = top + "px";
+}
+
+function insertNodes(field, nodes) {
+    field.focus();
+    var sel = window.getSelection();
+    var range = savedRange && savedRange.field === field && field.contains(savedRange.range.startContainer) ? savedRange.range : null;
+    if (!range) {
+        range = document.createRange();
+        range.selectNodeContents(field);
+        range.collapse(false);
+    }
+    range.deleteContents();
+    nodes.forEach(function (node) {
+        range.insertNode(node);
+        range.setStartAfter(node);
+        range.collapse(true);
+    });
+    sel.removeAllRanges();
+    sel.addRange(range);
+    savedRange = { field: field, range: range.cloneRange() };
+    markEmpty(field);
+}
+
+function nodesForText(text) {
+    var nodes = [];
+    var last = 0;
+    FLAG_RE.lastIndex = 0;
+    text.replace(FLAG_RE, function (flag, index) {
+        if (index > last) nodes.push(document.createTextNode(text.slice(last, index)));
+        var img = document.createElement("img");
+        img.className = "flag-img";
+        img.alt = countryLabel(flag) || "";
+        img.title = countryLabel(flag) || "";
+        img.setAttribute("data-emoji", flag);
+        img.src = flagPicture(flag);
+        if (flagCode(flag)) {
+            img.onerror = function () {
+                img.onerror = null;
+                img.src = twemojiSrc(flag);
+            };
+        }
+        img.setAttribute("contenteditable", "false");
+        nodes.push(img);
+        last = index + flag.length;
+        return flag;
+    });
+    if (last < text.length) nodes.push(document.createTextNode(text.slice(last)));
+    FLAG_RE.lastIndex = 0;
+    return nodes;
+}
+
+function insertEmoji(emoji) {
+    if (!emojiField) return;
+    var max = Number(emojiField.getAttribute("data-maxlength")) || 0;
+    if (max && fieldValue(emojiField).length + emoji.length > max) return;
+    insertNodes(emojiField, nodesForText(emoji));
+}
+
+document.getElementById("post-emoji").addEventListener("mousedown", rememberCaret);
+document.getElementById("post-emoji").addEventListener("click", function () {
+    openEmojiPanel(this, document.getElementById("post-text"));
+});
+
+document.getElementById("emoji-panel").addEventListener("mousedown", function (event) {
+    if (event.target.closest(".emoji-choice")) event.preventDefault();
+});
+
+document.getElementById("emoji-panel").addEventListener("click", function (event) {
+    var tab = event.target.closest("[data-emoji-tab]");
+    if (tab) {
+        var scroller = this.querySelector(".emoji-scroll");
+        var section = document.getElementById("emoji-" + tab.getAttribute("data-emoji-tab"));
+        if (section) scroller.scrollTop = section.offsetTop;
+        var tabs = this.querySelectorAll("[data-emoji-tab]");
+        for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle("on", tabs[i] === tab);
+        return;
+    }
+    var choice = event.target.closest(".emoji-choice");
+    if (!choice) return;
+    insertEmoji(choice.getAttribute("data-emoji") || choice.textContent);
+});
+
+document.addEventListener("click", function (event) {
+    if (event.target.closest("#emoji-panel, #post-emoji, .emoji-open")) return;
+    closeEmojiPanel();
+});
+
+function closeDeleteMenus() {
+    var pops = document.querySelectorAll(".social-view .delete-pop");
+    for (var i = 0; i < pops.length; i++) pops[i].hidden = true;
+}
+
+document.querySelector(".social-view").addEventListener("mousedown", function (event) {
+    if (event.target.closest(".emoji-open")) rememberCaret();
+});
+
+document.querySelector(".social-view").addEventListener("keydown", function (event) {
+    var box = event.target.closest && event.target.closest(".comment-form .rich-text");
+    if (!box || event.key !== "Enter") return;
+    event.preventDefault();
+    if (box.closest("form").requestSubmit) box.closest("form").requestSubmit();
+    else box.closest("form").dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+});
+
+document.querySelector(".social-view").addEventListener("paste", function (event) {
+    var box = event.target.closest && event.target.closest(".rich-text");
+    if (!box) return;
+    event.preventDefault();
+    var text = (event.clipboardData || window.clipboardData).getData("text") || "";
+    var max = Number(box.getAttribute("data-maxlength")) || 0;
+    if (max) text = text.slice(0, Math.max(0, max - fieldValue(box).length));
+    if (!text) return;
+    insertNodes(box, nodesForText(text));
+});
+
+document.querySelector(".social-view").addEventListener("input", function (event) {
+    if (event.target.classList && event.target.classList.contains("rich-text")) markEmpty(event.target);
+});
+
+document.querySelector(".social-view").addEventListener("click", function (event) {
+    var emojiButton = event.target.closest(".emoji-open");
+    if (emojiButton) {
+        var form = emojiButton.closest(".comment-form");
+        openEmojiPanel(emojiButton, form.querySelector(".rich-text"));
+        return;
+    }
+
+    var line = event.target.closest(".line-btn");
+    if (line) {
+        var pop = line.parentNode.querySelector(".delete-pop");
+        var opening = pop.hidden;
+        closeDeleteMenus();
+        pop.hidden = !opening;
+        return;
+    }
+
+    var deletePost = event.target.closest("[data-delete-post]");
+    if (deletePost) {
+        var postId = deletePost.getAttribute("data-delete-post");
+        savePosts(loadPosts().filter(function (post) {
+            return post.id !== postId || post.author !== ME;
+        }));
+        renderFeed();
+        return;
+    }
+
+    var deleteComment = event.target.closest("[data-delete-comment]");
+    if (deleteComment) {
+        var commentPostId = deleteComment.getAttribute("data-post");
+        var commentId = deleteComment.getAttribute("data-delete-comment");
+        var posts = loadPosts();
+        posts.forEach(function (post) {
+            if (post.id !== commentPostId) return;
+            post.comments = (post.comments || []).filter(function (comment) {
+                if (comment.id !== commentId) return true;
+                return post.author !== ME && comment.author !== ME;
+            });
+        });
+        savePosts(posts);
+        renderFeed();
+        return;
+    }
+
+    if (!event.target.closest(".item-menu")) closeDeleteMenus();
+
+    var commentOpen = event.target.closest("[data-comment-post]");
+    if (commentOpen) {
+        var commentPostId = commentOpen.getAttribute("data-comment-post");
+        var commentForm = commentOpen.closest(".post").querySelector(".comment-form");
+        var opening = commentForm.hidden || openCommentPost !== commentPostId;
+        document.querySelectorAll(".social-view .comment-form").forEach(function (form) {
+            form.hidden = true;
+        });
+        openCommentPost = opening ? commentPostId : null;
+        commentForm.hidden = !opening;
+        if (opening) commentForm.querySelector(".rich-text").focus();
+        return;
+    }
+
+    var postLike = event.target.closest("[data-like-post]");
+    if (postLike) {
+        var likedPostId = postLike.getAttribute("data-like-post");
+        var likedPosts = loadPosts();
+        likedPosts.forEach(function (post) {
+            if (post.id !== likedPostId) return;
+            post.likes = post.likes || 0;
+            post.liked = !post.liked;
+            post.likes += post.liked ? 1 : -1;
+            if (post.likes < 0) post.likes = 0;
+        });
+        savePosts(likedPosts);
+        renderFeed();
+        return;
+    }
+
+    var button = event.target.closest(".like-btn");
+    if (!button) return;
+    var postId = button.getAttribute("data-post");
+    var commentId = button.getAttribute("data-like");
+    var posts = loadPosts();
+
+    posts.forEach(function (post) {
+        if (post.id !== postId) return;
+        (post.comments || []).forEach(function (comment) {
+            if (comment.id !== commentId) return;
+            comment.liked = !comment.liked;
+            comment.likes += comment.liked ? 1 : -1;
+            if (comment.likes < 0) comment.likes = 0;
+        });
+    });
+    savePosts(posts);
+    renderFeed();
+});
+
+var logoutBtn = document.getElementById("me-logout");
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", function () {
+        if (confirm("Are you sure you want to log out?")) {
+            window.location.href = "./login.html";
+        }
+    });
+}
+
+// Story modal event listeners
+document.getElementById("story-modal-close").addEventListener("click", function () {
+    document.getElementById("story-modal").hidden = true;
+});
+
+document.getElementById("story-photo-btn").addEventListener("click", function () {
+    document.getElementById("story-modal").hidden = true;
+    document.getElementById("story-file").click();
+});
+
+document.getElementById("story-live-btn").addEventListener("click", function () {
+    document.getElementById("story-modal").hidden = true;
+    openLiveCreateModal();
+});
+
+/* ============================================================
+   ACTIVE PUBLIC LIVE STREAMS & BROADCASTER SYSTEM
+   ============================================================ */
+
+var LIVE_STORAGE_KEY = "discode-live-streams";
+var DEFAULT_LIVE_STREAMS = [
+    {
+        id: "live-gpro",
+        streamer: "Gpro-fighter",
+        avatar: "./assets/img/img-icon 3.png",
+        title: "🔥 Road to Grandmaster | Ranked Matches with Squad",
+        category: "Gaming",
+        tags: ["Valorant", "Ranked", "Competitive"],
+        viewers: 1420,
+        startedAt: Date.now() - 48 * 60 * 1000,
+        visibility: "public",
+        theme: "gaming",
+        isUser: false
+    },
+    {
+        id: "live-sigma",
+        streamer: "Mr_Sigma",
+        avatar: "./assets/img/img-icon 4.jpeg",
+        title: "🎧 24/7 Lo-Fi Chill Beats & Relax Study Session",
+        category: "Music",
+        tags: ["Lo-Fi", "Beats", "Study", "Chill"],
+        viewers: 2845,
+        startedAt: Date.now() - 130 * 60 * 1000,
+        visibility: "public",
+        theme: "lofi",
+        isUser: false
+    },
+    {
+        id: "live-nxn",
+        streamer: "nxn",
+        avatar: "./assets/img/img-icon 1.png",
+        title: "🎨 Digital Cyberpunk Concept Art & Drawing Chat",
+        category: "Entertainment",
+        tags: ["Art", "Illustration", "Design"],
+        viewers: 630,
+        startedAt: Date.now() - 25 * 60 * 1000,
+        visibility: "public",
+        theme: "art",
+        isUser: false
+    },
+    {
+        id: "live-moiz",
+        streamer: "Moiz Hussain",
+        avatar: "./assets/img/img-icon 2.png",
+        title: "💻 Building Real-Time Chat & Live Streaming in JS",
+        category: "Science & Tech",
+        tags: ["Coding", "JavaScript", "WebDev"],
+        viewers: 382,
+        startedAt: Date.now() - 72 * 60 * 1000,
+        visibility: "public",
+        theme: "code",
+        isUser: false
+    }
+];
+
+function loadLiveStreams() {
+    try {
+        var raw = localStorage.getItem(LIVE_STORAGE_KEY);
+        if (!raw) {
+            localStorage.setItem(LIVE_STORAGE_KEY, JSON.stringify(DEFAULT_LIVE_STREAMS));
+            return DEFAULT_LIVE_STREAMS.slice();
+        }
+        var parsed = JSON.parse(raw);
+        return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_LIVE_STREAMS.slice();
+    } catch (e) {
+        return DEFAULT_LIVE_STREAMS.slice();
+    }
+}
+
+function saveLiveStreams(streams) {
+    try {
+        localStorage.setItem(LIVE_STORAGE_KEY, JSON.stringify(streams));
+    } catch (e) {}
+}
+
+var previewAnimTokens = [];
+function clearCardAnimations() {
+    previewAnimTokens.forEach(function (token) {
+        cancelAnimationFrame(token.id);
+        token.active = false;
+    });
+    previewAnimTokens = [];
+}
+
+function drawSimulatedFrame(ctx, width, height, theme, time) {
+    ctx.clearRect(0, 0, width, height);
+
+    if (theme === "gaming") {
+        var grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, "#0d0221");
+        grad.addColorStop(0.5, "#240046");
+        grad.addColorStop(1, "#3c096c");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+
+        var sunGrad = ctx.createLinearGradient(width / 2, height * 0.2, width / 2, height * 0.65);
+        sunGrad.addColorStop(0, "#ff007f");
+        sunGrad.addColorStop(1, "#ffbe0b");
+        ctx.fillStyle = sunGrad;
+        ctx.beginPath();
+        ctx.arc(width / 2, height * 0.45, Math.min(width, height) * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#1e0b36";
+        for (var i = 0; i < 5; i++) {
+            var cutY = height * 0.35 + i * (height * 0.05);
+            ctx.fillRect(width * 0.2, cutY, width * 0.6, 2 + i);
+        }
+
+        ctx.strokeStyle = "rgba(0, 240, 255, 0.4)";
+        ctx.lineWidth = 1.5;
+        var horizonY = height * 0.55;
+        ctx.beginPath();
+        for (var x = -width * 0.5; x <= width * 1.5; x += width * 0.12) {
+            ctx.moveTo(width / 2, horizonY);
+            ctx.lineTo(x, height);
+        }
+        var gridOffset = (time * 0.08) % (height * 0.1);
+        for (var y = horizonY; y <= height; y += (y - horizonY) * 0.35 + 4) {
+            var shiftedY = y + gridOffset * ((y - horizonY) / (height - horizonY));
+            if (shiftedY <= height) {
+                ctx.moveTo(0, shiftedY);
+                ctx.lineTo(width, shiftedY);
+            }
+        }
+        ctx.stroke();
+
+    } else if (theme === "lofi") {
+        var grad = ctx.createLinearGradient(0, 0, 0, height);
+        grad.addColorStop(0, "#0b0c10");
+        grad.addColorStop(0.6, "#1f2833");
+        grad.addColorStop(1, "#121b22");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.fillStyle = "rgba(10, 14, 23, 0.85)";
+        var buildings = [0.15, 0.3, 0.22, 0.45, 0.35, 0.5, 0.28, 0.4];
+        var bw = width / buildings.length;
+        for (var b = 0; b < buildings.length; b++) {
+            var bh = height * buildings[b];
+            ctx.fillRect(b * bw, height - bh, bw + 1, bh);
+            ctx.fillStyle = "rgba(255, 230, 140, 0.7)";
+            for (var w = 0; w < 3; w++) {
+                var wx = b * bw + 6 + (w * 10);
+                var wy = height - bh + 12 + ((time * 0.001 + b) % 2 * 6);
+                if (wx < (b + 1) * bw - 6 && wy < height - 10) {
+                    ctx.fillRect(wx, wy, 4, 6);
+                }
+            }
+            ctx.fillStyle = "rgba(10, 14, 23, 0.85)";
+        }
+
+        var barCount = 28;
+        var barW = width / barCount;
+        for (var k = 0; k < barCount; k++) {
+            var waveH = Math.sin(time * 0.005 + k * 0.4) * Math.cos(time * 0.003 - k * 0.2);
+            var barH = Math.max(8, (Math.abs(waveH) * height * 0.38));
+            var barGrad = ctx.createLinearGradient(0, height - barH, 0, height);
+            barGrad.addColorStop(0, "#66fcf1");
+            barGrad.addColorStop(1, "rgba(69, 162, 158, 0.3)");
+            ctx.fillStyle = barGrad;
+            ctx.fillRect(k * barW + 1, height - barH, barW - 2, barH);
+        }
+
+    } else if (theme === "code") {
+        ctx.fillStyle = "#050d0a";
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.fillStyle = "#00ff66";
+        ctx.font = "bold 11px monospace";
+        var cols = Math.floor(width / 16);
+        for (var c = 0; c < cols; c++) {
+            var dropY = ((time * 0.12 + c * 37) % (height + 30));
+            var charCode = 65 + ((c * 7 + Math.floor(time * 0.01)) % 26);
+            ctx.fillStyle = "rgba(0, 255, 102, 0.25)";
+            for (var trail = 1; trail <= 5; trail++) {
+                ctx.fillText(String.fromCharCode(charCode - trail), c * 16, dropY - trail * 12);
+            }
+            ctx.fillStyle = "#ffffff";
+            ctx.fillText(String.fromCharCode(charCode), c * 16, dropY);
+        }
+
+        ctx.fillStyle = "rgba(13, 20, 28, 0.85)";
+        ctx.strokeStyle = "rgba(0, 255, 136, 0.3)";
+        ctx.lineWidth = 1;
+        var cx = width * 0.12, cy = height * 0.25, cw = width * 0.76, ch = height * 0.52;
+        ctx.fillRect(cx, cy, cw, ch);
+        ctx.strokeRect(cx, cy, cw, ch);
+        ctx.fillStyle = "#58a6ff";
+        ctx.fillText("const stream = await navigator.getLiveMedia();", cx + 12, cy + 22);
+        ctx.fillStyle = "#7ee787";
+        ctx.fillText("stream.broadcast({ public: true }); // OK", cx + 12, cy + 40);
+
+    } else if (theme === "art") {
+        var grad = ctx.createLinearGradient(0, 0, width, height);
+        grad.addColorStop(0, "#1a0826");
+        grad.addColorStop(0.5, "#2a0845");
+        grad.addColorStop(1, "#0b0014");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+
+        var waves = [
+            { color: "rgba(255, 0, 128, 0.45)", speed: 0.003, freq: 0.02, offset: 0 },
+            { color: "rgba(0, 229, 255, 0.45)", speed: 0.002, freq: 0.025, offset: 2 },
+            { color: "rgba(255, 215, 0, 0.45)", speed: 0.0025, freq: 0.015, offset: 4 }
+        ];
+
+        waves.forEach(function (w) {
+            ctx.fillStyle = w.color;
+            ctx.beginPath();
+            ctx.moveTo(0, height);
+            for (var px = 0; px <= width; px += 8) {
+                var py = height * 0.5 + Math.sin(px * w.freq + time * w.speed + w.offset) * (height * 0.28);
+                ctx.lineTo(px, py);
+            }
+            ctx.lineTo(width, height);
+            ctx.closePath();
+            ctx.fill();
+        });
+
+    } else {
+        var grad = ctx.createLinearGradient(0, 0, width, height);
+        grad.addColorStop(0, "#1e1f22");
+        grad.addColorStop(1, "#111214");
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, width, height);
+
+        var pulseR = (time * 0.04) % (height * 0.45);
+        ctx.strokeStyle = "rgba(242, 63, 67, " + (1 - pulseR / (height * 0.45)) + ")";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, pulseR, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = "#f23f43";
+        ctx.beginPath();
+        ctx.arc(width / 2, height / 2, 8, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 13px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("LIVE BROADCAST", width / 2, height / 2 + 34);
+        ctx.textAlign = "left";
+    }
+}
+
+function startCardAnimation(canvas, theme) {
+    if (!canvas) return;
+    var ctx = canvas.getContext("2d");
+    var token = { active: true, id: 0 };
+    previewAnimTokens.push(token);
+
+    var start = performance.now();
+    function loop(now) {
+        if (!token.active) return;
+        var elapsed = now - start;
+        drawSimulatedFrame(ctx, canvas.width, canvas.height, theme, elapsed);
+        token.id = requestAnimationFrame(loop);
+    }
+    token.id = requestAnimationFrame(loop);
+}
+
+function formatLiveViewerCount(count) {
+    return count >= 1000 ? (count / 1000).toFixed(1) + "K" : String(count);
+}
+
+function renderLiveStreams() {
+    var list = document.getElementById("live-streams-list");
+    var empty = document.getElementById("live-streams-empty");
+    var countBadge = document.getElementById("live-count-badge");
+    if (!list) return;
+
+    clearCardAnimations();
+    while (list.firstChild) list.removeChild(list.firstChild);
+
+    var allStreams = loadLiveStreams();
+    var publicStreams = allStreams.filter(function (s) {
+        return s.visibility === "public";
+    });
+
+    var liveBadgeText = (typeof t === "function" && t("LIVE")) || "LIVE";
+    var watchText = (typeof t === "function" && t("Watch Stream")) || "Watch Stream";
+    var yourStreamText = (typeof t === "function" && t("Your Stream")) || "Your Stream";
+
+    if (countBadge) {
+        countBadge.textContent = String(publicStreams.length);
+    }
+
+    if (empty) {
+        empty.hidden = publicStreams.length > 0;
+    }
+
+    if (!publicStreams.length) return;
+
+    publicStreams.forEach(function (stream) {
+        var item = document.createElement("button");
+        item.type = "button";
+        item.className = "live-drawer-item";
+        item.setAttribute("data-stream-id", stream.id);
+
+        var preview = document.createElement("div");
+        preview.className = "live-drawer-preview";
+
+        var canvas = document.createElement("canvas");
+        canvas.width = 240;
+        canvas.height = 144;
+
+        var badge = document.createElement("span");
+        badge.className = "live-drawer-live-badge";
+        badge.textContent = liveBadgeText;
+
+        var viewers = document.createElement("span");
+        viewers.className = "live-drawer-viewers";
+        viewers.innerHTML = '<i class="fa-solid fa-eye"></i> ' + formatLiveViewerCount(stream.viewers || 0);
+
+        preview.appendChild(canvas);
+        preview.appendChild(badge);
+        preview.appendChild(viewers);
+
+        var body = document.createElement("div");
+        body.className = "live-drawer-body";
+
+        var meta = document.createElement("div");
+        meta.className = "live-drawer-meta";
+
+        var topRow = document.createElement("div");
+        topRow.className = "live-drawer-top-row";
+
+        var streamer = document.createElement("div");
+        streamer.className = "live-drawer-streamer";
+
+        var avatar = document.createElement("img");
+        avatar.src = stream.avatar || "./assets/img/img-icon-profile.jpeg";
+        avatar.alt = stream.streamer || "";
+
+        var streamerText = document.createElement("div");
+        var streamerName = document.createElement("strong");
+        streamerName.textContent = stream.streamer || "Unknown";
+        var streamerSub = document.createElement("span");
+        streamerSub.textContent = (stream.category || "Public Live") + " • " + (stream.isUser ? yourStreamText : timeAgo(stream.startedAt || Date.now()));
+
+        streamerText.appendChild(streamerName);
+        streamerText.appendChild(streamerSub);
+        streamer.appendChild(avatar);
+        streamer.appendChild(streamerText);
+
+        var stat = document.createElement("span");
+        stat.className = "live-drawer-stat";
+        stat.innerHTML = '<i class="fa-solid fa-signal"></i> ' + formatLiveViewerCount(stream.viewers || 0);
+
+        var title = document.createElement("h3");
+        title.className = "live-drawer-title";
+        title.textContent = stream.title || "Live Stream";
+
+        var tags = document.createElement("div");
+        tags.className = "live-drawer-tags";
+        (stream.tags && stream.tags.length ? stream.tags.slice(0, 3) : [stream.category || "Live"]).forEach(function (tag) {
+            var pill = document.createElement("span");
+            pill.textContent = tag;
+            tags.appendChild(pill);
+        });
+
+        topRow.appendChild(streamer);
+        topRow.appendChild(stat);
+        meta.appendChild(topRow);
+        meta.appendChild(title);
+        meta.appendChild(tags);
+
+        var cta = document.createElement("span");
+        cta.className = "live-drawer-cta";
+        cta.innerHTML = '<span>' + watchText + '</span><i class="fa-solid fa-angle-right"></i>';
+
+        body.appendChild(meta);
+        body.appendChild(cta);
+
+        item.appendChild(preview);
+        item.appendChild(body);
+
+        item.addEventListener("click", function () {
+            openLiveWatchModal(stream);
+        });
+
+        list.appendChild(item);
+        startCardAnimation(canvas, stream.theme || "gaming");
+    });
+}
+
+/* ============================================================
+   AUTHENTIC INSTAGRAM LIVE VIEWER SYSTEM
+   ============================================================ */
+
+var activeWatchStream = null;
+var watchUptimeTimer = null;
+var watchViewerJitterTimer = null;
+var watchChatSimTimer = null;
+var watchHeartSimTimer = null;
+var watchJoinToastTimer = null;
+var watchTheaterAnimId = null;
+
+var SIMULATED_CHATTERS = [
+    { name: "Mr_Sigma", avatar: "./assets/img/img-icon 4.jpeg", msgs: ["hey there 👋", "amazing stream 🔥", "what song is this?", "you're playing great", "hello everyone! 👋"] },
+    { name: "Moiz Hussain", avatar: "./assets/img/img-icon 2.png", msgs: ["W streamer 🔥", "clean setup bro!", "let's gooooo!!", "10/10 content", "kalp kalp kalp ❤️❤️❤️"] },
+    { name: "nxn", avatar: "./assets/img/img-icon 1.png", msgs: ["love the vibe ✨", "this is going really well", "please save this stream!", "hey everyone", "gg wp 👏"] },
+    { name: "Gpro-fighter", avatar: "./assets/img/img-icon 3.png", msgs: ["rank 1 soon! 🏆", "sheeesh!", "helalll 🔥", "adamsın!", "takipteyiz"] },
+    { name: "Unknown_Inj3ctor", avatar: "./assets/img/img-icon.png", msgs: ["Do you have a Discord link?", "we're watching king 👑", "hello everyone 🌍", "I clipped that haha"] },
+    { name: "aylin_kaya", avatar: "./assets/img/img-icon 2.png", msgs: ["the stream quality is so good 😍", "audio sounds great", "hi everyone 💕", "how long have you been live?"] }
+];
+
+var JOIN_CANDIDATES = [
+    "Moiz Hussain", "nxn", "Gpro-fighter", "Mr_Sigma",
+    "aylin_kaya", "can_demirr", "zeynep.dev", "arda_99", "selin_art", "emir_b"
+];
+
+function triggerJoinToast(user) {
+    var toast = document.getElementById("ig-join-toast");
+    var userEl = document.getElementById("ig-join-user");
+    if (!toast) return;
+    if (userEl) userEl.textContent = user;
+    toast.hidden = false;
+    toast.style.animation = "none";
+    void toast.offsetWidth;
+    toast.style.animation = "igJoinSlide 3.5s forwards";
+}
+
+function spawnInstagramHeart(color) {
+    var zone = document.getElementById("live-floating-reactions");
+    if (!zone) return;
+    var heart = document.createElement("div");
+    heart.className = "ig-floating-heart";
+    var colors = ["#ff3040", "#fd1d1d", "#fc5c7d", "#ff8a00", "#f56040", "#e1306c", "#c13584", "#ffd200", "#00f2fe", "#4facfe"];
+    var c = color || colors[Math.floor(Math.random() * colors.length)];
+    heart.style.color = c;
+    heart.innerHTML = '<i class="fa-solid fa-heart"></i>';
+    var rightOffset = 8 + Math.floor(Math.random() * 26);
+    heart.style.right = rightOffset + "px";
+    var scale = 0.8 + Math.random() * 0.45;
+    heart.style.fontSize = (24 * scale) + "px";
+    zone.appendChild(heart);
+    setTimeout(function () {
+        if (heart.parentNode) heart.parentNode.removeChild(heart);
+    }, 2200);
+}
+
+function appendChatMessage(author, avatar, text) {
+    var feed = document.getElementById("live-chat-feed");
+    if (!feed) return;
+    var item = document.createElement("div");
+    item.className = "ig-comment-item";
+
+    var img = document.createElement("img");
+    img.src = avatar || "./assets/img/img-icon-profile.jpeg";
+    img.alt = author || "";
+
+    var body = document.createElement("div");
+    body.className = "ig-comment-body";
+
+    var authorSpan = document.createElement("span");
+    authorSpan.className = "ig-comment-author";
+    authorSpan.textContent = author;
+
+    var textSpan = document.createElement("span");
+    textSpan.className = "ig-comment-text";
+    textSpan.textContent = text;
+
+    body.appendChild(authorSpan);
+    body.appendChild(textSpan);
+    item.appendChild(img);
+    item.appendChild(body);
+
+    feed.appendChild(item);
+    feed.scrollTop = feed.scrollHeight;
+}
+
+function openLiveWatchModal(stream) {
+    activeWatchStream = stream;
+    var modal = document.getElementById("live-watch-modal");
+    if (!modal) return;
+    modal.hidden = false;
+
+    var titleEl = document.getElementById("live-watch-title");
+    var nameEl = document.getElementById("live-streamer-name");
+    var avatarEl = document.getElementById("live-streamer-avatar");
+    var viewersEl = document.getElementById("live-viewers-count");
+    var endBtn = document.getElementById("live-btn-end");
+    var followBtn = document.getElementById("live-btn-follow");
+
+    if (titleEl) titleEl.textContent = stream.title;
+    if (nameEl) nameEl.textContent = stream.streamer;
+    if (avatarEl) avatarEl.src = stream.avatar || "./assets/img/img-icon-profile.jpeg";
+
+    var currentViewers = stream.viewers || 1420;
+    function formatViewers(cnt) {
+        return cnt >= 1000 ? (cnt / 1000).toFixed(1) + "K" : String(cnt);
+    }
+    if (viewersEl) viewersEl.textContent = formatViewers(currentViewers);
+
+    if (endBtn) endBtn.hidden = !stream.isUser;
+    if (followBtn) {
+        followBtn.hidden = !!stream.isUser;
+        followBtn.classList.remove("following");
+        var followTxt = (typeof t === "function" && t("Follow")) || "Follow";
+        followBtn.textContent = followTxt;
+    }
+
+    var canvas = document.getElementById("live-stream-canvas");
+    var video = document.getElementById("live-stream-video");
+
+    if (stream.isUser && stream.userMediaStream) {
+        if (canvas) canvas.hidden = true;
+        if (video) {
+            video.hidden = false;
+            video.srcObject = stream.userMediaStream;
+            video.play().catch(function () {});
+        }
+    } else {
+        if (video) {
+            video.hidden = true;
+            video.srcObject = null;
+        }
+        if (canvas) {
+            canvas.hidden = false;
+            var ctx = canvas.getContext("2d");
+            var start = performance.now();
+            function theaterLoop(now) {
+                if (modal.hidden || activeWatchStream !== stream) return;
+                var elapsed = now - start;
+                drawSimulatedFrame(ctx, canvas.width, canvas.height, stream.theme || "gaming", elapsed);
+                watchTheaterAnimId = requestAnimationFrame(theaterLoop);
+            }
+            if (watchTheaterAnimId) cancelAnimationFrame(watchTheaterAnimId);
+            watchTheaterAnimId = requestAnimationFrame(theaterLoop);
+        }
+    }
+
+    if (watchViewerJitterTimer) clearInterval(watchViewerJitterTimer);
+    watchViewerJitterTimer = setInterval(function () {
+        var delta = Math.floor(Math.random() * 5) - 2;
+        currentViewers = Math.max(1, currentViewers + delta);
+        if (viewersEl) viewersEl.textContent = formatViewers(currentViewers);
+    }, 4000);
+
+    // Initial comments feed
+    var chatFeed = document.getElementById("live-chat-feed");
+    if (chatFeed) {
+        while (chatFeed.firstChild) chatFeed.removeChild(chatFeed.firstChild);
+        for (var i = 0; i < 4; i++) {
+            var chatter = SIMULATED_CHATTERS[i % SIMULATED_CHATTERS.length];
+            var randomMsg = chatter.msgs[Math.floor(Math.random() * chatter.msgs.length)];
+            appendChatMessage(chatter.name, chatter.avatar, randomMsg);
+        }
+    }
+
+    // Periodic incoming comments from community
+    if (watchChatSimTimer) clearInterval(watchChatSimTimer);
+    watchChatSimTimer = setInterval(function () {
+        if (modal.hidden) return;
+        var chatter = SIMULATED_CHATTERS[Math.floor(Math.random() * SIMULATED_CHATTERS.length)];
+        var msg = chatter.msgs[Math.floor(Math.random() * chatter.msgs.length)];
+        appendChatMessage(chatter.name, chatter.avatar, msg);
+    }, 4500);
+
+    // Periodic Instagram join toasts
+    if (watchJoinToastTimer) clearInterval(watchJoinToastTimer);
+    watchJoinToastTimer = setInterval(function () {
+        if (modal.hidden) return;
+        var name = JOIN_CANDIDATES[Math.floor(Math.random() * JOIN_CANDIDATES.length)];
+        triggerJoinToast(name);
+    }, 6500);
+
+    setTimeout(function () {
+        if (!modal.hidden) {
+            var name = JOIN_CANDIDATES[Math.floor(Math.random() * JOIN_CANDIDATES.length)];
+            triggerJoinToast(name);
+        }
+    }, 1500);
+
+    // Background automatic floating hearts from other audience members
+    if (watchHeartSimTimer) clearInterval(watchHeartSimTimer);
+    watchHeartSimTimer = setInterval(function () {
+        if (modal.hidden) return;
+        var count = Math.random() > 0.65 ? 2 : 1;
+        for (var h = 0; h < count; h++) {
+            setTimeout(spawnInstagramHeart, h * 130);
+        }
+    }, 2200);
+}
+
+function closeLiveWatchModal() {
+    var modal = document.getElementById("live-watch-modal");
+    if (modal) modal.hidden = true;
+    if (watchUptimeTimer) clearInterval(watchUptimeTimer);
+    if (watchViewerJitterTimer) clearInterval(watchViewerJitterTimer);
+    if (watchChatSimTimer) clearInterval(watchChatSimTimer);
+    if (watchHeartSimTimer) clearInterval(watchHeartSimTimer);
+    if (watchJoinToastTimer) clearInterval(watchJoinToastTimer);
+    if (watchTheaterAnimId) cancelAnimationFrame(watchTheaterAnimId);
+    activeWatchStream = null;
+
+    var video = document.getElementById("live-stream-video");
+    if (video) {
+        video.srcObject = null;
+        video.hidden = true;
+    }
+    var toast = document.getElementById("ig-join-toast");
+    if (toast) toast.hidden = true;
+}
+
+var watchCloseBtn = document.getElementById("live-watch-close");
+if (watchCloseBtn) watchCloseBtn.addEventListener("click", closeLiveWatchModal);
+
+var watchBackdrop = document.getElementById("live-watch-backdrop");
+if (watchBackdrop) watchBackdrop.addEventListener("click", closeLiveWatchModal);
+
+var chatForm = document.getElementById("live-chat-form");
+if (chatForm) {
+    chatForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var input = document.getElementById("live-chat-input");
+        if (!input) return;
+        var val = input.value.trim();
+        if (!val) return;
+        appendChatMessage(myName(), avatarFor(ME) || "./assets/img/img-icon-profile.jpeg", val);
+        input.value = "";
+    });
+}
+
+var igHeartBtn = document.getElementById("ig-heart-btn");
+if (igHeartBtn) {
+    igHeartBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        spawnInstagramHeart("#ff3040");
+        setTimeout(function () { spawnInstagramHeart(); }, 80);
+        setTimeout(function () { spawnInstagramHeart(); }, 160);
+        setTimeout(function () { spawnInstagramHeart(); }, 240);
+    });
+}
+
+var followBtn = document.getElementById("live-btn-follow");
+if (followBtn) {
+    followBtn.addEventListener("click", function () {
+        followBtn.classList.toggle("following");
+        var isFoll = followBtn.classList.contains("following");
+        var followTxt = (typeof t === "function" && t("Follow")) || "Follow";
+        var followingTxt = (typeof t === "function" && t("Following")) || "Following";
+        followBtn.textContent = isFoll ? followingTxt : followTxt;
+    });
+}
+
+var muteBtn = document.getElementById("live-mute-btn");
+if (muteBtn) {
+    muteBtn.addEventListener("click", function () {
+        var icon = muteBtn.querySelector("i");
+        var video = document.getElementById("live-stream-video");
+        if (icon) {
+            var isMuted = icon.classList.contains("fa-volume-xmark");
+            if (isMuted) {
+                icon.className = "fa-solid fa-volume-high";
+                if (video) video.muted = false;
+            } else {
+                icon.className = "fa-solid fa-volume-xmark";
+                if (video) video.muted = true;
+            }
+        }
+    });
+}
+
+var endStreamBtn = document.getElementById("live-btn-end");
+if (endStreamBtn) {
+    endStreamBtn.addEventListener("click", function () {
+        if (!activeWatchStream || !activeWatchStream.isUser) return;
+        if (confirm("Are you sure you want to end your live stream?")) {
+            if (activeWatchStream.userMediaStream) {
+                activeWatchStream.userMediaStream.getTracks().forEach(function (t) { t.stop(); });
+            }
+            var all = loadLiveStreams();
+            all = all.filter(function (s) { return s.id !== activeWatchStream.id; });
+            saveLiveStreams(all);
+            closeLiveWatchModal();
+            renderLiveStreams();
+            renderStories();
+        }
+    });
+}
+
+/* ============================================================
+   GO LIVE BROADCASTER CREATION SYSTEM
+   ============================================================ */
+
+var livePreviewStream = null;
+var livePreviewAnimId = null;
+var selectedSource = "camera";
+
+function openLiveCreateModal() {
+    var modal = document.getElementById("live-create-modal");
+    if (!modal) return;
+    modal.hidden = false;
+    document.querySelectorAll(".live-source-card").forEach(function (btn) {
+        btn.classList.toggle("active", (btn.getAttribute("data-source") || "camera") === "camera");
+    });
+    setupSourcePreview("camera");
+}
+
+function closeLiveCreateModal() {
+    var modal = document.getElementById("live-create-modal");
+    if (modal) modal.hidden = true;
+    stopSourcePreview();
+}
+
+function stopSourcePreview() {
+    if (livePreviewStream) {
+        livePreviewStream.getTracks().forEach(function (t) { t.stop(); });
+        livePreviewStream = null;
+    }
+    if (livePreviewAnimId) {
+        cancelAnimationFrame(livePreviewAnimId);
+        livePreviewAnimId = null;
+    }
+    var video = document.getElementById("live-create-preview-video");
+    if (video) {
+        video.srcObject = null;
+        video.hidden = true;
+    }
+}
+
+function setupSourcePreview(source) {
+    selectedSource = source;
+    stopSourcePreview();
+
+    var canvas = document.getElementById("live-create-preview-canvas");
+    var video = document.getElementById("live-create-preview-video");
+    var status = document.getElementById("live-preview-status");
+
+    if (source === "camera") {
+        if (status) status.textContent = "Connecting Camera...";
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(function (stream) {
+                livePreviewStream = stream;
+                if (canvas) canvas.hidden = true;
+                if (video) {
+                    video.hidden = false;
+                    video.srcObject = stream;
+                    video.play().catch(function () {});
+                }
+                if (status) status.textContent = "Camera Ready";
+            }).catch(function () {
+                fallbackPreview(canvas, video, status, "Camera unavailable (using studio)");
+            });
+        } else {
+            fallbackPreview(canvas, video, status, "Camera unavailable (using studio)");
+        }
+    } else if (source === "screen") {
+        if (status) status.textContent = "Requesting Screen...";
+        if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+            navigator.mediaDevices.getDisplayMedia({ video: true }).then(function (stream) {
+                livePreviewStream = stream;
+                if (canvas) canvas.hidden = true;
+                if (video) {
+                    video.hidden = false;
+                    video.srcObject = stream;
+                    video.play().catch(function () {});
+                }
+                if (status) status.textContent = "Screen Ready";
+            }).catch(function () {
+                fallbackPreview(canvas, video, status, "Screen unavailable (using studio)");
+            });
+        } else {
+            fallbackPreview(canvas, video, status, "Screen unavailable (using studio)");
+        }
+    } else {
+        fallbackPreview(canvas, video, status, "Virtual Studio Ready");
+    }
+}
+
+function fallbackPreview(canvas, video, status, msg) {
+    if (video) {
+        video.srcObject = null;
+        video.hidden = true;
+    }
+    if (canvas) {
+        canvas.hidden = false;
+        var ctx = canvas.getContext("2d");
+        var start = performance.now();
+        function loop(now) {
+            var elapsed = now - start;
+            drawSimulatedFrame(ctx, canvas.width, canvas.height, "user", elapsed);
+            livePreviewAnimId = requestAnimationFrame(loop);
+        }
+        livePreviewAnimId = requestAnimationFrame(loop);
+    }
+    if (status) status.textContent = msg || "Ready";
+}
+
+document.querySelectorAll(".live-source-card").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+        document.querySelectorAll(".live-source-card").forEach(function (b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+        var src = btn.getAttribute("data-source") || "camera";
+        setupSourcePreview(src);
+    });
+});
+
+document.querySelectorAll(".live-vis-pill").forEach(function (pill) {
+    pill.addEventListener("click", function () {
+        document.querySelectorAll(".live-vis-pill").forEach(function (p) { p.classList.remove("active"); });
+        pill.classList.add("active");
+        var radio = pill.querySelector("input[type='radio']");
+        if (radio) radio.checked = true;
+    });
+});
+
+var createCloseBtn = document.getElementById("live-create-close");
+if (createCloseBtn) createCloseBtn.addEventListener("click", closeLiveCreateModal);
+
+var createCancelBtn = document.getElementById("live-create-cancel");
+if (createCancelBtn) createCancelBtn.addEventListener("click", closeLiveCreateModal);
+
+var createBackdrop = document.getElementById("live-create-backdrop");
+if (createBackdrop) createBackdrop.addEventListener("click", closeLiveCreateModal);
+
+var createForm = document.getElementById("live-create-form");
+if (createForm) {
+    createForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var titleInput = document.getElementById("live-form-title");
+        var catSelect = document.getElementById("live-form-category");
+        var visRadio = document.querySelector("input[name='visibility']:checked");
+
+        var title = (titleInput && titleInput.value.trim()) || "Live Hangout & Stream";
+        var cat = (catSelect && catSelect.value) || "Gaming";
+        var vis = (visRadio && visRadio.value) || "public";
+
+        var newStream = {
+            id: "live-user-" + nextId(),
+            streamer: myName(),
+            avatar: avatarFor(ME) || "./assets/img/img-icon-profile.jpeg",
+            title: title,
+            category: cat,
+            tags: [cat, "Live", "Public"],
+            viewers: 1,
+            startedAt: Date.now(),
+            visibility: vis,
+            theme: "user",
+            isUser: true,
+            userMediaStream: livePreviewStream
+        };
+
+        var streams = loadLiveStreams();
+        streams.unshift(newStream);
+        saveLiveStreams(streams);
+
+        var keepStream = livePreviewStream;
+        livePreviewStream = null;
+        closeLiveCreateModal();
+
+        newStream.userMediaStream = keepStream;
+
+        renderLiveStreams();
+        renderStories();
+        openLiveWatchModal(newStream);
+    });
+}
+
+var exploreGoLiveBtn = document.getElementById("explore-go-live-btn");
+if (exploreGoLiveBtn) exploreGoLiveBtn.addEventListener("click", openLiveCreateModal);
+
+var emptyGoLiveBtn = document.getElementById("empty-go-live-btn");
+if (emptyGoLiveBtn) emptyGoLiveBtn.addEventListener("click", openLiveCreateModal);
+
+document.addEventListener("DOMContentLoaded", function () {
+    renderLiveStreams();
+});
+

@@ -1,0 +1,148 @@
+.nitro-view {
+    background: #07040c;
+}
+
+.nitro-hero {
+    position: relative;
+    flex: 1;
+    min-height: 280px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background:
+        radial-gradient(90% 70% at 50% -8%, #e07cff 0%, rgba(224, 124, 255, 0) 46%),
+        radial-gradient(28% 36% at 14% 22%, rgba(255, 150, 240, 0.45), transparent 70%),
+        radial-gradient(24% 32% at 86% 16%, rgba(170, 80, 255, 0.4), transparent 72%),
+        linear-gradient(180deg, #c45cff 0%, #8a35ea 24%, #541ca8 48%, #2a0d52 72%, #0c0614 100%);
+}
+
+.nitro-star,
+.nitro-key,
+.nitro-wumpus {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    height: auto;
+}
+
+.nitro-star {
+    left: 3%;
+    top: 10%;
+    width: min(168px, 18%);
+    mask-image: radial-gradient(circle at 50% 48%, #000 34%, transparent 58%);
+}
+
+.nitro-key {
+    left: 5%;
+    bottom: 8%;
+    width: min(148px, 16%);
+    mask-image: radial-gradient(circle at 55% 52%, #000 38%, transparent 62%);
+}
+
+.nitro-wumpus {
+    right: 0;
+    bottom: 4%;
+    width: min(270px, 30%);
+    mask-image: radial-gradient(ellipse at 64% 58%, #000 42%, transparent 68%);
+}
+
+.nitro-hero-copy {
+    position: relative;
+    z-index: 1;
+    width: min(520px, 92%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 22px;
+    padding: 36px 12px 28px;
+}
+
+.nitro-hero h1 {
+    font-size: clamp(26px, 3vw, 48px);
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: -0.035em;
+    line-height: 0.9;
+}
+
+.nitro-hero-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.nitro-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 16px 0 10px;
+    border: 0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.nitro-btn-subscribe {
+    background: #fff;
+    color: #111214;
+}
+
+.nitro-btn-subscribe:hover {
+    background: #f2f3f5;
+}
+
+.nitro-mark {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: #111214;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.nitro-btn-gift {
+    background: rgba(12, 6, 20, 0.38);
+    color: #fff;
+    padding-left: 14px;
+}
+
+.nitro-btn-gift:hover {
+    background: rgba(12, 6, 20, 0.55);
+}
+
+.nitro-hero-note {
+    max-width: 460px;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+@media screen and (max-width: 720px) {
+    .nitro-hero {
+        width: 100%;
+        min-height: 100%;
+    }
+
+    .nitro-hero-actions {
+        flex-direction: column;
+    }
+
+    .nitro-wumpus,
+    .nitro-star,
+    .nitro-key {
+        opacity: 0.35;
+    }
+}

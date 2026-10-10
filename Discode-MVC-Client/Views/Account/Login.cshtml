@@ -1,0 +1,23 @@
+@model LoginVM
+@{
+    Layout = "_LoginLayout";
+}
+
+<main class="login-page">
+    <form class="login-card" id="login-form" asp-controller="Account" asp-action="Login" method="post">
+        <h1>Welcome back!</h1>
+        @if (TempData["Info"] is string info)
+        {
+            <p class="auth-info">@info</p>
+        }
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="auth-errors" asp-validation-summary="All"></div>
+        }
+        <input asp-for="ReturnUrl" type="hidden" />
+        <input asp-for="Email" type="email" autocomplete="email" required placeholder="Email">
+        <input asp-for="Password" type="password" autocomplete="current-password" required placeholder="Password">
+        <button type="submit">Sign in</button>
+        <p class="login-switch">Don't have an account? <a asp-controller="Account" asp-action="Register">Sign up</a></p>
+    </form>
+</main>
