@@ -1,6 +1,5 @@
 "use strict";
 (function () {
-    var KEY = "discode-me";
     var STATUSES = {
         online: { label: "Online", color: "#23a559" },
         idle: { label: "Idle", color: "#f0b232" },
@@ -8,50 +7,53 @@
         invisible: { label: "Invisible", color: "#80848e", note: "You will appear offline" }
     };
 
-    function load() {
-        try {
-            return JSON.parse(localStorage.getItem(KEY)) || {};
-        } catch (e) {
-            return {};
-        }
+    var state = { status: "online" };
+
+    function nodeText(sel) {
+        var el = typeof sel === "string" ? document.querySelector(sel) : sel;
+        return el ? el.textContent.trim() : "";
     }
 
-    function save(data) {
-        localStorage.setItem(KEY, JSON.stringify(data));
+    function meName() {
+        return ownName || nodeText("#user-panel .me-display");
     }
 
-    var state = load();
-    if (!STATUSES[state.status]) state.status = "online";
+    function meHandle() {
+        return ownHandle || nodeText("#me-handle-name") || nodeText("#settings-username");
+    }
 
-    function paintDisplay() {
-        var name = state.displayName || "Anonymou5";
+    function isMe(name) {
+        return !name || name === meName() || name === meHandle();
+    }
+
+    function applyDisplay(name) {
+        ownName = name;
         var nodes = document.querySelectorAll(".me-display");
         for (var i = 0; i < nodes.length; i++) nodes[i].textContent = name;
         var input = document.getElementById("me-display-input");
         if (input && document.activeElement !== input) input.value = name;
+        var view = document.getElementById("me-view-name");
+        if (view) view.textContent = name;
     }
 
     var panel = document.getElementById("user-panel");
     if (!panel) return;
     var identity = panel.querySelector(".user-identity");
-    var nameEl = identity.querySelector("p");
     var statusEl = identity.querySelector("span");
-    var photo = identity.querySelector("img").getAttribute("src");
-    var displayName = nameEl.textContent;
+    var ownName = nodeText("#user-panel .me-display");
+    var ownHandle = nodeText("#me-handle-name") || nodeText("#settings-username");
+    var ownPhoto = identity.querySelector("img") ? identity.querySelector("img").getAttribute("src") : "";
 
     function paintPanel() {
         panel.setAttribute("data-status", state.status);
         statusEl.textContent = STATUSES[state.status].label;
     }
 
-    paintDisplay();
     paintPanel();
     paintLock();
 
     var pop = document.getElementById("me-pop");
     if (!pop) return;
-    pop.querySelector("img").src = photo;
-    pop.querySelector("h2").textContent = state.displayName || displayName;
 
     var menu = document.getElementById("me-status-menu");
     if (!menu) return;
@@ -65,27 +67,14 @@
         profile.querySelector(".me-dot").style.background = item.color;
         pop.querySelector(".me-mini").style.background = item.color;
         document.getElementById("me-status-label").textContent = item.label;
-        var chip = document.getElementById("me-chip");
-        var about = document.getElementById("me-about");
-        about.hidden = !state.bio;
-        about.textContent = state.bio || "";
         var pronouns = document.getElementById("me-pronouns");
-        if (pronouns) pronouns.textContent = state.pronouns || "Add pronouns";
-        var bubble = document.getElementById("me-status-bubble");
-        var bubbleText = document.getElementById("me-status-bubble-text");
-        if (bubble && bubbleText) {
-            bubble.classList.toggle("has-bio", !!(state.bio || state.emoji));
-            bubbleText.textContent = (state.emoji ? state.emoji + " " : "") + (state.bio || "Today I learned...");
-            var chipText = document.getElementById("me-chip-text");
-            if (chipText) {
-                chip.classList.toggle("has-bio", !!(state.bio || state.emoji));
-                chipText.textContent = bubbleText.textContent;
-            }
-        }
+        if (pronouns && !pronouns.textContent.trim()) pronouns.textContent = "Add pronouns";
     }
 
+    paintPop();
+
     document.getElementById("me-edit").addEventListener("click", function () {
-        viewing = "Anonymou5";
+        viewing = meName();
         setVisitor(false);
         closePop();
         paintPop();
@@ -98,7 +87,9 @@
     if (logoutBtn) {
         logoutBtn.addEventListener("click", function () {
             if (confirm("Are you sure you want to log out?")) {
-                window.location.href = "./login.html";
+                var form = document.getElementById("logout-form");
+                if (form) form.submit();
+                else window.location.href = "/Account/Login";
             }
         });
     }
@@ -108,7 +99,7 @@
         settingsMe.addEventListener("click", function () {
             var settings = document.getElementById("settings");
             if (settings) settings.hidden = true;
-            viewing = "Anonymou5";
+            viewing = meName();
             setVisitor(false);
             closePop();
             paintPop();
@@ -194,7 +185,6 @@
         var button = event.target.closest("button");
         if (!button) return;
         state.status = button.getAttribute("data-status");
-        save(state);
         paintPanel();
         paintPop();
         document.dispatchEvent(new CustomEvent("discode-presence"));
@@ -249,7 +239,6 @@
     function openSetStatus() {
         pickedEmoji = state.emoji || "😀";
         pickedClear = state.clear || "tomorrow";
-        setInput.value = state.bio || "";
         previewStatus();
         fillEmoji();
         setEmoji.classList.add("d-none");
@@ -289,10 +278,22 @@
     });
     document.getElementById("set-status-form").addEventListener("submit", function (event) {
         event.preventDefault();
-        state.bio = setInput.value.trim();
         state.emoji = pickedEmoji;
         state.clear = pickedClear;
-        save(state);
+        var status = setInput.value.trim();
+        var bubble = document.getElementById("me-status-bubble");
+        var bubbleText = document.getElementById("me-status-bubble-text");
+        var chip = document.getElementById("me-chip");
+        var chipText = document.getElementById("me-chip-text");
+        var about = document.getElementById("me-about");
+        if (bubbleText) bubbleText.textContent = status || "Today I learned...";
+        if (chipText) chipText.textContent = status || "Today I learned...";
+        if (bubble) bubble.classList.toggle("has-bio", !!status);
+        if (chip) chip.classList.toggle("has-bio", !!status);
+        if (about) {
+            about.hidden = !status;
+            about.textContent = status;
+        }
         paintPop();
         document.dispatchEvent(new CustomEvent("discode-presence"));
         closeSetStatus();
@@ -302,7 +303,6 @@
     var pronounsInput = document.getElementById("set-pronouns-input");
 
     document.getElementById("me-pronouns").addEventListener("click", function () {
-        pronounsInput.value = state.pronouns || "";
         setPronouns.classList.remove("d-none");
         pronounsInput.focus();
     });
@@ -317,14 +317,16 @@
 
     document.getElementById("set-pronouns-form").addEventListener("submit", function (event) {
         event.preventDefault();
-        state.pronouns = pronounsInput.value.trim();
-        save(state);
-        paintPop();
+        var next = pronounsInput.value.trim();
+        var pronouns = document.getElementById("me-pronouns");
+        if (pronouns) pronouns.textContent = next || "Add pronouns";
+        var viewPronouns = document.getElementById("me-view-pronouns");
+        if (viewPronouns) viewPronouns.textContent = next;
         setPronouns.classList.add("d-none");
     });
 
-    var savedBio = "";
     var bioInput = document.getElementById("me-bio");
+    var savedBio = bioInput ? bioInput.value.trim() : "";
     var bioEmoji = document.getElementById("me-bio-emoji");
     var bioEmojiList = document.getElementById("me-bio-emoji-list");
 
@@ -348,17 +350,14 @@
         });
     }
 
-    var viewing = "Anonymou5";
-    var ownSince = "";
-    var ownPhoto = state.photo || "./assets/img/img-icon-profile.jpeg";
+    var viewing = meName();
+    var ownSince = nodeText("#me-since");
 
     function applyOwnPhoto(src) {
         ownPhoto = src;
-        var faces = document.querySelectorAll("#user-panel .avatar img, #me-pop .me-avatar img, #me-profile .me-profile-avatar img, .set-status-person > img");
+        var faces = document.querySelectorAll("#user-panel .avatar img, #me-pop .me-avatar img, #me-profile .me-profile-avatar img, .set-status-person > img, .settings-me img");
         for (var i = 0; i < faces.length; i++) faces[i].src = src;
     }
-
-    if (state.photo) applyOwnPhoto(state.photo);
 
     var avatarFile = document.getElementById("me-avatar-file");
     if (avatarFile) {
@@ -379,9 +378,8 @@
                     canvas.height = size;
                     var ctx = canvas.getContext("2d");
                     ctx.drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
-                    state.photo = canvas.toDataURL("image/jpeg", 0.85);
-                    save(state);
-                    applyOwnPhoto(state.photo);
+                    var photo = canvas.toDataURL("image/jpeg", 0.85);
+                    applyOwnPhoto(photo);
                 };
                 image.src = reader.result;
             };
@@ -414,11 +412,8 @@
         var bubbleText = document.getElementById("me-status-bubble-text");
         var bio = document.getElementById("me-view-bio");
         var bioBlock = profile.querySelector(".me-bio-block");
-        var about = document.getElementById("me-view-about");
-        var aboutBlock = document.getElementById("me-about-block");
         var pronounText = info.pronouns || "";
         var bioText = info.bio || "";
-        var aboutText = info.about || "";
         if (pronouns) {
             pronouns.hidden = !pronounText;
             pronouns.textContent = pronounText;
@@ -434,11 +429,6 @@
             bio.textContent = bioText;
         }
         if (bioBlock) bioBlock.classList.toggle("has-text", !!bioText);
-        if (about) about.textContent = aboutText;
-        if (aboutBlock) {
-            aboutBlock.hidden = !aboutText;
-            aboutBlock.classList.toggle("has-text", !!aboutText);
-        }
     }
 
     function formatJoined(value) {
@@ -455,8 +445,7 @@
         paintPerson(row ? {
             pronouns: row.getAttribute("data-pronouns") || "",
             bio: row.getAttribute("data-bio") || "",
-            emoji: row.getAttribute("data-emoji") || "",
-            about: row.getAttribute("data-about") || ""
+            emoji: row.getAttribute("data-emoji") || ""
         } : {});
         fetch("/api/users/" + encodeURIComponent(name)).then(function (response) {
             if (!response.ok) throw new Error("user");
@@ -468,8 +457,7 @@
             paintPerson({
                 pronouns: data.pronouns || "",
                 bio: data.bio || "",
-                emoji: data.emoji || "",
-                about: data.about || ""
+                emoji: data.emoji || ""
             });
         }).catch(function () {});
     }
@@ -477,9 +465,6 @@
     function setVisitor(on) {
         profile.classList.toggle("visitor-view", on);
         var add = document.getElementById("me-add");
-        var note = document.getElementById("me-note-block");
-        var noteAdd = document.getElementById("me-note-add");
-        var noteInput = document.getElementById("me-note-input");
         var handle = document.getElementById("me-handle-name");
         var title = profile.querySelector(".me-profile-id h2");
         var face = profile.querySelector(".me-profile-avatar img");
@@ -493,53 +478,39 @@
             if (label) label.textContent = on ? "Message" : "Edit Profile";
         }
         if (add) add.hidden = !on;
-        if (note) note.hidden = !on;
-        if (noteAdd) noteAdd.hidden = false;
-        if (noteInput) {
-            noteInput.hidden = true;
-            noteInput.value = "";
-        }
         if (!on) {
-            if (title) title.textContent = state.displayName || "Anonymou5";
+            if (title) title.textContent = ownName;
             var ownInput = document.getElementById("me-display-input");
-            if (ownInput) ownInput.value = state.displayName || "Anonymou5";
+            if (ownInput) ownInput.value = ownName;
             var ownView = document.getElementById("me-view-name");
             if (ownView) ownView.hidden = true;
-            if (handle) handle.textContent = "anonymou5";
+            if (handle) handle.textContent = ownHandle;
             if (face) face.src = ownPhoto;
             if (since) since.textContent = ownSince;
             profile.classList.remove("has-pronouns", "has-status");
             var viewPronouns = document.getElementById("me-view-pronouns");
             if (viewPronouns) viewPronouns.hidden = true;
-            var aboutBlock = document.getElementById("me-about-block");
-            if (aboutBlock) aboutBlock.hidden = true;
             var bioBlock = profile.querySelector(".me-bio-block");
             if (bioBlock) bioBlock.classList.remove("has-text");
             paintPop();
         }
     }
 
-    var noteAddBtn = document.getElementById("me-note-add");
-    if (noteAddBtn) {
-        noteAddBtn.addEventListener("click", function () {
-            var input = document.getElementById("me-note-input");
-            if (!input) return;
-            noteAddBtn.hidden = true;
-            input.hidden = false;
-            input.focus();
-        });
-    }
-
     function relationTo(author) {
-        if (!author || author === "Anonymou5") return "self";
+        if (isMe(author)) return "self";
         if (friendNames().indexOf(author) !== -1) return "friend";
         return "stranger";
+    }
+
+    function isLocked() {
+        var pub = document.getElementById("account-public");
+        return pub ? !pub.classList.contains("on") : false;
     }
 
     function paintLock() {
         var button = document.getElementById("me-lock");
         if (!button) return;
-        var locked = !!state.locked;
+        var locked = isLocked();
         button.setAttribute("aria-pressed", locked ? "true" : "false");
         var icon = button.querySelector("i");
         if (icon) icon.className = "fa-solid " + (locked ? "fa-lock" : "fa-lock-open");
@@ -549,7 +520,7 @@
         var box = document.getElementById("me-posts");
         if (!box) return;
         var rel = relationTo(viewing);
-        var locked = viewing === "Anonymou5" && !!state.locked;
+        var locked = isMe(viewing) && isLocked();
         var limited = rel === "stranger" && locked;
         profile.classList.toggle("locked-view", limited);
         var go = profile.querySelector(".me-posts-go");
@@ -596,41 +567,12 @@
         });
     }
 
-    var meLoaded = false;
-
-    function loadMe() {
-        if (meLoaded) return;
-        meLoaded = true;
-        fetch("/api/me").then(function (response) {
-            if (!response.ok) throw new Error("me");
-            return response.json();
-        }).then(function (data) {
-            var since = document.getElementById("me-since");
-            var date = new Date(data.registeredAt);
-            if (since && data.registeredAt && !isNaN(date.getTime())) {
-                since.textContent = date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-            }
-        }).catch(function () {
-            meLoaded = false;
-        });
-    }
+    function loadMe() {}
 
     function commitBio() {
         var next = bioInput.value.trim();
         if (next === savedBio) return;
-        fetch("/api/me", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ bio: next })
-        }).then(function (response) {
-            if (!response.ok) throw new Error("bio");
-            return response.json().catch(function () { return {}; });
-        }).then(function (data) {
-            savedBio = data.bio != null ? data.bio : next;
-            bioInput.value = savedBio;
-        }).catch(function () {
-            bioInput.value = savedBio;
-        });
+        savedBio = next;
     }
 
     bioEmoji.addEventListener("click", function () {
@@ -661,16 +603,14 @@
     var nameInput = document.getElementById("me-display-input");
     var nameForm = document.getElementById("me-name-form");
     function commitDisplay() {
-        if (!nameInput || viewing !== "Anonymou5") return;
+        if (!nameInput || !isMe(viewing)) return;
         var next = nameInput.value.trim();
         if (!next) {
-            nameInput.value = state.displayName || "Anonymou5";
+            nameInput.value = meName();
             return;
         }
-        if (next === (state.displayName || "Anonymou5")) return;
-        state.displayName = next;
-        save(state);
-        paintDisplay();
+        if (next === meName()) return;
+        applyDisplay(next);
     }
     if (nameForm) {
         nameForm.addEventListener("submit", function (event) {
@@ -681,7 +621,7 @@
     var msgBtn = document.getElementById("me-msg");
     if (msgBtn) {
         msgBtn.addEventListener("click", function () {
-            if (viewing !== "Anonymou5") return;
+            if (!isMe(viewing)) return;
             profile.classList.add("d-none");
             var settings = document.getElementById("settings");
             if (settings) settings.hidden = false;
@@ -717,32 +657,27 @@
     });
 
     document.addEventListener("discode-privacy", function () {
-        state = load();
         paintLock();
         renderMyPosts();
     });
-    document.addEventListener("discode-display", function () {
-        state = load();
-        paintDisplay();
-    });
 
     window.openUserProfile = function (name, photo) {
-        viewing = name || "Anonymou5";
-        var self = viewing === "Anonymou5";
+        viewing = name || meName();
+        var self = isMe(viewing);
         setVisitor(!self);
         var title = profile.querySelector(".me-profile-id h2");
-        if (title) title.textContent = self ? (state.displayName || "Anonymou5") : viewing;
+        if (title) title.textContent = self ? meName() : viewing;
         var nameInput = document.getElementById("me-display-input");
         var viewName = document.getElementById("me-view-name");
         if (self) {
-            if (nameInput) nameInput.value = state.displayName || "Anonymou5";
+            if (nameInput) nameInput.value = meName();
             if (viewName) viewName.hidden = true;
         } else if (viewName) {
             viewName.hidden = false;
             viewName.textContent = viewing;
         }
         var handle = document.getElementById("me-handle-name");
-        if (handle) handle.textContent = self ? "anonymou5" : viewing.toLowerCase().replace(/\s+/g, "");
+        if (handle) handle.textContent = self ? meHandle() : viewing.toLowerCase().replace(/\s+/g, "");
         var face = profile.querySelector(".me-profile-avatar img");
         if (face) face.src = self ? ownPhoto : (photo || ownPhoto);
         var since = document.getElementById("me-since");

@@ -49,6 +49,31 @@
         if (event.key === "Escape") closeBirth();
     });
 
+    var form = document.getElementById("register-form");
+    var textInputs = form ? form.querySelectorAll("#register-email, #register-display, #register-user, #register-pass") : [];
+    for (var t = 0; t < textInputs.length; t++) {
+        textInputs[t].addEventListener("keydown", function (event) {
+            if (event.key === " " && this.selectionStart === 0) event.preventDefault();
+        });
+        textInputs[t].addEventListener("input", function () {
+            this.value = this.value.replace(/^\s+/, "");
+        });
+    }
+
+    if (form) {
+        form.addEventListener("submit", function (event) {
+            closeBirth();
+            var day = document.getElementById("register-day");
+            var month = document.getElementById("register-month");
+            var year = document.getElementById("register-year");
+            if (!day.value.trim() || !month.value.trim() || !year.value.trim()) {
+                event.preventDefault();
+                var firstEmpty = document.querySelector(".birth-box:not(.has-value) .birth-field") || document.querySelector(".birth-field");
+                if (firstEmpty) firstEmpty.focus();
+            }
+        });
+    }
+
     var togglePasswordBtns = document.querySelectorAll(".toggle-password");
     for (var i = 0; i < togglePasswordBtns.length; i++) {
         togglePasswordBtns[i].addEventListener("click", function (event) {

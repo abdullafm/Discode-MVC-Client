@@ -29,3 +29,5 @@ C:\Users\User\source\repos\Discode-MVC-Client\Discode-MVC-Client\obj\Debug\net8.
 C:\Users\User\source\repos\Discode-MVC-Client\Discode-MVC-Client\obj\Debug\net8.0\Discode-MVC-Client.pdb
 C:\Users\User\source\repos\Discode-MVC-Client\Discode-MVC-Client\obj\Debug\net8.0\Discode-MVC-Client.genruntimeconfig.cache
 C:\Users\User\source\repos\Discode-MVC-Client\Discode-MVC-Client\obj\Debug\net8.0\ref\Discode-MVC-Client.dll
+C:\Users\User\source\repos\Discode-MVC-Client\Discode-MVC-Client\obj\Debug\net8.0\Discode-MVC-Client.sourcelink.json
+C:\Users\User\source\repos\Discode-MVC-Client\Discode-MVC-Client\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

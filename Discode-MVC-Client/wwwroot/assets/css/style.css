@@ -3795,7 +3795,13 @@ body .conversation-sidebar .direct-messages h2 .dm-new {
 }
 
 .me-profile-id .me-handle {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
     margin: 2px 0 12px;
+    color: #80848e;
+    font-size: 14px;
 }
 
 .me-profile-id .me-handle span {
@@ -3803,13 +3809,16 @@ body .conversation-sidebar .direct-messages h2 .dm-new {
 }
 
 .me-pronouns {
+    display: inline;
     border: 0;
     background: transparent;
     color: #80848e;
     font: inherit;
+    font-size: 14px;
+    line-height: inherit;
     cursor: pointer;
     border-radius: 4px;
-    padding: 0 4px;
+    padding: 0;
 }
 
 .me-pronouns:hover,
@@ -3915,11 +3924,6 @@ body .conversation-sidebar .direct-messages h2 .dm-new {
     padding: 0;
 }
 
-.me-note {
-    color: #80848e;
-    font-size: 12px;
-}
-
 .me-board {
     flex: 1;
     padding: 48px 20px 20px;
@@ -3986,14 +3990,12 @@ body .conversation-sidebar .direct-messages h2 .dm-new {
 }
 
 .me-profile.visitor-view .me-bio-block,
-.me-profile.visitor-view .me-about-block,
 .me-profile.visitor-view #me-handle-dot,
 .me-profile.visitor-view .me-status-bubble {
     display: none;
 }
 
-.me-profile.visitor-view .me-bio-block.has-text,
-.me-profile.visitor-view .me-about-block.has-text {
+.me-profile.visitor-view .me-bio-block.has-text {
     display: block;
 }
 
@@ -4006,14 +4008,12 @@ body .conversation-sidebar .direct-messages h2 .dm-new {
 }
 
 #me-view-pronouns,
-#me-view-bio,
-#me-view-about {
+#me-view-bio {
     color: #4d5058;
 }
 
 #me-view-pronouns[hidden],
-#me-view-bio[hidden],
-.me-about-block[hidden] {
+#me-view-bio[hidden] {
     display: none;
 }
 
@@ -4033,36 +4033,6 @@ body .conversation-sidebar .direct-messages h2 .dm-new {
 
 .me-add[hidden] {
     display: none;
-}
-
-.me-note-block[hidden] {
-    display: none;
-}
-
-.me-note-block h3 span {
-    color: #80848e;
-    font-size: 12px;
-    font-weight: 400;
-}
-
-#me-note-add {
-    border: 0;
-    background: transparent;
-    color: #80848e;
-    font: inherit;
-    font-style: italic;
-    padding: 0;
-    cursor: pointer;
-}
-
-#me-note-input {
-    width: 100%;
-    border: 0;
-    border-bottom: 1px solid #e9e9ea;
-    background: transparent;
-    font: inherit;
-    color: #060607;
-    padding: 4px 0;
 }
 
 .me-profile.locked-view .me-bio-form {

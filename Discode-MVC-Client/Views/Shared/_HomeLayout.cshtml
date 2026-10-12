@@ -1,0 +1,678 @@
+@model ProfileVM
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="~/assets/js/theme.js"></script>
+    <script src="~/assets/js/i18n.js"></script>
+    <script src="~/assets/js/nav.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord | Friends</title>
+    <link rel="stylesheet" href="~/assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="shortcut icon" href="~/assets/icons/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <header class="app-header">
+        <div class="home-loader" id="loader" role="status">
+            <i class="fa-brands fa-discord"></i>
+            <p class="loader-title">DID YOU KNOW</p>
+            <p class="loader-message">
+                <span>
+                    <span class="key-hint">CTRL</span>
+                    <span class="key-hint">K</span>
+                    to quickly find a previous
+                </span>
+                <span>conversation or channel.</span>
+            </p>
+        </div>
+        <div class="server-rail" id="server-rail">
+            <nav class="server-nav" aria-label="Servers">
+                <button type="button" class="server-home" onclick="openToggle()" aria-label="Home"><i
+                        class="fa-brands fa-discord" aria-hidden="true"></i></button>
+                <hr>
+                <a href="./server.html?id=azaan" data-id="azaan" aria-label="Azaan server"><img
+                        src="~/assets/img/Azaan.jpeg" alt=""></a>
+                <div id="server-list"></div>
+                <template id="server-chip"><button type="button" class="server-chip"></button></template>
+                <button type="button" class="server-action" id="server-add" aria-label="Add a Server"><i
+                        class="fa-solid fa-plus" aria-hidden="true"></i></button>
+                <hr>
+                     <a class="server-action" href="./discover.html" aria-label="Discover"><i class="fa-solid fa-compass"></i></a>
+                    <a class="server-action" href="./discover.html" aria-label="Discover"><i class="fa-solid fa-server"></i></a>
+                </nav>
+        </div>
+        <aside class="conversation-sidebar" id="conversations">
+            <div class="sidebar-search">
+                <input type="search" placeholder="Find or start a conversation"
+                    aria-label="Find or start a conversation" data-i18n-placeholder="Find or start a conversation"
+                    autocomplete="off" name="conversation-search">
+            </div>
+            <nav aria-label="Shortcuts">
+                <ul class="shortcut-list">
+                    <li>
+                        <a class="shortcut-item active" href="./index.html">
+                            <svg class="linkButtonIcon_c91bad" aria-hidden="true" role="img"
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                                viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M13 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"></path>
+                                <path fill="currentColor"
+                                    d="M3 5v-.75C3 3.56 3.56 3 4.25 3s1.24.56 1.33 1.25C6.12 8.65 9.46 12 13 12h1a8 8 0 0 1 8 8 2 2 0 0 1-2 2 .21.21 0 0 1-.2-.15 7.65 7.65 0 0 0-1.32-2.3c-.15-.2-.42-.06-.39.17l.25 2c.02.15-.1.28-.25.28H9a2 2 0 0 1-2-2v-2.22c0-1.57-.67-3.05-1.53-4.37A15.85 15.85 0 0 1 3 5Z">
+                                </path>
+                            </svg>
+                            <p data-i18n="Friends">Friends</p>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="shortcut-item" href="./nitro.html">
+                            <svg class="linkButtonIcon_c91bad" aria-hidden="true" role="img"
+                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
+                                viewBox="0 0 24 24">
+                                <path fill="currentColor" d="M15 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"></path>
+                                <path fill="currentColor" fill-rule="evenodd"
+                                    d="M7 4a1 1 0 0 0 0 2h3a1 1 0 1 1 0 2H5.5a1 1 0 0 0 0 2H8a1 1 0 1 1 0 2H6a1 1 0 1 0 0 2h1.25A8 8 0 1 0 15 4H7Zm8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"
+                                    clip-rule="evenodd"></path>
+                                <path fill="currentColor" d="M2.5 10a1 1 0 0 0 0-2H2a1 1 0 0 0 0 2h.5Z"></path>
+                            </svg>
+                            <p data-i18n="Nitro">Nitro</p>
+                            <div class="promo-badge">BUY 1, GET 1</div>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="shortcut-item" href="./socialmedia.html">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <path transform="translate(4, 0)"
+                                    d="M12.3172 7.80738C12.4618 7.67827 12.591 7.54399 12.702 7.40972C13.4018 6.58082 13.7375 5.58924 13.8717 4.5202C13.9234 3.93145 13.944 3.20068 13.6703 2.54738C13.3889 2.00511 12.7201 1.79336 12.1778 2.07483C11.602 2.38728 11.1501 2.77461 10.7705 3.22134C10.7266 2.94246 10.6724 2.66358 10.6052 2.38728C10.3883 1.68491 10.1482 0.724321 9.50003 0.176888C8.12112 -0.618439 7.52204 1.47317 7.26124 2.38728C7.1941 2.66358 7.13987 2.94504 7.09597 3.2265C7.08306 3.21101 7.07015 3.19293 7.05466 3.17486C6.65699 2.73846 6.1328 2.22718 5.46658 1.98703C4.87525 1.82693 4.26843 2.17553 4.10833 2.76687C3.81137 3.94695 3.97922 4.99017 4.37172 6.05405C4.62478 6.72284 5.01986 7.33225 5.5518 7.8048C2.4712 7.90034 0 10.4283 0 13.5348V21H6.46849V16.4966C6.46849 15.159 7.55303 14.0745 8.89062 14.0745C10.2282 14.0745 11.3128 15.159 11.3128 16.4966V21H17.8613V13.5348C17.8613 10.4309 15.3953 7.90551 12.3147 7.80738H12.3172ZM4.54731 13.416C3.62029 13.416 2.87144 12.6646 2.87144 11.7401C2.87144 10.8157 3.62287 10.0643 4.54731 10.0643C5.47175 10.0643 6.22318 10.8157 6.22318 11.7401C6.22318 12.6646 5.47175 13.416 4.54731 13.416Z"
+                                    fill="currentColor"></path>
+                            </svg>
+                            <p data-i18n="Media">Media</p>
+                            <div class="new-badge">Public Post</div>
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+            <section id="direct-messages">
+                <div class="direct-messages">
+                    <h2><span data-i18n="DIRECT MESSAGES">DIRECT MESSAGES</span> <button type="button" class="dm-new" aria-label="New Message"><i
+                                class="fa fa-plus"></i></button></h2>
+                    <div class="friend-list">
+                        <a class="friend-item" href="./dm.html?name=Mr_Sigma" data-joined="Jan 4, 2021"
+                            data-pronouns="he/him" data-bio="Today I learned..." data-emoji="😋">
+                            <div class="avatar">
+                                <img src="~/assets/img/img-icon 4.jpeg" alt="">
+                            </div>
+                            <p>Mr_Sigma</p>
+                            <i class="fa fa-xmark"></i>
+                        </a>
+                        <a class="friend-item" href="./dm.html?name=Gpro-fighter" data-joined="Aug 19, 2023"
+                            data-pronouns="they/them">
+                            <div class="avatar">
+                                <img src="~/assets/img/img-icon 3.png" alt="">
+                            </div>
+                            <p>Gpro-fighter</p>
+                            <i class="fa fa-xmark"></i>
+                        </a>
+                        <a class="friend-item" href="./dm.html?name=Moiz%20Hussain" data-joined="Mar 2, 2022"
+                            data-pronouns="he/him" data-bio="afk" data-emoji="💤">
+                            <div class="avatar">
+                                <img src="~/assets/img/img-icon 2.png" alt="">
+                            </div>
+                            <p>Moiz Hussain</p>
+                            <i class="fa fa-xmark"></i>
+                        </a>
+                        <a class="friend-item" href="./dm.html?name=nxn" data-joined="May 11, 2022"
+                            data-pronouns="she/her" data-bio="in another tab" data-emoji="🌙">
+                            <div class="avatar">
+                                <img src="~/assets/img/img-icon 1.png" alt="">
+                            </div>
+                            <p>nxn</p>
+                            <i class="fa fa-xmark"></i>
+                        </a>
+                        <a class="friend-item" href="./dm.html?name=Unknown_Inj3ctor" data-joined="Nov 28, 2024">
+                            <div class="avatar">
+                                <img src="~/assets/img/img-icon.png" alt="">
+                            </div>
+                            <p>Unknown_Inj3ctor</p>
+                            <i class="fa fa-xmark"></i>
+                        </a>
+                    </div>
+                    <template id="group-row"><a class="friend-item group-row" href="./group.html"><span
+                                class="group-avatar"><i class="fa-solid fa-user-group"></i><img alt=""
+                                    hidden></span><span class="group-row-text">
+                                <p></p><span></span>
+                            </span><i class="fa fa-xmark"></i></a></template>
+                </div>
+            </section>
+            <div class="user-panel" id="user-panel">
+                <div class="user-identity">
+                    <div class="avatar">
+                        <img src="@(string.IsNullOrWhiteSpace(Model.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.AvatarUrl)" alt="">
+                    </div>
+                    <div class="user-details">
+                        <p class="me-display">@Model.DisplayName</p>
+                        <span data-i18n="Online">Online</span>
+                    </div>
+                </div>
+                <div class="user-controls">
+                    <button type="button" onclick="mic()" aria-label="Mute microphone"><i class="fa-solid fa-microphone" id="mic" aria-hidden="true"></i></button>
+                    <button type="button" id="headp-btn" onclick="headp()" aria-label="Deafen"><i class="fa-solid fa-headphones" id="head" aria-hidden="true"></i></button>
+                    <button type="button" id="settings-open" aria-label="Settings"><i
+                            class="fa-solid fa-gear"></i></button>
+                </div>
+            </div>
+        </aside>
+    </header>
+        @RenderBody()
+ <footer>
+        <div class="new-msg" id="new-msg" hidden>
+            <div class="new-msg-card" role="dialog" aria-labelledby="new-msg-title">
+                <div class="new-msg-head">
+                    <div>
+                        <h2 id="new-msg-title">New Message</h2>
+                        <p>Group DMs can have up to 10 members.</p>
+                    </div>
+                    <button type="button" class="new-msg-close" id="new-msg-close" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <label class="new-msg-search">
+                    <span id="new-msg-chips"></span>
+                    <input id="new-msg-search" type="text" placeholder="Search">
+                </label>
+                <p class="new-msg-hint">Add friends or server members to group DMs.</p>
+                <template id="new-msg-chip"><span class="new-msg-chip"><span></span><button type="button"
+                            aria-label="Remove">×</button></span></template>
+                <div class="new-msg-list" id="new-msg-list">
+                    <p class="new-msg-empty" id="new-msg-empty" hidden>No friends found.</p>
+                    <label class="new-msg-friend" data-friend="Mr_Sigma"><img src="~/assets/img/img-icon 4.jpeg"
+                            alt=""><span>Mr_Sigma</span><input type="checkbox" data-friend="Mr_Sigma"></label>
+                    <label class="new-msg-friend" data-friend="Gpro-fighter"><img src="~/assets/img/img-icon 3.png"
+                            alt=""><span>Gpro-fighter</span><input type="checkbox" data-friend="Gpro-fighter"></label>
+                    <label class="new-msg-friend" data-friend="Moiz Hussain"><img src="~/assets/img/img-icon 2.png"
+                            alt=""><span>Moiz Hussain</span><input type="checkbox" data-friend="Moiz Hussain"></label>
+                    <label class="new-msg-friend" data-friend="nxn"><img src="~/assets/img/img-icon 1.png"
+                            alt=""><span>nxn</span><input type="checkbox" data-friend="nxn"></label>
+                    <label class="new-msg-friend" data-friend="Unknown_Inj3ctor"><img src="~/assets/img/img-icon.png"
+                            alt=""><span>Unknown_Inj3ctor</span><input type="checkbox"
+                            data-friend="Unknown_Inj3ctor"></label>
+                </div>
+                <div class="new-msg-actions">
+                    <button type="button" class="new-msg-cancel" id="new-msg-cancel">Cancel</button>
+                    <button type="button" class="new-msg-create" id="new-msg-create" disabled>Create Message</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="me-status-menu" id="me-status-menu" hidden>
+            <button type="button" data-status="online"><span class="me-swatch"
+                    style="background:#23a559"></span>Online</button>
+            <button type="button" data-status="idle"><span class="me-swatch"
+                    style="background:#f0b232"></span>Idle</button>
+            <button type="button" data-status="dnd"><span class="me-swatch" style="background:#f23f43"></span>Do Not
+                Disturb<small>You will not receive desktop notifications</small></button>
+            <button type="button" data-status="invisible"><span class="me-swatch"
+                    style="background:#80848e"></span>Invisible<small>You will appear offline</small></button>
+        </div>
+        <div class="me-pop d-none" id="me-pop">
+            <div class="me-banner"></div>
+            <div class="me-head">
+                <div class="me-avatar">
+                    <img src="@(string.IsNullOrWhiteSpace(Model.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.AvatarUrl)" alt="">
+                    <span class="me-dot"></span>
+                </div>
+                <button type="button" class="me-chip@(string.IsNullOrWhiteSpace(Model.CustomStatus) ? "" : " has-bio")" id="me-chip"><i class="fa-solid fa-plus"></i><span
+                        id="me-chip-text">@(string.IsNullOrWhiteSpace(Model.CustomStatus) ? "Today I learned..." : Model.CustomStatus)</span></button>
+            </div>
+            <div class="me-body">
+                <h2 class="me-display">@Model.DisplayName</h2>
+                <p class="me-handle">@Model.UserName</p>
+                <p class="me-about" id="me-about" @(string.IsNullOrWhiteSpace(Model.CustomStatus) ? "hidden" : null)>@Model.CustomStatus</p>
+                <button type="button" class="me-edit" id="me-edit"><i class="fa-solid fa-pen"></i> Edit Profile</button>
+                <button type="button" class="me-logout" id="me-logout"><i class="fa-solid fa-right-from-bracket"></i> Log out</button>
+                <button type="button" class="me-row" id="me-status-open"><span class="me-mini"></span><span
+                        id="me-status-label">Online</span><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </div>
+        <div class="me-profile d-none" id="me-profile">
+            <div class="me-profile-card" role="dialog" aria-label="Profile">
+                <button type="button" class="me-profile-close" id="me-profile-close" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+                <div class="me-profile-side">
+                    <div class="me-profile-banner"></div>
+                    <div class="me-profile-id">
+                        <div class="me-profile-top">
+                            <div class="me-profile-avatar">
+                                <img src="@(string.IsNullOrWhiteSpace(Model.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.AvatarUrl)" alt="">
+                                <label class="me-avatar-edit" aria-label="Change avatar">
+                                    <input id="me-avatar-file" type="file" accept="image/*">
+                                    <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                                </label>
+                                <span class="me-dot"></span>
+                            </div>
+                            <button type="button" class="me-status-bubble@(string.IsNullOrWhiteSpace(Model.CustomStatus) ? "" : " has-bio")" id="me-status-bubble"><i
+                                    class="fa-solid fa-plus"></i><span id="me-status-bubble-text">@(string.IsNullOrWhiteSpace(Model.CustomStatus) ? "Today I learned..." : Model.CustomStatus)</span></button>
+                        </div>
+                        <form class="me-name-form" id="me-name-form"><input id="me-display-input" type="text"
+                                maxlength="32" value="@Model.DisplayName" aria-label="Display name"></form>
+                        <h2 id="me-view-name" hidden>@Model.DisplayName</h2>
+                        <p class="me-handle"><span id="me-handle-name">@Model.UserName</span> <span id="me-handle-dot">•</span> <button type="button" class="me-pronouns" id="me-pronouns">@(string.IsNullOrWhiteSpace(Model.Pronouns) ? "Add pronouns" : Model.Pronouns)</button><span id="me-view-pronouns" hidden>@Model.Pronouns</span></p>
+                        <div class="me-actions">
+                            <button type="button" class="me-add" id="me-add" hidden><i
+                                    class="fa-solid fa-user-plus"></i> Add Friend</button>
+                            <button type="button" class="me-msg" id="me-msg"><i class="fa-solid fa-comment"></i>
+                                <span>Message</span></button>
+                        </div>
+                        <div class="me-block me-bio-block">
+                            <h3>Bio</h3>
+                            <form class="me-bio-form" id="me-bio-form"><input id="me-bio" type="text" maxlength="190"
+                                    placeholder="No bio yet." value="@Model.Bio"><button type="button" id="me-bio-emoji"
+                                    aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>
+                                <div class="set-emoji d-none" id="me-bio-emoji-list"></div>
+                            </form>
+                            <p id="me-view-bio" hidden>@Model.Bio</p>
+                        </div>
+                        <div class="me-block">
+                            <h3>Member Since</h3>
+                            <p id="me-since">@Model.MemberSince</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="me-board">
+                    <div class="me-tabs">
+                        <button type="button" class="on" data-tab="board">Board</button>
+                    </div>
+                    <div class="me-panel" id="me-board">
+                        <template id="me-post">
+                            <div class="me-post"><img alt="" hidden>
+                                <p></p><time></time>
+                            </div>
+                        </template>
+                        <div class="me-posts" id="me-posts"></div>
+                        <p class="me-posts-empty" id="me-posts-empty">No posts yet.</p>
+                        <a class="me-posts-go" href="./socialmedia.html">Social Media</a>
+                    </div>
+                    <div class="me-panel d-none" id="me-activity">
+                        <p>Nothing here yet.</p>
+                    </div>
+                    <div class="me-panel d-none" id="me-wishlist">
+                        <p>Nothing here yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="set-status d-none" id="set-status">
+            <form class="set-status-card" id="set-status-form">
+                <div class="set-status-head">
+                    <h2>Set your status</h2>
+                    <button type="button" id="set-status-close" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="set-status-preview">
+                    <div class="set-status-banner"></div>
+                    <div class="set-status-person">
+                        <img src="@(string.IsNullOrWhiteSpace(Model.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.AvatarUrl)" alt="">
+                        <span class="me-dot"></span>
+                        <span class="set-status-mini" id="set-status-mini"><span id="set-status-mini-emoji"></span><span
+                                id="set-status-mini-text">@(string.IsNullOrWhiteSpace(Model.CustomStatus) ? "Today I learned..." : Model.CustomStatus)</span></span>
+                    </div>
+                    <h3 class="me-display">@Model.DisplayName</h3>
+                    <p>@Model.UserName</p>
+                </div>
+                <p class="set-status-label">Status</p>
+                <div class="set-status-field">
+                    <button type="button" id="set-status-emoji" aria-label="Emoji">😀</button>
+                    <input id="set-status-input" type="text" maxlength="128" placeholder="Today I learned..." value="@Model.CustomStatus">
+                    <div class="set-emoji d-none" id="set-emoji"></div>
+                </div>
+                <div class="set-status-foot">
+                    <div class="set-when-wrap">
+                        <button type="button" id="set-status-when">Clear tomorrow <i
+                                class="fa-solid fa-chevron-down"></i></button>
+                        <div class="set-when d-none" id="set-when">
+                            <button type="button" data-clear="none">Don't clear</button>
+                            <button type="button" data-clear="30">30 minutes</button>
+                            <button type="button" data-clear="60">1 hour</button>
+                            <button type="button" data-clear="240">4 hours</button>
+                            <button type="button" data-clear="today">Today</button>
+                            <button type="button" data-clear="tomorrow">Tomorrow</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="set-status-save">Save</button>
+                </div>
+            </form>
+        </div>
+        <div class="set-status d-none" id="set-pronouns">
+            <form class="set-status-card" id="set-pronouns-form">
+                <div class="set-status-head">
+                    <h2>Add pronouns</h2>
+                    <button type="button" id="set-pronouns-close" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <p class="set-status-label">Pronouns</p>
+                <div class="set-status-field">
+                    <input id="set-pronouns-input" type="text" maxlength="40" placeholder="Add pronouns" value="@Model.Pronouns">
+                </div>
+                <div class="set-status-foot">
+                    <span></span>
+                    <button type="submit" class="set-status-save">Save</button>
+                </div>
+            </form>
+        </div>
+        <div class="row-menu" id="row-menu" hidden>
+            <ul>
+                <li><button type="button" data-action="pin"><i class="fa-solid fa-thumbtack"></i><span
+                            class="row-menu-label">Pin</span></button></li>
+                <li class="row-menu-line"></li>
+                <li><button type="button" data-action="profile"><i class="fa-solid fa-user"></i><span
+                            class="row-menu-label">Profile</span></button></li>
+                <li><button type="button" data-action="call"><i class="fa-solid fa-phone"></i><span
+                            class="row-menu-label">Start a Call</span></button></li>
+                <li><button type="button" data-action="close"><i class="fa-solid fa-xmark"></i><span>
+                            class="row-menu-label">Close DM</span></button></li>
+                <li class="row-menu-line"></li>
+                <li class="row-menu-branch">
+                    <button type="button" data-sub="invite"><i class="fa-solid fa-user-plus"></i><span
+                            class="row-menu-label">Invite to Server</span><i
+                            class="fa-solid fa-chevron-right row-menu-chev"></i></button>
+                    <ul class="row-menu-sub">
+                        <li><button type="button" data-action="invite">No servers</button></li>
+                    </ul>
+                </li>
+                <li class="row-menu-line"></li>
+                <li><button type="button" data-action="friend"><i class="fa-solid fa-user-plus"></i><span
+                            class="row-menu-label">Add Friend</span></button></li>
+                <li><button type="button" class="row-menu-danger" data-action="block"><i
+                            class="fa-solid fa-ban"></i><span class="row-menu-label">Block</span></button></li>
+                <li class="row-menu-line"></li>
+                <li class="row-menu-branch">
+                    <button type="button" data-sub="mute"><i class="fa-solid fa-volume-xmark"></i><span
+                            class="row-menu-label">Mute @@<span id="row-menu-mute-name"></span></span><i
+                            class="fa-solid fa-chevron-right row-menu-chev"></i></button>
+                    <ul class="row-menu-sub">
+                        <li><button type="button" data-action="mute">For 15 Minutes</button></li>
+                        <li><button type="button" data-action="mute">For 1 Hour</button></li>
+                        <li><button type="button" data-action="mute">For 3 Hours</button></li>
+                        <li><button type="button" data-action="mute">For 8 Hours</button></li>
+                        <li><button type="button" data-action="mute">For 24 Hours</button></li>
+                        <li><button type="button" data-action="mute">Until I turn it back on</button></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <div class="settings" id="settings" hidden>
+            <div class="settings-card" role="dialog" aria-label="Settings">
+                <button type="button" class="settings-close" id="settings-close" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+                <aside class="settings-nav">
+                    <div class="settings-me">
+                        <img src="@(string.IsNullOrWhiteSpace(Model.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.AvatarUrl)" alt="">
+                        <div>
+                            <strong class="me-display">@Model.DisplayName</strong>
+                            <span>Edit Profiles</span>
+                        </div>
+                    </div>
+                    <nav class="settings-tabs" aria-label="Settings">
+                        <p data-i18n="Account">Account</p>
+                        <ul>
+                            <li><button type="button" class="on" data-settings-tab="account"><i
+                                        class="fa-solid fa-user"></i> <span data-i18n="Account Info">Account Info</span></button></li>
+                        </ul>
+                        <ul>
+                            <li><button type="button" data-settings-tab="notifications"><i class="fa-solid fa-bell"></i>
+                                    <span data-i18n="Notifications">Notifications</span></button></li>
+                        </ul>
+                        <p data-i18n="Appearance">Experience</p>
+                        <ul>
+                            <li><button type="button" data-settings-tab="appearance"><i class="fa-solid fa-palette"></i>
+                                    <span data-i18n="Appearance">Appearance</span></button></li>
+                            <li><button type="button" data-settings-tab="language"><span class="lang-icon"
+                                        aria-hidden="true">文A</span> <span data-i18n="Language &amp; Time">Language &amp; Time</span></button></li>
+                        </ul>
+                    </nav>
+                </aside>
+                <div class="settings-main">
+                    <section id="settings-account">
+                        <div class="settings-panel">
+                            <h2 data-i18n="Account">Account</h2>
+                            <h3 data-i18n="Account Info">Account Info</h3>
+                            <div class="settings-row"><span data-i18n="Account">Username</span><b
+                                    id="settings-username">@Model.UserName</b><button type="button"
+                                    id="settings-username-edit" data-i18n="Edit">Edit</button></div>
+                            <div class="settings-row"><span>Email</span><b><span id="settings-email" data-email="@Model.Email">@Model.Email</span> <button type="button"
+                                        class="settings-link" id="settings-email-toggle" aria-label="Reveal email"><i
+                                             class="fa-regular fa-eye"></i></button></b></div>
+                            <h3 data-i18n="Password">Password</h3>
+                            <div class="settings-row"><span data-i18n="Password">Password</span><button type="button"
+                                    id="settings-password-edit" data-i18n="Edit">Edit</button></div>
+                            <h3 data-i18n="Visibility">Visibility</h3>
+                            <div class="notify-row">
+                                <div><strong data-i18n="Public account">Public account</strong>
+                                    <p>Turn this off to hide your account from people who are not your friends.</p>
+                                </div>
+                                <button type="button" class="notify-switch@(Model.IsPublic ? " on" : "")" id="account-public" aria-pressed="@Model.IsPublic.ToString().ToLower()"
+                                    aria-label="Public account"></button>
+                            </div>
+                        </div>
+                    </section>
+                    <section id="settings-security" hidden>
+                        <div class="settings-panel">
+                            <h2>Password &amp; Security</h2>
+                        </div>
+                    </section>
+                    <section id="settings-standing" hidden>
+                        <div class="settings-panel">
+                            <h2>Account Standing</h2>
+                        </div>
+                    </section>
+                    <section id="settings-family" hidden>
+                        <div class="settings-panel">
+                            <h2>Family Center</h2>
+                        </div>
+                    </section>
+                    <section id="settings-privacy" hidden>
+                        <div class="settings-panel">
+                            <h2>Data &amp; Privacy</h2>
+                        </div>
+                    </section>
+                    <section id="settings-messages" hidden>
+                        <div class="settings-panel">
+                            <h2>Messaging Permissions</h2>
+                        </div>
+                    </section>
+                    <section id="settings-notifications" hidden>
+                        <div class="settings-panel">
+                            <h2 data-i18n="Notifications">Notifications</h2>
+                            <div class="notify-row">
+                                <div><strong data-i18n="Enable notifications">Enable notifications</strong>
+                                    <p>Turn all notifications on or off.</p>
+                                </div>
+                                <button type="button" class="notify-switch on" data-notify="all" aria-pressed="true"
+                                    aria-label="Enable notifications"></button>
+                            </div>
+                            <div class="notify-row">
+                                <div><strong data-i18n="Direct messages">Direct messages</strong>
+                                    <p>Notify me when someone sends a message.</p>
+                                </div>
+                                <button type="button" class="notify-switch on" data-notify="dm" aria-pressed="true"
+                                    aria-label="Direct messages"></button>
+                            </div>
+                            <div class="notify-row">
+                                <div><strong data-i18n="Friend requests">Friend requests</strong>
+                                    <p>Notify me when someone adds me.</p>
+                                </div>
+                                <button type="button" class="notify-switch on" data-notify="friends" aria-pressed="true"
+                                    aria-label="Friend requests"></button>
+                            </div>
+                            <div class="notify-row">
+                                <div><strong data-i18n="Sounds">Sounds</strong>
+                                    <p>Play a sound with notifications.</p>
+                                </div>
+                                <button type="button" class="notify-switch on" data-notify="sound" aria-pressed="true"
+                                    aria-label="Sounds"></button>
+                            </div>
+                        </div>
+                    </section>
+                    <section id="settings-appearance" hidden>
+                        <div class="settings-panel">
+                            <h2 data-i18n="Appearance">Appearance</h2>
+                            <h3 data-i18n="Theme">Theme</h3>
+                            <p class="settings-note">White is the default. Black stays on until you switch it back.</p>
+                            <div class="theme-choices">
+                                <label class="theme-choice"><input type="radio" name="theme" value="light" checked><span
+                                        class="theme-swatch light"></span> <span data-i18n="White">White</span></label>
+                                <label class="theme-choice"><input type="radio" name="theme" value="dark"><span
+                                        class="theme-swatch dark"></span> <span data-i18n="Black">Black</span></label>
+                            </div>
+                        </div>
+                    </section>
+                    <section id="settings-language" hidden>
+                        <div class="settings-panel">
+                            <h2 data-i18n="Language &amp; Time">Language &amp; Time</h2>
+                            <h3 data-i18n="Select a Language">Select a Language</h3>
+                            <p class="settings-note" data-i18n="Choose the language you want Discord to display.">Choose the language you want Discord to display.</p>
+                            <div class="lang-box">
+                                <label class="lang-field">
+                                    <img class="lang-flag" id="lang-field-flag" src="https://flagcdn.com/w40/us.png"
+                                        alt="">
+                                    <input id="lang-search" type="text" value="English" autocomplete="off">
+                                    <i class="fa-solid fa-chevron-down" id="lang-chevron"></i>
+                                </label>
+                                <ul id="lang-select-list" hidden>
+                                    <li><button type="button" class="on" data-lang="English" data-native="English"
+                                            data-flag="us"><img class="lang-flag" src="https://flagcdn.com/w40/us.png"
+                                                alt=""><span>English</span><span class="lang-en">English</span><i
+                                                class="fa-solid fa-check"></i></button></li>
+                                    <li><button type="button" data-lang="Turkish" data-native="Türkçe"
+                                            data-flag="tr"><img class="lang-flag" src="https://flagcdn.com/w40/tr.png"
+                                                alt=""><span>Türkçe</span><span class="lang-en">Turkish</span><i
+                                                class="fa-solid fa-check"></i></button></li>
+                                    <li><button type="button" data-lang="Azerbaijan" data-native="Azərbaycan"
+                                            data-flag="az"><img class="lang-flag" src="https://flagcdn.com/w40/az.png"
+                                                alt=""><span>Azərbaycan</span><span class="lang-en">Azerbaijan</span><i
+                                                class="fa-solid fa-check"></i></button></li>
+                                </ul>
+                            </div>
+                            <h3 data-i18n="Time format">Time format</h3>
+                            <div class="time-format">
+                                <label><input type="radio" name="time-format" value="auto" checked> Auto</label>
+                                <label><input type="radio" name="time-format" value="12"> 12-hour</label>
+                                <label><input type="radio" name="time-format" value="24"> 24-hour</label>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+        <div class="name-modal" id="name-modal" hidden>
+            <div class="name-modal-card" role="dialog" aria-labelledby="name-modal-title">
+                <button type="button" class="name-modal-x" id="name-modal-close" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+                <h2 id="name-modal-title">Change your username</h2>
+                <p>Enter a new username and your existing password.</p>
+                <label for="name-modal-user">Username</label>
+                <input id="name-modal-user" type="text" maxlength="32" autocomplete="off">
+                <p class="name-modal-hint">Please only use numbers, letters, underscores _ , or periods.</p>
+                <label for="name-modal-pass">Current Password</label>
+                <div class="name-modal-pass">
+                    <input id="name-modal-pass" type="password" autocomplete="current-password">
+                    <button type="button" id="name-modal-eye" aria-label="Show password"><i
+                            class="fa-regular fa-eye"></i></button>
+                </div>
+                <p class="name-modal-error" id="name-modal-error" hidden>Enter your username and current password.</p>
+                <div class="name-modal-actions">
+                    <button type="button" id="name-modal-cancel">Cancel</button>
+                    <button type="button" id="name-modal-done">Done</button>
+                </div>
+            </div>
+        </div>
+        <div class="name-modal" id="pass-modal" hidden>
+            <div class="name-modal-card" role="dialog" aria-labelledby="pass-modal-title">
+                <button type="button" class="name-modal-x" id="pass-modal-close" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+                <h2 id="pass-modal-title">Update your password</h2>
+                <p>Enter your current password and a new password.</p>
+                <label for="pass-modal-current">Current Password <span class="req">*</span></label>
+                <div class="name-modal-pass">
+                    <input id="pass-modal-current" type="password" autocomplete="current-password">
+                    <button type="button" class="pass-eye" aria-label="Show password"><i
+                            class="fa-regular fa-eye"></i></button>
+                </div>
+                <label for="pass-modal-new">New Password <span class="req">*</span></label>
+                <div class="name-modal-pass">
+                    <input id="pass-modal-new" type="password" autocomplete="new-password">
+                    <button type="button" class="pass-eye" aria-label="Show password"><i
+                            class="fa-regular fa-eye"></i></button>
+                </div>
+                <label for="pass-modal-confirm">Confirm New Password <span class="req">*</span></label>
+                <div class="name-modal-pass">
+                    <input id="pass-modal-confirm" type="password" autocomplete="new-password">
+                    <button type="button" class="pass-eye" aria-label="Show password"><i
+                            class="fa-regular fa-eye"></i></button>
+                </div>
+                <p class="name-modal-error" id="pass-modal-error" hidden>Fill in all password fields.</p>
+                <div class="name-modal-actions">
+                    <button type="button" id="pass-modal-cancel">Cancel</button>
+                    <button type="button" id="pass-modal-done">Done</button>
+                </div>
+            </div>
+        </div>
+        <div class="server-modal" id="server-modal" hidden>
+            <div class="server-modal-card" role="dialog" aria-labelledby="server-modal-title">
+                <button type="button" class="server-modal-x" id="server-modal-close" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+                <section id="server-pick">
+                    <h2 id="server-modal-title">Create Your Server</h2>
+                    <p>Your server is where you and your friends hang out. Make yours and start talking.</p>
+                    <button type="button" class="server-choice" data-server="own"><i
+                            class="fa-solid fa-pen"></i><span>Create My Own</span><i
+                            class="fa-solid fa-chevron-right"></i></button>
+                    <h2 class="server-invite-title">Have an invite already?</h2>
+                    <button type="button" class="server-join-open" id="server-join-open">Join a Server</button>
+                </section>
+                <section id="server-create" hidden>
+                    <h2>Customize your server</h2>
+                    <p>Give your new server a personality with a name. You can always change it later.</p>
+                    <label for="server-name">Server Name</label>
+                    <div class="server-name-field">
+                        <input id="server-name" type="text" placeholder=" " maxlength="32">
+                        <span class="server-name-hint">Your Server Name</span>
+                    </div>
+                    <p class="server-modal-error" id="server-create-error" hidden>Enter a server name.</p>
+                    <div class="server-modal-actions">
+                        <button type="button" id="server-create-back">Back</button>
+                        <button type="button" id="server-create-done">Create</button>
+                    </div>
+                </section>
+                <section id="server-join" hidden>
+                    <h2>Join a Server</h2>
+                    <p>Enter an invite below to join an existing server.</p>
+                    <label for="server-invite">Invite Link</label>
+                    <input id="server-invite" type="text" placeholder="https://discord.gg/hTKzmak">
+                    <p class="server-modal-error" id="server-join-error" hidden>Enter an invite link.</p>
+                    <div class="server-modal-actions">
+                        <button type="button" id="server-join-back">Back</button>
+                        <button type="button" id="server-join-done">Join Server</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+        <div class="friend-more" id="friend-more" hidden>
+            <button type="button" data-action="video">Start Video Call</button>
+            <button type="button" data-action="voice">Start Voice Call</button>
+            <button type="button" class="is-danger" data-action="remove">Remove Friend</button>
+        </div>
+        @Html.AntiForgeryToken()
+        <form id="logout-form" asp-controller="Account" asp-action="Logout" method="post" hidden></form>
+        <script src="~/assets/js/groups.js"></script>
+        <script src="~/assets/js/profile.js"></script>
+        <script src="~/assets/js/script.js"></script>
+    </footer>
+</body>
+
+</html>
+

@@ -1,4 +1,3 @@
-using Discode_MVC_Client.Helpers;
 using Discode_MVC_Client.ViewModels.Account;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -29,7 +28,7 @@ namespace Discode_MVC_Client.Controllers
         public IActionResult Register()
         {
             if (User.Identity?.IsAuthenticated == true)
-                return LocalRedirect(RoleRedirect.HomeUrl(User.FindAll(ClaimTypes.Role).Select(c => c.Value)));
+                return RedirectToAction("Index", "Home");
 
             return View(new RegisterVM { Email = TempData["AuthEmail"] as string ?? string.Empty });
         }
@@ -38,25 +37,34 @@ namespace Discode_MVC_Client.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterVM model)
         {
-            if (!TryParseBirthDay(model.Day, model.Month, model.Year, out var birthDay))
+            model.Email = model.Email?.Trim() ?? string.Empty;
+            model.DisplayName = model.DisplayName?.Trim() ?? string.Empty;
+            model.UserName = model.UserName?.Trim() ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(model.Email) ||
+                string.IsNullOrWhiteSpace(model.DisplayName) ||
+                string.IsNullOrWhiteSpace(model.UserName) ||
+                string.IsNullOrWhiteSpace(model.Password) ||
+                string.IsNullOrWhiteSpace(model.Day) ||
+                string.IsNullOrWhiteSpace(model.Month) ||
+                string.IsNullOrWhiteSpace(model.Year) ||
+                !TryParseBirthDay(model.Day, model.Month, model.Year, out var birthDay))
             {
-                ModelState.AddModelError(string.Empty, "Enter your date of birth.");
+                ModelState.AddModelError(string.Empty, "Fill in all fields.");
                 return View(model);
             }
-
-            var request = new
-            {
-                email = model.Email?.Trim(),
-                displayName = model.DisplayName?.Trim(),
-                userName = model.UserName?.Trim(),
-                birthDay,
-                password = model.Password
-            };
 
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var response = await client.PostAsJsonAsync("api/account/register", request);
+                var response = await client.PostAsJsonAsync("api/account/register", new
+                {
+                    model.Email,
+                    model.DisplayName,
+                    model.UserName,
+                    birthDay,
+                    model.Password
+                });
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -81,7 +89,7 @@ namespace Discode_MVC_Client.Controllers
         public IActionResult Login(string? returnUrl = null)
         {
             if (User.Identity?.IsAuthenticated == true)
-                return LocalRedirect(RoleRedirect.HomeUrl(User.FindAll(ClaimTypes.Role).Select(c => c.Value)));
+                return RedirectToAction("Index", "Home");
 
             return View(new LoginVM
             {
@@ -95,9 +103,10 @@ namespace Discode_MVC_Client.Controllers
         public async Task<IActionResult> Login(LoginVM model)
         {
             var password = model.Password;
+            model.Email = model.Email?.Trim() ?? string.Empty;
             model.Password = string.Empty;
 
-            if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrEmpty(password))
+            if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(password))
             {
                 ModelState.AddModelError(string.Empty, "Enter your email and password.");
                 return View(model);
@@ -130,7 +139,7 @@ namespace Discode_MVC_Client.Controllers
                 if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                     return LocalRedirect(model.ReturnUrl);
 
-                return LocalRedirect(RoleRedirect.HomeUrl(result.Roles));
+                return RedirectToAction("Index", "Home");
             }
             catch (HttpRequestException)
             {
@@ -153,7 +162,8 @@ namespace Discode_MVC_Client.Controllers
             {
                 new(ClaimTypes.NameIdentifier, login.UserId ?? string.Empty),
                 new(ClaimTypes.Email, login.Email ?? string.Empty),
-                new(ClaimTypes.Name, login.DisplayName ?? login.UserName ?? login.Email ?? string.Empty)
+                new(ClaimTypes.Name, login.DisplayName ?? login.UserName ?? login.Email ?? string.Empty),
+                new("userName", login.UserName ?? string.Empty)
             };
             claims.AddRange(login.Roles.Select(role => new Claim(ClaimTypes.Role, role)));
 

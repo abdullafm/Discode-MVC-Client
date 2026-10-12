@@ -132,12 +132,7 @@
     window.discodeGo = go;
 
     function currentRole() {
-        try {
-            var user = JSON.parse(localStorage.getItem("discode-me") || "{}");
-            return user.role === "admin" || user.role === "superadmin" ? user.role : "member";
-        } catch (error) {
-            return "member";
-        }
+        return "member";
     }
 
     function syncAdminEntry() {

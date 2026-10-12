@@ -1,25 +1,346 @@
+@model ProfileVM
 @{
-    Layout = null;
-    ViewData["Title"] = "DisCode";
+    Layout = "_HomeLayout";
 }
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DisCode</title>
-    <link rel="stylesheet" href="~/assets/css/login.css">
-</head>
-<body>
-    <main class="login-page">
-        <div class="login-card">
-            <h1>Welcome, @User.Identity?.Name</h1>
-            <p>You are signed in.</p>
-            <form asp-controller="Account" asp-action="Logout" method="post">
-                <button type="submit">Log out</button>
-            </form>
+<main class="friends-view show-main">
+    <section id="friends-toolbar">
+        <div class="friends-header">
+            <div class="friends-header-start">
+                <div class="friends-title">
+                    <svg class="linkButtonIcon_c91bad" aria-hidden="true" role="img"
+                         xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M13 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"></path>
+                        <path fill="currentColor"
+                              d="M3 5v-.75C3 3.56 3.56 3 4.25 3s1.24.56 1.33 1.25C6.12 8.65 9.46 12 13 12h1a8 8 0 0 1 8 8 2 2 0 0 1-2 2 .21.21 0 0 1-.2-.15 7.65 7.65 0 0 0-1.32-2.3c-.15-.2-.42-.06-.39.17l.25 2c.02.15-.1.28-.25.28H9a2 2 0 0 1-2-2v-2.22c0-1.57-.67-3.05-1.53-4.37A15.85 15.85 0 0 1 3 5Z">
+                        </path>
+                    </svg>
+                    <h1 data-i18n="Friends">Friends</h1>
+                </div>
+                <nav class="friend-filters" aria-label="Friend filters">
+                    <button type="button" class="friend-filter-pick" id="friend-filter-pick" aria-expanded="false"
+                            aria-controls="friend-filter-menu">
+                        <span id="friend-filter-label" data-i18n="Online">Online</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div class="friend-filter-menu" id="friend-filter-menu">
+                        <span class="friend-filter-glide" aria-hidden="true"></span>
+                        <button type="button" class="active" data-filter="online">
+                            <span class="friend-filter-icon friend-status-dot online" aria-hidden="true"></span>
+                            <span class="friend-filter-text" data-i18n="Online">Online</span>
+                            <i class="fa-solid fa-check friend-filter-check" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" data-filter="all">
+                            <i class="fa-solid fa-user-group friend-filter-icon" aria-hidden="true"></i>
+                            <span class="friend-filter-text" data-i18n="All">All</span>
+                            <i class="fa-solid fa-check friend-filter-check" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" data-filter="pending">
+                            <i class="fa-solid fa-user-clock friend-filter-icon" aria-hidden="true"></i>
+                            <span class="friend-filter-text" data-i18n="Pending">Pending</span>
+                            <i class="fa-solid fa-check friend-filter-check" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" data-filter="blocked">
+                            <i class="fa-regular fa-circle-xmark friend-filter-icon" aria-hidden="true"></i>
+                            <span class="friend-filter-text" data-i18n="Blocked">Blocked</span>
+                            <i class="fa-solid fa-check friend-filter-check" aria-hidden="true"></i>
+                        </button>
+                        <button type="button" data-filter="add">
+                            <i class="fa-solid fa-user-plus friend-filter-icon" aria-hidden="true"></i>
+                            <span class="friend-filter-text" data-i18n="Add Friend">Add Friend</span>
+                        </button>
+                    </div>
+                </nav>
+            </div>
+            <div class="header-actions">
+                <div class="notify-box">
+                    <button type="button" id="notify-open" aria-label="Notifications" aria-expanded="false"
+                            aria-controls="notify-panel">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notify-count" id="notify-count" hidden>0</span>
+                    </button>
+                    <div class="notify-panel" id="notify-panel" hidden>
+                        <div class="notify-header">
+                            <div class="notify-header-left">
+                                <h2 data-i18n="Notifications">Notifications</h2>
+                                <span class="notify-unread-badge" id="notify-unread-badge" hidden>0 Unread</span>
+                            </div>
+                            <div class="notify-header-actions">
+                                <button type="button" class="notify-mark-read-btn" id="notify-mark-all" title="Mark all as read" aria-label="Mark all as read">
+                                    <i class="fa-solid fa-check-double"></i>
+                                    <span data-i18n="Mark all as read">Mark all as read</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="notify-list-wrap">
+                            <div id="notify-list"></div>
+                            <div class="notify-empty" id="notify-empty" hidden>
+                                <div class="notify-empty-icon">
+                                    <i class="fa-solid fa-bell-slash"></i>
+                                </div>
+                                <p class="notify-empty-title" data-i18n="No notifications">No notifications</p>
+                                <p class="notify-empty-desc" data-i18n="You're all caught up! Check back later for updates.">You're all caught up! Check back later for updates.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </main>
-</body>
-</html>
+    </section>
+
+    <section id="friends-body">
+        <div class="friends-body">
+            <section id="friends-online">
+                <div class="friends-online">
+                    <label class="friends-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="search" placeholder="Search" aria-label="Search" data-i18n-placeholder="Search" autocomplete="off" name="friend-search">
+                    </label>
+                    <h2 id="friends-online-title">Online — 5</h2>
+                    <h2 id="friends-all-title" hidden>All friends — 5</h2>
+                    <div class="friends-online-list">
+                        <div class="online-row" data-presence="online">
+                            <a class="online-main" href="./dm.html?name=Mr_Sigma">
+                                <span class="online-face">
+                                    <img src="~/assets/img/img-icon 4.jpeg" alt=""><span class="online-dot"></span>
+                                </span>
+                                <span class="online-copy"><strong>Mr_Sigma</strong><span data-i18n="Online">Online</span></span>
+                            </a>
+                            <a class="online-act" href="./dm.html?name=Mr_Sigma" aria-label="Message Mr_Sigma">
+                                <i class="fa-solid fa-comment"></i>
+                            </a>
+                            <button type="button" class="online-act" aria-label="More">
+                                <i class="fa-solid fa-ellipsis"></i>
+                            </button>
+                        </div>
+                        <div class="online-row" data-presence="idle">
+                            <a class="online-main" href="./dm.html?name=Gpro-fighter">
+                                <span class="online-face">
+                                    <img src="~/assets/img/img-icon 3.png" alt=""><span class="online-dot idle"></span>
+                                </span>
+                                <span class="online-copy"><strong>Gpro-fighter</strong><span>Idle</span></span>
+                            </a>
+                            <a class="online-act" href="./dm.html?name=Gpro-fighter"
+                               aria-label="Message Gpro-fighter"><i class="fa-solid fa-comment"></i></a>
+                            <button type="button" class="online-act" aria-label="More">
+                                <i class="fa-solid fa-ellipsis"></i>
+                            </button>
+                        </div>
+                        <div class="online-row" data-presence="dnd">
+                            <a class="online-main" href="./dm.html?name=Moiz%20Hussain">
+                                <span class="online-face">
+                                    <img src="~/assets/img/img-icon 2.png" alt=""><span class="online-dot dnd"></span>
+                                </span>
+                                <span class="online-copy">
+                                    <strong>Moiz Hussain</strong><span>
+                                    Do Not
+                                    Disturb
+                                </span>
+                            </span>
+                        </a>
+                        <a class="online-act" href="./dm.html?name=Moiz%20Hussain"
+                           aria-label="Message Moiz Hussain"><i class="fa-solid fa-comment"></i></a>
+                        <button type="button" class="online-act" aria-label="More">
+                            <i class="fa-solid fa-ellipsis"></i>
+                        </button>
+                    </div>
+                    <div class="online-row" data-presence="online">
+                        <a class="online-main" href="./dm.html?name=nxn">
+                            <span class="online-face">
+                                <img src="~/assets/img/img-icon 1.png" alt=""><span class="online-dot"></span>
+                            </span>
+                            <span class="online-copy"><strong>nxn</strong><span data-i18n="Online">Online</span></span>
+                        </a>
+                        <a class="online-act" href="./dm.html?name=nxn" aria-label="Message nxn">
+                            <i class="fa-solid fa-comment"></i>
+                        </a>
+                        <button type="button" class="online-act" aria-label="More">
+                            <i class="fa-solid fa-ellipsis"></i>
+                        </button>
+                    </div>
+                    <div class="online-row" data-presence="online">
+                        <a class="online-main" href="./dm.html?name=Unknown_Inj3ctor">
+                            <span class="online-face">
+                                <img src="~/assets/img/img-icon.png" alt=""><span class="online-dot"></span>
+                            </span>
+                            <span class="online-copy"><strong>Unknown_Inj3ctor</strong><span data-i18n="Online">Online</span></span>
+                        </a>
+                        <a class="online-act" href="./dm.html?name=Unknown_Inj3ctor"
+                           aria-label="Message Unknown_Inj3ctor"><i class="fa-solid fa-comment"></i></a>
+                        <button type="button" class="online-act" aria-label="More">
+                            <i class="fa-solid fa-ellipsis"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="friends-pending" hidden>
+            <div class="friends-online">
+                <label class="friends-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="search" placeholder="Search" aria-label="Search" data-i18n-placeholder="Search" autocomplete="off" name="friend-search">
+                </label>
+                <h2 id="friends-pending-title" hidden>Received — <span></span></h2>
+                <div class="friends-online-list" id="friends-pending-list"></div>
+                <template id="friend-request-row">
+                    <div class="online-row request-row">
+                        <div class="online-main">
+                            <span class="online-face"><img alt=""></span>
+                            <span class="online-copy">
+                                <span class="request-name">
+                                    <strong></strong>
+                                    <span class="request-badge" hidden>
+                                        <i class="fa-solid fa-heart"></i><span></span>
+                                    </span>
+                                </span>
+                                <span class="request-user"></span>
+                            </span>
+                        </div>
+                        <button type="button" class="online-act request-accept" aria-label="Accept">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                        <button type="button" class="online-act request-decline" aria-label="Decline">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </template>
+                <h2 id="friends-sent-title" hidden>Sent — <span></span></h2>
+                <div class="friends-online-list" id="friends-sent-list"></div>
+                <template id="friend-sent-row">
+                    <div class="online-row sent-row">
+                        <div class="online-main">
+                            <span class="online-face sent-face"><span class="sent-letter"></span></span>
+                            <span class="online-copy">
+                                <strong></strong>
+                                <span class="request-user"></span>
+                            </span>
+                        </div>
+                        <button type="button" class="online-act request-decline sent-cancel"
+                                aria-label="Cancel">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </section>
+        <section id="friends-blocked" hidden>
+            <div class="friends-online">
+                <label class="friends-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="search" placeholder="Search" aria-label="Search" data-i18n-placeholder="Search" autocomplete="off" name="friend-search">
+                </label>
+                <h2 id="friends-blocked-title" hidden>Blocked — <span></span></h2>
+                <div class="friends-online-list" id="friends-blocked-list"></div>
+                <template id="blocked-row">
+                    <div class="online-row blocked-row">
+                        <div class="online-main">
+                            <span class="online-face"><img alt=""></span>
+                            <span class="online-copy">
+                                <strong></strong>
+                                <span class="request-user"></span>
+                            </span>
+                        </div>
+                        <button type="button" class="online-act blocked-unblock" aria-label="Unblock">
+                            <i class="fa-solid fa-user-xmark"></i>
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </section>
+        <section id="friends-add" hidden>
+            <div class="friends-add">
+                <h2 data-i18n="Add Friend">Add Friend</h2>
+                <p class="add-friend-lead" data-i18n="You can add friends with their Discord username.">You can add friends with their Discord username.</p>
+                <form id="add-friend-form">
+                    <div class="add-friend-box">
+                        <div class="add-friend-user">
+                            <input id="add-friend-name" type="text" placeholder="Enter a username"
+                                   maxlength="32" autocomplete="off" aria-label="Username">
+                            <button type="submit" id="add-friend-send" disabled data-i18n="Send Friend Request">Send Friend Request</button>
+                        </div>
+                        <label class="add-friend-note">
+                            <textarea id="add-friend-message" maxlength="120"
+                                      placeholder="Personalize your request (Optional)"
+                                      aria-label="Personalize your request"></textarea>
+                            <span id="add-friend-count">120</span>
+                        </label>
+                    </div>
+                    <p class="add-friend-hint">
+                        What you write here will also show up in your DM if you become
+                        friends.
+                    </p>
+                    <p class="add-friend-ok" id="add-friend-ok" hidden>
+                        Success! Your friend request to <strong id="add-friend-ok-name"></strong> was sent.
+                    </p>
+                    <p class="add-friend-error" id="add-friend-error" hidden>
+                        Hm, didn't work. Double check that
+                        the capitalization, spelling, any spaces, and numbers are correct.
+                    </p>
+                </form>
+                <h3 data-i18n="Other Places to Make Friends">Other Places to Make Friends</h3>
+                <p class="add-friend-lead">
+                    Don't have a username on hand? Check out our list of public servers
+                    that includes everything from gaming to cooking, music, anime and more.
+                </p>
+                <a class="add-friend-discover" href="./discover.html">
+                    <span class="add-friend-discover-mark"><i class="fa-brands fa-discord"></i></span>
+                    <span data-i18n="Explore Discoverable Servers">Explore Discoverable Servers</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </a>
+
+                <!-- Instagram-style Real-time Search -->
+                <div class="inline-search-container">
+                    <div class="inline-search-header">
+                        <h3 data-i18n="Quick Search">Quick Search</h3>
+                        <p data-i18n="Find users by username instantly">Find users by username instantly</p>
+                    </div>
+                    <div class="inline-search-wrapper">
+                        <i class="fa-solid fa-magnifying-glass inline-search-icon"></i>
+                        <input type="text" id="inline-search-input" placeholder="Search users..." autocomplete="off">
+                        <button type="button" class="inline-search-clear" id="inline-search-clear" hidden aria-label="Clear">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <!-- Single unified results card -->
+                    <div class="inline-search-results-card" id="inline-search-results-card" hidden>
+                        <div class="inline-search-loading" id="inline-search-loading" hidden>
+                            <div class="loading-spinner"></div>
+                        </div>
+                        <table class="inline-search-table" id="inline-search-table" hidden>
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inline-search-tbody"></tbody>
+                        </table>
+                        <div class="inline-search-no-results" id="inline-search-no-results" hidden>
+                            <i class="fa-solid fa-user-slash"></i>
+                            <p>No users found matching "<span id="inline-search-query"></span>"</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="friends-empty" hidden>
+            <div class="friends-empty">
+                <img src="~/assets/img/1641b16ec6ac0c4e733d.svg" alt="img-centre">
+                <p>No one's around to play with Wumpus.</p>
+            </div>
+        </section>
+        <section id="active-now" hidden>
+            <div class="active-now">
+                <h2 data-i18n="Active Now">Active Now</h2>
+                <div class="active-now-message">
+                    <h3>It's quiet for now...</h3>
+                    <p>
+                        When a friend starts an activity—like playing a game or hanging out on voice—we'll show
+                        it here!
+                    </p>
+                </div>
+            </div>
+        </section>
+    </div>
+</section>
+</main>

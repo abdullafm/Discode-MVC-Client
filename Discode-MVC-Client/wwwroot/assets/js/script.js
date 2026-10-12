@@ -21,6 +21,11 @@ else {
     if (earlyLoader) earlyLoader.remove();
 }
 
+window.addEventListener("pageshow", function () {
+    var searches = document.querySelectorAll(".friends-search input, .sidebar-search input");
+    for (var i = 0; i < searches.length; i++) searches[i].value = "";
+});
+
 window.onload = function () {
     if (!keepLoader) return;
     setTimeout(function () {

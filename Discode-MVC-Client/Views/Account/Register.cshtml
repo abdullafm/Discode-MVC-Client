@@ -1,4 +1,4 @@
-﻿@model RegisterVM
+@model RegisterVM
 @{
     Layout = "_RegisterLayout";
 }
@@ -10,11 +10,11 @@
             {
                 <div class="auth-errors" asp-validation-summary="All"></div>
             }
-            <input asp-for="Email" id="register-email" type="email" autocomplete="email" required placeholder="Email">
-            <input asp-for="DisplayName" id="register-display" type="text" autocomplete="nickname" maxlength="32" placeholder="Display Name">
-            <input asp-for="UserName" id="register-user" type="text" autocomplete="username" required maxlength="32" placeholder="Username">
+            <input asp-for="Email" id="register-email" type="email" autocomplete="email" required pattern=".*\S.*" placeholder="Email">
+            <input asp-for="DisplayName" id="register-display" type="text" autocomplete="nickname" required maxlength="32" pattern=".*\S.*" placeholder="Display Name">
+            <input asp-for="UserName" id="register-user" type="text" autocomplete="username" required maxlength="32" pattern="[A-Za-z0-9._]+" placeholder="Username">
             <div class="password-wrapper">
-                <input asp-for="Password" id="register-pass" type="password" autocomplete="new-password" required placeholder="Password">
+                <input asp-for="Password" id="register-pass" type="password" autocomplete="new-password" required pattern=".*\S.*" placeholder="Password">
                 <button type="button" class="toggle-password" aria-label="Toggle password visibility">
                     <i class="fa-solid fa-eye-slash"></i>
                 </button>

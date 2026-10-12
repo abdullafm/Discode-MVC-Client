@@ -459,13 +459,19 @@ renderGroupList();
     var emailToggle = document.getElementById("settings-email-toggle");
     var emailText = document.getElementById("settings-email");
     if (emailToggle && emailText) {
-        emailToggle.addEventListener("click", function () {
-            var open = emailText.getAttribute("data-open") === "1";
-            emailText.setAttribute("data-open", open ? "0" : "1");
-            emailText.textContent = open ? emailText.getAttribute("data-hidden") : emailText.getAttribute("data-shown");
+        var email = (emailText.getAttribute("data-email") || emailText.textContent || "").trim();
+        var at = email.indexOf("@");
+        var hiddenEmail = at > 0 ? "********" + email.slice(at) : email;
+        var emailVisible = false;
+        emailText.textContent = hiddenEmail;
+        emailToggle.addEventListener("click", function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            emailVisible = !emailVisible;
+            emailText.textContent = emailVisible ? email : hiddenEmail;
             var icon = emailToggle.querySelector("i");
-            if (icon) icon.className = open ? "fa-regular fa-eye" : "fa-regular fa-eye-slash";
-            emailToggle.setAttribute("aria-label", open ? "Reveal email" : "Hide email");
+            if (icon) icon.className = emailVisible ? "fa-regular fa-eye-slash" : "fa-regular fa-eye";
+            emailToggle.setAttribute("aria-label", emailVisible ? "Hide email" : "Reveal email");
         });
     }
 
@@ -513,6 +519,8 @@ renderGroupList();
                 return;
             }
             nameValue.textContent = next;
+            var handle = document.getElementById("me-handle-name");
+            if (handle) handle.textContent = next;
             closeNameModal();
         });
         var nameEye = document.getElementById("name-modal-eye");
@@ -592,26 +600,14 @@ renderGroupList();
     }
 
     var accountPublic = document.getElementById("account-public");
-    function readMe() {
-        try { return JSON.parse(localStorage.getItem("discode-me")) || {}; } catch (e) { return {}; }
-    }
-    function paintAccountPublic() {
-        if (!accountPublic) return;
-        var pub = !readMe().locked;
-        accountPublic.classList.toggle("on", pub);
-        accountPublic.setAttribute("aria-pressed", pub ? "true" : "false");
-    }
-    paintAccountPublic();
     if (accountPublic) {
         accountPublic.addEventListener("click", function () {
-            var me = readMe();
-            me.locked = !me.locked;
-            localStorage.setItem("discode-me", JSON.stringify(me));
-            paintAccountPublic();
+            var nextPublic = !accountPublic.classList.contains("on");
+            accountPublic.classList.toggle("on", nextPublic);
+            accountPublic.setAttribute("aria-pressed", nextPublic ? "true" : "false");
             document.dispatchEvent(new CustomEvent("discode-privacy"));
         });
     }
-    document.addEventListener("discode-privacy", paintAccountPublic);
 })();
 
 (function () {

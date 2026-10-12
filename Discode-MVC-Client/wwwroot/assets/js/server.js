@@ -431,7 +431,7 @@
                 button.setAttribute("data-name", item.name);
                 if (item.self) button.setAttribute("data-self", "1");
                 if (item.handle) button.setAttribute("data-handle", item.handle);
-                if (item.about) button.setAttribute("data-about", item.about);
+                if (item.bio) button.setAttribute("data-bio", item.bio);
                 if (item.statusText) button.setAttribute("data-note", item.statusText);
                 var face = document.createElement("span");
                 face.className = "server-member-face";
@@ -644,8 +644,8 @@
             : (button.getAttribute("data-handle") || name.toLowerCase().replace(/\s+/g, ""));
         var bioInput = document.getElementById("me-bio");
         var profileAbout = self
-            ? ((bioInput && bioInput.value.trim()) || saved.profileBio || saved.about || "")
-            : (button.getAttribute("data-about") || "");
+            ? ((bioInput && bioInput.value.trim()) || saved.profileBio || "")
+            : (button.getAttribute("data-bio") || "");
         var custom = self
             ? (((saved.emoji ? saved.emoji + " " : "") + (saved.bio || "")).trim())
             : (button.getAttribute("data-note") || "");
