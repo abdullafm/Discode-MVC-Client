@@ -3,8 +3,19 @@
   "WorkspaceRootPath": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|ViewDataWindow_MSSQL__/DESKTOP_1V0T6IS/DiscodeDB/True/SqlTable/dbo.AspNetUsers.sql||{0058A1F7-65F3-4DB9-B3D0-CA7E64DD73CD}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\viewmodels\\account\\registervm.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\viewmodels\\account\\registervm.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\controllers\\accountcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\controllers\\accountcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\viewmodels\\account\\registerresponsevm.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -27,20 +38,12 @@
       "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\handlers\\bearertokenhandler.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\controllers\\accountcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\controllers\\accountcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\views\\shared\\_homelayout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\views\\shared\\_homelayout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\views\\home\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
       "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\views\\home\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\controllers\\homecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -91,19 +94,29 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "dbo.AspNetUsers [Data]",
+              "DocumentMoniker": "ViewDataWindow_MSSQL__/DESKTOP_1V0T6IS/DiscodeDB/True/SqlTable/dbo.AspNetUsers.sql",
+              "ToolTip": "dbo.AspNetUsers [Data]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000826|",
+              "WhenOpened": "2026-10-12T09:22:57.559Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
               "Title": "RegisterVM.cs",
               "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\ViewModels\\Account\\RegisterVM.cs",
               "RelativeDocumentMoniker": "Discode-MVC-Client\\ViewModels\\Account\\RegisterVM.cs",
               "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\ViewModels\\Account\\RegisterVM.cs",
               "RelativeToolTip": "Discode-MVC-Client\\ViewModels\\Account\\RegisterVM.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAoAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-10-12T06:29:42.79Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 6,
               "Title": "LoginResponseVM.cs",
               "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\ViewModels\\Account\\LoginResponseVM.cs",
               "RelativeDocumentMoniker": "Discode-MVC-Client\\ViewModels\\Account\\LoginResponseVM.cs",
@@ -111,12 +124,11 @@
               "RelativeToolTip": "Discode-MVC-Client\\ViewModels\\Account\\LoginResponseVM.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-12T06:29:39.997Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-10-12T06:29:39.997Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 5,
               "Title": "LoginVM.cs",
               "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\ViewModels\\Account\\LoginVM.cs",
               "RelativeDocumentMoniker": "Discode-MVC-Client\\ViewModels\\Account\\LoginVM.cs",
@@ -124,12 +136,11 @@
               "RelativeToolTip": "Discode-MVC-Client\\ViewModels\\Account\\LoginVM.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-12T06:29:31.098Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-10-12T06:29:31.098Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 8,
               "Title": "BearerTokenHandler.cs",
               "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Handlers\\BearerTokenHandler.cs",
               "RelativeDocumentMoniker": "Discode-MVC-Client\\Handlers\\BearerTokenHandler.cs",
@@ -137,12 +148,11 @@
               "RelativeToolTip": "Discode-MVC-Client\\Handlers\\BearerTokenHandler.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAACUAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-12T06:09:45.111Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-10-12T06:09:45.111Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 3,
               "Title": "AccountController.cs",
               "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Controllers\\AccountController.cs",
               "RelativeDocumentMoniker": "Discode-MVC-Client\\Controllers\\AccountController.cs",
@@ -155,7 +165,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 7,
               "Title": "ProfileVM.cs",
               "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\ViewModels\\Account\\ProfileVM.cs",
               "RelativeDocumentMoniker": "Discode-MVC-Client\\ViewModels\\Account\\ProfileVM.cs",
@@ -163,12 +173,11 @@
               "RelativeToolTip": "Discode-MVC-Client\\ViewModels\\Account\\ProfileVM.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-11T19:09:19.877Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-10-11T19:09:19.877Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 4,
               "Title": "RegisterResponseVM.cs",
               "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\ViewModels\\Account\\RegisterResponseVM.cs",
               "RelativeDocumentMoniker": "Discode-MVC-Client\\ViewModels\\Account\\RegisterResponseVM.cs",
@@ -176,12 +185,11 @@
               "RelativeToolTip": "Discode-MVC-Client\\ViewModels\\Account\\RegisterResponseVM.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-10T21:01:25.276Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-10-10T21:01:25.276Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 9,
               "Title": "_HomeLayout.cshtml",
               "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\Shared\\_HomeLayout.cshtml",
               "RelativeDocumentMoniker": "Discode-MVC-Client\\Views\\Shared\\_HomeLayout.cshtml",
@@ -193,7 +201,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 10,
               "Title": "Index.cshtml",
               "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\Home\\Index.cshtml",
               "RelativeDocumentMoniker": "Discode-MVC-Client\\Views\\Home\\Index.cshtml",
@@ -205,15 +213,16 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 2,
               "Title": "HomeController.cs",
               "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Controllers\\HomeController.cs",
               "RelativeDocumentMoniker": "Discode-MVC-Client\\Controllers\\HomeController.cs",
               "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Controllers\\HomeController.cs",
               "RelativeToolTip": "Discode-MVC-Client\\Controllers\\HomeController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAABgAAAAAAAAAAAAgwBsAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-10T20:23:21.564Z"
+              "WhenOpened": "2026-10-10T20:23:21.564Z",
+              "EditorCaption": ""
             }
           ]
         }

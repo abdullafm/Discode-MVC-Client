@@ -13,7 +13,6 @@ wwwroot\assets\css\nitro.css
 wwwroot\assets\css\register.css
 wwwroot\assets\css\server.css
 wwwroot\assets\css\socialmedia.css
-wwwroot\assets\css\style.css
 wwwroot\assets\icons\favicon.ico
 wwwroot\assets\img\1641b16ec6ac0c4e733d.svg
 wwwroot\assets\img\Azaan.jpeg
@@ -33,14 +32,17 @@ wwwroot\assets\js\call.js
 wwwroot\assets\js\discover.js
 wwwroot\assets\js\dm.js
 wwwroot\assets\js\group.js
+wwwroot\assets\js\groups.js
 wwwroot\assets\js\i18n.js
 wwwroot\assets\js\login.js
 wwwroot\assets\js\nav.js
 wwwroot\assets\js\nitro.js
+wwwroot\assets\js\profile.js
 wwwroot\assets\js\register.js
 wwwroot\assets\js\script.js
 wwwroot\assets\js\server.js
 wwwroot\assets\js\socialmedia.js
 wwwroot\assets\js\theme.js
-wwwroot\assets\js\groups.js
-wwwroot\assets\js\profile.js
+wwwroot\uploads\avatars\.gitkeep
+wwwroot\uploads\avatars\63803260-478b-4f47-a400-13044e002e9b.jpg
+wwwroot\assets\css\style.css
