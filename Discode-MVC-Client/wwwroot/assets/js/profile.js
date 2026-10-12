@@ -22,6 +22,62 @@
         return ownHandle || nodeText("#me-handle-name") || nodeText("#settings-username");
     }
 
+    function profileValue(id, fallback) {
+        var el = document.getElementById(id);
+        if (!el) return fallback || "";
+        if (el.value != null && el.tagName !== "SPAN") return el.value.trim();
+        return (el.textContent || "").trim();
+    }
+
+    function showProfileError(message) {
+        var el = document.querySelector(".home-error");
+        if (!el) {
+            el = document.createElement("p");
+            el.className = "home-error";
+            document.body.insertBefore(el, document.body.firstChild);
+        }
+        el.hidden = false;
+        el.textContent = message;
+    }
+
+    function saveProfile() {
+        var box = document.getElementById("me-profile");
+        if (box && box.classList.contains("visitor-view")) return;
+
+        var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
+        var pub = document.getElementById("account-public");
+        fetch("/Home/UpdateProfile", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/json",
+                "RequestVerificationToken": tokenInput ? tokenInput.value : "",
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            body: JSON.stringify({
+                displayName: profileValue("me-display-input", meName()),
+                userName: profileValue("me-handle-name") || profileValue("settings-username") || meHandle(),
+                avatarUrl: savedAvatarUrl || profileValue("Update_AvatarUrl"),
+                bio: profileValue("me-bio"),
+                customStatus: profileValue("set-status-input"),
+                pronouns: profileValue("set-pronouns-input"),
+                isPublic: !!(pub && pub.classList.contains("on"))
+            })
+        }).then(function (res) {
+            if (res.ok) return;
+            return res.json().then(function (data) {
+                var msg = data && data.errors && data.errors[0] ? data.errors[0] : "Could not update the profile.";
+                showProfileError(msg);
+            }).catch(function () {
+                showProfileError("Could not update the profile (" + res.status + ").");
+            });
+        }).catch(function () {
+            showProfileError("Could not reach the server. Refresh and try again.");
+        });
+    }
+
+    window.saveDiscodeProfile = saveProfile;
+
     function isMe(name) {
         return !name || name === meName() || name === meHandle();
     }
@@ -122,12 +178,16 @@
         });
     });
 
-    document.getElementById("me-profile-close").addEventListener("click", function () {
+    function closeProfile() {
+        if (profile.classList.contains("d-none")) return;
+        if (!profile.classList.contains("visitor-view")) saveProfile();
         profile.classList.add("d-none");
-    });
+    }
+
+    document.getElementById("me-profile-close").addEventListener("click", closeProfile);
 
     profile.addEventListener("click", function (event) {
-        if (event.target === profile) profile.classList.add("d-none");
+        if (event.target === profile) closeProfile();
     });
     function place() {
         var rect = panel.getBoundingClientRect();
@@ -152,6 +212,7 @@
             pop.style.transform = "";
             pop.classList.add("d-none");
         }, 200);
+        saveProfile();
     }
 
     function openPop() {
@@ -247,10 +308,31 @@
         setInput.focus();
     }
 
+    function applyCustomStatus() {
+        var status = setInput.value.trim();
+        var bubble = document.getElementById("me-status-bubble");
+        var bubbleText = document.getElementById("me-status-bubble-text");
+        var chip = document.getElementById("me-chip");
+        var chipText = document.getElementById("me-chip-text");
+        var about = document.getElementById("me-about");
+        if (bubbleText) bubbleText.textContent = status || "Today I learned...";
+        if (chipText) chipText.textContent = status || "Today I learned...";
+        if (bubble) bubble.classList.toggle("has-bio", !!status);
+        if (chip) chip.classList.toggle("has-bio", !!status);
+        if (about) {
+            about.hidden = !status;
+            about.textContent = status;
+        }
+        paintPop();
+        document.dispatchEvent(new CustomEvent("discode-presence"));
+    }
+
     function closeSetStatus() {
+        applyCustomStatus();
         setStatus.classList.add("d-none");
         setEmoji.classList.add("d-none");
         setWhen.classList.add("d-none");
+        saveProfile();
     }
 
     document.getElementById("me-status-bubble").addEventListener("click", function () {
@@ -280,22 +362,6 @@
         event.preventDefault();
         state.emoji = pickedEmoji;
         state.clear = pickedClear;
-        var status = setInput.value.trim();
-        var bubble = document.getElementById("me-status-bubble");
-        var bubbleText = document.getElementById("me-status-bubble-text");
-        var chip = document.getElementById("me-chip");
-        var chipText = document.getElementById("me-chip-text");
-        var about = document.getElementById("me-about");
-        if (bubbleText) bubbleText.textContent = status || "Today I learned...";
-        if (chipText) chipText.textContent = status || "Today I learned...";
-        if (bubble) bubble.classList.toggle("has-bio", !!status);
-        if (chip) chip.classList.toggle("has-bio", !!status);
-        if (about) {
-            about.hidden = !status;
-            about.textContent = status;
-        }
-        paintPop();
-        document.dispatchEvent(new CustomEvent("discode-presence"));
         closeSetStatus();
     });
 
@@ -307,22 +373,25 @@
         pronounsInput.focus();
     });
 
-    document.getElementById("set-pronouns-close").addEventListener("click", function () {
-        setPronouns.classList.add("d-none");
-    });
-
-    setPronouns.addEventListener("click", function (event) {
-        if (event.target === setPronouns) setPronouns.classList.add("d-none");
-    });
-
-    document.getElementById("set-pronouns-form").addEventListener("submit", function (event) {
-        event.preventDefault();
+    function closePronouns() {
         var next = pronounsInput.value.trim();
         var pronouns = document.getElementById("me-pronouns");
         if (pronouns) pronouns.textContent = next || "Add pronouns";
         var viewPronouns = document.getElementById("me-view-pronouns");
         if (viewPronouns) viewPronouns.textContent = next;
         setPronouns.classList.add("d-none");
+        saveProfile();
+    }
+
+    document.getElementById("set-pronouns-close").addEventListener("click", closePronouns);
+
+    setPronouns.addEventListener("click", function (event) {
+        if (event.target === setPronouns) closePronouns();
+    });
+
+    document.getElementById("set-pronouns-form").addEventListener("submit", function (event) {
+        event.preventDefault();
+        closePronouns();
     });
 
     var bioInput = document.getElementById("me-bio");
@@ -359,6 +428,8 @@
         for (var i = 0; i < faces.length; i++) faces[i].src = src;
     }
 
+    var savedAvatarUrl = profileValue("Update_AvatarUrl");
+
     var avatarFile = document.getElementById("me-avatar-file");
     if (avatarFile) {
         avatarFile.addEventListener("change", function () {
@@ -378,8 +449,33 @@
                     canvas.height = size;
                     var ctx = canvas.getContext("2d");
                     ctx.drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
-                    var photo = canvas.toDataURL("image/jpeg", 0.85);
-                    applyOwnPhoto(photo);
+                    canvas.toBlob(function (blob) {
+                        if (!blob) return;
+                        var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
+                        var data = new FormData();
+                        data.append("file", blob, "avatar.jpg");
+                        if (tokenInput) data.append("__RequestVerificationToken", tokenInput.value);
+                        fetch("/Home/UploadAvatar", {
+                            method: "POST",
+                            credentials: "same-origin",
+                            headers: {
+                                "RequestVerificationToken": tokenInput ? tokenInput.value : "",
+                                "X-Requested-With": "XMLHttpRequest"
+                            },
+                            body: data
+                        }).then(function (res) {
+                            if (!res.ok) throw new Error("upload");
+                            return res.json();
+                        }).then(function (data) {
+                            savedAvatarUrl = data.avatarUrl;
+                            var hidden = document.getElementById("Update_AvatarUrl");
+                            if (hidden) hidden.value = data.avatarUrl;
+                            applyOwnPhoto(data.avatarUrl + "?v=" + Date.now());
+                            saveProfile();
+                        }).catch(function () {
+                            showProfileError("Could not save the photo.");
+                        });
+                    }, "image/jpeg", 0.85);
                 };
                 image.src = reader.result;
             };
@@ -573,6 +669,7 @@
         var next = bioInput.value.trim();
         if (next === savedBio) return;
         savedBio = next;
+        saveProfile();
     }
 
     bioEmoji.addEventListener("click", function () {
@@ -611,6 +708,7 @@
         }
         if (next === meName()) return;
         applyDisplay(next);
+        saveProfile();
     }
     if (nameForm) {
         nameForm.addEventListener("submit", function (event) {
@@ -651,8 +749,8 @@
     document.addEventListener("keydown", function (event) {
         if (event.key !== "Escape") return;
         if (!setStatus.classList.contains("d-none")) closeSetStatus();
-        else if (!setPronouns.classList.contains("d-none")) setPronouns.classList.add("d-none");
-        else if (!profile.classList.contains("d-none")) profile.classList.add("d-none");
+        else if (!setPronouns.classList.contains("d-none")) closePronouns();
+        else if (!profile.classList.contains("d-none")) closeProfile();
         else closePop();
     });
 

@@ -522,6 +522,7 @@ renderGroupList();
             var handle = document.getElementById("me-handle-name");
             if (handle) handle.textContent = next;
             closeNameModal();
+            if (window.saveDiscodeProfile) window.saveDiscodeProfile();
         });
         var nameEye = document.getElementById("name-modal-eye");
         if (nameEye) {
@@ -606,6 +607,7 @@ renderGroupList();
             accountPublic.classList.toggle("on", nextPublic);
             accountPublic.setAttribute("aria-pressed", nextPublic ? "true" : "false");
             document.dispatchEvent(new CustomEvent("discode-privacy"));
+            if (window.saveDiscodeProfile) window.saveDiscodeProfile();
         });
     }
 })();
