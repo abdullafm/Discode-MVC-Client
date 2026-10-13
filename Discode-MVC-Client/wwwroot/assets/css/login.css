@@ -105,6 +105,34 @@ body {
     color: #71767b;
 }
 
+.login-code {
+    letter-spacing: 0.35em;
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.login-forgot,
+button.login-forgot {
+    display: block;
+    width: fit-content;
+    margin: 0 0 4px;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: #1d9bf0;
+    font: inherit;
+    font-size: 15px;
+    line-height: 1.4;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.login-forgot:hover,
+button.login-forgot:hover {
+    text-decoration: underline;
+}
+
 .login-switch button,
 .login-switch a {
     border: 0;
@@ -123,10 +151,21 @@ body {
     text-decoration: underline;
 }
 
+.login-card button.login-forgot[type="submit"] {
+    width: auto;
+    height: auto;
+    margin: 8px 0 0;
+    background: transparent;
+    color: #1d9bf0;
+    font-size: 15px;
+    font-weight: 400;
+    box-shadow: none;
+}
+
 .login-card button[type="submit"] {
     width: 100%;
     height: 40px;
-    margin: 24px 0 16px;
+    margin: 16px 0 16px;
     border: 0;
     border-radius: 9999px;
     background: #ffffff;

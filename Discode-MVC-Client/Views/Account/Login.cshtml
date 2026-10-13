@@ -6,9 +6,18 @@
 <main class="login-page">
     <form class="login-card" id="login-form" asp-controller="Account" asp-action="Login" method="post">
         <h1>Welcome back!</h1>
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="auth-errors" asp-validation-summary="All"></div>
+        }
+        @if (TempData["Info"] is string info)
+        {
+            <p class="auth-info">@info</p>
+        }
         <input asp-for="ReturnUrl" type="hidden" />
         <input asp-for="Email" id="login-email" type="email" autocomplete="email" required pattern=".*\S.*" placeholder="Email">
         <input asp-for="Password" id="login-pass" type="password" autocomplete="current-password" required pattern=".*\S.*" placeholder="Password">
+        <a class="login-forgot" asp-controller="Account" asp-action="ForgotPassword" data-i18n="Forgot password?">Forgot password?</a>
         <button type="submit">Sign in</button>
         <p class="login-switch">Don't have an account? <a asp-controller="Account" asp-action="Register">Sign up</a></p>
     </form>

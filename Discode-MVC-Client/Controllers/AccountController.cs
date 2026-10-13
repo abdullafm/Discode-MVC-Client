@@ -68,9 +68,7 @@ namespace Discode_MVC_Client.Controllers
 
                 if (response.IsSuccessStatusCode)
                 {
-                    TempData["AuthEmail"] = model.Email;
-                    TempData["Info"] = "Your account is ready. Log in to continue.";
-                    return RedirectToAction(nameof(Login));
+                    return RedirectToAction(nameof(VerifyEmail), new { email = model.Email });
                 }
 
                 var result = await ReadJsonAsync<RegisterResponseVM>(response);
@@ -146,6 +144,119 @@ namespace Discode_MVC_Client.Controllers
                 ModelState.AddModelError(string.Empty, "The service is unavailable right now. Please try again later.");
                 return View(model);
             }
+        }
+
+        [HttpGet]
+        public IActionResult VerifyEmail(string? email)
+        {
+            if (User.Identity?.IsAuthenticated == true)
+                return RedirectToAction("Index", "Home");
+
+            if (string.IsNullOrWhiteSpace(email))
+                return RedirectToAction(nameof(Register));
+
+            return View(new VerifyEmailVM { Email = email.Trim() });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> VerifyEmail(VerifyEmailVM model)
+        {
+            if (User.Identity?.IsAuthenticated == true)
+                return RedirectToAction("Index", "Home");
+
+            model.Email = model.Email?.Trim() ?? string.Empty;
+            model.Code = new string((model.Code ?? string.Empty).Where(char.IsDigit).ToArray());
+
+            if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Code))
+            {
+                ModelState.AddModelError(string.Empty, "Enter the 4-digit code.");
+                return View(model);
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await client.PostAsJsonAsync("api/account/verify-email", new
+                {
+                    model.Email,
+                    model.Code
+                });
+
+                var result = await ReadJsonAsync<RegisterResponseVM>(response);
+                if (response.IsSuccessStatusCode && result is not null && result.IsSuccess)
+                {
+                    TempData["AuthEmail"] = model.Email;
+                    TempData["Info"] = "Email confirmed. You can sign in now.";
+                    return RedirectToAction(nameof(Login));
+                }
+
+                foreach (var error in result?.Errors is { Length: > 0 } ? result.Errors : new[] { "That code is incorrect." })
+                    ModelState.AddModelError(string.Empty, error);
+            }
+            catch (HttpRequestException)
+            {
+                ModelState.AddModelError(string.Empty, "The service is unavailable right now. Please try again later.");
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendCode(VerifyEmailVM model)
+        {
+            if (User.Identity?.IsAuthenticated == true)
+                return RedirectToAction("Index", "Home");
+
+            model.Email = model.Email?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(model.Email))
+                return RedirectToAction(nameof(Register));
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await client.PostAsJsonAsync("api/account/resend-code", new { model.Email });
+                var result = await ReadJsonAsync<RegisterResponseVM>(response);
+                if (response.IsSuccessStatusCode && result is not null && result.IsSuccess)
+                    TempData["Info"] = "A new code was sent to your email.";
+                else
+                    foreach (var error in result?.Errors is { Length: > 0 } ? result.Errors : new[] { "Could not resend the code." })
+                        ModelState.AddModelError(string.Empty, error);
+            }
+            catch (HttpRequestException)
+            {
+                ModelState.AddModelError(string.Empty, "The service is unavailable right now. Please try again later.");
+            }
+
+            return View(nameof(VerifyEmail), new VerifyEmailVM { Email = model.Email });
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            if (User.Identity?.IsAuthenticated == true)
+                return RedirectToAction("Index", "Home");
+
+            return View(new ForgotPasswordVM());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ForgotPassword(ForgotPasswordVM model)
+        {
+            if (User.Identity?.IsAuthenticated == true)
+                return RedirectToAction("Index", "Home");
+
+            model.Email = model.Email?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(model.Email))
+            {
+                ModelState.AddModelError(string.Empty, "Enter your email.");
+                return View(model);
+            }
+
+            ViewBag.Info = "If an account exists for this email, we will send a reset link.";
+            return View(new ForgotPasswordVM());
         }
 
         [HttpPost]

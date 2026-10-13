@@ -1,0 +1,26 @@
+@model VerifyEmailVM
+@{
+    Layout = "_LoginLayout";
+}
+
+<main class="login-page">
+    <form class="login-card" id="verify-form" asp-controller="Account" asp-action="VerifyEmail" method="post">
+        <h1 data-i18n="Check your email">Check your email</h1>
+        <p>We sent a 4-digit code to <strong>@Model.Email</strong>.</p>
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="auth-errors" asp-validation-summary="All"></div>
+        }
+        @if (TempData["Info"] is string info)
+        {
+            <p class="auth-info">@info</p>
+        }
+        <input asp-for="Email" type="hidden">
+        <input asp-for="Code" id="verify-code" class="login-code" type="text" inputmode="numeric" maxlength="4" autocomplete="one-time-code" required pattern="[0-9]{4}" placeholder="0000" aria-label="Verification code">
+        <button type="submit" data-i18n="Verify">Verify</button>
+        <p class="login-switch">
+            <button type="submit" class="login-forgot" formaction="@Url.Action("ResendCode", "Account")" formmethod="post" formnovalidate data-i18n="Resend code">Resend code</button>
+        </p>
+        <p class="login-switch"><a asp-controller="Account" asp-action="Login" data-i18n="Sign in">Sign in</a></p>
+    </form>
+</main>

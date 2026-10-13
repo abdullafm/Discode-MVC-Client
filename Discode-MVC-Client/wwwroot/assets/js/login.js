@@ -25,3 +25,11 @@
         }
     });
 })();
+
+(function () {
+    var code = document.getElementById("verify-code");
+    if (!code) return;
+    code.addEventListener("input", function () {
+        this.value = this.value.replace(/\D/g, "").slice(0, 4);
+    });
+})();
