@@ -235,7 +235,6 @@
             <div class="me-body">
                 <h2 class="me-display">@Model.Profile.DisplayName</h2>
                 <p class="me-handle">@Model.Profile.UserName</p>
-                <p class="me-about" id="me-about" @(string.IsNullOrWhiteSpace(Model.Profile.CustomStatus) ? "hidden" : null)>@Model.Profile.CustomStatus</p>
                 <button type="button" class="me-edit" id="me-edit"><i class="fa-solid fa-pen"></i> Edit Profile</button>
                 <button type="button" class="me-logout" id="me-logout"><i class="fa-solid fa-right-from-bracket"></i> Log out</button>
                 <button type="button" class="me-row" id="me-status-open"><span class="me-mini"></span><span

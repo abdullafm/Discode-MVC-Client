@@ -40,9 +40,18 @@
         el.textContent = message;
     }
 
+    var saveInFlight = false;
+    var saveQueued = false;
+
     function saveProfile() {
         var box = document.getElementById("me-profile");
         if (box && box.classList.contains("visitor-view")) return;
+
+        if (saveInFlight) {
+            saveQueued = true;
+            return;
+        }
+        saveInFlight = true;
 
         var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
         var pub = document.getElementById("account-public");
@@ -64,7 +73,11 @@
                 isPublic: !!(pub && pub.classList.contains("on"))
             })
         }).then(function (res) {
-            if (res.ok) return;
+            if (res.ok) {
+                var el = document.querySelector(".home-error");
+                if (el) el.hidden = true;
+                return;
+            }
             return res.json().then(function (data) {
                 var msg = data && data.errors && data.errors[0] ? data.errors[0] : "Could not update the profile.";
                 showProfileError(msg);
@@ -73,6 +86,12 @@
             });
         }).catch(function () {
             showProfileError("Could not reach the server. Refresh and try again.");
+        }).then(function () {
+            saveInFlight = false;
+            if (saveQueued) {
+                saveQueued = false;
+                saveProfile();
+            }
         });
     }
 
@@ -132,7 +151,7 @@
     document.getElementById("me-edit").addEventListener("click", function () {
         viewing = meName();
         setVisitor(false);
-        closePop();
+        closePop(true);
         paintPop();
         loadMe();
         renderMyPosts();
@@ -202,7 +221,7 @@
 
     var popTimer = 0;
 
-    function closePop() {
+    function closePop(skipSave) {
         closeStatus();
         window.clearTimeout(popTimer);
         if (window.discodePop) window.discodePop(pop, false);
@@ -212,7 +231,7 @@
             pop.style.transform = "";
             pop.classList.add("d-none");
         }, 200);
-        saveProfile();
+        if (!skipSave) saveProfile();
     }
 
     function openPop() {

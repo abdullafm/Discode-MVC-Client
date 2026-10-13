@@ -57,7 +57,9 @@ namespace Discode_MVC_Client.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var response = await client.PutAsJsonAsync("api/account/profile", model);
+                var response = await client.PutAsJsonAsync("api/account/myprofileupdate", model);
+                if (response.StatusCode is System.Net.HttpStatusCode.NotFound or System.Net.HttpStatusCode.MethodNotAllowed)
+                    response = await client.PutAsJsonAsync("api/account/profile", model);
                 var result = await ReadJsonAsync<UpdateProfileResponseVM>(response);
 
                 if (!response.IsSuccessStatusCode || result is null || !result.IsSuccess)
