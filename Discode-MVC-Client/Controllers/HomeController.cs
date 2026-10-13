@@ -1,4 +1,5 @@
 using Discode_MVC_Client.ViewModels.Account;
+using Discode_MVC_Client.ViewModels.Friends;
 using Discode_MVC_Client.ViewModels.Home;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -100,6 +101,97 @@ namespace Discode_MVC_Client.Controllers
             return Ok(new { avatarUrl = "/uploads/avatars/" + userId + ".jpg" });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> SearchUsers(string searchName)
+        {
+            if (string.IsNullOrWhiteSpace(searchName))
+                return Ok(Array.Empty<UserSearchVM>());
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var users = await client.GetFromJsonAsync<List<UserSearchVM>>(
+                    "api/account/search?searchName=" + Uri.EscapeDataString(searchName.Trim()));
+
+                return Ok(users ?? new List<UserSearchVM>());
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(503, Array.Empty<UserSearchVM>());
+            }
+            catch (JsonException)
+            {
+                return Ok(Array.Empty<UserSearchVM>());
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> SendFriendRequest([FromBody] SendFriendRequestVM model)
+        {
+            if (model is null || (string.IsNullOrWhiteSpace(model.UserName) && string.IsNullOrWhiteSpace(model.UserId)))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a user." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync("api/friend/request", new
+            {
+                userId = string.IsNullOrWhiteSpace(model.UserId) ? null : model.UserId.Trim(),
+                userName = model.UserName?.Trim()
+            }));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Friends()
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var data = await client.GetFromJsonAsync<List<FriendRequestVM>>("api/friend");
+                return Ok(data ?? new List<FriendRequestVM>());
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(503, Array.Empty<FriendRequestVM>());
+            }
+            catch (JsonException)
+            {
+                return Ok(Array.Empty<FriendRequestVM>());
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> FriendPending()
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var data = await client.GetFromJsonAsync<FriendPendingVM>("api/friend/pending");
+                return Ok(data ?? new FriendPendingVM());
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(503, new FriendPendingVM());
+            }
+            catch (JsonException)
+            {
+                return Ok(new FriendPendingVM());
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> CancelFriendRequest([FromBody] FriendRequestIdVM model)
+            => ForwardFriendAction(model, id => $"api/friend/request/{id}", HttpMethod.Delete);
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> AcceptFriendRequest([FromBody] FriendRequestIdVM model)
+            => ForwardFriendAction(model, id => $"api/friend/request/{id}/accept", HttpMethod.Post);
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> DeclineFriendRequest([FromBody] FriendRequestIdVM model)
+            => ForwardFriendAction(model, id => $"api/friend/request/{id}/decline", HttpMethod.Post);
+
         private static HomeVM ToHome(ProfileVM profile) => new()
         {
             Profile = profile,
@@ -124,6 +216,39 @@ namespace Discode_MVC_Client.Controllers
             catch (JsonException)
             {
                 return null;
+            }
+        }
+
+        private Task<IActionResult> ForwardFriendAction(FriendRequestIdVM model, Func<int, string> url, HttpMethod method)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Friend request not found." } }));
+
+            return ForwardToApi(client =>
+            {
+                if (method == HttpMethod.Delete)
+                    return client.DeleteAsync(url(model.Id));
+                return client.PostAsJsonAsync(url(model.Id), new { });
+            });
+        }
+
+        private async Task<IActionResult> ForwardToApi(Func<HttpClient, Task<HttpResponseMessage>> send)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await send(client);
+                var payload = await response.Content.ReadAsStringAsync();
+                return new ContentResult
+                {
+                    StatusCode = (int)response.StatusCode,
+                    Content = string.IsNullOrWhiteSpace(payload) ? "{}" : payload,
+                    ContentType = "application/json"
+                };
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(503, new { errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
             }
         }
     }

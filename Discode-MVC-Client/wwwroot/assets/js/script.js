@@ -111,21 +111,67 @@ function openToggle() {
         glide.style.height = "25px";
         glide.style.transform = "translate(" + button.offsetLeft + "px, -50%)";
     }
+    var currentFilter = "online";
     function paintFriends(filter) {
+        currentFilter = filter || currentFilter;
         var onlineTitle = document.getElementById("friends-online-title");
         var allTitle = document.getElementById("friends-all-title");
-        var list = document.querySelector("#friends-online .friends-online-list");
+        var list = document.getElementById("friends-all-list") || document.querySelector("#friends-online .friends-online-list");
         if (!list) return;
         var rows = list.querySelectorAll(".online-row");
         var visible = 0;
         for (var i = 0; i < rows.length; i++) {
             var presence = rows[i].getAttribute("data-presence") || "online";
-            var hide = filter === "online" && presence === "offline";
+            var hide = currentFilter === "online" && presence === "offline";
             rows[i].hidden = hide;
             if (!hide) visible++;
         }
-        if (onlineTitle) onlineTitle.hidden = filter !== "online" || visible === 0;
-        if (allTitle) allTitle.hidden = filter !== "all" || visible === 0;
+        if (onlineTitle) {
+            var count = onlineTitle.querySelector("span");
+            if (count) count.textContent = String(visible);
+            onlineTitle.hidden = currentFilter !== "online" || visible === 0;
+        }
+        if (allTitle) {
+            var count = allTitle.querySelector("span");
+            if (count) count.textContent = String(rows.length);
+            allTitle.hidden = currentFilter !== "all" || rows.length === 0;
+        }
+    }
+    function addFriendRow(item) {
+        var list = document.getElementById("friends-all-list");
+        var template = document.getElementById("friend-row");
+        if (!list || !template) return;
+        var username = item.userName || item.username || "";
+        var displayName = item.displayName || username;
+        var row = template.content.firstElementChild.cloneNode(true);
+        row.setAttribute("data-user", username);
+        var strong = row.querySelector("strong");
+        if (strong) strong.textContent = displayName;
+        var img = row.querySelector("img");
+        if (img) img.src = item.avatarUrl || item.avatar || "/assets/img/img-icon-profile.jpeg";
+        var links = row.querySelectorAll("a");
+        var href = "./dm.html?name=" + encodeURIComponent(username);
+        for (var i = 0; i < links.length; i++) {
+            links[i].setAttribute("href", href);
+            if (links[i].classList.contains("online-act"))
+                links[i].setAttribute("aria-label", "Message " + displayName);
+        }
+        list.appendChild(row);
+    }
+    function loadFriends() {
+        fetch("/Home/Friends", {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+            .then(function (response) { return response.ok ? response.json() : []; })
+            .then(function (data) {
+                var list = document.getElementById("friends-all-list");
+                if (!list) return;
+                list.innerHTML = "";
+                (data || []).forEach(addFriendRow);
+                paintFriends(currentFilter);
+            })
+            .catch(function () {});
     }
     function paintCount(title, rows) {
         if (!title) return;
@@ -141,28 +187,155 @@ function openToggle() {
         paintCount(title, list ? list.querySelectorAll(".request-row") : []);
         paintCount(sentTitle, sentList ? sentList.querySelectorAll(".sent-row") : []);
     }
-    function addSentRequest(username) {
+    function friendToken() {
+        var input = document.querySelector("input[name='__RequestVerificationToken']");
+        return input ? input.value : "";
+    }
+    function friendPost(url, body) {
+        return fetch(url, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "Content-Type": "application/json",
+                "RequestVerificationToken": friendToken(),
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            body: JSON.stringify(body)
+        });
+    }
+    function fillFace(row, avatarUrl, name) {
+        var face = row.querySelector(".online-face");
+        var img = row.querySelector("img");
+        var letter = row.querySelector(".sent-letter");
+        if (avatarUrl && img) {
+            img.hidden = false;
+            img.src = avatarUrl;
+            if (letter) letter.hidden = true;
+            if (face) face.classList.remove("sent-face");
+        } else if (letter) {
+            letter.hidden = false;
+            letter.textContent = (name || "?").charAt(0).toUpperCase();
+            if (img) img.hidden = true;
+        } else if (img) {
+            img.src = avatarUrl || "/assets/img/img-icon-profile.jpeg";
+        }
+    }
+    function fillRequestRow(row, item) {
+        var username = item.userName || item.username || "";
+        var displayName = item.displayName || username;
+        row.setAttribute("data-id", String(item.id || ""));
+        row.setAttribute("data-user", username);
+        var strong = row.querySelector("strong");
+        var user = row.querySelector(".request-user");
+        if (strong) strong.textContent = displayName;
+        if (user) user.textContent = username;
+        fillFace(row, item.avatarUrl || item.avatar || "", displayName);
+    }
+    function addSentRequest(item) {
         var list = document.getElementById("friends-sent-list");
         var template = document.getElementById("friend-sent-row");
         if (!list || !template) return;
+        var username = typeof item === "string" ? item : (item.userName || item.username || "");
+        if (!username) return;
+        var data = typeof item === "string" ? { userName: item, displayName: item } : item;
         var existing = list.querySelectorAll(".sent-row");
         for (var i = 0; i < existing.length; i++) {
             if (existing[i].getAttribute("data-user") === username) {
+                if (data.id) existing[i].setAttribute("data-id", String(data.id));
                 paintPendingTitle();
                 return;
             }
         }
         var row = template.content.firstElementChild.cloneNode(true);
-        row.setAttribute("data-user", username);
-        var strong = row.querySelector("strong");
-        var user = row.querySelector(".request-user");
-        var letter = row.querySelector(".sent-letter");
-        if (strong) strong.textContent = username;
-        if (user) user.textContent = username;
-        if (letter) letter.textContent = username.charAt(0).toUpperCase();
+        fillRequestRow(row, data);
         list.appendChild(row);
         paintPendingTitle();
     }
+    function addReceivedRequest(item) {
+        var list = document.getElementById("friends-pending-list");
+        var template = document.getElementById("friend-request-row");
+        if (!list || !template) return;
+        var row = template.content.firstElementChild.cloneNode(true);
+        fillRequestRow(row, item);
+        list.appendChild(row);
+    }
+    function paintPendingLists(sent, received) {
+        var sentList = document.getElementById("friends-sent-list");
+        var receivedList = document.getElementById("friends-pending-list");
+        if (sentList) sentList.innerHTML = "";
+        if (receivedList) receivedList.innerHTML = "";
+        (received || []).forEach(addReceivedRequest);
+        (sent || []).forEach(addSentRequest);
+        paintPendingTitle();
+    }
+    function loadPending() {
+        fetch("/Home/FriendPending", {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+            .then(function (response) { return response.ok ? response.json() : null; })
+            .then(function (data) {
+                if (!data) return;
+                paintPendingLists(data.sent || [], data.received || []);
+            })
+            .catch(function () {});
+    }
+    window.discodeFriends = {
+        reload: loadPending,
+        reloadFriends: loadFriends,
+        addSent: addSentRequest,
+        hasSent: function (username) {
+            var list = document.getElementById("friends-sent-list");
+            if (!list) return false;
+            var rows = list.querySelectorAll(".sent-row");
+            for (var i = 0; i < rows.length; i++) {
+                if (rows[i].getAttribute("data-user") === username) return true;
+            }
+            return false;
+        },
+        send: function (user, button) {
+            var username = user && (user.username || user.userName || "");
+            var userId = user && (user.id || user.userId || "");
+            if ((!username && !userId) || !button) return;
+            button.disabled = true;
+            friendPost("/Home/SendFriendRequest", { userName: username, userId: userId || null })
+                .then(function (response) {
+                    return response.json().then(function (data) {
+                        return { ok: response.ok, data: data || {} };
+                    }).catch(function () {
+                        return { ok: response.ok, data: {} };
+                    });
+                })
+                .then(function (result) {
+                    var message = result.data && result.data.errors && result.data.errors[0]
+                        ? String(result.data.errors[0])
+                        : "";
+                    var already = !result.ok && message.toLowerCase().indexOf("already") !== -1;
+                    if (!result.ok && !already) {
+                        button.disabled = false;
+                        var span = button.querySelector("span") || button;
+                        var prev = span === button ? button.innerHTML : span.textContent;
+                        if (span === button) button.innerHTML = message || "Couldn't send";
+                        else span.textContent = message || "Couldn't send";
+                        setTimeout(function () {
+                            if (span === button) button.innerHTML = prev;
+                            else span.textContent = prev;
+                        }, 2500);
+                        return;
+                    }
+                    button.classList.add("button-sent");
+                    button.disabled = true;
+                    button.innerHTML = '<i class="fa-solid fa-check"></i><span>Request Sent</span>';
+                    if (result.ok && result.data && result.data.id) addSentRequest(result.data);
+                    else loadPending();
+                    var pendingBtn = document.querySelector("#friend-filter-menu button[data-filter='pending']");
+                    if (pendingBtn) pendingBtn.click();
+                })
+                .catch(function () {
+                    button.disabled = false;
+                });
+        }
+    };
     function paintBlockedTitle() {
         var title = document.getElementById("friends-blocked-title");
         var list = document.getElementById("friends-blocked-list");
@@ -170,6 +343,15 @@ function openToggle() {
         title.hidden = !list.querySelector(".blocked-row");
     }
     paintFriends("online");
+    loadFriends();
+    loadPending();
+    setInterval(function () {
+        if (document.hidden) return;
+        var pending = document.getElementById("friends-pending");
+        var online = document.getElementById("friends-online");
+        if (pending && !pending.hidden) loadPending();
+        if (online && !online.hidden) loadFriends();
+    }, 3000);
     syncGlide(menu.querySelector("button.active"));
     pick.addEventListener("click", function (event) {
         if (!isCompactFilter()) return;
@@ -210,8 +392,11 @@ function openToggle() {
         if (add) add.hidden = !showAdd;
         if (empty) empty.hidden = showList || showPending || showBlocked || showAdd;
         if (now) now.hidden = showList || showPending || showBlocked || showAdd;
-        if (showList) paintFriends(filter);
-        if (showPending) paintPendingTitle();
+        if (showList) {
+            currentFilter = filter;
+            loadFriends();
+        }
+        if (showPending) loadPending();
         if (showBlocked) paintBlockedTitle();
         if (isCompactFilter()) closeCompactFilter();
     });
@@ -223,6 +408,42 @@ function openToggle() {
         if (!isCompactFilter()) closeCompactFilter();
         syncGlide(menu.querySelector("button.active"));
     });
+    var sentList = document.getElementById("friends-sent-list");
+    if (sentList) {
+        sentList.addEventListener("click", function (event) {
+            var button = event.target.closest(".sent-cancel");
+            if (!button) return;
+            var row = button.closest(".sent-row");
+            if (!row) return;
+            var id = row.getAttribute("data-id") || "";
+            row.remove();
+            paintPendingTitle();
+            if (!id) return;
+            friendPost("/Home/CancelFriendRequest", { id: Number(id) }).catch(function () {});
+        });
+    }
+    var receivedList = document.getElementById("friends-pending-list");
+    if (receivedList) {
+        receivedList.addEventListener("click", function (event) {
+            var accept = event.target.closest(".request-accept");
+            var decline = event.target.closest(".request-decline");
+            if (!accept && !decline) return;
+            var row = event.target.closest(".request-row");
+            if (!row) return;
+            var id = Number(row.getAttribute("data-id") || 0);
+            row.remove();
+            paintPendingTitle();
+            if (!id) return;
+            friendPost(accept ? "/Home/AcceptFriendRequest" : "/Home/DeclineFriendRequest", { id: id })
+                .then(function () {
+                    if (!accept) return;
+                    loadFriends();
+                    var allBtn = document.querySelector("#friend-filter-menu button[data-filter='all']");
+                    if (allBtn) allBtn.click();
+                })
+                .catch(function () {});
+        });
+    }
     var form = document.getElementById("add-friend-form");
     var nameInput = document.getElementById("add-friend-name");
     var messageInput = document.getElementById("add-friend-message");
@@ -256,26 +477,8 @@ function openToggle() {
         nameInput.value = "";
         if (messageInput) messageInput.value = "";
         if (count) count.textContent = "120";
-        fetch("/api/friends/requests", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username: username, message: message })
-        }).catch(function () {});
+        friendPost("/Home/SendFriendRequest", { userName: username }).catch(function () {});
     });
-    var sentList = document.getElementById("friends-sent-list");
-    if (sentList) {
-        sentList.addEventListener("click", function (event) {
-            var button = event.target.closest(".sent-cancel");
-            if (!button) return;
-            var row = button.closest(".sent-row");
-            if (!row) return;
-            var username = row.getAttribute("data-user") || "";
-            row.remove();
-            paintPendingTitle();
-            if (!username) return;
-            fetch("/api/friends/requests/" + encodeURIComponent(username), { method: "DELETE" }).catch(function () {});
-        });
-    }
 })();
 
 (function () {
@@ -374,19 +577,8 @@ function openToggle() {
     var queryText = document.getElementById("inline-search-query");
     
     var debounceTimer = null;
+    var searchToken = 0;
     var DEBOUNCE_DELAY = 300;
-    
-    // Mock user data - replace with real API call
-    var mockUsers = [
-        { username: "yarasa", displayName: "Yarasa", avatar: null, status: "online" },
-        { username: "yarasaxd", displayName: "Yarasa XD", avatar: null, status: "online" },
-        { username: "yarasa404", displayName: "Yarasa 404", avatar: null, status: "offline" },
-        { username: "Mr_Sigma", displayName: "Mr Sigma", avatar: "./assets/img/img-icon 4.jpeg", status: "online" },
-        { username: "Gpro-fighter", displayName: "Gpro Fighter", avatar: "./assets/img/img-icon 3.png", status: "idle" },
-        { username: "Moiz Hussain", displayName: "Moiz Hussain", avatar: "./assets/img/img-icon 2.png", status: "dnd" },
-        { username: "nxn", displayName: "nxn", avatar: "./assets/img/img-icon 1.png", status: "online" },
-        { username: "Unknown_Inj3ctor", displayName: "Unknown Inj3ctor", avatar: "./assets/img/img-icon.png", status: "offline" }
-    ];
     
     // Clear button
     if (searchClear && searchInput) {
@@ -418,39 +610,42 @@ function openToggle() {
             return;
         }
         
+        var token = ++searchToken;
         showLoading();
         
         debounceTimer = setTimeout(function () {
-            performSearch(query.trim());
+            performSearch(query.trim(), token);
         }, DEBOUNCE_DELAY);
     }
     
-    // Actual search function - REPLACE THIS WITH REAL API CALL
     async function searchUsers(query) {
-        // TODO: Replace with real API call:
-        // const response = await fetch('/api/search?q=' + encodeURIComponent(query));
-        // const data = await response.json();
-        // return data.users;
-        
-        // Mock implementation for demo
-        return new Promise(function (resolve) {
-            setTimeout(function () {
-                var filtered = mockUsers.filter(function (user) {
-                    var q = query.toLowerCase();
-                    return user.username.toLowerCase().includes(q) || 
-                           user.displayName.toLowerCase().includes(q);
-                });
-                resolve(filtered);
-            }, 500); // Simulate network delay
+        var response = await fetch("/Home/SearchUsers?searchName=" + encodeURIComponent(query), {
+            method: "GET",
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        });
+        if (!response.ok) throw new Error("search");
+        var data = await response.json();
+        if (!Array.isArray(data)) return [];
+        return data.map(function (user) {
+            return {
+                id: user.id || "",
+                username: user.userName || user.username || "",
+                displayName: user.displayName || "",
+                avatar: user.avatarUrl || user.avatar || null,
+                status: "offline"
+            };
         });
     }
     
     // Perform search
-    async function performSearch(query) {
+    async function performSearch(query, token) {
         try {
             var users = await searchUsers(query);
+            if (token !== searchToken) return;
             displayResults(users, query);
         } catch (error) {
+            if (token !== searchToken) return;
             console.error("Search error:", error);
             showNoResults(query);
         }
@@ -458,14 +653,14 @@ function openToggle() {
     
     // Display search results as table
     function displayResults(users, query) {
-        hideLoading();
         searchTbody.innerHTML = "";
         
-        if (users.length === 0) {
+        if (!users || users.length === 0) {
             showNoResults(query);
             return;
         }
         
+        hideLoading();
         noResults.hidden = true;
         searchTable.hidden = false;
         resultsCard.hidden = false;
@@ -475,9 +670,10 @@ function openToggle() {
             
             var avatarHtml = user.avatar 
                 ? '<img src="' + user.avatar + '" alt="' + user.username + '">'
-                : user.username.charAt(0).toUpperCase();
+                : (user.username || "?").charAt(0).toUpperCase();
             
             var statusHtml = getStatusHtml(user.status);
+            var already = window.discodeFriends && window.discodeFriends.hasSent(user.username);
             
             row.innerHTML = 
                 '<td>' +
@@ -491,25 +687,28 @@ function openToggle() {
                 '</td>' +
                 '<td class="inline-search-status-cell">' + statusHtml + '</td>' +
                 '<td class="inline-search-action-cell">' +
-                    '<button type="button" data-username="' + user.username + '" data-user-id="' + user.username + '">' +
-                        '<i class="fa-solid fa-user-plus"></i>' +
-                        '<span>Add Friend</span>' +
+                    '<button type="button" data-username="' + user.username + '" data-user-id="' + (user.id || "") + '"' + (already ? ' class="button-sent" disabled' : '') + '>' +
+                        (already
+                            ? '<i class="fa-solid fa-check"></i><span>Request Sent</span>'
+                            : '<i class="fa-solid fa-user-plus"></i><span>Add Friend</span>') +
                     '</button>' +
                 '</td>';
             
             searchTbody.appendChild(row);
-        });
-        
-        // Add friend button click handlers
-        var addButtons = searchTbody.querySelectorAll('button[data-username]');
-        addButtons.forEach(function (btn) {
-            btn.addEventListener("click", function (event) {
-                event.stopPropagation();
-                var username = btn.getAttribute("data-username");
-                var userId = btn.getAttribute("data-user-id");
-                addFriendRequest(username, btn);
-                sendFriendRequest(userId);
-            });
+            var cell = row.querySelector(".inline-search-user-cell");
+            if (cell) {
+                cell.style.cursor = "pointer";
+                cell.addEventListener("click", function () {
+                    if (window.openUserProfile) window.openUserProfile(user.username, user.avatar);
+                });
+            }
+            var button = row.querySelector("button[data-username]");
+            if (button && !button.disabled) {
+                button.addEventListener("click", function (event) {
+                    event.stopPropagation();
+                    addFriendRequest(user, button);
+                });
+            }
         });
     }
     
@@ -557,6 +756,7 @@ function openToggle() {
     
     // Clear all results
     function clearResults() {
+        searchToken++;
         searchTbody.innerHTML = "";
         noResults.hidden = true;
         loadingSpinner.hidden = true;
@@ -570,37 +770,9 @@ function openToggle() {
         }
     }
     
-    // Add friend request
-    function addFriendRequest(username, button) {
-        // TODO: Replace with real API call
-        // fetch('/api/friends/requests', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({ username: username })
-        // });
-        
-        console.log("Friend request sent to:", username);
-        
-        // Update button state to "Request Sent"
-        if (button) {
-            button.classList.add("button-sent");
-            button.innerHTML = '<i class="fa-solid fa-check"></i><span>Request Sent</span>';
-            button.disabled = true;
-        }
-        
-        // Optional: Clear search after delay
-        setTimeout(function () {
-            clearResults();
-            if (searchInput) searchInput.value = "";
-            if (searchClear) searchClear.hidden = true;
-        }, 1500);
-    }
-    
-    // Send friend request function (placeholder for future use)
-    function sendFriendRequest(userId) {
-        console.log("sendFriendRequest called with userId:", userId);
-        // This function can be called from other parts of the app
-        // For now, it's a placeholder
+    function addFriendRequest(user, button) {
+        if (window.discodeFriends && window.discodeFriends.send)
+            window.discodeFriends.send(user, button);
     }
     
     // Search input event listener

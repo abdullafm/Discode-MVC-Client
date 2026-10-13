@@ -205,6 +205,15 @@
 
     document.getElementById("me-profile-close").addEventListener("click", closeProfile);
 
+    var addFriend = document.getElementById("me-add");
+    if (addFriend) {
+        addFriend.addEventListener("click", function () {
+            var username = addFriend.getAttribute("data-username") || nodeText("#me-handle-name");
+            if (window.discodeFriends && window.discodeFriends.send)
+                window.discodeFriends.send({ username: username }, addFriend);
+        });
+    }
+
     profile.addEventListener("click", function (event) {
         if (event.target === profile) closeProfile();
     });
@@ -794,7 +803,14 @@
             viewName.textContent = viewing;
         }
         var handle = document.getElementById("me-handle-name");
-        if (handle) handle.textContent = self ? meHandle() : viewing.toLowerCase().replace(/\s+/g, "");
+        if (handle) handle.textContent = self ? meHandle() : viewing;
+        var add = document.getElementById("me-add");
+        if (add) {
+            add.setAttribute("data-username", self ? "" : viewing);
+            add.classList.remove("button-sent");
+            add.disabled = false;
+            add.innerHTML = '<i class="fa-solid fa-user-plus"></i> <span>Add Friend</span>';
+        }
         var face = profile.querySelector(".me-profile-avatar img");
         if (face) face.src = self ? ownPhoto : (photo || ownPhoto);
         var since = document.getElementById("me-since");

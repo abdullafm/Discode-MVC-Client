@@ -1459,11 +1459,6 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
 }
 
 /* Inline Search Container (for Add Friend section) */
-.inline-search-container {
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px solid #202225;
-}
 
 .inline-search-header {
     margin-bottom: 16px;
@@ -1740,10 +1735,20 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
 
 /* Loading state - inside single card */
 .inline-search-loading {
-    display: flex;
     align-items: center;
     justify-content: center;
     padding: 32px;
+}
+
+.inline-search-loading:not([hidden]) {
+    display: flex;
+}
+
+.inline-search-loading[hidden],
+.inline-search-no-results[hidden],
+.inline-search-table[hidden],
+.inline-search-results-card[hidden] {
+    display: none !important;
 }
 
 .loading-spinner {
@@ -1763,12 +1768,15 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
 
 /* No results - inside single card */
 .inline-search-no-results {
-    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 32px 16px;
     text-align: center;
+}
+
+.inline-search-no-results:not([hidden]) {
+    display: flex;
 }
 
 .inline-search-no-results i {
@@ -1789,9 +1797,6 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
 }
 
 /* Light mode for inline search */
-html:not(.theme-dark) .inline-search-container {
-    border-top-color: #e4e4e7;
-}
 
 html:not(.theme-dark) .inline-search-header h3 {
     color: #18181b;

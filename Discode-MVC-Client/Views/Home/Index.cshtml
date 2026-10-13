@@ -95,83 +95,26 @@
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="search" placeholder="Search" aria-label="Search" data-i18n-placeholder="Search" autocomplete="off" name="friend-search">
                     </label>
-                    <h2 id="friends-online-title">Online — 5</h2>
-                    <h2 id="friends-all-title" hidden>All friends — 5</h2>
-                    <div class="friends-online-list">
+                    <h2 id="friends-online-title">Online — <span>0</span></h2>
+                    <h2 id="friends-all-title" hidden>All friends — <span>0</span></h2>
+                    <div class="friends-online-list" id="friends-all-list"></div>
+                    <template id="friend-row">
                         <div class="online-row" data-presence="online">
-                            <a class="online-main" href="./dm.html?name=Mr_Sigma">
+                            <a class="online-main" href="#">
                                 <span class="online-face">
-                                    <img src="~/assets/img/img-icon 4.jpeg" alt=""><span class="online-dot"></span>
+                                    <img alt=""><span class="online-dot"></span>
                                 </span>
-                                <span class="online-copy"><strong>Mr_Sigma</strong><span data-i18n="Online">Online</span></span>
+                                <span class="online-copy"><strong></strong><span data-i18n="Online">Online</span></span>
                             </a>
-                            <a class="online-act" href="./dm.html?name=Mr_Sigma" aria-label="Message Mr_Sigma">
+                            <a class="online-act" href="#" aria-label="Message">
                                 <i class="fa-solid fa-comment"></i>
                             </a>
                             <button type="button" class="online-act" aria-label="More">
                                 <i class="fa-solid fa-ellipsis"></i>
                             </button>
                         </div>
-                        <div class="online-row" data-presence="idle">
-                            <a class="online-main" href="./dm.html?name=Gpro-fighter">
-                                <span class="online-face">
-                                    <img src="~/assets/img/img-icon 3.png" alt=""><span class="online-dot idle"></span>
-                                </span>
-                                <span class="online-copy"><strong>Gpro-fighter</strong><span>Idle</span></span>
-                            </a>
-                            <a class="online-act" href="./dm.html?name=Gpro-fighter"
-                               aria-label="Message Gpro-fighter"><i class="fa-solid fa-comment"></i></a>
-                            <button type="button" class="online-act" aria-label="More">
-                                <i class="fa-solid fa-ellipsis"></i>
-                            </button>
-                        </div>
-                        <div class="online-row" data-presence="dnd">
-                            <a class="online-main" href="./dm.html?name=Moiz%20Hussain">
-                                <span class="online-face">
-                                    <img src="~/assets/img/img-icon 2.png" alt=""><span class="online-dot dnd"></span>
-                                </span>
-                                <span class="online-copy">
-                                    <strong>Moiz Hussain</strong><span>
-                                    Do Not
-                                    Disturb
-                                </span>
-                            </span>
-                        </a>
-                        <a class="online-act" href="./dm.html?name=Moiz%20Hussain"
-                           aria-label="Message Moiz Hussain"><i class="fa-solid fa-comment"></i></a>
-                        <button type="button" class="online-act" aria-label="More">
-                            <i class="fa-solid fa-ellipsis"></i>
-                        </button>
-                    </div>
-                    <div class="online-row" data-presence="online">
-                        <a class="online-main" href="./dm.html?name=nxn">
-                            <span class="online-face">
-                                <img src="~/assets/img/img-icon 1.png" alt=""><span class="online-dot"></span>
-                            </span>
-                            <span class="online-copy"><strong>nxn</strong><span data-i18n="Online">Online</span></span>
-                        </a>
-                        <a class="online-act" href="./dm.html?name=nxn" aria-label="Message nxn">
-                            <i class="fa-solid fa-comment"></i>
-                        </a>
-                        <button type="button" class="online-act" aria-label="More">
-                            <i class="fa-solid fa-ellipsis"></i>
-                        </button>
-                    </div>
-                    <div class="online-row" data-presence="online">
-                        <a class="online-main" href="./dm.html?name=Unknown_Inj3ctor">
-                            <span class="online-face">
-                                <img src="~/assets/img/img-icon.png" alt=""><span class="online-dot"></span>
-                            </span>
-                            <span class="online-copy"><strong>Unknown_Inj3ctor</strong><span data-i18n="Online">Online</span></span>
-                        </a>
-                        <a class="online-act" href="./dm.html?name=Unknown_Inj3ctor"
-                           aria-label="Message Unknown_Inj3ctor"><i class="fa-solid fa-comment"></i></a>
-                        <button type="button" class="online-act" aria-label="More">
-                            <i class="fa-solid fa-ellipsis"></i>
-                        </button>
-                    </div>
+                    </template>
                 </div>
-            </div>
         </section>
         <section id="friends-pending" hidden>
             <div class="friends-online">
@@ -208,7 +151,10 @@
                 <template id="friend-sent-row">
                     <div class="online-row sent-row">
                         <div class="online-main">
-                            <span class="online-face sent-face"><span class="sent-letter"></span></span>
+                            <span class="online-face sent-face">
+                                <img alt="" hidden>
+                                <span class="sent-letter"></span>
+                            </span>
                             <span class="online-copy">
                                 <strong></strong>
                                 <span class="request-user"></span>
@@ -248,46 +194,6 @@
         </section>
         <section id="friends-add" hidden>
             <div class="friends-add">
-                <h2 data-i18n="Add Friend">Add Friend</h2>
-                <p class="add-friend-lead" data-i18n="You can add friends with their Discord username.">You can add friends with their Discord username.</p>
-                <form id="add-friend-form">
-                    <div class="add-friend-box">
-                        <div class="add-friend-user">
-                            <input id="add-friend-name" type="text" placeholder="Enter a username"
-                                   maxlength="32" autocomplete="off" aria-label="Username">
-                            <button type="submit" id="add-friend-send" disabled data-i18n="Send Friend Request">Send Friend Request</button>
-                        </div>
-                        <label class="add-friend-note">
-                            <textarea id="add-friend-message" maxlength="120"
-                                      placeholder="Personalize your request (Optional)"
-                                      aria-label="Personalize your request"></textarea>
-                            <span id="add-friend-count">120</span>
-                        </label>
-                    </div>
-                    <p class="add-friend-hint">
-                        What you write here will also show up in your DM if you become
-                        friends.
-                    </p>
-                    <p class="add-friend-ok" id="add-friend-ok" hidden>
-                        Success! Your friend request to <strong id="add-friend-ok-name"></strong> was sent.
-                    </p>
-                    <p class="add-friend-error" id="add-friend-error" hidden>
-                        Hm, didn't work. Double check that
-                        the capitalization, spelling, any spaces, and numbers are correct.
-                    </p>
-                </form>
-                <h3 data-i18n="Other Places to Make Friends">Other Places to Make Friends</h3>
-                <p class="add-friend-lead">
-                    Don't have a username on hand? Check out our list of public servers
-                    that includes everything from gaming to cooking, music, anime and more.
-                </p>
-                <a class="add-friend-discover" href="./discover.html">
-                    <span class="add-friend-discover-mark"><i class="fa-brands fa-discord"></i></span>
-                    <span data-i18n="Explore Discoverable Servers">Explore Discoverable Servers</span>
-                    <i class="fa-solid fa-chevron-right"></i>
-                </a>
-
-                <!-- Instagram-style Real-time Search -->
                 <div class="inline-search-container">
                     <div class="inline-search-header">
                         <h3 data-i18n="Quick Search">Quick Search</h3>
@@ -300,7 +206,6 @@
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>
-                    <!-- Single unified results card -->
                     <div class="inline-search-results-card" id="inline-search-results-card" hidden>
                         <div class="inline-search-loading" id="inline-search-loading" hidden>
                             <div class="loading-spinner"></div>
