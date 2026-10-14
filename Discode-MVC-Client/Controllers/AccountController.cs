@@ -243,7 +243,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ForgotPassword(ForgotPasswordVM model)
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordVM model)
         {
             if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Home");
@@ -255,8 +255,111 @@ namespace Discode_MVC_Client.Controllers
                 return View(model);
             }
 
-            ViewBag.Info = "If an account exists for this email, we will send a reset link.";
-            return View(new ForgotPasswordVM());
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await client.PostAsJsonAsync("api/account/forgot-password", new
+                {
+                    email = model.Email,
+                    resetPageUrl = $"{Request.Scheme}://{Request.Host}/Account/ResetPassword"
+                });
+
+                if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                {
+                    ModelState.AddModelError(string.Empty, "Too many attempts. Please wait a minute and try again.");
+                    return View(model);
+                }
+
+                var result = await ReadJsonAsync<RegisterResponseVM>(response);
+                if (!response.IsSuccessStatusCode || result is null || !result.IsSuccess)
+                {
+                    foreach (var error in result?.Errors is { Length: > 0 } ? result.Errors : new[] { "Could not send the reset email. Try again in a moment." })
+                        ModelState.AddModelError(string.Empty, error);
+                    return View(model);
+                }
+
+                ViewBag.Sent = true;
+                return View(new ForgotPasswordVM());
+            }
+            catch (HttpRequestException)
+            {
+                ModelState.AddModelError(string.Empty, "The service is unavailable right now. Please try again later.");
+                return View(model);
+            }
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword(string? email, string? token)
+        {
+            return View(new ResetPasswordVM
+            {
+                Email = email?.Trim() ?? string.Empty,
+                Token = token ?? string.Empty
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordVM model)
+        {
+            model.Email = model.Email?.Trim() ?? string.Empty;
+            model.Token = model.Token ?? string.Empty;
+            var password = model.NewPassword;
+            var confirm = model.ConfirmPassword;
+            model.NewPassword = string.Empty;
+            model.ConfirmPassword = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Token))
+            {
+                ModelState.AddModelError(string.Empty, "This reset link is invalid or has expired.");
+                return View(model);
+            }
+
+            if (string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(confirm))
+            {
+                model.NewPassword = password;
+                model.ConfirmPassword = confirm;
+                ModelState.AddModelError(string.Empty, "Enter and confirm your new password.");
+                return View(model);
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await client.PostAsJsonAsync("api/account/reset-password", new
+                {
+                    email = model.Email,
+                    token = model.Token,
+                    newPassword = password,
+                    confirmPassword = confirm
+                });
+
+                if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                {
+                    ModelState.AddModelError(string.Empty, "Too many attempts. Please wait a minute and try again.");
+                    return View(model);
+                }
+
+                var result = await ReadJsonAsync<RegisterResponseVM>(response);
+                if (!response.IsSuccessStatusCode || result is null || !result.IsSuccess)
+                {
+                    foreach (var error in result?.Errors is { Length: > 0 } ? result.Errors : new[] { "Could not reset the password." })
+                        ModelState.AddModelError(string.Empty, error);
+                    return View(model);
+                }
+
+                if (User.Identity?.IsAuthenticated == true)
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+                TempData["Info"] = "Password updated. You can sign in now.";
+                TempData["AuthEmail"] = model.Email;
+                return RedirectToAction(nameof(Login));
+            }
+            catch (HttpRequestException)
+            {
+                ModelState.AddModelError(string.Empty, "The service is unavailable right now. Please try again later.");
+                return View(model);
+            }
         }
 
         [HttpPost]

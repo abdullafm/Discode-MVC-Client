@@ -81,6 +81,64 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangeUsername([FromBody] ChangeUsernameVM model)
+        {
+            if (model is null)
+                return BadRequest(new UpdateProfileResponseVM { Errors = new[] { "Username data is missing." } });
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await client.PutAsJsonAsync("api/account/username", model);
+                var result = await ReadJsonAsync<UpdateProfileResponseVM>(response);
+
+                if (!response.IsSuccessStatusCode || result is null || !result.IsSuccess)
+                {
+                    var error = result?.Errors is { Length: > 0 }
+                        ? result.Errors[0]
+                        : "Could not change the username.";
+                    return BadRequest(new UpdateProfileResponseVM { Errors = new[] { error } });
+                }
+
+                return Ok(result);
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(503, new UpdateProfileResponseVM { Errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordVM model)
+        {
+            if (model is null)
+                return BadRequest(new UpdateProfileResponseVM { Errors = new[] { "Password data is missing." } });
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await client.PutAsJsonAsync("api/account/password", model);
+                var result = await ReadJsonAsync<UpdateProfileResponseVM>(response);
+
+                if (!response.IsSuccessStatusCode || result is null || !result.IsSuccess)
+                {
+                    var error = result?.Errors is { Length: > 0 }
+                        ? result.Errors[0]
+                        : "Could not change the password.";
+                    return BadRequest(new UpdateProfileResponseVM { Errors = new[] { error } });
+                }
+
+                return Ok(result);
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(503, new UpdateProfileResponseVM { Errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         [RequestSizeLimit(2_000_000)]
         public IActionResult UploadAvatar(IFormFile file)
         {
