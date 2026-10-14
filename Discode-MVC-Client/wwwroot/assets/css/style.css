@@ -25,6 +25,27 @@ body {
     background: #fff;
 }
 
+.home-error {
+    position: fixed;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 300;
+    margin: 0;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background: #fff0f0;
+    color: #f23f43;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+html.theme-dark .home-error {
+    background: #3d1f21;
+    color: #f23f43;
+}
+
 .app-header {
     display: contents;
 }
@@ -5841,7 +5862,7 @@ html.theme-dark .friend-filter-menu button {
     margin: 0 28px 8px 0;
 }
 
-.name-modal-card > p {
+.name-modal-card > p:not(.name-modal-error) {
     color: #4d5058;
     font-size: 14px;
     margin-bottom: 16px;
@@ -5897,15 +5918,22 @@ html.theme-dark .friend-filter-menu button {
     cursor: pointer;
 }
 
-.name-modal-hint,
-.name-modal-error {
+.name-modal-hint {
     margin-top: 6px;
     font-size: 12px;
     color: #80848e;
 }
 
 .name-modal-error {
-    color: #da373c;
+    margin-top: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #f23f43 !important;
+}
+
+.name-modal-card input.is-invalid,
+.name-modal-card input.is-invalid:focus {
+    border-color: #f23f43 !important;
 }
 
 .name-modal-actions {
@@ -5941,9 +5969,13 @@ html.theme-dark .name-modal-card {
 }
 
 html.theme-dark .name-modal-x,
-html.theme-dark .name-modal-card > p,
+html.theme-dark .name-modal-card > p:not(.name-modal-error),
 html.theme-dark .name-modal-hint {
     color: #b5bac1 !important;
+}
+
+html.theme-dark .name-modal-error {
+    color: #f23f43 !important;
 }
 
 html.theme-dark .name-modal-card label {

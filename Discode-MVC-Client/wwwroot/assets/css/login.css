@@ -181,6 +181,26 @@ button.login-forgot:hover {
     background: #d7dbdc;
 }
 
+.login-card a.login-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 40px;
+    margin: 16px 0 16px;
+    border-radius: 9999px;
+    background: #ffffff;
+    color: #0f1419;
+    font-size: 17px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.login-card a.login-submit:hover {
+    background: #d7dbdc;
+    text-decoration: none;
+}
+
 .login-switch {
     margin: 0;
     color: #71767b;
@@ -194,8 +214,10 @@ button.login-forgot:hover {
 }
 
 .auth-errors,
-.auth-errors ul {
-    color: #f4212e;
+.auth-errors ul,
+.auth-errors li {
+    color: #f23f43 !important;
+    font-weight: 600;
 }
 
 .auth-errors ul {

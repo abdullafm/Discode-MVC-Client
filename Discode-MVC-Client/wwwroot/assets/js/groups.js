@@ -475,6 +475,21 @@ renderGroupList();
         });
     }
 
+    function setModalError(modal, errorEl, message) {
+        var inputs = modal ? modal.querySelectorAll("input") : [];
+        var i;
+        if (message) {
+            if (errorEl) {
+                errorEl.hidden = false;
+                errorEl.textContent = message;
+            }
+            for (i = 0; i < inputs.length; i++) inputs[i].classList.add("is-invalid");
+            return;
+        }
+        if (errorEl) errorEl.hidden = true;
+        for (i = 0; i < inputs.length; i++) inputs[i].classList.remove("is-invalid");
+    }
+
     var nameModal = document.getElementById("name-modal");
     var nameEdit = document.getElementById("settings-username-edit");
     var nameValue = document.getElementById("settings-username");
@@ -492,12 +507,12 @@ renderGroupList();
                 if (icon) icon.className = "fa-regular fa-eye";
                 eye.setAttribute("aria-label", "Show password");
             }
-            if (nameError) nameError.hidden = true;
+            setModalError(nameModal, nameError, "");
         }
         function openNameModal() {
             nameUser.value = nameValue.textContent;
             namePass.value = "";
-            if (nameError) nameError.hidden = true;
+            setModalError(nameModal, nameError, "");
             nameModal.hidden = false;
             nameUser.focus();
         }
@@ -512,17 +527,37 @@ renderGroupList();
             var pass = namePass.value;
             var ok = /^[a-zA-Z0-9_.]+$/.test(next);
             if (!next || !pass || !ok) {
-                if (nameError) {
-                    nameError.hidden = false;
-                    nameError.textContent = !pass ? "Enter your current password." : "Please only use numbers, letters, underscores _ , or periods.";
-                }
+                setModalError(nameModal, nameError, !pass ? "Enter your current password." : "Please only use numbers, letters, underscores _ , or periods.");
                 return;
             }
-            nameValue.textContent = next;
-            var handle = document.getElementById("me-handle-name");
-            if (handle) handle.textContent = next;
-            closeNameModal();
-            if (window.saveDiscodeProfile) window.saveDiscodeProfile();
+            var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
+            fetch("/Home/ChangeUsername", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": tokenInput ? tokenInput.value : "",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: JSON.stringify({ userName: next, currentPassword: pass })
+            }).then(function (res) {
+                return res.json().then(function (data) {
+                    if (!res.ok || (data && data.isSuccess === false)) {
+                        setModalError(nameModal, nameError, data && data.errors && data.errors[0]
+                            ? data.errors[0]
+                            : "Current password is incorrect.");
+                        return;
+                    }
+                    nameValue.textContent = next;
+                    var handle = document.getElementById("me-handle-name");
+                    if (handle) handle.textContent = next;
+                    closeNameModal();
+                }).catch(function () {
+                    setModalError(nameModal, nameError, "Could not change the username.");
+                });
+            }).catch(function () {
+                setModalError(nameModal, nameError, "Could not reach the server. Refresh and try again.");
+            });
         });
         var nameEye = document.getElementById("name-modal-eye");
         if (nameEye) {
@@ -557,7 +592,7 @@ renderGroupList();
                 if (icon) icon.className = "fa-regular fa-eye";
                 eyes[i].setAttribute("aria-label", "Show password");
             }
-            if (passError) passError.hidden = true;
+            setModalError(passModal, passError, "");
         }
         passEdit.addEventListener("click", function () {
             closePassModal();
@@ -571,20 +606,46 @@ renderGroupList();
         });
         document.getElementById("pass-modal-done").addEventListener("click", function () {
             if (!passCurrent.value || !passNew.value || !passConfirm.value) {
-                if (passError) {
-                    passError.hidden = false;
-                    passError.textContent = "Fill in all password fields.";
-                }
+                setModalError(passModal, passError, "Fill in all password fields.");
                 return;
             }
             if (passNew.value !== passConfirm.value) {
-                if (passError) {
-                    passError.hidden = false;
-                    passError.textContent = "New passwords do not match.";
-                }
+                setModalError(passModal, passError, "New passwords do not match.");
                 return;
             }
-            closePassModal();
+            if (passNew.value === passCurrent.value) {
+                setModalError(passModal, passError, "Choose a different password.");
+                return;
+            }
+            var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
+            fetch("/Home/ChangePassword", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": tokenInput ? tokenInput.value : "",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: JSON.stringify({
+                    currentPassword: passCurrent.value,
+                    newPassword: passNew.value,
+                    confirmPassword: passConfirm.value
+                })
+            }).then(function (res) {
+                return res.json().then(function (data) {
+                    if (!res.ok || (data && data.isSuccess === false)) {
+                        setModalError(passModal, passError, data && data.errors && data.errors[0]
+                            ? data.errors[0]
+                            : "Current password is incorrect.");
+                        return;
+                    }
+                    closePassModal();
+                }).catch(function () {
+                    setModalError(passModal, passError, "Could not change the password.");
+                });
+            }).catch(function () {
+                setModalError(passModal, passError, "Could not reach the server. Refresh and try again.");
+            });
         });
         var passEyes = passModal.querySelectorAll(".pass-eye");
         for (var e = 0; e < passEyes.length; e++) {
