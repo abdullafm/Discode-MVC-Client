@@ -13,6 +13,7 @@ wwwroot\assets\css\nitro.css
 wwwroot\assets\css\register.css
 wwwroot\assets\css\server.css
 wwwroot\assets\css\socialmedia.css
+wwwroot\assets\css\style.css
 wwwroot\assets\icons\favicon.ico
 wwwroot\assets\img\1641b16ec6ac0c4e733d.svg
 wwwroot\assets\img\Azaan.jpeg
@@ -45,4 +46,5 @@ wwwroot\assets\js\socialmedia.js
 wwwroot\assets\js\theme.js
 wwwroot\uploads\avatars\.gitkeep
 wwwroot\uploads\avatars\63803260-478b-4f47-a400-13044e002e9b.jpg
-wwwroot\assets\css\style.css
+wwwroot\uploads\avatars\abacec53-bb63-4805-ac44-637d4a2d6f8d.jpg
+wwwroot\uploads\avatars\d0e497c8-99ef-455a-a067-81311b432850.jpg

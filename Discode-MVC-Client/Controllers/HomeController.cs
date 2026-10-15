@@ -250,6 +250,11 @@ namespace Discode_MVC_Client.Controllers
         public Task<IActionResult> DeclineFriendRequest([FromBody] FriendRequestIdVM model)
             => ForwardFriendAction(model, id => $"api/friend/request/{id}/decline", HttpMethod.Post);
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> RemoveFriend([FromBody] FriendRequestIdVM model)
+            => ForwardFriendAction(model, id => $"api/friend/{id}", HttpMethod.Delete);
+
         private static HomeVM ToHome(ProfileVM profile) => new()
         {
             Profile = profile,

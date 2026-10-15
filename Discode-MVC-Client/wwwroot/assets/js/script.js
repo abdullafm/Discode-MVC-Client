@@ -145,6 +145,7 @@ function openToggle() {
         var displayName = item.displayName || username;
         var row = template.content.firstElementChild.cloneNode(true);
         row.setAttribute("data-user", username);
+        row.setAttribute("data-id", String(item.id || ""));
         var strong = row.querySelector("strong");
         if (strong) strong.textContent = displayName;
         var img = row.querySelector("img");
@@ -283,6 +284,9 @@ function openToggle() {
     window.discodeFriends = {
         reload: loadPending,
         reloadFriends: loadFriends,
+        remove: function (id) {
+            return friendPost("/Home/RemoveFriend", { id: id });
+        },
         addSent: addSentRequest,
         hasSent: function (username) {
             var list = document.getElementById("friends-sent-list");
@@ -531,7 +535,18 @@ function openToggle() {
             if (window.discodeGo) window.discodeGo(href);
             else window.location.href = href;
         }
-        if (action === "remove") row.remove();
+        if (action === "remove") {
+            var friendRow = row;
+            var requestId = Number(friendRow.getAttribute("data-id") || 0);
+            if (requestId > 0 && window.discodeFriends) {
+                window.discodeFriends.remove(requestId)
+                    .then(function (response) {
+                        if (response.ok) friendRow.remove();
+                        window.discodeFriends.reloadFriends();
+                    })
+                    .catch(function () {});
+            }
+        }
         closeMenu();
     });
 })();

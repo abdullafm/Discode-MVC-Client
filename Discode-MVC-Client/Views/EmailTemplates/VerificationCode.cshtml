@@ -1,0 +1,30 @@
+@model Discode_MVC_Client.ViewModels.Email.VerificationCodeEmailVM
+@{
+    Layout = "_EmailLayout";
+}
+<tr>
+    <td style="padding:0 0 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:40px;font-weight:700;line-height:1.1;color:#e7e9ea;">
+        Check your email
+    </td>
+</tr>
+<tr>
+    <td style="padding:0 0 28px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:17px;line-height:1.5;color:#71767b;">
+        Enter this 4-digit code to confirm your email and finish creating your account.
+    </td>
+</tr>
+<tr>
+    <td style="padding:0 0 28px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+                <td align="center" bgcolor="#000000" style="background:#000000;border:1px solid #536471;border-radius:4px;padding:18px 16px;font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:40px;font-weight:700;letter-spacing:14px;color:#ffffff;">
+                    @Model.Code
+                </td>
+            </tr>
+        </table>
+    </td>
+</tr>
+<tr>
+    <td style="font-family:'Nunito Sans',Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#71767b;">
+        This code expires in 10 minutes. If you did not request it, you can ignore this email.
+    </td>
+</tr>
