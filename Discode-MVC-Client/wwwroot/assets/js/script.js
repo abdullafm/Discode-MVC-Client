@@ -284,8 +284,27 @@ function openToggle() {
     window.discodeFriends = {
         reload: loadPending,
         reloadFriends: loadFriends,
-        remove: function (id) {
-            return friendPost("/Home/RemoveFriend", { id: id });
+        removeRow: function (row) {
+            var requestId = Number(row.getAttribute("data-id") || 0);
+            if (requestId <= 0) return;
+            friendPost("/Home/RemoveFriend", { id: requestId })
+                .then(function (response) {
+                    if (response.ok) row.remove();
+                    loadFriends();
+                })
+                .catch(function () {});
+        },
+        blockRow: function (row) {
+            var username = row.getAttribute("data-user") || "";
+            if (!username) return;
+            friendPost("/Home/BlockUser", { userName: username })
+                .then(function (response) {
+                    if (response.ok) row.remove();
+                    loadFriends();
+                    loadPending();
+                    loadBlocked();
+                })
+                .catch(function () {});
         },
         addSent: addSentRequest,
         hasSent: function (username) {
@@ -344,7 +363,59 @@ function openToggle() {
         var title = document.getElementById("friends-blocked-title");
         var list = document.getElementById("friends-blocked-list");
         if (!title || !list) return;
-        title.hidden = !list.querySelector(".blocked-row");
+        var rows = list.querySelectorAll(".blocked-row");
+        var count = title.querySelector("span");
+        if (count) count.textContent = String(rows.length);
+        title.hidden = rows.length === 0;
+    }
+    function addBlockedRow(item) {
+        var list = document.getElementById("friends-blocked-list");
+        var template = document.getElementById("blocked-row");
+        if (!list || !template) return;
+        var username = item.userName || item.username || "";
+        var displayName = item.displayName || username;
+        var row = template.content.firstElementChild.cloneNode(true);
+        row.setAttribute("data-id", String(item.id || ""));
+        row.setAttribute("data-user", username);
+        var strong = row.querySelector("strong");
+        var user = row.querySelector(".request-user");
+        var img = row.querySelector("img");
+        if (strong) strong.textContent = displayName;
+        if (user) user.textContent = username;
+        if (img) img.src = item.avatarUrl || item.avatar || "/assets/img/img-icon-profile.jpeg";
+        list.appendChild(row);
+    }
+    function loadBlocked() {
+        fetch("/Home/Blocked", {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        })
+            .then(function (response) { return response.ok ? response.json() : null; })
+            .then(function (data) {
+                var list = document.getElementById("friends-blocked-list");
+                if (!list || !data) return;
+                list.innerHTML = "";
+                data.forEach(addBlockedRow);
+                paintBlockedTitle();
+            })
+            .catch(function () {});
+    }
+    var blockedList = document.getElementById("friends-blocked-list");
+    if (blockedList) {
+        blockedList.addEventListener("click", function (event) {
+            var button = event.target.closest(".blocked-unblock");
+            if (!button) return;
+            var row = button.closest(".blocked-row");
+            if (!row) return;
+            var id = Number(row.getAttribute("data-id") || 0);
+            if (!id) return;
+            friendPost("/Home/UnblockUser", { id: id })
+                .then(function (response) {
+                    if (response.ok) row.remove();
+                    paintBlockedTitle();
+                })
+                .catch(function () {});
+        });
     }
     paintFriends("online");
     loadFriends();
@@ -401,7 +472,7 @@ function openToggle() {
             loadFriends();
         }
         if (showPending) loadPending();
-        if (showBlocked) paintBlockedTitle();
+        if (showBlocked) loadBlocked();
         if (isCompactFilter()) closeCompactFilter();
     });
     document.addEventListener("click", function (event) {
@@ -535,18 +606,68 @@ function openToggle() {
             if (window.discodeGo) window.discodeGo(href);
             else window.location.href = href;
         }
-        if (action === "remove") {
-            var friendRow = row;
-            var requestId = Number(friendRow.getAttribute("data-id") || 0);
-            if (requestId > 0 && window.discodeFriends) {
-                window.discodeFriends.remove(requestId)
-                    .then(function (response) {
-                        if (response.ok) friendRow.remove();
-                        window.discodeFriends.reloadFriends();
-                    })
-                    .catch(function () {});
-            }
+        if (action === "remove" && window.discodeFriends) window.discodeFriends.removeRow(row);
+        closeMenu();
+    });
+})();
+
+(function () {
+    var menu = document.getElementById("friend-context");
+    var list = document.getElementById("friends-all-list");
+    if (!menu || !list) return;
+    var row = null;
+
+    function closeMenu() {
+        menu.hidden = true;
+        row = null;
+    }
+
+    function openMenu(target, x, y) {
+        row = target;
+        menu.hidden = false;
+        var width = menu.offsetWidth;
+        var height = menu.offsetHeight;
+        var left = Math.max(8, Math.min(x, window.innerWidth - width - 8));
+        var top = Math.max(8, Math.min(y, window.innerHeight - height - 8));
+        menu.style.left = left + "px";
+        menu.style.top = top + "px";
+    }
+
+    list.addEventListener("contextmenu", function (event) {
+        var target = event.target.closest && event.target.closest(".online-row");
+        if (!target) return;
+        event.preventDefault();
+        openMenu(target, event.clientX, event.clientY);
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest || !event.target.closest("#friend-context")) closeMenu();
+    });
+
+    document.addEventListener("contextmenu", function (event) {
+        if (!event.target.closest || !event.target.closest("#friends-all-list")) closeMenu();
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") closeMenu();
+    });
+
+    window.addEventListener("resize", closeMenu);
+    window.addEventListener("scroll", closeMenu, true);
+
+    menu.addEventListener("click", function (event) {
+        var button = event.target.closest("button");
+        if (!button || !row) return;
+        var action = button.getAttribute("data-action");
+        var link = row.querySelector(".online-main");
+        var href = link ? link.getAttribute("href") : "";
+        if ((action === "message" || action === "voice") && href) {
+            if (action === "voice") href += (href.indexOf("?") === -1 ? "?" : "&") + "call=voice";
+            if (window.discodeGo) window.discodeGo(href);
+            else window.location.href = href;
         }
+        if (action === "block" && window.discodeFriends) window.discodeFriends.blockRow(row);
+        if (action === "remove" && window.discodeFriends) window.discodeFriends.removeRow(row);
         closeMenu();
     });
 })();

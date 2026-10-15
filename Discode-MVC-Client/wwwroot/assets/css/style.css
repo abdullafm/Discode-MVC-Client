@@ -2572,6 +2572,120 @@ html.theme-dark .friend-more .is-danger:hover {
     color: #fff;
 }
 
+.friend-context {
+    position: fixed;
+    z-index: 80;
+    width: 208px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: #fff;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, .18);
+}
+
+.friend-context[hidden] {
+    display: none;
+}
+
+.friend-context button {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    margin: 2px 0;
+    border: 0;
+    border-radius: 2px;
+    background: transparent;
+    color: #060607;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    padding: 6px 8px;
+    cursor: pointer;
+}
+
+.friend-context button small {
+    margin-top: 2px;
+    color: #5c5e66;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.friend-context button.has-arrow {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.friend-context button.has-arrow i {
+    font-size: 11px;
+}
+
+.friend-context button span {
+    color: inherit;
+}
+
+.friend-context hr {
+    display: block;
+    width: 100%;
+    height: 1px;
+    margin: 4px 0;
+    border: 0;
+    background: #e3e5e8;
+}
+
+.friend-context button:hover {
+    background: #f2f3f5;
+}
+
+.friend-context .is-danger {
+    color: #f23f43;
+}
+
+.friend-context .is-danger:hover {
+    background: #f23f43;
+    color: #fff;
+}
+
+html.theme-dark .friend-context {
+    background: #111214;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, .45);
+}
+
+html.theme-dark .friend-context button {
+    color: #dbdee1;
+}
+
+html.theme-dark .friend-context button small {
+    color: #949ba4;
+}
+
+html.theme-dark body .friend-context button span {
+    color: inherit !important;
+}
+
+html.theme-dark .friend-context hr {
+    background: #2e3035;
+}
+
+html.theme-dark .friend-context button:hover {
+    background: #4752c4;
+    color: #fff;
+}
+
+html.theme-dark .friend-context button:hover small {
+    color: #e0e3ff;
+}
+
+html.theme-dark .friend-context .is-danger {
+    color: #f23f43;
+}
+
+html.theme-dark .friend-context .is-danger:hover {
+    background: #da373c;
+    color: #fff;
+}
+
 .online-row:hover .online-dot {
     border-color: #f2f3f5;
 }

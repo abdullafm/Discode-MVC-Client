@@ -255,6 +255,44 @@ namespace Discode_MVC_Client.Controllers
         public Task<IActionResult> RemoveFriend([FromBody] FriendRequestIdVM model)
             => ForwardFriendAction(model, id => $"api/friend/{id}", HttpMethod.Delete);
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> BlockUser([FromBody] BlockUserVM model)
+        {
+            if (model is null || (string.IsNullOrWhiteSpace(model.UserName) && string.IsNullOrWhiteSpace(model.UserId)))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a user." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync("api/block", new
+            {
+                userId = string.IsNullOrWhiteSpace(model.UserId) ? null : model.UserId.Trim(),
+                userName = model.UserName?.Trim()
+            }));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Blocked()
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var data = await client.GetFromJsonAsync<List<FriendRequestVM>>("api/block");
+                return Ok(data ?? new List<FriendRequestVM>());
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(503, Array.Empty<FriendRequestVM>());
+            }
+            catch (JsonException)
+            {
+                return Ok(Array.Empty<FriendRequestVM>());
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> UnblockUser([FromBody] FriendRequestIdVM model)
+            => ForwardFriendAction(model, id => $"api/block/{id}", HttpMethod.Delete);
+
         private static HomeVM ToHome(ProfileVM profile) => new()
         {
             Profile = profile,
