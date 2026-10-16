@@ -1,7 +1,6 @@
 @model HomeVM
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <script src="~/assets/js/theme.js"></script>
     <script src="~/assets/js/i18n.js"></script>
@@ -10,9 +9,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discord | Friends</title>
     <link rel="stylesheet" href="~/assets/css/style.css">
+    @RenderSection("Styles", required: false)
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
+     <link rel="stylesheet" href="~/assets/css/nitro.css">
+     <link rel="stylesheet" href="~/assets/css/socialmedia.css">
     <link rel="shortcut icon" href="~/assets/icons/favicon.ico" type="image/x-icon">
 </head>
 
@@ -59,7 +61,7 @@
             <nav aria-label="Shortcuts">
                 <ul class="shortcut-list">
                     <li>
-                        <a class="shortcut-item active" href="./index.html">
+                        <a class="shortcut-item active" asp-controller="Home" asp-action="Index">
                             <svg class="linkButtonIcon_c91bad" aria-hidden="true" role="img"
                                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                                 viewBox="0 0 24 24">
@@ -72,7 +74,7 @@
                         </a>
                     </li>
                     <li>
-                        <a class="shortcut-item" href="./nitro.html">
+                        <a class="shortcut-item" asp-controller="Nitro" asp-action="Index">
                             <svg class="linkButtonIcon_c91bad" aria-hidden="true" role="img"
                                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none"
                                 viewBox="0 0 24 24">
@@ -87,7 +89,7 @@
                         </a>
                     </li>
                     <li>
-                        <a class="shortcut-item" href="./socialmedia.html">
+                        <a class="shortcut-item" asp-controller="Social" asp-action="Index">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path transform="translate(4, 0)"

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Discode-MVC-Client")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e9eeaf0ce0700ce59320287ddc26127968714182")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b9d5dfe376b52584710007321408c0413b883eb7")]
 [assembly: System.Reflection.AssemblyProductAttribute("Discode-MVC-Client")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Discode-MVC-Client")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

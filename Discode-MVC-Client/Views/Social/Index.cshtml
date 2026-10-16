@@ -1,0 +1,366 @@
+﻿@model HomeVM
+@{
+    Layout = "_HomeLayout";
+}
+<main class="friends-view social-view show-main">
+            <section id="social-stage"><div class="social-stage">
+                <div class="social-bar">
+                    <h1 id="social-title">Explore</h1>
+                </div>
+                <section id="view-explore"><div class="social-panel">
+                    <div class="explore-posts-divider">
+                        <h3>Public Posts</h3>
+                    </div>
+                    <p class="feed-empty" id="explore-empty" hidden>No public posts yet.</p>
+                    <div class="post-list" id="explore-list"></div>
+                </div></section>
+                <section id="view-friends" hidden><div class="social-panel">
+                    <div class="story-row" id="story-row"></div>
+                    <p class="feed-empty" id="friends-empty" hidden>No posts from friends yet.</p>
+                    <div class="post-list" id="friends-list"></div>
+                </div></section>
+                <section id="view-live" hidden><div class="social-panel live-view-panel">
+                    <div class="live-drawer-header">
+                        <div class="live-drawer-title-wrap">
+                            <span class="live-drawer-kicker">Public Live Streams</span>
+                            <h2>Live Now</h2>
+                            <p>Browse active public streams.</p>
+                        </div>
+                        <div class="live-drawer-actions">
+                            <button type="button" class="btn-go-live-action" id="explore-go-live-btn">
+                                <i class="fa-solid fa-video"></i>
+                                <span>Go Live</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="live-drawer-list" id="live-streams-list"></div>
+                    <div class="live-streams-empty" id="live-streams-empty" hidden>
+                        <i class="fa-solid fa-tower-broadcast"></i>
+                        <p>No active public live streams right now.</p>
+                        <button type="button" class="btn-start-stream" id="empty-go-live-btn">Start Streaming</button>
+                    </div>
+                </div></section>
+                <section id="view-compose" hidden><div class="social-panel">
+                    <form class="post-composer" id="post-composer">
+                        <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+                        <div class="composer-fields">
+                            <input type="text" name="author" maxlength="32" value="Anonymou5" aria-label="Name">
+                            <div class="rich-text" id="post-text" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="What's happening?" data-maxlength="500" data-empty="1"></div>
+                            <div class="photo-preview" id="photo-preview" hidden><img id="photo-preview-img" alt=""><button type="button" id="photo-remove" aria-label="Remove photo"><i class="fa-solid fa-xmark"></i></button></div>
+                            <div class="composer-actions">
+                                <div class="composer-tools">
+                                    <label class="tool-btn" title="Photo">
+                                        <i class="fa-regular fa-image"></i>
+                                        <input type="file" id="post-image" accept="image/*">
+                                    </label>
+                                    <button class="tool-btn" id="post-emoji" type="button" title="Emoji" aria-label="Emoji">
+                                        <i class="fa-regular fa-face-smile"></i>
+                                    </button>
+                                    <button class="tool-btn" id="post-lock" type="button" aria-pressed="false" title="Public">
+                                        <i class="fa-solid fa-lock-open"></i>
+                                    </button>
+                                </div>
+                                <button type="submit">Post</button>
+                            </div>
+                        </div>
+                    </form>
+                </div></section>
+            </div></section>
+            <section id="social-rail" aria-label="Social"><div class="social-rail">
+                <button type="button" data-view="compose">
+                    <i class="fa-solid fa-pen"></i>
+                    <span>Post</span>
+                </button>
+                <button type="button" class="active" data-view="explore">
+                    <i class="fa-solid fa-compass"></i>
+                    <span>Explore</span>
+                </button>
+                <button type="button" data-view="friends">
+                    <i class="fa-solid fa-user-group"></i>
+                    <span>Friends</span>
+                </button>
+                <button type="button" data-view="live">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                    <span>Live</span>
+                    <span class="explore-live-toggle-count" id="live-count-badge">4</span>
+                </button>
+            </div></section>
+            <section id="story-viewer" hidden><div class="story-viewer">
+                <div class="story-frame">
+                    <div class="story-progress" id="story-progress"></div>
+                    <div class="story-top">
+                        <img id="story-avatar" alt="">
+                        <strong id="story-name"></strong>
+                        <time id="story-time"></time>
+                        <div class="story-actions">
+                            <div class="story-menu">
+                                <button type="button" id="story-menu" aria-label="Story options" hidden><i class="fa-solid fa-ellipsis"></i></button>
+                                <div class="story-delete" id="story-delete" hidden>
+                                    <button type="button" id="story-delete-btn">Delete</button>
+                                </div>
+                            </div>
+                            <button type="button" id="story-close" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                    <img class="story-photo" id="story-photo" alt="">
+                    <p class="story-caption" id="story-caption"></p>
+                    <button class="story-hit story-hit-prev" id="story-prev" type="button" aria-label="Previous"></button>
+                    <button class="story-hit story-hit-next" id="story-next" type="button" aria-label="Next"></button>
+                </div>
+            </div></section>
+            <section id="story-file-wrap" hidden><input type="file" id="story-file" accept="image/*" hidden></section>
+            <section id="story-modal" hidden><div class="story-modal">
+                <div class="story-modal-content">
+                    <h2>Create Story</h2>
+                    <div class="story-options">
+                        <button type="button" class="story-option-btn" id="story-live-btn">
+                            <i class="fa-solid fa-video"></i>
+                            <span>Go Live</span>
+                        </button>
+                        <button type="button" class="story-option-btn" id="story-photo-btn">
+                            <i class="fa-solid fa-camera"></i>
+                            <span>Add Photo/Video</span>
+                        </button>
+                    </div>
+                    <button type="button" class="story-modal-close" id="story-modal-close" aria-label="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div></section>
+            <section id="story-editor" hidden><div class="story-editor">
+                <div class="story-frame">
+                    <canvas class="story-canvas" id="story-canvas" width="540" height="960"></canvas>
+                    <div class="story-edit-top">
+                        <button type="button" id="story-discard" aria-label="Discard"><i class="fa-solid fa-xmark"></i></button>
+                        <div class="story-edit-tools">
+                            <button type="button" data-tool="text" aria-label="Text"><i class="fa-solid fa-font"></i></button>
+                            <button type="button" data-tool="draw" aria-label="Draw"><i class="fa-solid fa-pen"></i></button>
+                            <button type="button" data-tool="sticker" aria-label="Sticker"><i class="fa-solid fa-face-grin-stars"></i></button>
+                            <button type="button" id="story-undo" aria-label="Undo"><i class="fa-solid fa-rotate-left"></i></button>
+                        </div>
+                    </div>
+                    <div class="story-edit-panel" id="story-edit-panel" hidden>
+                        <div id="story-tool-text" hidden>
+                            <input id="story-text" maxlength="80" placeholder="Add text" autocomplete="off">
+                            <div class="story-colors">
+                                <button type="button" data-color="#ffffff" style="background:#ffffff"></button>
+                                <button type="button" data-color="#111111" style="background:#111111"></button>
+                                <button type="button" data-color="#f9ce34" style="background:#f9ce34"></button>
+                                <button type="button" data-color="#ee2a7b" style="background:#ee2a7b"></button>
+                                <button type="button" data-color="#5865f2" style="background:#5865f2"></button>
+                                <button type="button" data-color="#3ba55d" style="background:#3ba55d"></button>
+                            </div>
+                            <button type="button" id="story-text-add">Add</button>
+                        </div>
+                        <div id="story-tool-draw" hidden>
+                            <div class="story-colors">
+                                <button type="button" data-color="#ffffff" style="background:#ffffff"></button>
+                                <button type="button" data-color="#111111" style="background:#111111"></button>
+                                <button type="button" data-color="#f9ce34" style="background:#f9ce34"></button>
+                                <button type="button" data-color="#ee2a7b" style="background:#ee2a7b"></button>
+                                <button type="button" data-color="#5865f2" style="background:#5865f2"></button>
+                                <button type="button" data-color="#3ba55d" style="background:#3ba55d"></button>
+                            </div>
+                        </div>
+                        <div id="story-tool-sticker" hidden>
+                            <button type="button" class="story-sticker" data-sticker="😂">😂</button>
+                            <button type="button" class="story-sticker" data-sticker="🔥">🔥</button>
+                            <button type="button" class="story-sticker" data-sticker="❤️">❤️</button>
+                            <button type="button" class="story-sticker" data-sticker="✨">✨</button>
+                            <button type="button" class="story-sticker" data-sticker="😭">😭</button>
+                            <button type="button" class="story-sticker" data-sticker="👍">👍</button>
+                            <button type="button" class="story-sticker" data-sticker="💀">💀</button>
+                            <button type="button" class="story-sticker" data-sticker="🎉">🎉</button>
+                        </div>
+                    </div>
+                    <div class="story-filters" id="story-filters">
+                        <button type="button" data-filter="none" class="on">Normal</button>
+                        <button type="button" data-filter="vivid">Vivid</button>
+                        <button type="button" data-filter="warm">Warm</button>
+                        <button type="button" data-filter="cool">Cool</button>
+                        <button type="button" data-filter="fade">Fade</button>
+                        <button type="button" data-filter="mono">Mono</button>
+                    </div>
+                    <button type="button" class="story-share" id="story-share">
+                        <img id="story-share-avatar" alt="">
+                        <span>Your story</span>
+                    </button>
+                </div>
+            </div></section>
+
+            <!-- Instagram Live Watch / Story Modal -->
+            <section id="live-watch-modal" class="live-modal ig-live-modal" hidden>
+                <div class="live-modal-backdrop" id="live-watch-backdrop"></div>
+                <div class="ig-live-dialog" role="dialog" aria-labelledby="live-streamer-name">
+                    <!-- Vertical Phone Frame -->
+                    <div class="ig-live-frame" id="live-player-container">
+                        <!-- Canvas / Video Taking 100% of the vertical frame -->
+                        <canvas id="live-stream-canvas" class="ig-stream-canvas" width="720" height="1280"></canvas>
+                        <video id="live-stream-video" class="ig-stream-video" playsinline autoplay muted hidden></video>
+
+                        <!-- Gradient Vignette Overlays -->
+                        <div class="ig-top-vignette"></div>
+                        <div class="ig-bottom-vignette"></div>
+
+                        <!-- Instagram Live Top Header -->
+                        <div class="ig-live-header">
+                            <div class="ig-streamer-pill">
+                                <div class="ig-avatar-ring">
+                                    <img id="live-streamer-avatar" src="~/assets/img/img-icon 3.png" alt="">
+                                </div>
+                                <div class="ig-streamer-meta">
+                                    <span class="ig-streamer-name" id="live-streamer-name">Gpro-fighter</span>
+                                    <span class="ig-live-badge">LIVE</span>
+                                </div>
+                                <button type="button" class="ig-btn-follow" id="live-btn-follow">Follow</button>
+                            </div>
+                            <div class="ig-header-right">
+                                <span class="ig-viewers-pill" id="live-viewers-pill">
+                                    <i class="fa-solid fa-eye"></i>
+                                    <span id="live-viewers-count">1.4K</span>
+                                </span>
+                                <button type="button" class="ig-btn-end" id="live-btn-end" hidden>Bitir</button>
+                                <button type="button" class="ig-btn-close" id="live-watch-close" aria-label="Close">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Stream Title Pill (Instagram Topic) -->
+                        <div class="ig-topic-tag" id="live-topic-tag">
+                            <span id="live-watch-title">🔥 Road to Grandmaster</span>
+                        </div>
+
+                        <!-- Floating Hearts Spawner Area -->
+                        <div class="ig-floating-hearts-zone" id="live-floating-reactions"></div>
+
+                        <!-- System Join Toast (e.g. 'nxn katıldı 👋') -->
+                        <div class="ig-join-toast" id="ig-join-toast" hidden>
+                            <span id="ig-join-user">Moiz Hussain</span> katıldı 👋
+                        </div>
+
+                        <!-- Instagram Live Comments Feed (Over the video) -->
+                        <div class="ig-comments-feed" id="live-chat-feed"></div>
+
+                        <!-- Instagram Live Bottom Action Bar -->
+                        <div class="ig-bottom-bar">
+                            <form class="ig-comment-form" id="live-chat-form">
+                                <input type="text" id="live-chat-input" placeholder="Yorum yap..." maxlength="150" autocomplete="off">
+                                <button type="submit" id="live-chat-submit" aria-label="Send">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </form>
+                            <div class="ig-action-buttons">
+                                <button type="button" class="ig-action-btn" id="live-mute-btn" title="Ses">
+                                    <i class="fa-solid fa-volume-high"></i>
+                                </button>
+                                <button type="button" class="ig-heart-btn" id="ig-heart-btn" aria-label="Like">
+                                    <i class="fa-solid fa-heart"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Go Live Broadcaster Modal -->
+            <section id="live-create-modal" class="live-modal" hidden>
+                <div class="live-modal-backdrop" id="live-create-backdrop"></div>
+                <div class="live-create-dialog" role="dialog" aria-labelledby="live-create-heading">
+                    <button type="button" class="live-modal-close" id="live-create-close" aria-label="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <div class="live-create-header">
+                        <div class="live-create-icon-badge">
+                            <i class="fa-solid fa-tower-broadcast"></i>
+                        </div>
+                        <h2 id="live-create-heading">Start Live Stream</h2>
+                        <p>Go live to your community or friends right now.</p>
+                    </div>
+                    <form class="live-create-form" id="live-create-form">
+                        <div class="live-form-group">
+                            <label for="live-form-title">Stream Title</label>
+                            <input type="text" id="live-form-title" placeholder="What are you streaming today?" maxlength="70" required value="Late Night Hangout &amp; Chill">
+                        </div>
+
+                        <div class="live-form-row">
+                            <div class="live-form-group">
+                                <label for="live-form-category">Category</label>
+                                <select id="live-form-category">
+                                    <option value="Gaming">Gaming</option>
+                                    <option value="Music">Music</option>
+                                    <option value="Science &amp; Tech">Science &amp; Tech</option>
+                                    <option value="Entertainment">Entertainment</option>
+                                    <option value="Education">Education</option>
+                                    <option value="Student Hubs">Student Hubs</option>
+                                </select>
+                            </div>
+                            <div class="live-form-group">
+                                <label>Visibility</label>
+                                <div class="live-vis-selector">
+                                    <label class="live-vis-pill active" id="vis-public-label">
+                                        <input type="radio" name="visibility" value="public" checked>
+                                        <i class="fa-solid fa-globe"></i>
+                                        <span>Public</span>
+                                    </label>
+                                    <label class="live-vis-pill" id="vis-friends-label">
+                                        <input type="radio" name="visibility" value="friends">
+                                        <i class="fa-solid fa-user-group"></i>
+                                        <span>Friends Only</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="live-form-group">
+                            <label>Stream Source</label>
+                            <div class="live-source-grid">
+                                <button type="button" class="live-source-card active" data-source="camera">
+                                    <i class="fa-solid fa-camera"></i>
+                                    <span>Camera</span>
+                                </button>
+                                <button type="button" class="live-source-card" data-source="screen">
+                                    <i class="fa-solid fa-desktop"></i>
+                                    <span>Screen Share</span>
+                                </button>
+                                <button type="button" class="live-source-card" data-source="studio">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                    <span>Virtual Studio</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="live-preview-box" id="live-create-preview-box">
+                            <canvas id="live-create-preview-canvas" width="320" height="180"></canvas>
+                            <video id="live-create-preview-video" width="320" height="180" playsinline autoplay muted hidden></video>
+                            <div class="live-preview-overlay">
+                                <span class="live-preview-label"><i class="fa-solid fa-circle"></i> Source Preview</span>
+                                <span class="live-preview-status" id="live-preview-status">Ready</span>
+                            </div>
+                        </div>
+
+                        <div class="live-create-actions">
+                            <button type="button" class="btn-live-cancel" id="live-create-cancel">Cancel</button>
+                            <button type="submit" class="btn-live-submit" id="live-create-submit">
+                                <i class="fa-solid fa-tower-broadcast"></i>
+                                <span>Go Live Now</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <template id="emoji-shell"><div class="emoji-tabs"></div><div class="emoji-scroll"></div></template>
+            <template id="emoji-tab"><button type="button"><i class="fa-solid"></i></button></template>
+            <template id="emoji-block"><section><div class="emoji-group"><h3></h3><div class="emoji-grid"></div></div></section></template>
+            <template id="emoji-choice"><button type="button" class="emoji-choice"></button></template>
+            <template id="emoji-flag"><button type="button" class="emoji-choice flag-choice"><img alt=""></button></template>
+            <template id="flag-img"><img class="flag-img" alt=""></template>
+            <template id="avatar-photo"><img alt=""></template>
+            <template id="post-card"><div class="post"><div class="post-author"><img alt="" hidden><span class="avatar-letter" hidden></span><div class="post-name"><strong></strong><time></time><i class="fa-solid fa-lock post-lock" hidden title="Friends only"></i></div><div class="item-menu" hidden><button class="line-btn" type="button" aria-label="Post options"><i class="fa-solid fa-ellipsis"></i></button><div class="delete-pop" hidden><button type="button" data-delete-post>Delete</button></div></div></div><p class="post-text" hidden></p><img class="post-photo" alt="" hidden><div class="post-actions"><button class="like-btn post-like" type="button" data-like-post aria-label="Like"><i class="fa-regular fa-heart"></i><span>0</span></button><button class="comment-open" type="button" data-comment-post aria-label="Comment"><i class="fa-regular fa-comment"></i></button></div><div class="comment-list"></div><form class="comment-form" hidden><img alt="" hidden><span class="avatar-letter" hidden></span><div class="rich-text" contenteditable="true" role="textbox" data-placeholder="Add a comment..." data-maxlength="280" data-empty="1"></div><button class="emoji-open" type="button" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button><button type="submit">Send</button></form></div></template>
+            <template id="comment-card"><div class="comment"><img alt="" hidden><span class="avatar-letter" hidden></span><div><div class="comment-body"><strong></strong><p></p></div><div class="comment-meta"><time></time><button class="like-btn" type="button" data-like data-post><i class="fa-regular fa-heart"></i><span>0</span></button><span class="item-menu" hidden><button class="line-btn" type="button" aria-label="Comment options"><i class="fa-solid fa-ellipsis"></i></button><span class="delete-pop" hidden><button type="button" data-delete-comment data-post>Delete</button></span></span></div></div></div></template>
+            <template id="story-mine"><button class="story-bubble mine" type="button" data-story=""><span class="story-ring"><img alt=""></span><span class="story-add" id="story-add" title="Add story"><i class="fa-solid fa-plus"></i></span><span class="story-label">Your story</span></button></template>
+            <template id="story-friend"><button class="story-bubble" type="button" data-story=""><span class="story-ring"><img alt=""></span><span class="story-label"></span></button></template>
+            <template id="story-bar"><span></span></template>
+            <section id="emoji-panel" hidden></section>
+        </main>
