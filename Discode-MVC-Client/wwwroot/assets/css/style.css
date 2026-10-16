@@ -1362,6 +1362,35 @@ body .friends-view .friends-header .friend-filters {
     transition: all 0.15s ease-in-out;
 }
 
+.friend-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: #f23f43;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    pointer-events: none;
+}
+
+.friend-badge[hidden] {
+    display: none;
+}
+
+.friend-filter-pick .friend-badge {
+    display: none;
+}
+
+html.theme-dark body .friend-badge {
+    color: #fff !important;
+}
+
 .friend-filter-icon {
     display: inline-flex;
     align-items: center;
@@ -1752,6 +1781,34 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
 
 .inline-search-action-cell button.button-sent i {
     color: #fff;
+}
+
+.inline-search-action-cell button.button-blocked {
+    background: #4e5058;
+}
+
+.inline-search-action-cell button.button-blocked:hover {
+    background: #da373c;
+}
+
+.inline-search-action-cell button.button-blocked .label-hover {
+    display: none;
+}
+
+.inline-search-action-cell button.button-blocked:hover .label-default {
+    display: none;
+}
+
+.inline-search-action-cell button.button-blocked:hover .label-hover {
+    display: inline;
+}
+
+.inline-search-action-cell button span {
+    color: inherit;
+}
+
+html.theme-dark body .inline-search-action-cell button span {
+    color: #fff !important;
 }
 
 /* Loading state - inside single card */
@@ -2181,6 +2238,21 @@ html.theme-dark .friend-status-dot.online {
         background: #eef0f3;
         font-weight: 600;
     }
+    .friend-filter-menu .friend-badge {
+        position: static;
+        margin-left: auto;
+    }
+
+    .friend-filter-pick .friend-badge {
+        position: static;
+        display: inline-block;
+        margin-left: 2px;
+    }
+
+    .friend-filter-pick .friend-badge[hidden] {
+        display: none;
+    }
+
 
     .friend-filter-menu button[data-filter="blocked"] {
         color: #dc4446;
@@ -2602,6 +2674,10 @@ html.theme-dark .friend-more .is-danger:hover {
     text-align: left;
     padding: 6px 8px;
     cursor: pointer;
+}
+
+.friend-context button[hidden] {
+    display: none;
 }
 
 .friend-context button small {

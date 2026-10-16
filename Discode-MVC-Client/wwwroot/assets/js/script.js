@@ -180,13 +180,24 @@ function openToggle() {
         if (count) count.textContent = String(rows.length);
         title.hidden = rows.length === 0;
     }
+    function paintPendingBadge(total) {
+        var text = total > 99 ? "99+" : String(total);
+        ["pending-badge", "pending-badge-pick"].forEach(function (id) {
+            var badge = document.getElementById(id);
+            if (!badge) return;
+            badge.textContent = text;
+            badge.hidden = total === 0;
+        });
+    }
     function paintPendingTitle() {
         var title = document.getElementById("friends-pending-title");
         var list = document.getElementById("friends-pending-list");
         var sentTitle = document.getElementById("friends-sent-title");
         var sentList = document.getElementById("friends-sent-list");
-        paintCount(title, list ? list.querySelectorAll(".request-row") : []);
+        var received = list ? list.querySelectorAll(".request-row") : [];
+        paintCount(title, received);
         paintCount(sentTitle, sentList ? sentList.querySelectorAll(".sent-row") : []);
+        paintPendingBadge(received.length);
     }
     function friendToken() {
         var input = document.querySelector("input[name='__RequestVerificationToken']");
@@ -293,6 +304,23 @@ function openToggle() {
                     loadFriends();
                 })
                 .catch(function () {});
+        },
+        getBlocked: function () {
+            return fetch("/Home/Blocked", {
+                credentials: "same-origin",
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            })
+                .then(function (response) { return response.ok ? response.json() : []; })
+                .then(function (data) { return Array.isArray(data) ? data : []; })
+                .catch(function () { return []; });
+        },
+        unblock: function (blockId) {
+            return friendPost("/Home/UnblockUser", { id: blockId })
+                .then(function (response) {
+                    if (response.ok) loadBlocked();
+                    return response.ok;
+                })
+                .catch(function () { return false; });
         },
         blockRow: function (row) {
             var username = row.getAttribute("data-user") || "";
@@ -422,9 +450,8 @@ function openToggle() {
     loadPending();
     setInterval(function () {
         if (document.hidden) return;
-        var pending = document.getElementById("friends-pending");
         var online = document.getElementById("friends-online");
-        if (pending && !pending.hidden) loadPending();
+        loadPending();
         if (online && !online.hidden) loadFriends();
     }, 3000);
     syncGlide(menu.querySelector("button.active"));
@@ -613,8 +640,12 @@ function openToggle() {
 
 (function () {
     var menu = document.getElementById("friend-context");
-    var list = document.getElementById("friends-all-list");
-    if (!menu || !list) return;
+    var listIds = ["friends-all-list", "friends-pending-list", "friends-sent-list"];
+    var lists = listIds
+        .map(function (id) { return document.getElementById(id); })
+        .filter(function (list) { return list; });
+    var removeButton = menu ? menu.querySelector("[data-action='remove']") : null;
+    if (!menu || lists.length === 0) return;
     var row = null;
 
     function closeMenu() {
@@ -624,6 +655,7 @@ function openToggle() {
 
     function openMenu(target, x, y) {
         row = target;
+        if (removeButton) removeButton.hidden = !target.closest("#friends-all-list");
         menu.hidden = false;
         var width = menu.offsetWidth;
         var height = menu.offsetHeight;
@@ -633,11 +665,13 @@ function openToggle() {
         menu.style.top = top + "px";
     }
 
-    list.addEventListener("contextmenu", function (event) {
-        var target = event.target.closest && event.target.closest(".online-row");
-        if (!target) return;
-        event.preventDefault();
-        openMenu(target, event.clientX, event.clientY);
+    lists.forEach(function (list) {
+        list.addEventListener("contextmenu", function (event) {
+            var target = event.target.closest && event.target.closest(".online-row");
+            if (!target) return;
+            event.preventDefault();
+            openMenu(target, event.clientX, event.clientY);
+        });
     });
 
     document.addEventListener("click", function (event) {
@@ -645,7 +679,8 @@ function openToggle() {
     });
 
     document.addEventListener("contextmenu", function (event) {
-        if (!event.target.closest || !event.target.closest("#friends-all-list")) closeMenu();
+        var inside = event.target.closest && event.target.closest(".online-row");
+        if (!inside || !lists.some(function (list) { return list.contains(inside); })) closeMenu();
     });
 
     document.addEventListener("keydown", function (event) {
@@ -763,14 +798,66 @@ function openToggle() {
         if (!response.ok) throw new Error("search");
         var data = await response.json();
         if (!Array.isArray(data)) return [];
+        var blockedByName = {};
+        if (window.discodeFriends) {
+            var blockedUsers = await window.discodeFriends.getBlocked();
+            blockedUsers.forEach(function (item) {
+                var name = item.userName || item.username || "";
+                if (name) blockedByName[name.toLowerCase()] = item.id;
+            });
+        }
         return data.map(function (user) {
+            var username = user.userName || user.username || "";
             return {
                 id: user.id || "",
-                username: user.userName || user.username || "",
+                username: username,
                 displayName: user.displayName || "",
                 avatar: user.avatarUrl || user.avatar || null,
-                status: "offline"
+                status: "offline",
+                blockId: blockedByName[username.toLowerCase()] || null
             };
+        });
+    }
+
+    function renderAction(cell, user) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.setAttribute("data-username", user.username);
+        button.setAttribute("data-user-id", user.id || "");
+        cell.innerHTML = "";
+        cell.appendChild(button);
+
+        if (user.blockId) {
+            button.className = "button-blocked";
+            button.innerHTML = '<i class="fa-solid fa-user-slash"></i>' +
+                '<span class="label-default">Blocked</span><span class="label-hover">Unblock</span>';
+            button.addEventListener("click", function (event) {
+                event.stopPropagation();
+                button.disabled = true;
+                window.discodeFriends.unblock(user.blockId).then(function (ok) {
+                    if (!ok) {
+                        button.disabled = false;
+                        return;
+                    }
+                    user.blockId = null;
+                    renderAction(cell, user);
+                });
+            });
+            return;
+        }
+
+        var already = window.discodeFriends && window.discodeFriends.hasSent(user.username);
+        if (already) {
+            button.className = "button-sent";
+            button.disabled = true;
+            button.innerHTML = '<i class="fa-solid fa-check"></i><span>Request Sent</span>';
+            return;
+        }
+
+        button.innerHTML = '<i class="fa-solid fa-user-plus"></i><span>Add Friend</span>';
+        button.addEventListener("click", function (event) {
+            event.stopPropagation();
+            addFriendRequest(user, button);
         });
     }
     
@@ -809,8 +896,7 @@ function openToggle() {
                 : (user.username || "?").charAt(0).toUpperCase();
             
             var statusHtml = getStatusHtml(user.status);
-            var already = window.discodeFriends && window.discodeFriends.hasSent(user.username);
-            
+
             row.innerHTML = 
                 '<td>' +
                     '<div class="inline-search-user-cell">' +
@@ -822,27 +908,15 @@ function openToggle() {
                     '</div>' +
                 '</td>' +
                 '<td class="inline-search-status-cell">' + statusHtml + '</td>' +
-                '<td class="inline-search-action-cell">' +
-                    '<button type="button" data-username="' + user.username + '" data-user-id="' + (user.id || "") + '"' + (already ? ' class="button-sent" disabled' : '') + '>' +
-                        (already
-                            ? '<i class="fa-solid fa-check"></i><span>Request Sent</span>'
-                            : '<i class="fa-solid fa-user-plus"></i><span>Add Friend</span>') +
-                    '</button>' +
-                '</td>';
-            
+                '<td class="inline-search-action-cell"></td>';
+
             searchTbody.appendChild(row);
+            renderAction(row.querySelector(".inline-search-action-cell"), user);
             var cell = row.querySelector(".inline-search-user-cell");
             if (cell) {
                 cell.style.cursor = "pointer";
                 cell.addEventListener("click", function () {
                     if (window.openUserProfile) window.openUserProfile(user.username, user.avatar);
-                });
-            }
-            var button = row.querySelector("button[data-username]");
-            if (button && !button.disabled) {
-                button.addEventListener("click", function (event) {
-                    event.stopPropagation();
-                    addFriendRequest(user, button);
                 });
             }
         });

@@ -20,6 +20,7 @@
                     <button type="button" class="friend-filter-pick" id="friend-filter-pick" aria-expanded="false"
                             aria-controls="friend-filter-menu">
                         <span id="friend-filter-label" data-i18n="Online">Online</span>
+                        <span class="friend-badge" id="pending-badge-pick" hidden>0</span>
                         <i class="fa-solid fa-chevron-down"></i>
                     </button>
                     <div class="friend-filter-menu" id="friend-filter-menu">
@@ -37,6 +38,7 @@
                         <button type="button" data-filter="pending">
                             <i class="fa-solid fa-user-clock friend-filter-icon" aria-hidden="true"></i>
                             <span class="friend-filter-text" data-i18n="Pending">Pending</span>
+                            <span class="friend-badge" id="pending-badge" hidden>0</span>
                             <i class="fa-solid fa-check friend-filter-check" aria-hidden="true"></i>
                         </button>
                         <button type="button" data-filter="blocked">
