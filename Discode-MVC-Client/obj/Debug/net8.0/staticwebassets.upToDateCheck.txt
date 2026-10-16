@@ -38,6 +38,7 @@ wwwroot\assets\js\i18n.js
 wwwroot\assets\js\login.js
 wwwroot\assets\js\nav.js
 wwwroot\assets\js\nitro.js
+wwwroot\assets\js\presence.js
 wwwroot\assets\js\profile.js
 wwwroot\assets\js\register.js
 wwwroot\assets\js\script.js

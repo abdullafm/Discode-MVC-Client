@@ -277,7 +277,17 @@
         paintPanel();
         paintPop();
         document.dispatchEvent(new CustomEvent("discode-presence"));
+        document.dispatchEvent(new CustomEvent("discode-status-change", { detail: { status: state.status } }));
         closeStatus();
+    });
+
+    document.addEventListener("discode-status-set", function (event) {
+        var status = event.detail && event.detail.status;
+        if (!STATUSES[status]) return;
+        state.status = status;
+        paintPanel();
+        paintPop();
+        document.dispatchEvent(new CustomEvent("discode-presence"));
     });
 
     var setStatus = document.getElementById("set-status");

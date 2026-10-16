@@ -1,6 +1,7 @@
 using Discode_MVC_Client.ViewModels.Account;
 using Discode_MVC_Client.ViewModels.Friends;
 using Discode_MVC_Client.ViewModels.Home;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -14,11 +15,13 @@ namespace Discode_MVC_Client.Controllers
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IWebHostEnvironment _environment;
+        private readonly IConfiguration _configuration;
 
-        public HomeController(IHttpClientFactory httpClientFactory, IWebHostEnvironment environment)
+        public HomeController(IHttpClientFactory httpClientFactory, IWebHostEnvironment environment, IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
             _environment = environment;
+            _configuration = configuration;
         }
 
         public async Task<IActionResult> Index()
@@ -46,6 +49,21 @@ namespace Discode_MVC_Client.Controllers
             }
 
             return View(ToHome(fallback));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> HubToken()
+        {
+            var token = await HttpContext.GetTokenAsync("access_token");
+            if (string.IsNullOrEmpty(token))
+                return Unauthorized();
+
+            Response.Headers.CacheControl = "no-store";
+            return Ok(new
+            {
+                token,
+                hubUrl = _configuration["ApiSettings:BaseUrl"]!.TrimEnd('/') + "/hubs/presence"
+            });
         }
 
         [HttpPost]

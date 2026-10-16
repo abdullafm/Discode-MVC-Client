@@ -2523,6 +2523,14 @@ html:not(.show-loader) .home-loader {
     background: #f0b232;
 }
 
+.online-dot.offline {
+    background: #80848e;
+}
+
+.online-dot.offline {
+    background: #80848e;
+}
+
 .online-dot.dnd {
     background: #f23f43;
 }

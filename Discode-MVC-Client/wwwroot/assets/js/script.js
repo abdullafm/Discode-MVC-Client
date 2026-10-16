@@ -137,6 +137,18 @@ function openToggle() {
             allTitle.hidden = currentFilter !== "all" || rows.length === 0;
         }
     }
+    var PRESENCE_LABELS = { online: "Online", idle: "Idle", dnd: "Do Not Disturb", offline: "Offline" };
+    function paintRowPresence(row, status) {
+        if (!PRESENCE_LABELS[status]) status = "offline";
+        row.setAttribute("data-presence", status);
+        var dot = row.querySelector(".online-dot");
+        if (dot) dot.className = "online-dot" + (status === "online" ? "" : " " + status);
+        var label = row.querySelector(".online-copy > span");
+        if (label) {
+            label.setAttribute("data-i18n", PRESENCE_LABELS[status]);
+            label.textContent = PRESENCE_LABELS[status];
+        }
+    }
     function addFriendRow(item) {
         var list = document.getElementById("friends-all-list");
         var template = document.getElementById("friend-row");
@@ -145,7 +157,9 @@ function openToggle() {
         var displayName = item.displayName || username;
         var row = template.content.firstElementChild.cloneNode(true);
         row.setAttribute("data-user", username);
+        row.setAttribute("data-user-id", item.userId || "");
         row.setAttribute("data-id", String(item.id || ""));
+        paintRowPresence(row, item.status);
         var strong = row.querySelector("strong");
         if (strong) strong.textContent = displayName;
         var img = row.querySelector("img");
@@ -159,7 +173,9 @@ function openToggle() {
         }
         list.appendChild(row);
     }
+    var livePresence = {};
     function loadFriends() {
+        var startedAt = Date.now();
         fetch("/Home/Friends", {
             credentials: "same-origin",
             headers: { "X-Requested-With": "XMLHttpRequest" }
@@ -169,7 +185,11 @@ function openToggle() {
                 var list = document.getElementById("friends-all-list");
                 if (!list) return;
                 list.innerHTML = "";
-                (data || []).forEach(addFriendRow);
+                (data || []).forEach(function (item) {
+                    var live = livePresence[item.userId];
+                    if (live && live.at >= startedAt) item.status = live.status;
+                    addFriendRow(item);
+                });
                 paintFriends(currentFilter);
             })
             .catch(function () {});
@@ -295,6 +315,14 @@ function openToggle() {
     window.discodeFriends = {
         reload: loadPending,
         reloadFriends: loadFriends,
+        setPresence: function (userId, status) {
+            livePresence[userId] = { status: status, at: Date.now() };
+            var rows = document.querySelectorAll("#friends-all-list .online-row");
+            for (var i = 0; i < rows.length; i++) {
+                if (rows[i].getAttribute("data-user-id") === userId) paintRowPresence(rows[i], status);
+            }
+            paintFriends(currentFilter);
+        },
         removeRow: function (row) {
             var requestId = Number(row.getAttribute("data-id") || 0);
             if (requestId <= 0) return;
