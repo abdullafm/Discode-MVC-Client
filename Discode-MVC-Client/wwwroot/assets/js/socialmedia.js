@@ -5,7 +5,6 @@ var STORE_KEY = "discode-social";
 var ME = (document.querySelector(".social-view") || document.body).getAttribute("data-username") || "Anonymou5";
 var currentView = "explore";
 var pendingImage = "";
-var friendsOnly = false;
 var openCommentPost = null;
 
 window.onload = function () {
@@ -153,21 +152,84 @@ function initial(name) {
     return letter || "?";
 }
 
-function isPublic(post) {
-    return post.visibility !== "friends";
+var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
+var feeds = { explore: [], friends: [] };
+
+function csrfToken() {
+    var input = document.querySelector("input[name='__RequestVerificationToken']");
+    return input ? input.value : "";
 }
 
-function isFriend(name) {
-    return friendNames().indexOf(name) !== -1;
+function readError(response, data) {
+    return new Error((data && data.errors && data.errors[0]) || "Something went wrong (" + response.status + ").");
 }
 
-function postsFor(view) {
-    return loadPosts().filter(function (post) {
-        if (view === "explore") return isPublic(post);
-        if (isFriend(post.author)) return true;
-        return post.author === ME;
+function requestJson(url, method, body) {
+    return fetch(url, {
+        method: method || "GET",
+        credentials: "same-origin",
+        headers: {
+            "Content-Type": "application/json",
+            "RequestVerificationToken": csrfToken(),
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: body ? JSON.stringify(body) : undefined
+    }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (data) {
+            if (!response.ok) throw readError(response, data);
+            return data;
+        });
     });
 }
+
+function utcMillis(value) {
+    var text = String(value || "");
+    return Date.parse(/Z$|[+-]\d\d:\d\d$/.test(text) ? text : text + "Z");
+}
+
+function purgeLegacyPosts() {
+    var state = loadState();
+    var kept = state.posts.filter(function (post) { return /^\d+$/.test(String(post.id)); });
+    if (kept.length === state.posts.length) return;
+    state.posts = kept;
+    saveState(state);
+}
+
+function mergeLocal(list) {
+    var local = loadPosts();
+    var byId = {};
+    local.forEach(function (post) { byId[post.id] = post; });
+    var merged = list.map(function (dto) {
+        var id = String(dto.id);
+        var entry = byId[id];
+        if (!entry) {
+            entry = { id: id, comments: [], likes: 0, liked: false };
+            byId[id] = entry;
+            local.push(entry);
+        }
+        entry.author = dto.authorUserName;
+        entry.avatar = dto.authorAvatarUrl || "";
+        entry.text = dto.text || "";
+        entry.image = dto.imageUrl || "";
+        entry.createdAt = utcMillis(dto.createdAt);
+        return entry;
+    });
+    savePosts(local);
+    return merged;
+}
+
+var feedRequest = { explore: 0, friends: 0 };
+
+function loadFeed(view) {
+    var request = ++feedRequest[view];
+    return requestJson(view === "friends" ? "/Home/FriendsPosts" : "/Home/ExplorePosts").then(function (list) {
+        if (request !== feedRequest[view]) return;
+        feeds[view] = mergeLocal(Array.isArray(list) ? list : []);
+        if (currentView === view) renderFeed();
+    }).catch(function () {});
+}
+
+purgeLegacyPosts();
 
 function showView(view) {
     currentView = view;
@@ -182,7 +244,10 @@ function showView(view) {
     }
     if (view === "friends") renderStories();
     if (view === "live" || view === "explore") renderLiveStreams();
-    if (view !== "compose") renderFeed();
+    if (view === "explore" || view === "friends") {
+        renderFeed();
+        loadFeed(view);
+    }
 }
 
 function readImage(file, done) {
@@ -212,8 +277,8 @@ function clearPhoto() {
     if (image) image.removeAttribute("src");
 }
 
-function setPersonFace(img, letter, name) {
-    var src = avatarFor(name);
+function setPersonFace(img, letter, name, avatarUrl) {
+    var src = avatarUrl || avatarFor(name);
     if (src && img) {
         img.hidden = false;
         img.src = src;
@@ -267,7 +332,9 @@ function renderFeed() {
     var view = currentView === "friends" ? "friends" : "explore";
     var list = document.getElementById(view === "friends" ? "friends-list" : "explore-list");
     var empty = document.getElementById(view === "friends" ? "friends-empty" : "explore-empty");
-    var posts = postsFor(view);
+    var local = {};
+    loadPosts().forEach(function (post) { local[post.id] = post; });
+    var posts = feeds[view].map(function (post) { return local[post.id] || post; });
     while (list.firstChild) list.removeChild(list.firstChild);
     if (empty) empty.hidden = posts.length > 0;
     if (!posts.length) return;
@@ -278,15 +345,13 @@ function renderFeed() {
         var card = postTpl.content.firstElementChild.cloneNode(true);
         var mine = post.author === ME;
         card.setAttribute("data-post", post.id);
-        setPersonFace(card.querySelector(".post-author > img"), card.querySelector(".post-author > .avatar-letter"), post.author);
+        setPersonFace(card.querySelector(".post-author > img"), card.querySelector(".post-author > .avatar-letter"), post.author, post.avatar || DEFAULT_AVATAR);
         var formFaces = card.querySelectorAll(".comment-form > img, .comment-form > .avatar-letter");
         setPersonFace(formFaces[0], formFaces[1], ME);
         var name = card.querySelector(".post-name strong");
         var when = card.querySelector(".post-name time");
         if (name) name.textContent = post.author;
         if (when) when.textContent = timeAgo(post.createdAt);
-        var lock = card.querySelector(".post-lock");
-        if (lock) lock.hidden = post.visibility !== "friends";
         var menu = card.querySelector(".post-author .item-menu");
         if (menu) {
             menu.hidden = !mine;
@@ -300,7 +365,7 @@ function renderFeed() {
         }
         var photo = card.querySelector(".post-photo");
         if (photo) {
-            var showPhoto = post.image && post.image.indexOf("data:image/") === 0;
+            var showPhoto = post.image && post.image.indexOf("/uploads/posts/") === 0;
             photo.hidden = !showPhoto;
             if (showPhoto) photo.src = post.image;
         }
@@ -349,30 +414,54 @@ function renderFeed() {
     });
 }
 
+function showPostError(message) {
+    var el = document.getElementById("post-error");
+    if (!el) return;
+    el.textContent = message || "";
+    el.hidden = !message;
+}
+
+function uploadPostImage() {
+    if (!pendingImage) return Promise.resolve("");
+    return fetch(pendingImage).then(function (response) { return response.blob(); }).then(function (blob) {
+        var data = new FormData();
+        data.append("file", blob, "post.jpg");
+        return fetch("/Home/UploadPostImage", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "RequestVerificationToken": csrfToken(), "X-Requested-With": "XMLHttpRequest" },
+            body: data
+        });
+    }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (data) {
+            if (!response.ok) throw readError(response, data);
+            return data.imageUrl;
+        });
+    });
+}
+
 document.getElementById("post-composer").addEventListener("submit", function (event) {
     event.preventDefault();
-    var author = event.target.author.value.trim() || "Anonymou5";
     var textBox = document.getElementById("post-text");
     var text = fieldValue(textBox).trim();
     if (!text && !pendingImage) return;
 
-    var posts = loadPosts();
-    posts.unshift({
-        id: nextId(),
-        author: author,
-        text: text,
-        image: pendingImage,
-        visibility: friendsOnly ? "friends" : "public",
-        createdAt: Date.now(),
-        comments: [],
-        likes: 0,
-        liked: false
+    var submit = event.target.querySelector("button[type=submit]");
+    if (submit) submit.disabled = true;
+    showPostError("");
+
+    uploadPostImage().then(function (imageUrl) {
+        return requestJson("/Home/CreatePost", "POST", { text: text, imageUrl: imageUrl });
+    }).then(function () {
+        while (textBox.firstChild) textBox.removeChild(textBox.firstChild);
+        textBox.setAttribute("data-empty", "1");
+        clearPhoto();
+        showView("friends");
+    }).catch(function (error) {
+        showPostError(error.message);
+    }).then(function () {
+        if (submit) submit.disabled = false;
     });
-    savePosts(posts);
-    while (textBox.firstChild) textBox.removeChild(textBox.firstChild);
-    textBox.setAttribute("data-empty", "1");
-    clearPhoto();
-    showView(friendsOnly ? "friends" : "explore");
 });
 
 document.querySelector(".social-view").addEventListener("submit", function (event) {
@@ -1024,14 +1113,6 @@ document.querySelector(".social-rail").addEventListener("click", function (event
     showView(button.getAttribute("data-view"));
 });
 
-document.getElementById("post-lock").addEventListener("click", function () {
-    friendsOnly = !friendsOnly;
-    this.setAttribute("aria-pressed", friendsOnly ? "true" : "false");
-    this.title = friendsOnly ? "Friends only" : "Public";
-    var icon = this.querySelector("i");
-    if (icon) icon.className = "fa-solid " + (friendsOnly ? "fa-lock" : "fa-lock-open");
-});
-
 document.getElementById("post-image").addEventListener("change", function () {
     var file = this.files && this.files[0];
     if (!file) return;
@@ -1326,10 +1407,10 @@ document.querySelector(".social-view").addEventListener("click", function (event
     var deletePost = event.target.closest("[data-delete-post]");
     if (deletePost) {
         var postId = deletePost.getAttribute("data-delete-post");
-        savePosts(loadPosts().filter(function (post) {
-            return post.id !== postId || post.author !== ME;
-        }));
-        renderFeed();
+        requestJson("/Home/DeletePost", "POST", { id: Number(postId) }).then(function () {
+            savePosts(loadPosts().filter(function (post) { return post.id !== postId; }));
+            loadFeed(currentView);
+        }).catch(function () {});
         return;
     }
 
@@ -1399,6 +1480,10 @@ document.querySelector(".social-view").addEventListener("click", function (event
     });
     savePosts(posts);
     renderFeed();
+});
+
+document.addEventListener("discode-posts-changed", function () {
+    if (currentView === "explore" || currentView === "friends") loadFeed(currentView);
 });
 
 var logoutBtn = document.getElementById("me-logout");

@@ -1,6 +1,7 @@
 using Discode_MVC_Client.ViewModels.Account;
 using Discode_MVC_Client.ViewModels.Friends;
 using Discode_MVC_Client.ViewModels.Home;
+using Discode_MVC_Client.ViewModels.Social;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -294,6 +295,65 @@ namespace Discode_MVC_Client.Controllers
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a user." } }));
 
             return ForwardToApi(client => client.GetAsync("api/account/users/" + Uri.EscapeDataString(name.Trim())));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> ExplorePosts()
+            => ForwardToApi(client => client.GetAsync("api/post/explore"));
+
+        [HttpGet]
+        public Task<IActionResult> FriendsPosts()
+            => ForwardToApi(client => client.GetAsync("api/post/friends"));
+
+        [HttpGet]
+        public Task<IActionResult> UserPosts(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a user." } }));
+
+            return ForwardToApi(client => client.GetAsync("api/post/user/" + Uri.EscapeDataString(name.Trim())));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> CreatePost([FromBody] CreatePostVM model)
+        {
+            if (model is null)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post data is missing." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync("api/post", new
+            {
+                text = model.Text ?? string.Empty,
+                imageUrl = model.ImageUrl ?? string.Empty
+            }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> DeletePost([FromBody] PostIdVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
+
+            return ForwardToApi(client => client.DeleteAsync($"api/post/{model.Id}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(5_000_000)]
+        public IActionResult UploadPostImage(IFormFile file)
+        {
+            if (file is null || file.Length == 0 || !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { errors = new[] { "Choose an image file." } });
+
+            var folder = Path.Combine(_environment.WebRootPath, "uploads", "posts");
+            Directory.CreateDirectory(folder);
+
+            var fileName = Guid.NewGuid().ToString("N") + ".jpg";
+            using (var stream = System.IO.File.Create(Path.Combine(folder, fileName)))
+                file.CopyTo(stream);
+
+            return Ok(new { imageUrl = "/uploads/posts/" + fileName });
         }
 
         [HttpGet]

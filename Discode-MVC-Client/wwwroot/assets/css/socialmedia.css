@@ -255,10 +255,14 @@ body .social-view {
     object-fit: cover;
 }
 
-.post-lock {
-    margin-left: 8px;
-    color: #80848e;
-    font-size: 12px;
+.composer-error {
+    margin: 8px 0 0;
+    color: #f23f43;
+    font-size: 13px;
+}
+
+.composer-error[hidden] {
+    display: none;
 }
 
 .composer-actions > button[type="submit"],

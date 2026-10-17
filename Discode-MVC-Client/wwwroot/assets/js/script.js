@@ -323,6 +323,17 @@ function openToggle() {
             }
             paintFriends(currentFilter);
         },
+        respond: function (requestId, accept) {
+            return friendPost(accept ? "/Home/AcceptFriendRequest" : "/Home/DeclineFriendRequest", { id: requestId })
+                .then(function (response) {
+                    if (response.ok) {
+                        loadPending();
+                        loadFriends();
+                    }
+                    return response.ok;
+                })
+                .catch(function () { return false; });
+        },
         removeRow: function (row) {
             var requestId = Number(row.getAttribute("data-id") || 0);
             if (requestId <= 0) return;
@@ -477,7 +488,7 @@ function openToggle() {
     loadFriends();
     loadPending();
     setInterval(function () {
-        if (document.hidden) return;
+        if (document.hidden || window.discodeLive) return;
         var online = document.getElementById("friends-online");
         loadPending();
         if (online && !online.hidden) loadFriends();

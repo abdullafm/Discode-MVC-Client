@@ -7437,3 +7437,55 @@ html.theme-dark .me-profile.private-view .me-private-note {
 html.theme-dark body .me-profile .me-actions button span {
     color: #fff !important;
 }
+
+/* Friend request card shown on the profile of someone who sent you a request */
+.me-request {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: #e3e5e8;
+    font-size: 14px;
+}
+
+.me-request[hidden] {
+    display: none;
+}
+
+.me-request p {
+    margin: 0 0 10px;
+    font-weight: 500;
+}
+
+.me-request-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.me-request-buttons button {
+    padding: 6px 14px;
+    border: 0;
+    border-radius: 4px;
+    background: #d4d7dc;
+    color: inherit;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.me-request-buttons button:hover {
+    background: #c4c9ce;
+}
+
+html.theme-dark .me-request {
+    background: #111214;
+}
+
+html.theme-dark .me-request-buttons button {
+    background: #2b2d31;
+    color: #f2f3f5;
+}
+
+html.theme-dark .me-request-buttons button:hover {
+    background: #35373c;
+}

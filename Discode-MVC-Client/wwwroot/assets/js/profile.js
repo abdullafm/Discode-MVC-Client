@@ -7,6 +7,8 @@
         invisible: { label: "Invisible", color: "#80848e", note: "You will appear offline" }
     };
 
+    var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
+
     var state = { status: "online" };
 
     function nodeText(sel) {
@@ -45,7 +47,7 @@
 
     function saveProfile() {
         var box = document.getElementById("me-profile");
-        if (box && box.classList.contains("visitor-view")) return;
+        if (box && !box.classList.contains("d-none") && box.classList.contains("visitor-view")) return;
 
         if (saveInFlight) {
             saveQueued = true;
@@ -199,13 +201,10 @@
 
     function closeProfile() {
         if (profile.classList.contains("d-none")) return;
-        var visitor = profile.classList.contains("visitor-view");
-        if (!visitor) saveProfile();
+        if (!profile.classList.contains("visitor-view")) saveProfile();
         profile.classList.add("d-none");
-        if (visitor) {
-            setVisitor(false);
-            setPrivateView(false, "");
-        }
+        viewingUserId = "";
+        if (window.discodePresence) window.discodePresence.unwatchProfile();
     }
 
     document.getElementById("me-profile-close").addEventListener("click", closeProfile);
@@ -218,6 +217,11 @@
                 window.discodeFriends.send({ username: username }, addFriend);
         });
     }
+
+    var requestAccept = document.getElementById("me-request-accept");
+    var requestIgnore = document.getElementById("me-request-ignore");
+    if (requestAccept) requestAccept.addEventListener("click", function () { respondToRequest(true); });
+    if (requestIgnore) requestIgnore.addEventListener("click", function () { respondToRequest(false); });
 
     profile.addEventListener("click", function (event) {
         if (event.target === profile) closeProfile();
@@ -463,6 +467,7 @@
     }
 
     var viewing = meName();
+    var viewingUserId = "";
     var ownSince = nodeText("#me-since");
 
     function applyOwnPhoto(src) {
@@ -586,6 +591,10 @@
             bio: row.getAttribute("data-bio") || "",
             emoji: row.getAttribute("data-emoji") || ""
         } : {});
+        loadVisitor(name);
+    }
+
+    function loadVisitor(name) {
         fetch("/Home/UserProfile?name=" + encodeURIComponent(name), {
             credentials: "same-origin",
             headers: { "X-Requested-With": "XMLHttpRequest" }
@@ -595,8 +604,24 @@
         }).then(function (data) {
             if (viewing !== name) return;
             paintVisitor(data);
+            renderMyPosts();
         }).catch(function () {});
     }
+
+    document.addEventListener("discode-posts-changed", function () {
+        if (!profile.classList.contains("d-none")) renderMyPosts();
+    });
+
+    document.addEventListener("discode-friends-changed", function () {
+        if (profile.classList.contains("d-none") || !profile.classList.contains("visitor-view")) return;
+        loadVisitor(viewing);
+    });
+
+    document.addEventListener("discode-profile-changed", function (event) {
+        if (profile.classList.contains("d-none") || !profile.classList.contains("visitor-view")) return;
+        if (!event.detail || event.detail.userId !== viewingUserId) return;
+        loadVisitor(viewing);
+    });
 
     function setPrivateView(on, name) {
         profile.classList.toggle("private-view", on);
@@ -611,7 +636,43 @@
         if (board) board.hidden = !on;
     }
 
+    function setRequestCard(on, requestId, name) {
+        var card = document.getElementById("me-request");
+        var text = document.getElementById("me-request-text");
+        if (!card) return;
+        card.hidden = !on;
+        card.setAttribute("data-id", on ? String(requestId) : "");
+        if (text) text.textContent = on ? name + " sent you a friend request." : "";
+    }
+
+    function pendingRequestId(userName) {
+        var rows = document.querySelectorAll("#friends-pending-list .request-row");
+        for (var i = 0; i < rows.length; i++) {
+            if (rows[i].getAttribute("data-user") === userName) return Number(rows[i].getAttribute("data-id")) || 0;
+        }
+        return 0;
+    }
+
+    function respondToRequest(accept) {
+        var card = document.getElementById("me-request");
+        var requestId = Number(card ? card.getAttribute("data-id") : 0);
+        if (!requestId || !window.discodeFriends || !window.discodeFriends.respond) return;
+        var name = viewing;
+        window.discodeFriends.respond(requestId, accept).then(function (ok) {
+            if (!ok || viewing !== name) return;
+            if (accept) {
+                showJoined(name);
+            } else {
+                setRequestCard(false);
+                var add = document.getElementById("me-add");
+                if (add) add.hidden = false;
+            }
+        });
+    }
+
     function paintVisitor(data) {
+        viewingUserId = data.userId || "";
+        if (window.discodePresence) window.discodePresence.watchProfile(viewingUserId);
         var displayName = data.displayName || data.userName || "";
         var viewName = document.getElementById("me-view-name");
         var handle = document.getElementById("me-handle-name");
@@ -620,14 +681,17 @@
         var add = document.getElementById("me-add");
         if (viewName) viewName.textContent = displayName;
         if (handle) handle.textContent = data.userName || "";
-        if (face && data.avatarUrl) face.src = data.avatarUrl;
+        if (face) face.src = data.avatarUrl || DEFAULT_AVATAR;
         var joined = formatJoined(data.memberSince);
         if (since && joined) since.textContent = joined;
         paintPerson({ pronouns: data.pronouns || "", bio: data.bio || "", emoji: "" });
         setPrivateView(!!data.isPrivate, displayName);
+        var requestId = data.relation === "pending-received" ? (data.requestId || pendingRequestId(data.userName)) : 0;
+        var incoming = !!requestId;
+        setRequestCard(incoming, requestId, displayName);
         if (!add) return;
         add.setAttribute("data-username", data.userName || "");
-        if (data.relation === "friend") {
+        if (data.relation === "friend" || incoming) {
             add.hidden = true;
         } else if (data.relation === "pending-sent" || data.relation === "pending-received") {
             add.disabled = true;
@@ -711,35 +775,43 @@
             if (emptyHide) emptyHide.hidden = true;
             return;
         }
-        var saved = {};
-        try {
-            saved = JSON.parse(localStorage.getItem("discode-social")) || {};
-        } catch (e) {
-            saved = {};
+        var name = viewing;
+        var target = isMe(viewing) ? meHandle() : viewing;
+        fetch("/Home/UserPosts?name=" + encodeURIComponent(target), {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        }).then(function (response) {
+            return response.ok ? response.json() : [];
+        }).then(function (posts) {
+            if (viewing !== name) return;
+            drawPosts(Array.isArray(posts) ? posts : []);
+        }).catch(function () {});
+
+        function drawPosts(posts) {
+            var empty = document.getElementById("me-posts-empty");
+            if (empty) empty.hidden = posts.length > 0;
+            clearPosts();
+            var tpl = document.getElementById("me-post");
+            posts.forEach(function (post) {
+                if (!tpl) return;
+                var card = tpl.content.firstElementChild.cloneNode(true);
+                var image = card.querySelector("img");
+                var text = card.querySelector("p");
+                var when = card.querySelector("time");
+                if (image) {
+                    image.hidden = !post.imageUrl;
+                    if (post.imageUrl) image.src = post.imageUrl;
+                }
+                if (text) text.textContent = post.text || "";
+                if (when) when.textContent = formatJoined(postTime(post.createdAt));
+                box.appendChild(card);
+            });
         }
-        var posts = (saved.posts || []).filter(function (post) {
-            if (post.author !== viewing) return false;
-            if (rel === "self" || rel === "friend") return true;
-            return post.visibility !== "friends";
-        });
-        var empty = document.getElementById("me-posts-empty");
-        if (empty) empty.hidden = posts.length > 0;
-        clearPosts();
-        var tpl = document.getElementById("me-post");
-        posts.forEach(function (post) {
-            if (!tpl) return;
-            var card = tpl.content.firstElementChild.cloneNode(true);
-            var image = card.querySelector("img");
-            var text = card.querySelector("p");
-            var when = card.querySelector("time");
-            if (image) {
-                image.hidden = !post.image;
-                if (post.image) image.src = post.image;
-            }
-            if (text) text.textContent = post.text || "";
-            if (when) when.textContent = post.createdAt ? new Date(post.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
-            box.appendChild(card);
-        });
+    }
+
+    function postTime(value) {
+        var text = String(value || "");
+        return /Z$|[+-]\d\d:\d\d$/.test(text) ? text : text + "Z";
     }
 
     function loadMe() {}
@@ -843,6 +915,9 @@
         var self = isMe(viewing);
         setVisitor(!self);
         setPrivateView(false, "");
+        setRequestCard(false);
+        viewingUserId = "";
+        if (window.discodePresence) window.discodePresence.unwatchProfile();
         var title = profile.querySelector(".me-profile-id h2");
         if (title) title.textContent = self ? meName() : viewing;
         var nameInput = document.getElementById("me-display-input");
@@ -864,7 +939,7 @@
             add.innerHTML = '<i class="fa-solid fa-user-plus"></i> <span>Add Friend</span>';
         }
         var face = profile.querySelector(".me-profile-avatar img");
-        if (face) face.src = self ? ownPhoto : (photo || ownPhoto);
+        if (face) face.src = self ? ownPhoto : (photo || DEFAULT_AVATAR);
         var since = document.getElementById("me-since");
         if (since && !self) showJoined(viewing);
         renderMyPosts();

@@ -47,5 +47,3 @@ C:\Users\User\AppData\Local\Temp\claude\c--Users-User-source-repos-Discode-API-F
 C:\Users\User\AppData\Local\Temp\claude\c--Users-User-source-repos-Discode-API-FinalProject\4ec619b8-a8eb-4bea-afd2-9c276ba7c886\scratchpad\mvc\Discode-MVC-Client.runtimeconfig.json
 C:\Users\User\AppData\Local\Temp\claude\c--Users-User-source-repos-Discode-API-FinalProject\4ec619b8-a8eb-4bea-afd2-9c276ba7c886\scratchpad\mvc\Discode-MVC-Client.dll
 C:\Users\User\AppData\Local\Temp\claude\c--Users-User-source-repos-Discode-API-FinalProject\4ec619b8-a8eb-4bea-afd2-9c276ba7c886\scratchpad\mvc\Discode-MVC-Client.pdb
-C:\Users\User\source\repos\Discode-MVC-Client\Discode-MVC-Client\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
-C:\Users\User\source\repos\Discode-MVC-Client\Discode-MVC-Client\obj\Debug\net8.0\Discode-.AA699995.Up2Date

@@ -267,6 +267,13 @@
                                 maxlength="32" value="@Model.Profile.DisplayName" aria-label="Display name"></form>
                         <h2 id="me-view-name" hidden>@Model.Profile.DisplayName</h2>
                         <p class="me-handle"><span id="me-handle-name">@Model.Profile.UserName</span> <span id="me-handle-dot">•</span> <button type="button" class="me-pronouns" id="me-pronouns">@(string.IsNullOrWhiteSpace(Model.Profile.Pronouns) ? "Add pronouns" : Model.Profile.Pronouns)</button><span id="me-view-pronouns" hidden>@Model.Profile.Pronouns</span></p>
+                        <div class="me-request" id="me-request" hidden>
+                            <p id="me-request-text"></p>
+                            <div class="me-request-buttons">
+                                <button type="button" id="me-request-accept">Accept</button>
+                                <button type="button" id="me-request-ignore">Ignore</button>
+                            </div>
+                        </div>
                         <div class="me-actions">
                             <button type="button" class="me-add" id="me-add" hidden><i
                                     class="fa-solid fa-user-plus"></i> <span>Add Friend</span></button>
