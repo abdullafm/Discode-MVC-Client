@@ -288,6 +288,15 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        public Task<IActionResult> UserProfile(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a user." } }));
+
+            return ForwardToApi(client => client.GetAsync("api/account/users/" + Uri.EscapeDataString(name.Trim())));
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Blocked()
         {
             try

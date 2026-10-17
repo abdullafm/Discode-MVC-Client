@@ -245,6 +245,7 @@
         </div>
         <div class="me-profile d-none" id="me-profile">
             <div class="me-profile-card" role="dialog" aria-label="Profile">
+                <div class="me-private-head" id="me-private-head" hidden><i class="fa-solid fa-lock"></i> <span>Private Profile</span></div>
                 <button type="button" class="me-profile-close" id="me-profile-close" aria-label="Close"><i
                         class="fa-solid fa-xmark"></i></button>
                 <div class="me-profile-side">
@@ -272,6 +273,7 @@
                             <button type="button" class="me-msg" id="me-msg"><i class="fa-solid fa-comment"></i>
                                 <span>Message</span></button>
                         </div>
+                        <p class="me-private-note" id="me-private-note" hidden></p>
                         <div class="me-block me-bio-block">
                             <h3>Bio</h3>
                             <form class="me-bio-form" id="me-bio-form"><input id="me-bio" type="text" maxlength="190"
@@ -299,6 +301,7 @@
                         </template>
                         <div class="me-posts" id="me-posts"></div>
                         <p class="me-posts-empty" id="me-posts-empty">No posts yet.</p>
+                        <p class="me-private-board" id="me-private-board" hidden>This profile is private. Add them as a friend to see their posts.</p>
                         <a class="me-posts-go" href="./socialmedia.html">Social Media</a>
                     </div>
                     <div class="me-panel d-none" id="me-activity">

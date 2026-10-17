@@ -729,6 +729,10 @@ function openToggle() {
             if (window.discodeGo) window.discodeGo(href);
             else window.location.href = href;
         }
+        if (action === "profile" && window.openUserProfile) {
+            var face = row.querySelector("img");
+            window.openUserProfile(row.getAttribute("data-user") || "", face ? face.getAttribute("src") : "");
+        }
         if (action === "block" && window.discodeFriends) window.discodeFriends.blockRow(row);
         if (action === "remove" && window.discodeFriends) window.discodeFriends.removeRow(row);
         closeMenu();

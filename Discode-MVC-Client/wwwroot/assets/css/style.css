@@ -7373,3 +7373,67 @@ body.call-resizing {
         min-height: 44px;
     }
 }
+
+/* Private profile view for non-friends */
+.me-profile.private-view .me-profile-card {
+    padding-top: 48px;
+    box-sizing: border-box;
+}
+
+.me-profile.private-view .me-private-head {
+    display: flex;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    background: #f2f3f5;
+    border-bottom: 1px solid #e3e5e8;
+}
+
+.me-profile.private-view .me-profile-close {
+    top: 8px;
+}
+
+.me-profile.private-view .me-private-note {
+    display: block;
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: #e3e5e8;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.me-profile.private-view #me-posts,
+.me-profile.private-view #me-posts-empty,
+.me-profile.private-view .me-posts-go {
+    display: none;
+}
+
+.me-profile.private-view .me-private-board {
+    display: block;
+    margin: 24px 0;
+    color: #80848e;
+    text-align: center;
+}
+
+html.theme-dark .me-profile.private-view .me-private-head {
+    background: #2b2d31;
+    border-bottom-color: #1e1f22;
+    color: #f2f3f5;
+}
+
+html.theme-dark .me-profile.private-view .me-private-note {
+    background: #232428;
+    color: #dbdee1;
+}
+
+html.theme-dark body .me-profile .me-actions button span {
+    color: #fff !important;
+}

@@ -199,8 +199,13 @@
 
     function closeProfile() {
         if (profile.classList.contains("d-none")) return;
-        if (!profile.classList.contains("visitor-view")) saveProfile();
+        var visitor = profile.classList.contains("visitor-view");
+        if (!visitor) saveProfile();
         profile.classList.add("d-none");
+        if (visitor) {
+            setVisitor(false);
+            setPrivateView(false, "");
+        }
     }
 
     document.getElementById("me-profile-close").addEventListener("click", closeProfile);
@@ -581,19 +586,55 @@
             bio: row.getAttribute("data-bio") || "",
             emoji: row.getAttribute("data-emoji") || ""
         } : {});
-        fetch("/api/users/" + encodeURIComponent(name)).then(function (response) {
+        fetch("/Home/UserProfile?name=" + encodeURIComponent(name), {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        }).then(function (response) {
             if (!response.ok) throw new Error("user");
             return response.json();
         }).then(function (data) {
             if (viewing !== name) return;
-            var text = formatJoined(data.registeredAt);
-            if (text) since.textContent = text;
-            paintPerson({
-                pronouns: data.pronouns || "",
-                bio: data.bio || "",
-                emoji: data.emoji || ""
-            });
+            paintVisitor(data);
         }).catch(function () {});
+    }
+
+    function setPrivateView(on, name) {
+        profile.classList.toggle("private-view", on);
+        var head = document.getElementById("me-private-head");
+        var note = document.getElementById("me-private-note");
+        var board = document.getElementById("me-private-board");
+        if (head) head.hidden = !on;
+        if (note) {
+            note.hidden = !on;
+            note.textContent = on ? name + "'s profile is private, so some info is hidden. Add them as a friend to see more." : "";
+        }
+        if (board) board.hidden = !on;
+    }
+
+    function paintVisitor(data) {
+        var displayName = data.displayName || data.userName || "";
+        var viewName = document.getElementById("me-view-name");
+        var handle = document.getElementById("me-handle-name");
+        var face = profile.querySelector(".me-profile-avatar img");
+        var since = document.getElementById("me-since");
+        var add = document.getElementById("me-add");
+        if (viewName) viewName.textContent = displayName;
+        if (handle) handle.textContent = data.userName || "";
+        if (face && data.avatarUrl) face.src = data.avatarUrl;
+        var joined = formatJoined(data.memberSince);
+        if (since && joined) since.textContent = joined;
+        paintPerson({ pronouns: data.pronouns || "", bio: data.bio || "", emoji: "" });
+        setPrivateView(!!data.isPrivate, displayName);
+        if (!add) return;
+        add.setAttribute("data-username", data.userName || "");
+        if (data.relation === "friend") {
+            add.hidden = true;
+        } else if (data.relation === "pending-sent" || data.relation === "pending-received") {
+            add.disabled = true;
+            add.classList.add("button-sent");
+            add.innerHTML = '<i class="fa-solid fa-user-clock"></i> <span>' +
+                (data.relation === "pending-sent" ? "Request Sent" : "Request Pending") + "</span>";
+        }
     }
 
     function setVisitor(on) {
@@ -801,6 +842,7 @@
         viewing = name || meName();
         var self = isMe(viewing);
         setVisitor(!self);
+        setPrivateView(false, "");
         var title = profile.querySelector(".me-profile-id h2");
         if (title) title.textContent = self ? meName() : viewing;
         var nameInput = document.getElementById("me-display-input");
