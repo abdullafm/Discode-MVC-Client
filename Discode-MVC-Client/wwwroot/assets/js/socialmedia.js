@@ -189,33 +189,67 @@ function utcMillis(value) {
 
 function purgeLegacyPosts() {
     var state = loadState();
-    var kept = state.posts.filter(function (post) { return /^\d+$/.test(String(post.id)); });
-    if (kept.length === state.posts.length) return;
-    state.posts = kept;
+    if (!state.posts.length) return;
+    state.posts = [];
     saveState(state);
 }
 
-function mergeLocal(list) {
-    var local = loadPosts();
-    var byId = {};
-    local.forEach(function (post) { byId[post.id] = post; });
-    var merged = list.map(function (dto) {
-        var id = String(dto.id);
-        var entry = byId[id];
-        if (!entry) {
-            entry = { id: id, comments: [], likes: 0, liked: false };
-            byId[id] = entry;
-            local.push(entry);
-        }
-        entry.author = dto.authorUserName;
-        entry.avatar = dto.authorAvatarUrl || "";
-        entry.text = dto.text || "";
-        entry.image = dto.imageUrl || "";
-        entry.createdAt = utcMillis(dto.createdAt);
-        return entry;
+function mapComment(dto) {
+    return {
+        id: String(dto.id),
+        author: dto.authorUserName,
+        avatar: dto.authorAvatarUrl || "",
+        text: dto.text || "",
+        createdAt: utcMillis(dto.createdAt),
+        likes: dto.likeCount || 0,
+        liked: !!dto.likedByMe
+    };
+}
+
+function mapPosts(list) {
+    return list.map(function (dto) {
+        return {
+            id: String(dto.id),
+            author: dto.authorUserName,
+            avatar: dto.authorAvatarUrl || "",
+            text: dto.text || "",
+            image: dto.imageUrl || "",
+            createdAt: utcMillis(dto.createdAt),
+            likes: dto.likeCount || 0,
+            liked: !!dto.likedByMe,
+            comments: (dto.comments || []).map(mapComment)
+        };
     });
-    savePosts(local);
-    return merged;
+}
+
+function captureDraft(list) {
+    if (!openCommentPost) return null;
+    var form = list.querySelector('.comment-form[data-post="' + openCommentPost + '"]');
+    var box = form && form.querySelector(".rich-text");
+    if (!box) return null;
+    return { post: openCommentPost, html: box.innerHTML, empty: box.getAttribute("data-empty"), focused: document.activeElement === box };
+}
+
+function restoreDraft(list, draft) {
+    if (!draft || draft.empty === "1") return;
+    var form = list.querySelector('.comment-form[data-post="' + draft.post + '"]');
+    var box = form && form.querySelector(".rich-text");
+    if (!box) return;
+    box.innerHTML = draft.html;
+    box.setAttribute("data-empty", draft.empty || "0");
+    if (!draft.focused) return;
+    box.focus();
+    var range = document.createRange();
+    range.selectNodeContents(box);
+    range.collapse(false);
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+}
+
+function clearField(box) {
+    while (box.firstChild) box.removeChild(box.firstChild);
+    box.setAttribute("data-empty", "1");
 }
 
 var feedRequest = { explore: 0, friends: 0 };
@@ -224,7 +258,7 @@ function loadFeed(view) {
     var request = ++feedRequest[view];
     return requestJson(view === "friends" ? "/Home/FriendsPosts" : "/Home/ExplorePosts").then(function (list) {
         if (request !== feedRequest[view]) return;
-        feeds[view] = mergeLocal(Array.isArray(list) ? list : []);
+        feeds[view] = mapPosts(Array.isArray(list) ? list : []);
         if (currentView === view) renderFeed();
     }).catch(function () {});
 }
@@ -332,9 +366,8 @@ function renderFeed() {
     var view = currentView === "friends" ? "friends" : "explore";
     var list = document.getElementById(view === "friends" ? "friends-list" : "explore-list");
     var empty = document.getElementById(view === "friends" ? "friends-empty" : "explore-empty");
-    var local = {};
-    loadPosts().forEach(function (post) { local[post.id] = post; });
-    var posts = feeds[view].map(function (post) { return local[post.id] || post; });
+    var posts = feeds[view];
+    var draft = captureDraft(list);
     while (list.firstChild) list.removeChild(list.firstChild);
     if (empty) empty.hidden = posts.length > 0;
     if (!posts.length) return;
@@ -347,7 +380,7 @@ function renderFeed() {
         card.setAttribute("data-post", post.id);
         setPersonFace(card.querySelector(".post-author > img"), card.querySelector(".post-author > .avatar-letter"), post.author, post.avatar || DEFAULT_AVATAR);
         var formFaces = card.querySelectorAll(".comment-form > img, .comment-form > .avatar-letter");
-        setPersonFace(formFaces[0], formFaces[1], ME);
+        setPersonFace(formFaces[0], formFaces[1], ME, myPhoto() || DEFAULT_AVATAR);
         var name = card.querySelector(".post-name strong");
         var when = card.querySelector(".post-name time");
         if (name) name.textContent = post.author;
@@ -380,7 +413,7 @@ function renderFeed() {
         (post.comments || []).forEach(function (comment) {
             if (!commentTpl || !comments) return;
             var item = commentTpl.content.firstElementChild.cloneNode(true);
-            setPersonFace(item.querySelector("img"), item.querySelector(".avatar-letter"), comment.author);
+            setPersonFace(item.querySelector("img"), item.querySelector(".avatar-letter"), comment.author, comment.avatar || DEFAULT_AVATAR);
             var who = item.querySelector("strong");
             var said = item.querySelector("p");
             var at = item.querySelector("time");
@@ -412,6 +445,7 @@ function renderFeed() {
         }
         list.appendChild(card);
     });
+    restoreDraft(list, draft);
 }
 
 function showPostError(message) {
@@ -467,25 +501,19 @@ document.getElementById("post-composer").addEventListener("submit", function (ev
 document.querySelector(".social-view").addEventListener("submit", function (event) {
     if (!event.target.classList.contains("comment-form")) return;
     event.preventDefault();
-    var postId = event.target.getAttribute("data-post");
-    var text = fieldValue(event.target.querySelector(".rich-text")).trim();
+    var postId = Number(event.target.getAttribute("data-post"));
+    var box = event.target.querySelector(".rich-text");
+    var text = fieldValue(box).trim();
     if (!text) return;
 
-    var posts = loadPosts();
-    posts.forEach(function (post) {
-        if (post.id !== postId) return;
-        post.comments = post.comments || [];
-        post.comments.push({
-            id: nextId(),
-            author: ME,
-            text: text,
-            createdAt: Date.now(),
-            likes: 0,
-            liked: false
-        });
+    var submit = event.target.querySelector("button[type=submit]");
+    if (submit) submit.disabled = true;
+    requestJson("/Home/CreateComment", "POST", { postId: postId, text: text }).then(function () {
+        clearField(box);
+        return loadFeed(currentView);
+    }).catch(function () {}).then(function () {
+        if (submit) submit.disabled = false;
     });
-    savePosts(posts);
-    renderFeed();
 });
 
 function groupedStories() {
@@ -1408,7 +1436,6 @@ document.querySelector(".social-view").addEventListener("click", function (event
     if (deletePost) {
         var postId = deletePost.getAttribute("data-delete-post");
         requestJson("/Home/DeletePost", "POST", { id: Number(postId) }).then(function () {
-            savePosts(loadPosts().filter(function (post) { return post.id !== postId; }));
             loadFeed(currentView);
         }).catch(function () {});
         return;
@@ -1416,18 +1443,9 @@ document.querySelector(".social-view").addEventListener("click", function (event
 
     var deleteComment = event.target.closest("[data-delete-comment]");
     if (deleteComment) {
-        var commentPostId = deleteComment.getAttribute("data-post");
-        var commentId = deleteComment.getAttribute("data-delete-comment");
-        var posts = loadPosts();
-        posts.forEach(function (post) {
-            if (post.id !== commentPostId) return;
-            post.comments = (post.comments || []).filter(function (comment) {
-                if (comment.id !== commentId) return true;
-                return post.author !== ME && comment.author !== ME;
-            });
-        });
-        savePosts(posts);
-        renderFeed();
+        requestJson("/Home/DeleteComment", "POST", { id: Number(deleteComment.getAttribute("data-delete-comment")) }).then(function () {
+            return loadFeed(currentView);
+        }).catch(function () {});
         return;
     }
 
@@ -1449,37 +1467,17 @@ document.querySelector(".social-view").addEventListener("click", function (event
 
     var postLike = event.target.closest("[data-like-post]");
     if (postLike) {
-        var likedPostId = postLike.getAttribute("data-like-post");
-        var likedPosts = loadPosts();
-        likedPosts.forEach(function (post) {
-            if (post.id !== likedPostId) return;
-            post.likes = post.likes || 0;
-            post.liked = !post.liked;
-            post.likes += post.liked ? 1 : -1;
-            if (post.likes < 0) post.likes = 0;
-        });
-        savePosts(likedPosts);
-        renderFeed();
+        requestJson("/Home/TogglePostLike", "POST", { id: Number(postLike.getAttribute("data-like-post")) }).then(function (result) {
+            setLike(postLike, result.liked, result.count);
+        }).catch(function () {});
         return;
     }
 
     var button = event.target.closest(".like-btn");
     if (!button) return;
-    var postId = button.getAttribute("data-post");
-    var commentId = button.getAttribute("data-like");
-    var posts = loadPosts();
-
-    posts.forEach(function (post) {
-        if (post.id !== postId) return;
-        (post.comments || []).forEach(function (comment) {
-            if (comment.id !== commentId) return;
-            comment.liked = !comment.liked;
-            comment.likes += comment.liked ? 1 : -1;
-            if (comment.likes < 0) comment.likes = 0;
-        });
-    });
-    savePosts(posts);
-    renderFeed();
+    requestJson("/Home/ToggleCommentLike", "POST", { id: Number(button.getAttribute("data-like")) }).then(function (result) {
+        setLike(button, result.liked, result.count);
+    }).catch(function () {});
 });
 
 document.addEventListener("discode-posts-changed", function () {

@@ -2717,3 +2717,11 @@ html:not(.theme-dark) .btn-live-cancel:hover {
     }
 }
 
+
+.like-btn span {
+    color: inherit;
+}
+
+html.theme-dark body .like-btn span {
+    color: inherit !important;
+}

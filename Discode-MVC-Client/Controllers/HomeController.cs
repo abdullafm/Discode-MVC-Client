@@ -289,21 +289,37 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
-        public Task<IActionResult> UserProfile(string name)
+        public async Task<IActionResult> UserProfile(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
-                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a user." } }));
+                return BadRequest(new { errors = new[] { "Choose a user." } });
 
-            return ForwardToApi(client => client.GetAsync("api/account/users/" + Uri.EscapeDataString(name.Trim())));
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var profile = await client.GetFromJsonAsync<UserProfileVM>("api/account/users/" + Uri.EscapeDataString(name.Trim()));
+                if (profile is null)
+                    return NotFound(new { errors = new[] { "User not found." } });
+
+                return Ok(profile);
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode((int?)ex.StatusCode ?? 503, new { errors = new[] { "Could not load the profile." } });
+            }
+            catch (JsonException)
+            {
+                return NotFound(new { errors = new[] { "User not found." } });
+            }
         }
 
         [HttpGet]
         public Task<IActionResult> ExplorePosts()
-            => ForwardToApi(client => client.GetAsync("api/post/explore"));
+            => GetPosts("api/post/explore");
 
         [HttpGet]
         public Task<IActionResult> FriendsPosts()
-            => ForwardToApi(client => client.GetAsync("api/post/friends"));
+            => GetPosts("api/post/friends");
 
         [HttpGet]
         public Task<IActionResult> UserPosts(string name)
@@ -311,7 +327,7 @@ namespace Discode_MVC_Client.Controllers
             if (string.IsNullOrWhiteSpace(name))
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a user." } }));
 
-            return ForwardToApi(client => client.GetAsync("api/post/user/" + Uri.EscapeDataString(name.Trim())));
+            return GetPosts("api/post/user/" + Uri.EscapeDataString(name.Trim()));
         }
 
         [HttpPost]
@@ -336,6 +352,46 @@ namespace Discode_MVC_Client.Controllers
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
 
             return ForwardToApi(client => client.DeleteAsync($"api/post/{model.Id}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> TogglePostLike([FromBody] PostIdVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/post/{model.Id}/like", new { }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> CreateComment([FromBody] CreateCommentVM model)
+        {
+            if (model is null || model.PostId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/post/{model.PostId}/comments", new { text = model.Text ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> DeleteComment([FromBody] CommentIdVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Comment not found." } }));
+
+            return ForwardToApi(client => client.DeleteAsync($"api/post/comments/{model.Id}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> ToggleCommentLike([FromBody] CommentIdVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Comment not found." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/post/comments/{model.Id}/like", new { }));
         }
 
         [HttpPost]
@@ -379,6 +435,24 @@ namespace Discode_MVC_Client.Controllers
         [ValidateAntiForgeryToken]
         public Task<IActionResult> UnblockUser([FromBody] FriendRequestIdVM model)
             => ForwardFriendAction(model, id => $"api/block/{id}", HttpMethod.Delete);
+
+        private async Task<IActionResult> GetPosts(string url)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var posts = await client.GetFromJsonAsync<List<PostVM>>(url);
+                return Ok(posts ?? new List<PostVM>());
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<PostVM>());
+            }
+            catch (JsonException)
+            {
+                return Ok(Array.Empty<PostVM>());
+            }
+        }
 
         private static HomeVM ToHome(ProfileVM profile) => new()
         {
