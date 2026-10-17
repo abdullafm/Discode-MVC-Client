@@ -2,7 +2,7 @@
 var micO = false;
 var headO = false;
 var STORE_KEY = "discode-social";
-var ME = "Anonymou5";
+var ME = (document.querySelector(".social-view") || document.body).getAttribute("data-username") || "Anonymou5";
 var currentView = "explore";
 var pendingImage = "";
 var friendsOnly = false;

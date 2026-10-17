@@ -1,7 +1,44 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\views\\social\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\views\\social\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\views\\_viewimports.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\views\\_viewimports.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\views\\emailtemplates\\verificationcode.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\views\\emailtemplates\\verificationcode.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\views\\emailtemplates\\passwordreset.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\views\\emailtemplates\\passwordreset.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\views\\home\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\views\\home\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\views\\nitro\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\views\\nitro\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\views\\shared\\_homelayout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\views\\shared\\_homelayout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\controllers\\socialcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\controllers\\socialcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\controllers\\nitrocontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\controllers\\nitrocontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +46,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 10,
           "Children": [
             {
               "$type": "Bookmark",
@@ -42,6 +79,121 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "VerificationCode.cshtml",
+              "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\EmailTemplates\\VerificationCode.cshtml",
+              "RelativeDocumentMoniker": "Discode-MVC-Client\\Views\\EmailTemplates\\VerificationCode.cshtml",
+              "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\EmailTemplates\\VerificationCode.cshtml",
+              "RelativeToolTip": "Discode-MVC-Client\\Views\\EmailTemplates\\VerificationCode.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-10-17T06:40:01.859Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "PasswordReset.cshtml",
+              "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\EmailTemplates\\PasswordReset.cshtml",
+              "RelativeDocumentMoniker": "Discode-MVC-Client\\Views\\EmailTemplates\\PasswordReset.cshtml",
+              "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\EmailTemplates\\PasswordReset.cshtml",
+              "RelativeToolTip": "Discode-MVC-Client\\Views\\EmailTemplates\\PasswordReset.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-10-17T06:39:58.586Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\Social\\Index.cshtml",
+              "RelativeDocumentMoniker": "Discode-MVC-Client\\Views\\Social\\Index.cshtml",
+              "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\Social\\Index.cshtml",
+              "RelativeToolTip": "Discode-MVC-Client\\Views\\Social\\Index.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-10-16T12:11:49.635Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "SocialController.cs",
+              "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Controllers\\SocialController.cs",
+              "RelativeDocumentMoniker": "Discode-MVC-Client\\Controllers\\SocialController.cs",
+              "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Controllers\\SocialController.cs",
+              "RelativeToolTip": "Discode-MVC-Client\\Controllers\\SocialController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-16T12:11:39.343Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "_ViewImports.cshtml",
+              "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\_ViewImports.cshtml",
+              "RelativeDocumentMoniker": "Discode-MVC-Client\\Views\\_ViewImports.cshtml",
+              "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\_ViewImports.cshtml",
+              "RelativeToolTip": "Discode-MVC-Client\\Views\\_ViewImports.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-10-16T11:39:10.23Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "_HomeLayout.cshtml",
+              "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\Shared\\_HomeLayout.cshtml",
+              "RelativeDocumentMoniker": "Discode-MVC-Client\\Views\\Shared\\_HomeLayout.cshtml",
+              "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\Shared\\_HomeLayout.cshtml",
+              "RelativeToolTip": "Discode-MVC-Client\\Views\\Shared\\_HomeLayout.cshtml",
+              "ViewState": "AgIAAHUCAAAAAAAAAAAAABAAAABAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-10-16T11:38:48.15Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\Home\\Index.cshtml",
+              "RelativeDocumentMoniker": "Discode-MVC-Client\\Views\\Home\\Index.cshtml",
+              "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\Home\\Index.cshtml",
+              "RelativeToolTip": "Discode-MVC-Client\\Views\\Home\\Index.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-10-16T11:38:15.062Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\Nitro\\Index.cshtml",
+              "RelativeDocumentMoniker": "Discode-MVC-Client\\Views\\Nitro\\Index.cshtml",
+              "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Views\\Nitro\\Index.cshtml",
+              "RelativeToolTip": "Discode-MVC-Client\\Views\\Nitro\\Index.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-10-16T11:35:00.547Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "NitroController.cs",
+              "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Controllers\\NitroController.cs",
+              "RelativeDocumentMoniker": "Discode-MVC-Client\\Controllers\\NitroController.cs",
+              "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Controllers\\NitroController.cs",
+              "RelativeToolTip": "Discode-MVC-Client\\Controllers\\NitroController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAxAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-16T11:34:47.615Z"
             }
           ]
         }

@@ -2,7 +2,7 @@
 @{
     Layout = "_HomeLayout";
 }
-<main class="friends-view social-view show-main">
+<main class="friends-view social-view show-main" data-username="@Model.Profile.UserName">
             <section id="social-stage"><div class="social-stage">
                 <div class="social-bar">
                     <h1 id="social-title">Explore</h1>
@@ -42,9 +42,9 @@
                 </div></section>
                 <section id="view-compose" hidden><div class="social-panel">
                     <form class="post-composer" id="post-composer">
-                        <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+                        <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
                         <div class="composer-fields">
-                            <input type="text" name="author" maxlength="32" value="Anonymou5" aria-label="Name">
+                            <input type="text" name="author" maxlength="32" value="@Model.Profile.UserName" readonly aria-label="Name">
                             <div class="rich-text" id="post-text" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="What's happening?" data-maxlength="500" data-empty="1"></div>
                             <div class="photo-preview" id="photo-preview" hidden><img id="photo-preview-img" alt=""><button type="button" id="photo-remove" aria-label="Remove photo"><i class="fa-solid fa-xmark"></i></button></div>
                             <div class="composer-actions">
