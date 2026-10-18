@@ -59,6 +59,10 @@
                     document.dispatchEvent(new CustomEvent("discode-posts-changed"));
                 });
 
+                connection.on("StoriesChanged", function () {
+                    document.dispatchEvent(new CustomEvent("discode-stories-changed"));
+                });
+
                 connection.onreconnecting(function () { window.discodeLive = false; });
                 connection.onclose(function () { window.discodeLive = false; });
                 connection.onreconnected(onConnected);

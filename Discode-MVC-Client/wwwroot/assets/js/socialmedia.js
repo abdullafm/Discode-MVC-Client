@@ -17,8 +17,8 @@ window.onload = function () {
     showView("explore");
 };
 
-var x = new Audio("./assets/css/audio/discordmute_IZNcLx2.mp3");
-var y = new Audio("./assets/css/audio/discord-unmute-sound.mp3");
+var x = new Audio("/assets/css/audio/discordmute_IZNcLx2.mp3");
+var y = new Audio("/assets/css/audio/discord-unmute-sound.mp3");
 
 function mic() {
     if (!micO) {
@@ -109,17 +109,41 @@ function savePosts(posts) {
     saveState(state);
 }
 
+var SEEN_KEY = "discode-seen-stories";
+var serverStories = [];
+
+function seenIds() {
+    try {
+        var saved = JSON.parse(localStorage.getItem(SEEN_KEY));
+        return Array.isArray(saved) ? saved : [];
+    } catch (err) {
+        return [];
+    }
+}
+
 function loadStories() {
-    var limit = 24 * 60 * 60 * 1000;
-    return loadState().stories.filter(function (story) {
-        return Date.now() - story.createdAt < limit && story.image && story.image.indexOf("data:image/") === 0;
+    var seen = seenIds();
+    return serverStories.map(function (item) {
+        return {
+            id: item.id,
+            author: item.authorUserName,
+            name: item.authorDisplayName || item.authorUserName,
+            avatar: item.authorAvatarUrl || "",
+            image: item.imageUrl,
+            createdAt: utcMillis(item.createdAt),
+            seen: seen.indexOf(item.id) !== -1
+        };
     });
 }
 
-function saveStories(stories) {
-    var state = loadState();
-    state.stories = stories;
-    saveState(state);
+function refreshStories() {
+    return requestJson("/Home/Stories").then(function (data) {
+        serverStories = Array.isArray(data) ? data : [];
+        var ids = serverStories.map(function (item) { return item.id; });
+        var kept = seenIds().filter(function (id) { return ids.indexOf(id) !== -1; });
+        localStorage.setItem(SEEN_KEY, JSON.stringify(kept));
+        renderStories();
+    }).catch(function () {});
 }
 
 function nextId() {
@@ -276,7 +300,10 @@ function showView(view) {
     for (var i = 0; i < buttons.length; i++) {
         buttons[i].classList.toggle("active", buttons[i].getAttribute("data-view") === view);
     }
-    if (view === "friends") renderStories();
+    if (view === "friends") {
+        renderStories();
+        refreshStories();
+    }
     if (view === "live" || view === "explore") renderLiveStreams();
     if (view === "explore" || view === "friends") {
         renderFeed();
@@ -568,44 +595,19 @@ function renderStories() {
     var mineImg = mineButton.querySelector("img");
     if (mineImg) mineImg.src = avatarFor(ME);
     row.appendChild(mineButton);
-    // Instagram Live story bubbles at the beginning of stories row
-    var publicLive = (typeof loadLiveStreams === "function" ? loadLiveStreams() : []).filter(function (s) {
-        return s.visibility === "public";
-    });
-    publicLive.forEach(function (stream) {
-        var liveBubble = document.createElement("button");
-        liveBubble.type = "button";
-        liveBubble.className = "story-bubble is-live";
-        liveBubble.setAttribute("data-live-stream", stream.id);
-
-        var badgeText = (typeof t === "function" && t("LIVE")) || "LIVE";
-        var safeStreamer = stream.streamer.replace(/[<>&"]/g, function (c) {
-            return { "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;" }[c];
-        });
-        var safeAvatar = (stream.avatar || "./assets/img/img-icon-profile.jpeg").replace(/"/g, "&quot;");
-
-        liveBubble.innerHTML =
-            '<span class="story-ring"><img src="' + safeAvatar + '" alt="' + safeStreamer + '"></span>' +
-            '<span class="story-live-badge">' + badgeText + '</span>' +
-            '<span class="story-label">' + safeStreamer + '</span>';
-
-        liveBubble.addEventListener("click", function () {
-            openLiveWatchModal(stream);
-        });
-        row.appendChild(liveBubble);
-    });
-
-    friendNames().forEach(function (name) {
+    Object.keys(groups).filter(function (name) { return name !== ME; }).sort(function (a, b) {
+        return groups[b][groups[b].length - 1].createdAt - groups[a][groups[a].length - 1].createdAt;
+    }).forEach(function (name) {
         var items = groups[name];
-        if (!items || !friendTpl) return;
+        if (!friendTpl) return;
         var seen = items.every(function (story) { return story.seen; });
         var button = friendTpl.content.firstElementChild.cloneNode(true);
         button.classList.add(seen ? "seen" : "fresh");
         button.setAttribute("data-story", name);
         var img = button.querySelector("img");
         var label = button.querySelector(".story-label");
-        if (img) img.src = avatarFor(name);
-        if (label) label.textContent = name;
+        if (img) img.src = items[0].avatar || DEFAULT_AVATAR;
+        if (label) label.textContent = items[0].name;
         row.appendChild(button);
     });
 }
@@ -629,11 +631,9 @@ function paintStory() {
     }
     var story = group.items[storyIndex];
     if (!story.seen) {
-        var all = loadState().stories;
-        all.forEach(function (item) {
-            if (item.id === story.id) item.seen = true;
-        });
-        saveState({ posts: loadPosts(), stories: all });
+        var seen = seenIds();
+        seen.push(story.id);
+        localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
         story.seen = true;
     }
 
@@ -647,8 +647,8 @@ function paintStory() {
         else if (i === storyIndex) bar.className = "current";
         progress.appendChild(bar);
     }
-    document.getElementById("story-avatar").src = avatarFor(group.author);
-    document.getElementById("story-name").textContent = group.author;
+    document.getElementById("story-avatar").src = group.author === ME ? avatarFor(ME) : story.avatar || DEFAULT_AVATAR;
+    document.getElementById("story-name").textContent = story.name;
     document.getElementById("story-time").textContent = timeAgo(story.createdAt);
     document.getElementById("story-photo").src = story.image;
     document.getElementById("story-caption").textContent = story.text || "";
@@ -662,7 +662,10 @@ function paintStory() {
 
 function openStories(author) {
     var groups = groupedStories();
-    var order = [ME].concat(friendNames()).filter(function (name) { return groups[name]; });
+    var order = Object.keys(groups).filter(function (name) { return name !== ME; }).sort(function (a, b) {
+        return groups[b][groups[b].length - 1].createdAt - groups[a][groups[a].length - 1].createdAt;
+    });
+    if (groups[ME]) order.unshift(ME);
     var start = order.indexOf(author);
     if (start < 0) return;
     storyGroups = order.map(function (name) {
@@ -957,19 +960,31 @@ function publishStory() {
     storyDraft.selected = -1;
     storyDraft.drawing = null;
     paintDraft();
-    var url = document.getElementById("story-canvas").toDataURL("image/jpeg", 0.82);
-    var state = loadState();
-    state.stories.push({
-        id: nextId(),
-        author: ME,
-        image: url,
-        text: "",
-        createdAt: Date.now(),
-        seen: false
-    });
-    saveState(state);
-    closeEditor();
-    showView("friends");
+    var share = document.getElementById("story-share");
+    share.disabled = true;
+    document.getElementById("story-canvas").toBlob(function (blob) {
+        var data = new FormData();
+        data.append("file", blob, "story.jpg");
+        fetch("/Home/UploadStoryImage", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "RequestVerificationToken": csrfToken(), "X-Requested-With": "XMLHttpRequest" },
+            body: data
+        }).then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (result) {
+                if (!response.ok) throw readError(response, result);
+                return requestJson("/Home/CreateStory", "POST", { imageUrl: result.imageUrl });
+            });
+        }).then(function () {
+            closeEditor();
+            showView("friends");
+            return refreshStories();
+        }).catch(function (err) {
+            alert(err.message);
+        }).then(function () {
+            share.disabled = false;
+        });
+    }, "image/jpeg", 0.82);
 }
 
 document.getElementById("story-file").addEventListener("change", function () {
@@ -1112,25 +1127,31 @@ document.getElementById("story-delete-btn").addEventListener("click", function (
     if (!group || group.author !== ME) return;
     var story = group.items[storyIndex];
     if (!story) return;
-    var state = loadState();
-    state.stories = state.stories.filter(function (item) { return item.id !== story.id; });
-    saveState(state);
-    group.items.splice(storyIndex, 1);
     closeStoryMenu();
-    if (!group.items.length) {
-        storyGroups.splice(storyCursor, 1);
-        if (!storyGroups.length) {
-            closeStories();
-            renderStories();
-            return;
+    requestJson("/Home/DeleteStory", "POST", { id: story.id }).then(function () {
+        serverStories = serverStories.filter(function (item) { return item.id !== story.id; });
+        group.items.splice(storyIndex, 1);
+        if (!group.items.length) {
+            storyGroups.splice(storyCursor, 1);
+            if (!storyGroups.length) {
+                closeStories();
+                renderStories();
+                return;
+            }
+            if (storyCursor >= storyGroups.length) storyCursor = storyGroups.length - 1;
+            storyIndex = 0;
+        } else if (storyIndex >= group.items.length) {
+            storyIndex = 0;
         }
-        if (storyCursor >= storyGroups.length) storyCursor = storyGroups.length - 1;
-        storyIndex = 0;
-    } else if (storyIndex >= group.items.length) {
-        storyIndex = 0;
-    }
-    renderStories();
-    paintStory();
+        renderStories();
+        paintStory();
+    }).catch(function (err) {
+        alert(err.message);
+    });
+});
+
+document.addEventListener("discode-stories-changed", function () {
+    refreshStories();
 });
 document.getElementById("story-next").addEventListener("click", nextStory);
 document.getElementById("story-prev").addEventListener("click", prevStory);
@@ -1517,7 +1538,7 @@ var DEFAULT_LIVE_STREAMS = [
     {
         id: "live-gpro",
         streamer: "Gpro-fighter",
-        avatar: "./assets/img/img-icon 3.png",
+        avatar: "/assets/img/img-icon 3.png",
         title: "🔥 Road to Grandmaster | Ranked Matches with Squad",
         category: "Gaming",
         tags: ["Valorant", "Ranked", "Competitive"],
@@ -1530,7 +1551,7 @@ var DEFAULT_LIVE_STREAMS = [
     {
         id: "live-sigma",
         streamer: "Mr_Sigma",
-        avatar: "./assets/img/img-icon 4.jpeg",
+        avatar: "/assets/img/img-icon 4.jpeg",
         title: "🎧 24/7 Lo-Fi Chill Beats & Relax Study Session",
         category: "Music",
         tags: ["Lo-Fi", "Beats", "Study", "Chill"],
@@ -1543,7 +1564,7 @@ var DEFAULT_LIVE_STREAMS = [
     {
         id: "live-nxn",
         streamer: "nxn",
-        avatar: "./assets/img/img-icon 1.png",
+        avatar: "/assets/img/img-icon 1.png",
         title: "🎨 Digital Cyberpunk Concept Art & Drawing Chat",
         category: "Entertainment",
         tags: ["Art", "Illustration", "Design"],
@@ -1556,7 +1577,7 @@ var DEFAULT_LIVE_STREAMS = [
     {
         id: "live-moiz",
         streamer: "Moiz Hussain",
-        avatar: "./assets/img/img-icon 2.png",
+        avatar: "/assets/img/img-icon 2.png",
         title: "💻 Building Real-Time Chat & Live Streaming in JS",
         category: "Science & Tech",
         tags: ["Coding", "JavaScript", "WebDev"],
@@ -1568,6 +1589,11 @@ var DEFAULT_LIVE_STREAMS = [
     }
 ];
 
+function fixStreamAvatar(stream) {
+    if (stream && typeof stream.avatar === "string") stream.avatar = stream.avatar.replace(/^\.\/assets\//, "/assets/");
+    return stream;
+}
+
 function loadLiveStreams() {
     try {
         var raw = localStorage.getItem(LIVE_STORAGE_KEY);
@@ -1576,7 +1602,7 @@ function loadLiveStreams() {
             return DEFAULT_LIVE_STREAMS.slice();
         }
         var parsed = JSON.parse(raw);
-        return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_LIVE_STREAMS.slice();
+        return Array.isArray(parsed) && parsed.length > 0 ? parsed.map(fixStreamAvatar) : DEFAULT_LIVE_STREAMS.slice();
     } catch (e) {
         return DEFAULT_LIVE_STREAMS.slice();
     }
@@ -1846,7 +1872,7 @@ function renderLiveStreams() {
         streamer.className = "live-drawer-streamer";
 
         var avatar = document.createElement("img");
-        avatar.src = stream.avatar || "./assets/img/img-icon-profile.jpeg";
+        avatar.src = stream.avatar || "/assets/img/img-icon-profile.jpeg";
         avatar.alt = stream.streamer || "";
 
         var streamerText = document.createElement("div");
@@ -1914,12 +1940,12 @@ var watchJoinToastTimer = null;
 var watchTheaterAnimId = null;
 
 var SIMULATED_CHATTERS = [
-    { name: "Mr_Sigma", avatar: "./assets/img/img-icon 4.jpeg", msgs: ["hey there 👋", "amazing stream 🔥", "what song is this?", "you're playing great", "hello everyone! 👋"] },
-    { name: "Moiz Hussain", avatar: "./assets/img/img-icon 2.png", msgs: ["W streamer 🔥", "clean setup bro!", "let's gooooo!!", "10/10 content", "kalp kalp kalp ❤️❤️❤️"] },
-    { name: "nxn", avatar: "./assets/img/img-icon 1.png", msgs: ["love the vibe ✨", "this is going really well", "please save this stream!", "hey everyone", "gg wp 👏"] },
-    { name: "Gpro-fighter", avatar: "./assets/img/img-icon 3.png", msgs: ["rank 1 soon! 🏆", "sheeesh!", "helalll 🔥", "adamsın!", "takipteyiz"] },
-    { name: "Unknown_Inj3ctor", avatar: "./assets/img/img-icon.png", msgs: ["Do you have a Discord link?", "we're watching king 👑", "hello everyone 🌍", "I clipped that haha"] },
-    { name: "aylin_kaya", avatar: "./assets/img/img-icon 2.png", msgs: ["the stream quality is so good 😍", "audio sounds great", "hi everyone 💕", "how long have you been live?"] }
+    { name: "Mr_Sigma", avatar: "/assets/img/img-icon 4.jpeg", msgs: ["hey there 👋", "amazing stream 🔥", "what song is this?", "you're playing great", "hello everyone! 👋"] },
+    { name: "Moiz Hussain", avatar: "/assets/img/img-icon 2.png", msgs: ["W streamer 🔥", "clean setup bro!", "let's gooooo!!", "10/10 content", "kalp kalp kalp ❤️❤️❤️"] },
+    { name: "nxn", avatar: "/assets/img/img-icon 1.png", msgs: ["love the vibe ✨", "this is going really well", "please save this stream!", "hey everyone", "gg wp 👏"] },
+    { name: "Gpro-fighter", avatar: "/assets/img/img-icon 3.png", msgs: ["rank 1 soon! 🏆", "sheeesh!", "helalll 🔥", "adamsın!", "takipteyiz"] },
+    { name: "Unknown_Inj3ctor", avatar: "/assets/img/img-icon.png", msgs: ["Do you have a Discord link?", "we're watching king 👑", "hello everyone 🌍", "I clipped that haha"] },
+    { name: "aylin_kaya", avatar: "/assets/img/img-icon 2.png", msgs: ["the stream quality is so good 😍", "audio sounds great", "hi everyone 💕", "how long have you been live?"] }
 ];
 
 var JOIN_CANDIDATES = [
@@ -1964,7 +1990,7 @@ function appendChatMessage(author, avatar, text) {
     item.className = "ig-comment-item";
 
     var img = document.createElement("img");
-    img.src = avatar || "./assets/img/img-icon-profile.jpeg";
+    img.src = avatar || "/assets/img/img-icon-profile.jpeg";
     img.alt = author || "";
 
     var body = document.createElement("div");
@@ -2002,7 +2028,7 @@ function openLiveWatchModal(stream) {
 
     if (titleEl) titleEl.textContent = stream.title;
     if (nameEl) nameEl.textContent = stream.streamer;
-    if (avatarEl) avatarEl.src = stream.avatar || "./assets/img/img-icon-profile.jpeg";
+    if (avatarEl) avatarEl.src = stream.avatar || "/assets/img/img-icon-profile.jpeg";
 
     var currentViewers = stream.viewers || 1420;
     function formatViewers(cnt) {
@@ -2135,7 +2161,7 @@ if (chatForm) {
         if (!input) return;
         var val = input.value.trim();
         if (!val) return;
-        appendChatMessage(myName(), avatarFor(ME) || "./assets/img/img-icon-profile.jpeg", val);
+        appendChatMessage(myName(), avatarFor(ME) || "/assets/img/img-icon-profile.jpeg", val);
         input.value = "";
     });
 }
@@ -2348,7 +2374,7 @@ if (createForm) {
         var newStream = {
             id: "live-user-" + nextId(),
             streamer: myName(),
-            avatar: avatarFor(ME) || "./assets/img/img-icon-profile.jpeg",
+            avatar: avatarFor(ME) || "/assets/img/img-icon-profile.jpeg",
             title: title,
             category: cat,
             tags: [cat, "Live", "Public"],

@@ -413,6 +413,63 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> Stories()
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var stories = await client.GetFromJsonAsync<List<StoryVM>>("api/story");
+                return Ok(stories ?? new List<StoryVM>());
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<StoryVM>());
+            }
+            catch (JsonException)
+            {
+                return Ok(Array.Empty<StoryVM>());
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> CreateStory([FromBody] CreateStoryVM model)
+        {
+            if (model is null)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Story data is missing." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync("api/story", new { imageUrl = model.ImageUrl ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> DeleteStory([FromBody] PostIdVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Story not found." } }));
+
+            return ForwardToApi(client => client.DeleteAsync($"api/story/{model.Id}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(5_000_000)]
+        public IActionResult UploadStoryImage(IFormFile file)
+        {
+            if (file is null || file.Length == 0 || !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { errors = new[] { "Choose an image file." } });
+
+            var folder = Path.Combine(_environment.WebRootPath, "uploads", "stories");
+            Directory.CreateDirectory(folder);
+
+            var fileName = Guid.NewGuid().ToString("N") + ".jpg";
+            using (var stream = System.IO.File.Create(Path.Combine(folder, fileName)))
+                file.CopyTo(stream);
+
+            return Ok(new { imageUrl = "/uploads/stories/" + fileName });
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Blocked()
         {
             try

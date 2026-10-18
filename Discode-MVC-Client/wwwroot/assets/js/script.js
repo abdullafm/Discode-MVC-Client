@@ -35,8 +35,8 @@ window.onload = function () {
     }, 2000);
 };
 
-var x = new Audio("./assets/css/audio/discordmute_IZNcLx2.mp3");
-var y = new Audio("./assets/css/audio/discord-unmute-sound.mp3");
+var x = new Audio("/assets/css/audio/discordmute_IZNcLx2.mp3");
+var y = new Audio("/assets/css/audio/discord-unmute-sound.mp3");
 
 function mic() {
     if (!micO) {
@@ -1074,7 +1074,7 @@ function openToggle() {
                 type: "like",
                 username: "Mr_Sigma",
                 displayName: "Mr Sigma",
-                avatar: "./assets/img/img-icon 4.jpeg",
+                avatar: "/assets/img/img-icon 4.jpeg",
                 message: "liked your post",
                 timestamp: Date.now() - 30 * 60 * 1000,
                 unread: true
@@ -1084,7 +1084,7 @@ function openToggle() {
                 type: "comment",
                 username: "Gpro-fighter",
                 displayName: "Gpro Fighter",
-                avatar: "./assets/img/img-icon 3.png",
+                avatar: "/assets/img/img-icon 3.png",
                 message: "commented on your post",
                 snippet: "Great content!",
                 timestamp: Date.now() - 60 * 60 * 1000,
