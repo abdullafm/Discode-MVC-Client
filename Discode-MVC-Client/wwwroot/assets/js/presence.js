@@ -92,6 +92,10 @@
                     document.dispatchEvent(new CustomEvent("discode-live-message", { detail: message }));
                 });
 
+                connection.on("LiveJoined", function (viewer) {
+                    document.dispatchEvent(new CustomEvent("discode-live-joined", { detail: viewer }));
+                });
+
                 connection.on("LiveHeart", function (streamId) {
                     document.dispatchEvent(new CustomEvent("discode-live-heart", { detail: { streamId: streamId } }));
                 });

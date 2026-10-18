@@ -19,6 +19,7 @@
     var heroIndex = 0;
     var broadcast = null;
     var watching = null;
+    var notice = "";
     var capture = { camera: null, screen: null, camVideo: makeVideo(), scrVideo: makeVideo(), timer: 0 };
 
     function makeVideo() {
@@ -53,6 +54,38 @@
         return el;
     }
 
+    var confirmDone = null;
+
+    function askConfirm(title, text, okLabel, single) {
+        if (confirmDone) confirmDone(false);
+        byId("confirm-title").textContent = title;
+        byId("confirm-text").textContent = text;
+        byId("confirm-ok").textContent = okLabel || "OK";
+        byId("confirm-cancel").hidden = !!single;
+        byId("confirm-modal").hidden = false;
+        byId("confirm-ok").focus();
+        return new Promise(function (resolve) {
+            confirmDone = function (answer) {
+                confirmDone = null;
+                byId("confirm-modal").hidden = true;
+                resolve(answer);
+            };
+        });
+    }
+
+    byId("confirm-ok").addEventListener("click", function () {
+        if (confirmDone) confirmDone(true);
+    });
+    byId("confirm-cancel").addEventListener("click", function () {
+        if (confirmDone) confirmDone(false);
+    });
+    byId("confirm-backdrop").addEventListener("click", function () {
+        if (confirmDone) confirmDone(false);
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && confirmDone) confirmDone(false);
+    });
+
     function viewerText(count) {
         return count >= 1000 ? (count / 1000).toFixed(1) + "K" : String(count);
     }
@@ -83,10 +116,17 @@
 
         var preview = element("div", "live-drawer-preview live-thumb");
         preview.style.background = gradientFor(stream.category);
-        var face = element("img", "live-thumb-avatar");
-        face.src = stream.hostAvatarUrl || DEFAULT_AVATAR;
-        face.alt = "";
-        preview.appendChild(face);
+        if (stream.thumbnailUrl) {
+            var shot = element("img", "live-thumb-image");
+            shot.src = stream.thumbnailUrl;
+            shot.alt = "";
+            preview.appendChild(shot);
+        } else {
+            var face = element("img", "live-thumb-avatar");
+            face.src = stream.hostAvatarUrl || DEFAULT_AVATAR;
+            face.alt = "";
+            preview.appendChild(face);
+        }
         preview.appendChild(element("span", "live-drawer-live-badge", "LIVE"));
         var viewers = element("span", "live-drawer-viewers");
         viewers.innerHTML = '<i class="fa-solid fa-eye"></i> ' + viewerText(stream.viewerCount);
@@ -127,8 +167,8 @@
 
         var bg = element("div", "live-hero-bg");
         bg.style.background = gradientFor(stream.category);
-        var blur = element("img", "live-hero-blur");
-        blur.src = stream.hostAvatarUrl || DEFAULT_AVATAR;
+        var blur = element("img", stream.thumbnailUrl ? "live-hero-shot" : "live-hero-blur");
+        blur.src = stream.thumbnailUrl || stream.hostAvatarUrl || DEFAULT_AVATAR;
         blur.alt = "";
         bg.appendChild(blur);
         hero.appendChild(bg);
@@ -251,6 +291,29 @@
         feed.scrollTop = feed.scrollHeight;
     }
 
+    function appendJoin(name, avatar) {
+        var feed = byId("live-chat-feed");
+        var line = element("div", "watch-join");
+        var face = element("img");
+        face.src = avatar || DEFAULT_AVATAR;
+        face.alt = "";
+        var text = element("p");
+        text.appendChild(element("strong", "", name));
+        text.appendChild(document.createTextNode(" joined"));
+        line.appendChild(face);
+        line.appendChild(text);
+        feed.appendChild(line);
+        feed.scrollTop = feed.scrollHeight;
+
+        var visibleFor = 5000 + Math.random() * 5000;
+        setTimeout(function () {
+            line.classList.add("leaving");
+            setTimeout(function () {
+                if (line.parentNode) line.parentNode.removeChild(line);
+            }, 450);
+        }, visibleFor);
+    }
+
     function spawnHeart() {
         var zone = byId("live-floating-reactions");
         var colors = ["#ff3040", "#fc5c7d", "#ff8a00", "#e1306c", "#c13584", "#ffd200"];
@@ -317,14 +380,22 @@
         video.srcObject = null;
     }
 
-    function closeWatchDialog() {
-        if (broadcast && !byId("live-watch-modal").hidden && byId("live-btn-end").hidden === false) {
-            if (!confirm("Your stream is live. End it?")) return;
-            endBroadcast();
-        }
+    function finishClose() {
         leaveWatching();
         byId("live-watch-modal").hidden = true;
         byId("live-stream-video").srcObject = null;
+    }
+
+    function closeWatchDialog() {
+        if (broadcast && !byId("live-watch-modal").hidden && !byId("live-btn-end").hidden) {
+            askConfirm("End your stream?", "You are live. Closing this window will stop the stream for everyone watching.", "End stream").then(function (ok) {
+                if (!ok || !broadcast) return;
+                endBroadcast();
+                finishClose();
+            });
+            return;
+        }
+        finishClose();
     }
 
     byId("live-watch-close").addEventListener("click", closeWatchDialog);
@@ -344,9 +415,11 @@
 
     byId("live-btn-end").addEventListener("click", function () {
         if (!broadcast) return;
-        if (!confirm("Are you sure you want to end your live stream?")) return;
-        endBroadcast();
-        byId("live-watch-modal").hidden = true;
+        askConfirm("End your stream?", "Your viewers will be disconnected and the stream will stop.", "End stream").then(function (ok) {
+            if (!ok || !broadcast) return;
+            endBroadcast();
+            byId("live-watch-modal").hidden = true;
+        });
     });
 
     byId("live-chat-form").addEventListener("submit", function (event) {
@@ -525,6 +598,12 @@
         if (currentStreamId() === message.streamId) appendChat(message.userName, message.avatarUrl, message.text);
     });
 
+    document.addEventListener("discode-live-joined", function (event) {
+        var viewer = event.detail;
+        if (currentStreamId() !== viewer.streamId || viewer.userName === ME) return;
+        appendJoin(viewer.userName, viewer.avatarUrl);
+    });
+
     document.addEventListener("discode-live-heart", function (event) {
         if (currentStreamId() === event.detail.streamId) spawnHeart();
     });
@@ -591,7 +670,10 @@
             drawing.fillStyle = "rgba(255, 255, 255, 0.55)";
             drawing.font = "600 34px sans-serif";
             drawing.textAlign = "center";
-            drawing.fillText("Choose a camera or screen to preview your stream", W / 2, H / 2);
+            var lines = (notice || "Choose a camera or screen to preview your stream").split("\n");
+            lines.forEach(function (line, index) {
+                drawing.fillText(line, W / 2, H / 2 + (index - (lines.length - 1) / 2) * 46);
+            });
         }
     }
 
@@ -658,7 +740,25 @@
         return media.getDisplayMedia({ video: { frameRate: 30 }, audio: true });
     }
 
+    function captureProblem(name, err) {
+        var what = name === "camera" ? "Camera" : "Screen sharing";
+        var reason = err && err.name;
+        if (reason === "NotAllowedError" || reason === "SecurityError") {
+            return name === "camera"
+                ? { short: "Camera blocked", long: "The browser blocked the camera.\nClick the lock icon in the address bar,\nallow Camera and Microphone, then try again." }
+                : { short: "Sharing cancelled", long: "Screen sharing was cancelled or blocked." };
+        }
+        if (reason === "NotFoundError" || reason === "OverconstrainedError" || (err && err.message === "no camera")) {
+            return { short: "No camera found", long: "No camera was found on this device.\nPlug one in, or use Screen Share." };
+        }
+        if (reason === "NotReadableError" || reason === "AbortError") {
+            return { short: "Camera busy", long: "The camera is being used by another app.\nClose it there and try again." };
+        }
+        return { short: what + " unavailable", long: what + " could not be started." };
+    }
+
     function toggleSource(name) {
+        notice = "";
         if (capture[name]) {
             releaseSource(name);
             refreshSourceUi();
@@ -668,8 +768,10 @@
         (name === "camera" ? acquireCamera() : acquireScreen()).then(function (stream) {
             attach(name, stream);
             refreshSourceUi();
-        }).catch(function () {
-            refreshSourceUi(name === "camera" ? "Camera unavailable" : "Screen sharing was cancelled");
+        }).catch(function (err) {
+            var problem = captureProblem(name, err);
+            notice = problem.long;
+            refreshSourceUi(problem.short);
         });
     }
 
@@ -681,7 +783,9 @@
 
     function openCreateDialog() {
         if (broadcast) {
-            alert("You are already live. End your current stream first.");
+            showWatchDialog(broadcast.info, true);
+            byId("live-stream-video").srcObject = broadcast.stream;
+            byId("live-stream-video").play().catch(function () {});
             return;
         }
         byId("live-create-modal").hidden = false;
@@ -738,7 +842,8 @@
 
         var out = buildOutputStream();
         hub("StartLive", { title: title, category: category }).then(function (stream) {
-            broadcast = { streamId: stream.id, stream: out.stream, mixer: out.mixer, peers: {}, info: stream };
+            broadcast = { streamId: stream.id, stream: out.stream, mixer: out.mixer, peers: {}, info: stream, thumbnail: "", snapshotTimer: 0 };
+            scheduleSnapshot(5000);
             byId("live-create-modal").hidden = true;
             showWatchDialog(stream, true);
             var video = byId("live-stream-video");
@@ -752,10 +857,64 @@
         });
     });
 
+    function postThumbnail(blob, previous) {
+        var data = new FormData();
+        data.append("file", blob, "preview.jpg");
+        if (previous) data.append("previous", previous);
+        return fetch("/Home/UploadLiveThumbnail", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "RequestVerificationToken": csrfToken(), "X-Requested-With": "XMLHttpRequest" },
+            body: data
+        }).then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (result) {
+                if (!response.ok) throw readError(response, result);
+                return result.imageUrl;
+            });
+        });
+    }
+
+    function takeSnapshot() {
+        if (!broadcast) return;
+        var current = broadcast;
+        var shot = document.createElement("canvas");
+        shot.width = 640;
+        shot.height = 360;
+        shot.getContext("2d").drawImage(canvas, 0, 0, shot.width, shot.height);
+        shot.toBlob(function (blob) {
+            if (!blob || broadcast !== current) return;
+            postThumbnail(blob, current.thumbnail).then(function (url) {
+                if (broadcast !== current) {
+                    removeThumbnail(url);
+                    return;
+                }
+                current.thumbnail = url;
+                return hub("UpdateLiveThumbnail", { imageUrl: url });
+            }).catch(function () {});
+        }, "image/jpeg", 0.8);
+    }
+
+    function removeThumbnail(url) {
+        if (!url) return;
+        requestJson("/Home/RemoveLiveThumbnail", "POST", { imageUrl: url }).catch(function () {});
+    }
+
+    function scheduleSnapshot(delay) {
+        var current = broadcast;
+        if (!current) return;
+        current.snapshotTimer = setTimeout(function () {
+            if (broadcast !== current) return;
+            takeSnapshot();
+            scheduleSnapshot((10 + Math.random() * 5) * 60 * 1000);
+        }, delay);
+    }
+
     function releaseBroadcast() {
         if (!broadcast) return;
         var current = broadcast;
         broadcast = null;
+        clearTimeout(current.snapshotTimer);
+        removeThumbnail(current.thumbnail);
         Object.keys(current.peers).forEach(function (key) { current.peers[key].pc.close(); });
         stopTracks(current.stream);
         if (current.mixer) current.mixer.close();

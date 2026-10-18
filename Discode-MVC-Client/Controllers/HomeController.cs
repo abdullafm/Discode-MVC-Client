@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Discode_MVC_Client.ViewModels.Account;
 using Discode_MVC_Client.ViewModels.Friends;
 using Discode_MVC_Client.ViewModels.Home;
@@ -429,6 +430,44 @@ namespace Discode_MVC_Client.Controllers
             {
                 return Ok(Array.Empty<LiveStreamVM>());
             }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(2_000_000)]
+        public IActionResult UploadLiveThumbnail(IFormFile file, string? previous)
+        {
+            if (file is null || file.Length == 0 || !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { errors = new[] { "Choose an image file." } });
+
+            DeleteLiveThumbnailFile(previous);
+
+            var folder = Path.Combine(_environment.WebRootPath, "uploads", "live");
+            Directory.CreateDirectory(folder);
+
+            var fileName = Guid.NewGuid().ToString("N") + ".jpg";
+            using (var stream = System.IO.File.Create(Path.Combine(folder, fileName)))
+                file.CopyTo(stream);
+
+            return Ok(new { imageUrl = "/uploads/live/" + fileName });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult RemoveLiveThumbnail([FromBody] LiveThumbnailVM model)
+        {
+            DeleteLiveThumbnailFile(model?.ImageUrl);
+            return Ok(new { });
+        }
+
+        private void DeleteLiveThumbnailFile(string? url)
+        {
+            if (string.IsNullOrEmpty(url) || !Regex.IsMatch(url, "^/uploads/live/[0-9a-f]{32}\\.jpg$"))
+                return;
+
+            var path = Path.Combine(_environment.WebRootPath, "uploads", "live", Path.GetFileName(url));
+            if (System.IO.File.Exists(path))
+                System.IO.File.Delete(path);
         }
 
         [HttpGet]

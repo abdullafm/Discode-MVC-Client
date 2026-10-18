@@ -60,7 +60,7 @@
               "RelativeDocumentMoniker": "Discode-MVC-Client\\Controllers\\EmailTemplatesController.cs",
               "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Controllers\\EmailTemplatesController.cs",
               "RelativeToolTip": "Discode-MVC-Client\\Controllers\\EmailTemplatesController.cs",
-              "ViewState": "AgIAAAgAAAAAAAAAAAAqwBsAAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAAgAAAAAAAAAAAAqwBwAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2026-10-18T16:32:06.136Z",
               "EditorCaption": ""
@@ -75,8 +75,7 @@
               "RelativeToolTip": "Discode-MVC-Client\\Controllers\\AccountController.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-10-18T16:32:03.197Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-10-18T16:32:03.197Z"
             }
           ]
         }
