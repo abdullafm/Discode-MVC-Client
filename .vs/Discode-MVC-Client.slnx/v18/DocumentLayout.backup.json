@@ -1,7 +1,16 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\controllers\\emailtemplatescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\controllers\\emailtemplatescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|c:\\users\\user\\source\\repos\\discode-mvc-client\\discode-mvc-client\\controllers\\accountcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{94936171-2828-2D64-83A9-F54B8FCD5227}|Discode-MVC-Client\\Discode-MVC-Client.csproj|solutionrelative:discode-mvc-client\\controllers\\accountcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +18,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 8,
           "Children": [
             {
               "$type": "Bookmark",
@@ -42,6 +51,32 @@
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "EmailTemplatesController.cs",
+              "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Controllers\\EmailTemplatesController.cs",
+              "RelativeDocumentMoniker": "Discode-MVC-Client\\Controllers\\EmailTemplatesController.cs",
+              "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Controllers\\EmailTemplatesController.cs",
+              "RelativeToolTip": "Discode-MVC-Client\\Controllers\\EmailTemplatesController.cs",
+              "ViewState": "AgIAAAgAAAAAAAAAAAAqwBsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-18T16:32:06.136Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "AccountController.cs",
+              "DocumentMoniker": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Controllers\\AccountController.cs",
+              "RelativeDocumentMoniker": "Discode-MVC-Client\\Controllers\\AccountController.cs",
+              "ToolTip": "C:\\Users\\User\\source\\repos\\Discode-MVC-Client\\Discode-MVC-Client\\Controllers\\AccountController.cs",
+              "RelativeToolTip": "Discode-MVC-Client\\Controllers\\AccountController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-18T16:32:03.197Z",
+              "EditorCaption": ""
             }
           ]
         }

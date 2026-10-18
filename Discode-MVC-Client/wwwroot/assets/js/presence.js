@@ -16,6 +16,7 @@
 
     function onConnected() {
         window.discodeLive = true;
+        document.dispatchEvent(new CustomEvent("discode-live-changed"));
         refreshFriends();
         joinWatchedProfile();
     }
@@ -63,6 +64,38 @@
                     document.dispatchEvent(new CustomEvent("discode-stories-changed"));
                 });
 
+                connection.on("LiveChanged", function () {
+                    document.dispatchEvent(new CustomEvent("discode-live-changed"));
+                });
+
+                connection.on("LiveViewers", function (streamId, count) {
+                    document.dispatchEvent(new CustomEvent("discode-live-viewers", { detail: { streamId: streamId, count: count } }));
+                });
+
+                connection.on("LiveEnded", function (streamId) {
+                    document.dispatchEvent(new CustomEvent("discode-live-ended", { detail: { streamId: streamId } }));
+                });
+
+                connection.on("ViewerJoined", function (streamId, connectionId) {
+                    document.dispatchEvent(new CustomEvent("discode-live-viewer-joined", { detail: { streamId: streamId, connectionId: connectionId } }));
+                });
+
+                connection.on("ViewerLeft", function (streamId, connectionId) {
+                    document.dispatchEvent(new CustomEvent("discode-live-viewer-left", { detail: { streamId: streamId, connectionId: connectionId } }));
+                });
+
+                connection.on("ReceiveSignal", function (streamId, from, payload) {
+                    document.dispatchEvent(new CustomEvent("discode-live-signal", { detail: { streamId: streamId, from: from, payload: payload } }));
+                });
+
+                connection.on("LiveMessage", function (message) {
+                    document.dispatchEvent(new CustomEvent("discode-live-message", { detail: message }));
+                });
+
+                connection.on("LiveHeart", function (streamId) {
+                    document.dispatchEvent(new CustomEvent("discode-live-heart", { detail: { streamId: streamId } }));
+                });
+
                 connection.onreconnecting(function () { window.discodeLive = false; });
                 connection.onclose(function () { window.discodeLive = false; });
                 connection.onreconnected(onConnected);
@@ -73,6 +106,10 @@
     }
 
     window.discodePresence = {
+        invoke: function () {
+            if (!isConnected()) return Promise.reject(new Error("Live connection is not ready yet."));
+            return connection.invoke.apply(connection, arguments);
+        },
         watchProfile: function (userId) {
             if (!userId || userId === watchedProfile) return;
             window.discodePresence.unwatchProfile();

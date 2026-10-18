@@ -413,6 +413,25 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> LiveStreams()
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var streams = await client.GetFromJsonAsync<List<LiveStreamVM>>("api/live");
+                return Ok(streams ?? new List<LiveStreamVM>());
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<LiveStreamVM>());
+            }
+            catch (JsonException)
+            {
+                return Ok(Array.Empty<LiveStreamVM>());
+            }
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Stories()
         {
             try
@@ -439,6 +458,16 @@ namespace Discode_MVC_Client.Controllers
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Story data is missing." } }));
 
             return ForwardToApi(client => client.PostAsJsonAsync("api/story", new { imageUrl = model.ImageUrl ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> ToggleStoryLike([FromBody] PostIdVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Story not found." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/story/{model.Id}/like", new { }));
         }
 
         [HttpPost]

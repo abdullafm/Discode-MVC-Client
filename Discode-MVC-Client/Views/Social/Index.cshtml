@@ -33,11 +33,27 @@
                             </button>
                         </div>
                     </div>
-                    <div class="live-drawer-list" id="live-streams-list"></div>
-                    <div class="live-streams-empty" id="live-streams-empty" hidden>
-                        <i class="fa-solid fa-tower-broadcast"></i>
-                        <p>No active public live streams right now.</p>
-                        <button type="button" class="btn-start-stream" id="empty-go-live-btn">Start Streaming</button>
+                    <div class="live-scroll">
+                        <div class="live-chips" id="live-chips"></div>
+                        <div class="live-section-head">
+                            <h3>Friends live now</h3>
+                            <p id="live-friends-count"></p>
+                        </div>
+                        <div class="live-hero" id="live-hero" hidden></div>
+                        <div class="live-friends-empty" id="live-friends-empty" hidden>
+                            <i class="fa-solid fa-user-group"></i>
+                            <p>None of your friends are live right now.</p>
+                        </div>
+                        <div class="live-section-head live-discover-head">
+                            <h3>Discover</h3>
+                            <p>Streams from people you don't know yet</p>
+                        </div>
+                        <div class="live-drawer-list" id="live-streams-list"></div>
+                        <div class="live-streams-empty" id="live-streams-empty" hidden>
+                            <i class="fa-solid fa-tower-broadcast"></i>
+                            <p>No active public live streams right now.</p>
+                            <button type="button" class="btn-start-stream" id="empty-go-live-btn">Start Streaming</button>
+                        </div>
                     </div>
                 </div></section>
                 <section id="view-compose" hidden><div class="social-panel">
@@ -102,29 +118,15 @@
                     </div>
                     <img class="story-photo" id="story-photo" alt="">
                     <p class="story-caption" id="story-caption"></p>
+                    <div class="story-reply" id="story-reply" hidden>
+                        <input type="text" id="story-reply-input" placeholder="Send message" autocomplete="off" maxlength="500">
+                        <button type="button" id="story-like" aria-label="Like story"><i class="fa-regular fa-heart"></i></button>
+                    </div>
                     <button class="story-hit story-hit-prev" id="story-prev" type="button" aria-label="Previous"></button>
                     <button class="story-hit story-hit-next" id="story-next" type="button" aria-label="Next"></button>
                 </div>
             </div></section>
             <section id="story-file-wrap" hidden><input type="file" id="story-file" accept="image/*" hidden></section>
-            <section id="story-modal" hidden><div class="story-modal">
-                <div class="story-modal-content">
-                    <h2>Create Story</h2>
-                    <div class="story-options">
-                        <button type="button" class="story-option-btn" id="story-live-btn">
-                            <i class="fa-solid fa-video"></i>
-                            <span>Go Live</span>
-                        </button>
-                        <button type="button" class="story-option-btn" id="story-photo-btn">
-                            <i class="fa-solid fa-camera"></i>
-                            <span>Add Photo/Video</span>
-                        </button>
-                    </div>
-                    <button type="button" class="story-modal-close" id="story-modal-close" aria-label="Close">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
-            </div></section>
             <section id="story-editor" hidden><div class="story-editor">
                 <div class="story-frame">
                     <canvas class="story-canvas" id="story-canvas" width="540" height="960"></canvas>
@@ -186,83 +188,53 @@
                 </div>
             </div></section>
 
-            <!-- Instagram Live Watch / Story Modal -->
-            <section id="live-watch-modal" class="live-modal ig-live-modal" hidden>
+            <!-- Live Watch Modal -->
+            <div id="live-watch-modal" class="live-modal" hidden>
                 <div class="live-modal-backdrop" id="live-watch-backdrop"></div>
-                <div class="ig-live-dialog" role="dialog" aria-labelledby="live-streamer-name">
-                    <!-- Vertical Phone Frame -->
-                    <div class="ig-live-frame" id="live-player-container">
-                        <!-- Canvas / Video Taking 100% of the vertical frame -->
-                        <canvas id="live-stream-canvas" class="ig-stream-canvas" width="720" height="1280"></canvas>
-                        <video id="live-stream-video" class="ig-stream-video" playsinline autoplay muted hidden></video>
-
-                        <!-- Gradient Vignette Overlays -->
-                        <div class="ig-top-vignette"></div>
-                        <div class="ig-bottom-vignette"></div>
-
-                        <!-- Instagram Live Top Header -->
-                        <div class="ig-live-header">
-                            <div class="ig-streamer-pill">
-                                <div class="ig-avatar-ring">
-                                    <img id="live-streamer-avatar" src="~/assets/img/img-icon 3.png" alt="">
+                <div class="watch-dialog" role="dialog" aria-labelledby="live-streamer-name">
+                    <div class="watch-stage" id="live-watch-stage">
+                        <video id="live-stream-video" class="watch-video" playsinline autoplay></video>
+                        <div class="watch-wait" id="live-watch-wait">
+                            <i class="fa-solid fa-circle-notch fa-spin"></i>
+                            <p id="live-watch-wait-text">Connecting to the stream...</p>
+                        </div>
+                        <div class="watch-top">
+                            <div class="watch-host">
+                                <img id="live-streamer-avatar" alt="">
+                                <div>
+                                    <strong id="live-streamer-name"></strong>
+                                    <p id="live-watch-title"></p>
                                 </div>
-                                <div class="ig-streamer-meta">
-                                    <span class="ig-streamer-name" id="live-streamer-name">Gpro-fighter</span>
-                                    <span class="ig-live-badge">LIVE</span>
-                                </div>
-                                <button type="button" class="ig-btn-follow" id="live-btn-follow">Follow</button>
+                                <em class="watch-live-badge">LIVE</em>
                             </div>
-                            <div class="ig-header-right">
-                                <span class="ig-viewers-pill" id="live-viewers-pill">
-                                    <i class="fa-solid fa-eye"></i>
-                                    <span id="live-viewers-count">1.4K</span>
-                                </span>
-                                <button type="button" class="ig-btn-end" id="live-btn-end" hidden>Bitir</button>
-                                <button type="button" class="ig-btn-close" id="live-watch-close" aria-label="Close">
+                            <div class="watch-top-right">
+                                <div class="watch-viewers"><i class="fa-solid fa-eye"></i> <b id="live-viewers-count">0</b></div>
+                                <button type="button" class="watch-end" id="live-btn-end" hidden>End stream</button>
+                                <button type="button" class="watch-icon-btn" id="live-watch-close" aria-label="Close">
                                     <i class="fa-solid fa-xmark"></i>
                                 </button>
                             </div>
                         </div>
-
-                        <!-- Stream Title Pill (Instagram Topic) -->
-                        <div class="ig-topic-tag" id="live-topic-tag">
-                            <span id="live-watch-title">🔥 Road to Grandmaster</span>
-                        </div>
-
-                        <!-- Floating Hearts Spawner Area -->
                         <div class="ig-floating-hearts-zone" id="live-floating-reactions"></div>
-
-                        <!-- System Join Toast (e.g. 'nxn katıldı 👋') -->
-                        <div class="ig-join-toast" id="ig-join-toast" hidden>
-                            <span id="ig-join-user">Moiz Hussain</span> katıldı 👋
-                        </div>
-
-                        <!-- Instagram Live Comments Feed (Over the video) -->
-                        <div class="ig-comments-feed" id="live-chat-feed"></div>
-
-                        <!-- Instagram Live Bottom Action Bar -->
-                        <div class="ig-bottom-bar">
-                            <form class="ig-comment-form" id="live-chat-form">
-                                <input type="text" id="live-chat-input" placeholder="Yorum yap..." maxlength="150" autocomplete="off">
-                                <button type="submit" id="live-chat-submit" aria-label="Send">
-                                    <i class="fa-solid fa-paper-plane"></i>
-                                </button>
-                            </form>
-                            <div class="ig-action-buttons">
-                                <button type="button" class="ig-action-btn" id="live-mute-btn" title="Ses">
-                                    <i class="fa-solid fa-volume-high"></i>
-                                </button>
-                                <button type="button" class="ig-heart-btn" id="ig-heart-btn" aria-label="Like">
-                                    <i class="fa-solid fa-heart"></i>
-                                </button>
-                            </div>
+                        <div class="watch-controls">
+                            <button type="button" class="watch-icon-btn" id="live-mute-btn" title="Sound"><i class="fa-solid fa-volume-high"></i></button>
+                            <button type="button" class="watch-icon-btn" id="live-fullscreen-btn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+                            <button type="button" class="watch-heart" id="ig-heart-btn" aria-label="Like"><i class="fa-solid fa-heart"></i></button>
                         </div>
                     </div>
+                    <aside class="watch-chat">
+                        <header>Live chat</header>
+                        <div class="watch-chat-feed" id="live-chat-feed"></div>
+                        <form class="watch-chat-form" id="live-chat-form">
+                            <input type="text" id="live-chat-input" placeholder="Send a message" maxlength="200" autocomplete="off">
+                            <button type="submit" id="live-chat-submit" aria-label="Send"><i class="fa-solid fa-paper-plane"></i></button>
+                        </form>
+                    </aside>
                 </div>
-            </section>
+            </div>
 
             <!-- Go Live Broadcaster Modal -->
-            <section id="live-create-modal" class="live-modal" hidden>
+            <div id="live-create-modal" class="live-modal" hidden>
                 <div class="live-modal-backdrop" id="live-create-backdrop"></div>
                 <div class="live-create-dialog" role="dialog" aria-labelledby="live-create-heading">
                     <button type="button" class="live-modal-close" id="live-create-close" aria-label="Close">
@@ -281,72 +253,51 @@
                             <input type="text" id="live-form-title" placeholder="What are you streaming today?" maxlength="70" required value="Late Night Hangout &amp; Chill">
                         </div>
 
-                        <div class="live-form-row">
-                            <div class="live-form-group">
-                                <label for="live-form-category">Category</label>
-                                <select id="live-form-category">
-                                    <option value="Gaming">Gaming</option>
-                                    <option value="Music">Music</option>
-                                    <option value="Science &amp; Tech">Science &amp; Tech</option>
-                                    <option value="Entertainment">Entertainment</option>
-                                    <option value="Education">Education</option>
-                                    <option value="Student Hubs">Student Hubs</option>
-                                </select>
-                            </div>
-                            <div class="live-form-group">
-                                <label>Visibility</label>
-                                <div class="live-vis-selector">
-                                    <label class="live-vis-pill active" id="vis-public-label">
-                                        <input type="radio" name="visibility" value="public" checked>
-                                        <i class="fa-solid fa-globe"></i>
-                                        <span>Public</span>
-                                    </label>
-                                    <label class="live-vis-pill" id="vis-friends-label">
-                                        <input type="radio" name="visibility" value="friends">
-                                        <i class="fa-solid fa-user-group"></i>
-                                        <span>Friends Only</span>
-                                    </label>
-                                </div>
-                            </div>
+                        <div class="live-form-group">
+                            <label for="live-form-category">Category</label>
+                            <select id="live-form-category">
+                                <option value="Gaming">Gaming</option>
+                                <option value="Music">Music</option>
+                                <option value="Science &amp; Tech">Science &amp; Tech</option>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Education">Education</option>
+                                <option value="Student Hubs">Student Hubs</option>
+                            </select>
                         </div>
 
                         <div class="live-form-group">
                             <label>Stream Source</label>
                             <div class="live-source-grid">
-                                <button type="button" class="live-source-card active" data-source="camera">
+                                <button type="button" class="live-source-card" data-source="camera" aria-pressed="false">
                                     <i class="fa-solid fa-camera"></i>
                                     <span>Camera</span>
                                 </button>
-                                <button type="button" class="live-source-card" data-source="screen">
+                                <button type="button" class="live-source-card" data-source="screen" aria-pressed="false">
                                     <i class="fa-solid fa-desktop"></i>
                                     <span>Screen Share</span>
                                 </button>
-                                <button type="button" class="live-source-card" data-source="studio">
-                                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                                    <span>Virtual Studio</span>
-                                </button>
                             </div>
+                            <p class="live-source-hint">Turn on both to show your screen with your camera in the corner.</p>
                         </div>
 
                         <div class="live-preview-box" id="live-create-preview-box">
-                            <canvas id="live-create-preview-canvas" width="320" height="180"></canvas>
-                            <video id="live-create-preview-video" width="320" height="180" playsinline autoplay muted hidden></video>
+                            <canvas id="live-create-preview-canvas" width="1280" height="720"></canvas>
                             <div class="live-preview-overlay">
-                                <span class="live-preview-label"><i class="fa-solid fa-circle"></i> Source Preview</span>
-                                <span class="live-preview-status" id="live-preview-status">Ready</span>
+                                <span class="live-preview-label"><i class="fa-solid fa-circle"></i> Preview</span>
+                                <span class="live-preview-status" id="live-preview-status">Choose a source</span>
                             </div>
                         </div>
 
                         <div class="live-create-actions">
                             <button type="button" class="btn-live-cancel" id="live-create-cancel">Cancel</button>
-                            <button type="submit" class="btn-live-submit" id="live-create-submit">
+                            <button type="submit" class="btn-live-submit" id="live-create-submit" disabled>
                                 <i class="fa-solid fa-tower-broadcast"></i>
                                 <span>Go Live Now</span>
                             </button>
                         </div>
                     </form>
                 </div>
-            </section>
+            </div>
 
             <template id="emoji-shell"><div class="emoji-tabs"></div><div class="emoji-scroll"></div></template>
             <template id="emoji-tab"><button type="button"><i class="fa-solid"></i></button></template>
@@ -362,3 +313,7 @@
             <template id="story-bar"><span></span></template>
             <section id="emoji-panel" hidden></section>
         </main>
+
+@section Scripts {
+    <script src="~/assets/js/live.js" asp-append-version="true"></script>
+}
