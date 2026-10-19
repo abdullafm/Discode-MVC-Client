@@ -7489,3 +7489,51 @@ html.theme-dark .me-request-buttons button {
 html.theme-dark .me-request-buttons button:hover {
     background: #35373c;
 }
+
+#emoji-panel {
+    flex-wrap: wrap;
+}
+
+#emoji-panel .emoji-tabs,
+#emoji-panel .emoji-scroll {
+    height: calc(100% - 40px);
+}
+
+.emoji-foot {
+    flex: 0 0 100%;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    border-top: 1px solid rgba(128, 133, 144, 0.25);
+    overflow: hidden;
+}
+
+.emoji-foot-face {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.emoji-foot-text {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.emoji-loading {
+    margin: 24px 8px;
+    text-align: center;
+    font-size: 13px;
+    color: #949ba4;
+}
+
+.emoji-choice img {
+    width: 22px;
+    height: 22px;
+    display: block;
+    margin: 0 auto;
+}

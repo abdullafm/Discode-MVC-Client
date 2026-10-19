@@ -414,6 +414,26 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
+        public async Task<IActionResult> Emojis()
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var categories = await client.GetFromJsonAsync<List<EmojiCategoryVM>>("api/emoji");
+                return Ok(categories ?? new List<EmojiCategoryVM>());
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<EmojiCategoryVM>());
+            }
+            catch (JsonException)
+            {
+                return Ok(Array.Empty<EmojiCategoryVM>());
+            }
+        }
+
+        [HttpGet]
         public async Task<IActionResult> LiveStreams()
         {
             try
