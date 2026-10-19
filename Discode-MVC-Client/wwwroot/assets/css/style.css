@@ -1232,6 +1232,10 @@ html.theme-dark .notify-btn-dismiss:hover {
     gap: 8px;
 }
 
+.notify-empty[hidden] {
+    display: none;
+}
+
 .notify-empty-icon {
     width: 48px;
     height: 48px;

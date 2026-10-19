@@ -1057,40 +1057,57 @@ function openToggle() {
         var notifyMarkAll = document.getElementById("notify-mark-all");
         var notifyUnreadBadge = document.getElementById("notify-unread-badge");
 
-        // Mock notification data
-        var notifications = [
-            {
-                id: 1,
-                type: "friend_request",
-                username: "yarasa",
-                displayName: "Yarasa",
-                avatar: null,
-                message: "sent you a friend request",
-                timestamp: Date.now() - 5 * 60 * 1000,
-                unread: true
-            },
-            {
-                id: 2,
-                type: "like",
-                username: "Mr_Sigma",
-                displayName: "Mr Sigma",
-                avatar: "/assets/img/img-icon 4.jpeg",
-                message: "liked your post",
-                timestamp: Date.now() - 30 * 60 * 1000,
-                unread: true
-            },
-            {
-                id: 3,
-                type: "comment",
-                username: "Gpro-fighter",
-                displayName: "Gpro Fighter",
-                avatar: "/assets/img/img-icon 3.png",
-                message: "commented on your post",
-                snippet: "Great content!",
-                timestamp: Date.now() - 60 * 60 * 1000,
-                unread: false
-            }
-        ];
+        var notifications = [];
+
+        var NOTIFICATION_TEXT = {
+            PostLike: "liked your post",
+            PostComment: "commented on your post",
+            CommentLike: "liked your comment",
+            StoryLike: "liked your story"
+        };
+
+        function notifyToken() {
+            var input = document.querySelector("input[name='__RequestVerificationToken']");
+            return input ? input.value : "";
+        }
+
+        function notifyRequest(url, method, body) {
+            return fetch(url, {
+                method: method || "GET",
+                credentials: "same-origin",
+                headers: {
+                    "Content-Type": "application/json",
+                    "RequestVerificationToken": notifyToken(),
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: body ? JSON.stringify(body) : undefined
+            });
+        }
+
+        function utcStamp(value) {
+            var text = String(value || "");
+            return Date.parse(/Z$|[+-]\d\d:\d\d$/.test(text) ? text : text + "Z");
+        }
+
+        function loadNotifications() {
+            return notifyRequest("/Home/Notifications").then(function (response) {
+                return response.ok ? response.json() : [];
+            }).then(function (data) {
+                notifications = (Array.isArray(data) ? data : []).map(function (item) {
+                    return {
+                        id: item.id,
+                        type: item.type === "PostComment" ? "comment" : "like",
+                        username: item.actorUserName,
+                        avatar: item.actorAvatarUrl || null,
+                        message: NOTIFICATION_TEXT[item.type] || "sent you a notification",
+                        snippet: item.snippet || null,
+                        timestamp: utcStamp(item.createdAt),
+                        unread: !item.isRead
+                    };
+                });
+                renderNotifications();
+            }).catch(function () {});
+        }
 
         function formatNotificationTime(timestamp) {
             var seconds = Math.max(1, Math.floor((Date.now() - timestamp) / 1000));
@@ -1242,44 +1259,17 @@ function openToggle() {
                 var actions = document.createElement("div");
                 actions.className = "notify-actions";
 
-                if (notif.type === "friend_request") {
-                    var acceptBtn = document.createElement("button");
-                    acceptBtn.type = "button";
-                    acceptBtn.className = "notify-btn notify-btn-accept";
-                    acceptBtn.setAttribute("aria-label", "Accept friend request");
-                    acceptBtn.title = "Accept";
-                    acceptBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
-                    acceptBtn.addEventListener("click", function (e) {
-                        e.stopPropagation();
-                        acceptFriendRequest(notif.id, notif.username);
-                    });
-
-                    var declineBtn = document.createElement("button");
-                    declineBtn.type = "button";
-                    declineBtn.className = "notify-btn notify-btn-decline";
-                    declineBtn.setAttribute("aria-label", "Decline friend request");
-                    declineBtn.title = "Decline";
-                    declineBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-                    declineBtn.addEventListener("click", function (e) {
-                        e.stopPropagation();
-                        declineFriendRequest(notif.id, notif.username);
-                    });
-
-                    actions.appendChild(acceptBtn);
-                    actions.appendChild(declineBtn);
-                } else {
-                    var dismissBtn = document.createElement("button");
-                    dismissBtn.type = "button";
-                    dismissBtn.className = "notify-btn notify-btn-dismiss";
-                    dismissBtn.setAttribute("aria-label", "Dismiss notification");
-                    dismissBtn.title = "Dismiss";
-                    dismissBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-                    dismissBtn.addEventListener("click", function (e) {
-                        e.stopPropagation();
-                        dismissNotification(notif.id);
-                    });
-                    actions.appendChild(dismissBtn);
-                }
+                var dismissBtn = document.createElement("button");
+                dismissBtn.type = "button";
+                dismissBtn.className = "notify-btn notify-btn-dismiss";
+                dismissBtn.setAttribute("aria-label", "Dismiss notification");
+                dismissBtn.title = "Dismiss";
+                dismissBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                dismissBtn.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    dismissNotification(notif.id);
+                });
+                actions.appendChild(dismissBtn);
 
                 item.appendChild(avatarWrap);
                 item.appendChild(content);
@@ -1298,6 +1288,7 @@ function openToggle() {
             if (notif && notif.unread) {
                 notif.unread = false;
                 renderNotifications();
+                notifyRequest("/Home/ReadNotification", "POST", { id: id }).catch(function () {});
             }
         }
 
@@ -1309,39 +1300,16 @@ function openToggle() {
                     changed = true;
                 }
             });
-            if (changed) renderNotifications();
+            if (changed) {
+                renderNotifications();
+                notifyRequest("/Home/ReadAllNotifications", "POST").catch(function () {});
+            }
         }
 
         function dismissNotification(id) {
             notifications = notifications.filter(function (n) { return n.id !== id; });
             renderNotifications();
-        }
-
-        function acceptFriendRequest(id, username) {
-            console.log("Accept friend request from:", username);
-            notifications = notifications.filter(function (n) { return n.id !== id; });
-            renderNotifications();
-        }
-
-        function declineFriendRequest(id, username) {
-            console.log("Decline friend request from:", username);
-            notifications = notifications.filter(function (n) { return n.id !== id; });
-            renderNotifications();
-        }
-
-        function addNotification(type, username, message, snippet, avatar) {
-            var newNotif = {
-                id: Date.now(),
-                type: type,
-                username: username,
-                avatar: avatar || null,
-                message: message,
-                snippet: snippet || null,
-                timestamp: Date.now(),
-                unread: true
-            };
-            notifications.unshift(newNotif);
-            renderNotifications();
+            notifyRequest("/Home/DeleteNotification", "POST", { id: id }).catch(function () {});
         }
 
         // Setup Header "Mark all as read"
@@ -1404,11 +1372,13 @@ function openToggle() {
             });
         }
 
+        document.addEventListener("discode-notifications-changed", loadNotifications);
+        document.addEventListener("visibilitychange", function () {
+            if (!document.hidden) loadNotifications();
+        });
+
         // Initial render
         renderNotifications();
-
-        // Expose addNotification and notifications for global access
-        window.addNotification = addNotification;
-        window.getNotifications = function () { return notifications; };
+        loadNotifications();
     })();
 })();

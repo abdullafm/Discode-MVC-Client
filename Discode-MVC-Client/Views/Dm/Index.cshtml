@@ -1,0 +1,123 @@
+﻿@model HomeVM
+@{
+    Layout = "_HomeLayout";
+}
+<main class="friends-view dm-view show-main">
+    <section id="dm-chat">
+        <div class="dm-chat">
+            <div class="dm-bar">
+                <div class="dm-bar-name">
+                    <i class="fa-solid fa-at"></i>
+                    <h1 id="dm-title">Mr_Sigma</h1>
+                </div>
+                <div class="dm-bar-tools">
+                    <i class="fa-solid fa-phone" id="dm-call" role="button" tabindex="0" aria-label="Start a call"></i>
+                    <i class="fa-solid fa-video" id="dm-video" role="button" tabindex="0" aria-label="Start a video call"></i>
+                    <i class="fa-solid fa-thumbtack"></i>
+                    <i class="fa-solid fa-user-plus"></i>
+                    <button type="button" id="dm-profile-toggle" class="on" aria-label="Profile"><i class="fa-solid fa-user"></i></button>
+                    <label class="dm-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="search" placeholder="Search" aria-label="Search">
+                    </label>
+                </div>
+            </div>
+            <button type="button" class="call-return"><i class="fa-solid fa-phone"></i><span>Return to call</span></button>
+            <div class="call-stage" id="call-stage" hidden>
+                <div class="call-phone-bar">
+                    <button type="button" class="call-phone-back" aria-label="Back"><i class="fa-solid fa-chevron-down"></i></button>
+                    <p class="call-phone-name"></p>
+                    <!-- <button type="button" class="call-phone-sound" aria-label="Speaker"><i class="fa-solid fa-volume-high"></i></button> -->
+                </div>
+                <video id="call-screen-video" class="call-screen-video" autoplay playsinline muted hidden></video>
+                <video id="call-cam-video" class="call-cam-video" autoplay playsinline muted hidden></video>
+                <div class="call-person">
+                    <div class="call-face">
+                        <img id="call-avatar" alt="">
+                        <span class="call-mute" id="call-mute"><i class="fa-solid fa-microphone-slash"></i></span>
+                    </div>
+                    <p class="call-phone-label"></p>
+                </div>
+                <div class="call-phone-sheet">
+                    <div class="call-phone-faces"></div>
+                    <div class="call-phone-add-card" id="call-phone-add-card">
+                        <button type="button" class="call-phone-add">
+                            <i class="fa-solid fa-user-plus"></i>
+                            <span><b>Add people to Voice Chat</b><small>Let the group know you are here!</small></span>
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                        <button type="button" class="call-phone-add-close" id="call-phone-add-close" aria-label="Close voice chat invite card">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="call-bar">
+                    <div class="call-pill">
+                        <button type="button" class="call-btn is-off" id="call-mic" aria-label="Mute" aria-pressed="true"><i class="fa-solid fa-microphone-slash"></i></button>
+                        <button type="button" class="call-btn" id="call-deafen" aria-label="Deafen" aria-pressed="false"><i class="fa-solid fa-headphones"></i></button>
+                        <button type="button" class="call-btn is-off" id="call-cam" aria-label="Turn off camera" aria-pressed="true"><i class="fa-solid fa-video-slash"></i></button>
+                        <span class="call-line"></span>
+                        <button type="button" class="call-btn" id="call-screen" aria-label="Share your screen" aria-pressed="false"><i class="fa-solid fa-display"></i></button>
+                    </div>
+                    <button type="button" class="call-hangup" id="call-hangup" aria-label="Disconnect"><i class="fa-solid fa-phone"></i></button>
+                </div>
+            </div>
+            <div class="call-resize" id="call-resize" role="separator" aria-orientation="horizontal" aria-label="Resize call" tabindex="0"></div>
+            <div class="dm-scroll">
+                <div class="dm-intro">
+                    <img id="dm-avatar" src="./assets/img/img-icon 4.jpeg" alt="">
+                    <h2 id="dm-name">Mr_Sigma</h2>
+                    <p class="dm-handle" id="dm-handle">Mr_Sigma</p>
+                    <p class="dm-start" id="dm-start">This is the beginning of your direct message history with <strong id="dm-start-name">Mr_Sigma</strong>.</p>
+                    <div class="dm-meta">
+                        <span>No servers in common</span>
+                        <button type="button">Remove Friend</button>
+                        <button type="button">Block</button>
+                    </div>
+                </div>
+                <div class="dm-divider"><span>September 16, 2026</span></div>
+                <p class="dm-system"><i class="fa-solid fa-user-group"></i><span id="dm-system"><strong id="dm-system-name">Mr_Sigma</strong> accepted your friend request. <time>9/16/26, 2:09 AM</time></span></p>
+                <div class="dm-wave">
+                    <span class="dm-hand" aria-hidden="true">&#128075;</span>
+                    <button type="button" id="dm-wave">Wave to Mr_Sigma</button>
+                </div>
+            </div>
+            <form class="dm-compose" id="dm-compose">
+                <button type="button" aria-label="Add"><i class="fa-solid fa-plus"></i></button>
+                <div class="rich-text" id="dm-input" contenteditable="true" role="textbox" aria-label="Message" data-placeholder="Message @Mr_Sigma" data-empty="1"></div>
+                <div class="dm-compose-tools">
+                    <button type="button" id="dm-emoji" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>
+                </div>
+                <template id="emoji-shell"><div class="emoji-tabs"></div><div class="emoji-scroll"></div></template>
+                <template id="emoji-tab"><button type="button"><i class="fa-solid"></i></button></template>
+                <template id="emoji-block"><section><div class="emoji-group"><h3></h3><div class="emoji-grid"></div></div></section></template>
+                <template id="emoji-choice"><button type="button" class="emoji-choice"></button></template>
+                <template id="emoji-flag"><button type="button" class="emoji-choice flag-choice"><img alt=""></button></template>
+                <template id="call-face"><img alt=""></template>
+                <div class="emoji-panel" id="emoji-panel" hidden></div>
+            </form>
+        </div>
+    </section>
+    <section id="dm-profile">
+        <div class="dm-profile">
+            <div class="dm-banner">
+                <button type="button" id="dm-profile-close" aria-label="Close profile"><i class="fa-solid fa-user"></i></button>
+                <button type="button" aria-label="More"><i class="fa-solid fa-ellipsis"></i></button>
+            </div>
+            <div class="dm-profile-photo">
+                <img class="dm-profile-avatar" id="dm-profile-avatar" src="./assets/img/img-icon 4.jpeg" alt="">
+                <span class="dm-status"></span>
+            </div>
+            <div class="dm-profile-card">
+                <h2 id="dm-profile-name">Mr_Sigma</h2>
+                <p id="dm-profile-handle">Mr_Sigma</p>
+            </div>
+            <div class="dm-profile-body">
+                <p class="dm-clock" id="dm-clock"></p>
+                <p class="dm-since-label">Member Since</p>
+                <p id="dm-since">Jan 3, 2024</p>
+            </div>
+            <button type="button" class="dm-full">View Full Profile</button>
+        </div>
+    </section>
+</main>

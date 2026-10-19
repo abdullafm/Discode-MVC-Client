@@ -19,6 +19,7 @@
         document.dispatchEvent(new CustomEvent("discode-live-changed"));
         document.dispatchEvent(new CustomEvent("discode-stories-changed"));
         document.dispatchEvent(new CustomEvent("discode-posts-changed"));
+        document.dispatchEvent(new CustomEvent("discode-notifications-changed"));
         refreshFriends();
         joinWatchedProfile();
     }
@@ -60,6 +61,10 @@
 
                 connection.on("PostsChanged", function () {
                     document.dispatchEvent(new CustomEvent("discode-posts-changed"));
+                });
+
+                connection.on("NotificationsChanged", function () {
+                    document.dispatchEvent(new CustomEvent("discode-notifications-changed"));
                 });
 
                 connection.on("StoriesChanged", function () {

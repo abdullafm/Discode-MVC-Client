@@ -414,6 +414,50 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> Notifications()
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var notifications = await client.GetFromJsonAsync<List<NotificationVM>>("api/notification");
+                return Ok(notifications ?? new List<NotificationVM>());
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<NotificationVM>());
+            }
+            catch (JsonException)
+            {
+                return Ok(Array.Empty<NotificationVM>());
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> ReadAllNotifications()
+            => ForwardToApi(client => client.PostAsJsonAsync("api/notification/read", new { }));
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> ReadNotification([FromBody] PostIdVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Notification not found." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/notification/{model.Id}/read", new { }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> DeleteNotification([FromBody] PostIdVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Notification not found." } }));
+
+            return ForwardToApi(client => client.DeleteAsync($"api/notification/{model.Id}"));
+        }
+
+        [HttpGet]
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public async Task<IActionResult> Emojis()
         {
