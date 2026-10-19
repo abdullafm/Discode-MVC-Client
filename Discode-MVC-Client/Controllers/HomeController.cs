@@ -473,6 +473,8 @@ namespace Discode_MVC_Client.Controllers
         [HttpGet]
         public async Task<IActionResult> Stories()
         {
+            DeleteExpiredStoryImages();
+
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
@@ -511,12 +513,68 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> DeleteStory([FromBody] PostIdVM model)
+        public Task<IActionResult> RecordStoryView([FromBody] PostIdVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Story not found." } }));
 
-            return ForwardToApi(client => client.DeleteAsync($"api/story/{model.Id}"));
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/story/{model.Id}/view", new { }));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> StoryViewers(int id)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var viewers = await client.GetFromJsonAsync<List<StoryViewerVM>>($"api/story/{id}/viewers");
+                return Ok(viewers ?? new List<StoryViewerVM>());
+            }
+            catch (HttpRequestException ex)
+            {
+                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<StoryViewerVM>());
+            }
+            catch (JsonException)
+            {
+                return Ok(Array.Empty<StoryViewerVM>());
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteStory([FromBody] DeleteStoryVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return BadRequest(new { errors = new[] { "Story not found." } });
+
+            var result = await ForwardToApi(client => client.DeleteAsync($"api/story/{model.Id}"));
+            if (result is ContentResult { StatusCode: >= 200 and < 300 })
+                DeleteStoryImageFile(model.ImageUrl);
+
+            return result;
+        }
+
+        private void DeleteExpiredStoryImages()
+        {
+            var folder = Path.Combine(_environment.WebRootPath, "uploads", "stories");
+            if (!Directory.Exists(folder))
+                return;
+
+            foreach (var path in Directory.EnumerateFiles(folder, "*.jpg"))
+            {
+                if (System.IO.File.GetLastWriteTimeUtc(path) <= DateTime.UtcNow.AddHours(-24))
+                    System.IO.File.Delete(path);
+            }
+        }
+
+        private void DeleteStoryImageFile(string? url)
+        {
+            if (string.IsNullOrEmpty(url) || !Regex.IsMatch(url, "^/uploads/stories/[0-9a-f]{32}\\.jpg$"))
+                return;
+
+            var path = Path.Combine(_environment.WebRootPath, "uploads", "stories", Path.GetFileName(url));
+            if (System.IO.File.Exists(path))
+                System.IO.File.Delete(path);
         }
 
         [HttpPost]

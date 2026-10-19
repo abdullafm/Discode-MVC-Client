@@ -96,6 +96,10 @@
                     document.dispatchEvent(new CustomEvent("discode-live-joined", { detail: viewer }));
                 });
 
+                connection.on("StoryViewsChanged", function (storyId) {
+                    document.dispatchEvent(new CustomEvent("discode-story-views-changed", { detail: { storyId: storyId } }));
+                });
+
                 connection.on("LiveHeart", function (streamId) {
                     document.dispatchEvent(new CustomEvent("discode-live-heart", { detail: { streamId: streamId } }));
                 });

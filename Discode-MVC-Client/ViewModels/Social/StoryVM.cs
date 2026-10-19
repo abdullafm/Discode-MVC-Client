@@ -10,5 +10,6 @@ namespace Discode_MVC_Client.ViewModels.Social
         public DateTime CreatedAt { get; set; }
         public int LikeCount { get; set; }
         public bool LikedByMe { get; set; }
+        public int ViewCount { get; set; }
     }
 }

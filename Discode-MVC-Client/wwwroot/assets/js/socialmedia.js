@@ -133,14 +133,29 @@ function loadStories() {
             createdAt: utcMillis(item.createdAt),
             likes: item.likeCount || 0,
             liked: !!item.likedByMe,
+            views: item.viewCount || 0,
             seen: seen.indexOf(item.id) !== -1
         };
     });
 }
 
+function checkStoryImage(item) {
+    var probe = new Image();
+    probe.onerror = function () {
+        if (item.authorUserName === ME) {
+            requestJson("/Home/DeleteStory", "POST", { id: item.id, imageUrl: item.imageUrl }).then(refreshStories).catch(function () {});
+            return;
+        }
+        serverStories = serverStories.filter(function (other) { return other.id !== item.id; });
+        renderStories();
+    };
+    probe.src = item.imageUrl;
+}
+
 function refreshStories() {
     return requestJson("/Home/Stories").then(function (data) {
         serverStories = Array.isArray(data) ? data : [];
+        serverStories.forEach(checkStoryImage);
         var ids = serverStories.map(function (item) { return item.id; });
         var kept = seenIds().filter(function (id) { return ids.indexOf(id) !== -1; });
         localStorage.setItem(SEEN_KEY, JSON.stringify(kept));
@@ -614,6 +629,85 @@ function renderStories() {
     });
 }
 
+var viewedStories = {};
+var viewsOpenFor = 0;
+
+function renderViewers(viewers) {
+    var list = document.getElementById("story-views-list");
+    while (list.firstChild) list.removeChild(list.firstChild);
+    document.getElementById("story-views-empty").hidden = viewers.length > 0;
+    document.getElementById("story-views-title").textContent = "Story views (" + viewers.length + ")";
+    viewers.forEach(function (viewer) {
+        var row = document.createElement("div");
+        row.className = "views-row";
+
+        var heart = document.createElement("span");
+        heart.className = "views-heart" + (viewer.liked ? " liked" : "");
+        heart.innerHTML = viewer.liked ? '<i class="fa-solid fa-heart"></i>' : "";
+
+        var face = document.createElement("img");
+        face.src = viewer.avatarUrl || DEFAULT_AVATAR;
+        face.alt = "";
+
+        var who = document.createElement("div");
+        var name = document.createElement("strong");
+        name.textContent = viewer.displayName || viewer.userName;
+        var when = document.createElement("p");
+        when.textContent = timeAgo(utcMillis(viewer.viewedAt)) + " ago";
+        who.appendChild(name);
+        who.appendChild(when);
+
+        row.appendChild(heart);
+        row.appendChild(face);
+        row.appendChild(who);
+        list.appendChild(row);
+    });
+}
+
+function loadViewers() {
+    if (!viewsOpenFor) return;
+    var id = viewsOpenFor;
+    requestJson("/Home/StoryViewers?id=" + id).then(function (viewers) {
+        if (viewsOpenFor === id) renderViewers(Array.isArray(viewers) ? viewers : []);
+    }).catch(function () {});
+}
+
+function openViewers(story) {
+    clearTimeout(storyTimer);
+    document.getElementById("story-progress").classList.add("paused");
+    document.getElementById("story-delete").hidden = true;
+    viewsOpenFor = story.id;
+    renderViewers([]);
+    document.getElementById("story-views-empty").hidden = true;
+    document.getElementById("story-views-modal").hidden = false;
+    loadViewers();
+}
+
+function closeViewers() {
+    viewsOpenFor = 0;
+    document.getElementById("story-views-modal").hidden = true;
+    if (!document.getElementById("story-viewer").hidden) {
+        document.getElementById("story-progress").classList.remove("paused");
+        clearTimeout(storyTimer);
+        storyTimer = setTimeout(nextStory, STORY_MS);
+    }
+}
+
+document.getElementById("story-views-btn").addEventListener("click", function () {
+    var group = storyGroups[storyCursor];
+    var story = group && group.items[storyIndex];
+    if (!story || group.author !== ME) return;
+    openViewers(story);
+});
+document.getElementById("story-views-close").addEventListener("click", closeViewers);
+document.getElementById("story-views-backdrop").addEventListener("click", closeViewers);
+document.addEventListener("discode-story-views-changed", function (event) {
+    if (viewsOpenFor === event.detail.storyId) loadViewers();
+});
+document.addEventListener("discode-stories-changed", function () {
+    if (viewsOpenFor) loadViewers();
+});
+
 function closeStoryMenu() {
     document.getElementById("story-delete").hidden = true;
     document.getElementById("story-progress").classList.remove("paused");
@@ -632,6 +726,10 @@ function paintStory() {
         return;
     }
     var story = group.items[storyIndex];
+    if (group.author !== ME && !viewedStories[story.id]) {
+        viewedStories[story.id] = true;
+        requestJson("/Home/RecordStoryView", "POST", { id: story.id }).catch(function () {});
+    }
     if (!story.seen) {
         var seen = seenIds();
         seen.push(story.id);
@@ -655,6 +753,7 @@ function paintStory() {
     document.getElementById("story-photo").src = story.image;
     document.getElementById("story-caption").textContent = story.text || "";
     document.getElementById("story-menu").hidden = group.author !== ME;
+    document.getElementById("story-views-label").textContent = story.views ? "Views (" + story.views + ")" : "Views";
     document.getElementById("story-reply").hidden = group.author === ME;
     document.getElementById("story-reply-input").value = "";
     paintStoryLike(story);
@@ -1164,7 +1263,7 @@ document.getElementById("story-delete-btn").addEventListener("click", function (
     var story = group.items[storyIndex];
     if (!story) return;
     closeStoryMenu();
-    requestJson("/Home/DeleteStory", "POST", { id: story.id }).then(function () {
+    requestJson("/Home/DeleteStory", "POST", { id: story.id, imageUrl: story.image }).then(function () {
         serverStories = serverStories.filter(function (item) { return item.id !== story.id; });
         group.items.splice(storyIndex, 1);
         if (!group.items.length) {

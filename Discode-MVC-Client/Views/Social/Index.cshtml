@@ -110,6 +110,7 @@
                             <div class="story-menu">
                                 <button type="button" id="story-menu" aria-label="Story options" hidden><i class="fa-solid fa-ellipsis"></i></button>
                                 <div class="story-delete" id="story-delete" hidden>
+                                    <button type="button" id="story-views-btn"><i class="fa-regular fa-eye"></i> <span id="story-views-label">Views</span></button>
                                     <button type="button" id="story-delete-btn">Delete</button>
                                 </div>
                             </div>
@@ -296,6 +297,18 @@
                             </button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <div id="story-views-modal" class="live-modal" hidden>
+                <div class="live-modal-backdrop" id="story-views-backdrop"></div>
+                <div class="views-dialog" role="dialog" aria-labelledby="story-views-title">
+                    <header>
+                        <h3 id="story-views-title">Story views</h3>
+                        <button type="button" class="live-modal-close" id="story-views-close" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+                    </header>
+                    <div class="views-list" id="story-views-list"></div>
+                    <p class="views-empty" id="story-views-empty" hidden>No one has viewed this story yet.</p>
                 </div>
             </div>
 
