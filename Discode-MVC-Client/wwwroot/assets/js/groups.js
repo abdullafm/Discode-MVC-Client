@@ -144,6 +144,37 @@ function renderPicker() {
     document.getElementById("new-msg-create").disabled = picked.length === 0;
 }
 
+function loadPickerFriends() {
+    return fetch("/Home/Friends", {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    }).then(function (response) {
+        return response.ok ? response.json() : [];
+    }).then(function (friends) {
+        var list = document.getElementById("new-msg-list");
+        var old = list.querySelectorAll(".new-msg-friend");
+        for (var i = 0; i < old.length; i++) old[i].remove();
+        (friends || []).forEach(function (friend) {
+            var userName = friend.userName || friend.username || "";
+            var row = document.createElement("label");
+            row.className = "new-msg-friend";
+            row.setAttribute("data-friend", userName);
+            var photo = document.createElement("img");
+            photo.alt = "";
+            photo.src = friend.avatarUrl || friend.avatar || "/assets/img/img-icon-profile.jpeg";
+            var label = document.createElement("span");
+            label.textContent = userName;
+            var box = document.createElement("input");
+            box.type = "checkbox";
+            box.setAttribute("data-friend", userName);
+            row.appendChild(photo);
+            row.appendChild(label);
+            row.appendChild(box);
+            list.appendChild(row);
+        });
+    }).catch(function () {});
+}
+
 function openNewMessage(members) {
     already = members ? members.slice() : [];
     picked = [];
@@ -151,6 +182,7 @@ function openNewMessage(members) {
     renderPicker();
     document.getElementById("new-msg").hidden = false;
     document.getElementById("new-msg-search").focus();
+    loadPickerFriends().then(renderPicker);
 }
 
 function closeNewMessage() {
@@ -206,8 +238,7 @@ function createMessage() {
         return !!name && list.indexOf(name) === index;
     }).sort();
     if (members.length === 1) {
-        if (window.discodeGo) window.discodeGo("./dm.html?name=" + encodeURIComponent(members[0]));
-        else window.location.href = "./dm.html?name=" + encodeURIComponent(members[0]);
+        window.location.href = "/Dm/Index?name=" + encodeURIComponent(members[0]);
         return;
     }
     var groups = loadGroups();

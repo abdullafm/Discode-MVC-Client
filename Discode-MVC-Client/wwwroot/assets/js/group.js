@@ -11,9 +11,9 @@ window.onload = function () {
     showGroup();
 };
 
-var x = new Audio("./assets/css/audio/discordmute_IZNcLx2.mp3");
-var y = new Audio("./assets/css/audio/discord-unmute-sound.mp3");
-var joinVoiceSound = new Audio("./assets/css/audio/join-voice.mp3");
+var x = new Audio("/assets/css/audio/discordmute_IZNcLx2.mp3");
+var y = new Audio("/assets/css/audio/discord-unmute-sound.mp3");
+var joinVoiceSound = new Audio("/assets/css/audio/join-voice.mp3");
 
 function mic() {
     if (!micO) {

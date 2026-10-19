@@ -8,7 +8,7 @@
             <div class="dm-bar">
                 <div class="dm-bar-name">
                     <i class="fa-solid fa-at"></i>
-                    <h1 id="dm-title">Mr_Sigma</h1>
+                    <h1 id="dm-title"></h1>
                 </div>
                 <div class="dm-bar-tools">
                     <i class="fa-solid fa-phone" id="dm-call" role="button" tabindex="0" aria-label="Start a call"></i>
@@ -65,34 +65,32 @@
             <div class="call-resize" id="call-resize" role="separator" aria-orientation="horizontal" aria-label="Resize call" tabindex="0"></div>
             <div class="dm-scroll">
                 <div class="dm-intro">
-                    <img id="dm-avatar" src="./assets/img/img-icon 4.jpeg" alt="">
-                    <h2 id="dm-name">Mr_Sigma</h2>
-                    <p class="dm-handle" id="dm-handle">Mr_Sigma</p>
-                    <p class="dm-start" id="dm-start">This is the beginning of your direct message history with <strong id="dm-start-name">Mr_Sigma</strong>.</p>
+                    <img id="dm-avatar" src="~/assets/img/img-icon-profile.jpeg" alt="">
+                    <h2 id="dm-name"></h2>
+                    <p class="dm-handle" id="dm-handle"></p>
+                    <p class="dm-start" id="dm-start">This is the beginning of your direct message history with <strong id="dm-start-name"></strong>.</p>
                     <div class="dm-meta">
                         <span>No servers in common</span>
                         <button type="button">Remove Friend</button>
                         <button type="button">Block</button>
                     </div>
                 </div>
-                <div class="dm-divider"><span>September 16, 2026</span></div>
-                <p class="dm-system"><i class="fa-solid fa-user-group"></i><span id="dm-system"><strong id="dm-system-name">Mr_Sigma</strong> accepted your friend request. <time>9/16/26, 2:09 AM</time></span></p>
-                <div class="dm-wave">
+                <div class="dm-wave" id="dm-wave-box" hidden>
                     <span class="dm-hand" aria-hidden="true">&#128075;</span>
-                    <button type="button" id="dm-wave">Wave to Mr_Sigma</button>
+                    <button type="button" id="dm-wave">Wave</button>
                 </div>
+                <div class="dm-messages" id="dm-messages"></div>
             </div>
+            <p class="dm-error" id="dm-error" hidden></p>
             <form class="dm-compose" id="dm-compose">
                 <button type="button" aria-label="Add"><i class="fa-solid fa-plus"></i></button>
-                <div class="rich-text" id="dm-input" contenteditable="true" role="textbox" aria-label="Message" data-placeholder="Message @Mr_Sigma" data-empty="1"></div>
+                <div class="dm-input-wrap">
+                    <span class="dm-placeholder" id="dm-placeholder" aria-hidden="true">Message</span>
+                    <div class="rich-text" id="dm-input" contenteditable="true" role="textbox" aria-label="Message" data-placeholder="Message" data-empty="1"></div>
+                </div>
                 <div class="dm-compose-tools">
                     <button type="button" id="dm-emoji" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>
                 </div>
-                <template id="emoji-shell"><div class="emoji-tabs"></div><div class="emoji-scroll"></div></template>
-                <template id="emoji-tab"><button type="button"><i class="fa-solid"></i></button></template>
-                <template id="emoji-block"><section><div class="emoji-group"><h3></h3><div class="emoji-grid"></div></div></section></template>
-                <template id="emoji-choice"><button type="button" class="emoji-choice"></button></template>
-                <template id="emoji-flag"><button type="button" class="emoji-choice flag-choice"><img alt=""></button></template>
                 <template id="call-face"><img alt=""></template>
                 <div class="emoji-panel" id="emoji-panel" hidden></div>
             </form>
@@ -105,19 +103,24 @@
                 <button type="button" aria-label="More"><i class="fa-solid fa-ellipsis"></i></button>
             </div>
             <div class="dm-profile-photo">
-                <img class="dm-profile-avatar" id="dm-profile-avatar" src="./assets/img/img-icon 4.jpeg" alt="">
+                <img class="dm-profile-avatar" id="dm-profile-avatar" src="~/assets/img/img-icon-profile.jpeg" alt="">
                 <span class="dm-status"></span>
             </div>
             <div class="dm-profile-card">
-                <h2 id="dm-profile-name">Mr_Sigma</h2>
-                <p id="dm-profile-handle">Mr_Sigma</p>
+                <h2 id="dm-profile-name"></h2>
+                <p id="dm-profile-handle"></p>
             </div>
             <div class="dm-profile-body">
                 <p class="dm-clock" id="dm-clock"></p>
                 <p class="dm-since-label">Member Since</p>
-                <p id="dm-since">Jan 3, 2024</p>
+                <p id="dm-since"></p>
             </div>
             <button type="button" class="dm-full">View Full Profile</button>
         </div>
     </section>
 </main>
+
+@section Scripts {
+    <script src="~/assets/js/call.js" asp-append-version="true"></script>
+    <script src="~/assets/js/dm.js" asp-append-version="true"></script>
+}

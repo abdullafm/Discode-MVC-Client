@@ -15,6 +15,7 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
      <link rel="stylesheet" href="~/assets/css/nitro.css" asp-append-version="true">
      <link rel="stylesheet" href="~/assets/css/socialmedia.css" asp-append-version="true">
+     <link rel="stylesheet" href="~/assets/css/dm.css" asp-append-version="true">
     <link rel="shortcut icon" href="~/assets/icons/favicon.ico" type="image/x-icon">
 </head>
 
@@ -107,47 +108,7 @@
                 <div class="direct-messages">
                     <h2><span data-i18n="DIRECT MESSAGES">DIRECT MESSAGES</span> <button type="button" class="dm-new" aria-label="New Message"><i
                                 class="fa fa-plus"></i></button></h2>
-                    <div class="friend-list">
-                        <a class="friend-item" href="./dm.html?name=Mr_Sigma" data-joined="Jan 4, 2021"
-                            data-pronouns="he/him" data-bio="Today I learned..." data-emoji="😋">
-                            <div class="avatar">
-                                <img src="~/assets/img/img-icon 4.jpeg" alt="">
-                            </div>
-                            <p>Mr_Sigma</p>
-                            <i class="fa fa-xmark"></i>
-                        </a>
-                        <a class="friend-item" href="./dm.html?name=Gpro-fighter" data-joined="Aug 19, 2023"
-                            data-pronouns="they/them">
-                            <div class="avatar">
-                                <img src="~/assets/img/img-icon 3.png" alt="">
-                            </div>
-                            <p>Gpro-fighter</p>
-                            <i class="fa fa-xmark"></i>
-                        </a>
-                        <a class="friend-item" href="./dm.html?name=Moiz%20Hussain" data-joined="Mar 2, 2022"
-                            data-pronouns="he/him" data-bio="afk" data-emoji="💤">
-                            <div class="avatar">
-                                <img src="~/assets/img/img-icon 2.png" alt="">
-                            </div>
-                            <p>Moiz Hussain</p>
-                            <i class="fa fa-xmark"></i>
-                        </a>
-                        <a class="friend-item" href="./dm.html?name=nxn" data-joined="May 11, 2022"
-                            data-pronouns="she/her" data-bio="in another tab" data-emoji="🌙">
-                            <div class="avatar">
-                                <img src="~/assets/img/img-icon 1.png" alt="">
-                            </div>
-                            <p>nxn</p>
-                            <i class="fa fa-xmark"></i>
-                        </a>
-                        <a class="friend-item" href="./dm.html?name=Unknown_Inj3ctor" data-joined="Nov 28, 2024">
-                            <div class="avatar">
-                                <img src="~/assets/img/img-icon.png" alt="">
-                            </div>
-                            <p>Unknown_Inj3ctor</p>
-                            <i class="fa fa-xmark"></i>
-                        </a>
-                    </div>
+                    <div class="friend-list"></div>
                     <template id="group-row"><a class="friend-item group-row" href="./group.html"><span
                                 class="group-avatar"><i class="fa-solid fa-user-group"></i><img alt=""
                                     hidden></span><span class="group-row-text">
@@ -195,17 +156,6 @@
                             aria-label="Remove">×</button></span></template>
                 <div class="new-msg-list" id="new-msg-list">
                     <p class="new-msg-empty" id="new-msg-empty" hidden>No friends found.</p>
-                    <label class="new-msg-friend" data-friend="Mr_Sigma"><img src="~/assets/img/img-icon 4.jpeg"
-                            alt=""><span>Mr_Sigma</span><input type="checkbox" data-friend="Mr_Sigma"></label>
-                    <label class="new-msg-friend" data-friend="Gpro-fighter"><img src="~/assets/img/img-icon 3.png"
-                            alt=""><span>Gpro-fighter</span><input type="checkbox" data-friend="Gpro-fighter"></label>
-                    <label class="new-msg-friend" data-friend="Moiz Hussain"><img src="~/assets/img/img-icon 2.png"
-                            alt=""><span>Moiz Hussain</span><input type="checkbox" data-friend="Moiz Hussain"></label>
-                    <label class="new-msg-friend" data-friend="nxn"><img src="~/assets/img/img-icon 1.png"
-                            alt=""><span>nxn</span><input type="checkbox" data-friend="nxn"></label>
-                    <label class="new-msg-friend" data-friend="Unknown_Inj3ctor"><img src="~/assets/img/img-icon.png"
-                            alt=""><span>Unknown_Inj3ctor</span><input type="checkbox"
-                            data-friend="Unknown_Inj3ctor"></label>
                 </div>
                 <div class="new-msg-actions">
                     <button type="button" class="new-msg-cancel" id="new-msg-cancel">Cancel</button>
@@ -719,6 +669,7 @@
             integrity="sha512-7SRCYIJtR6F8ocwW7UxW6wGKqbSyqREDbfCORCbGLatU0iugBLwyOXpzhkPyHIFdBO0K2VCu57fvP2Twgx1o2A=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script src="~/assets/js/presence.js" asp-append-version="true"></script>
+        <script src="~/assets/js/directmessages.js" asp-append-version="true"></script>
         @RenderSection("Scripts", required: false)
     </footer>
 </body>

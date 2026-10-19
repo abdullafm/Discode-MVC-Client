@@ -11,8 +11,8 @@ window.onload = function () {
     }, 2000);
 };
 
-var x = new Audio("./assets/css/audio/discordmute_IZNcLx2.mp3");
-var y = new Audio("./assets/css/audio/discord-unmute-sound.mp3");
+var x = new Audio("/assets/css/audio/discordmute_IZNcLx2.mp3");
+var y = new Audio("/assets/css/audio/discord-unmute-sound.mp3");
 
 function mic() {
     if (!micO) {

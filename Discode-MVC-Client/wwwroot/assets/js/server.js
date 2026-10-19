@@ -116,7 +116,7 @@
     var voiceStatus = document.getElementById("server-voice-status");
     var voiceJoin = document.getElementById("server-voice-join");
     var voiceLeave = document.getElementById("server-voice-leave");
-    var joinVoiceSound = new Audio("assets/css/audio/join-voice.mp3");
+    var joinVoiceSound = new Audio("/assets/css/audio/join-voice.mp3");
 
     function channelTitle(button) {
         var nameNode = button ? button.querySelector(".server-channel-name") : null;

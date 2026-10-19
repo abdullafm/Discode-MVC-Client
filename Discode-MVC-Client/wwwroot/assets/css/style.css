@@ -7541,3 +7541,59 @@ html.theme-dark .me-request-buttons button:hover {
     display: block;
     margin: 0 auto;
 }
+
+/* Direct message rows in the sidebar */
+body .conversation-sidebar .direct-messages .friend-list .friend-item[data-presence="online"] .avatar::after {
+    border-color: #23a559;
+}
+
+body .conversation-sidebar .direct-messages .friend-list .friend-item[data-presence="idle"] .avatar::after {
+    border-color: #f0b232;
+}
+
+body .conversation-sidebar .direct-messages .friend-list .friend-item[data-presence="dnd"] .avatar::after {
+    border-color: #f23f43;
+}
+
+html.theme-dark body .friend-item[data-presence="online"] > .avatar::after {
+    border-color: #23a559 !important;
+}
+
+html.theme-dark body .friend-item[data-presence="idle"] > .avatar::after {
+    border-color: #f0b232 !important;
+}
+
+html.theme-dark body .friend-item[data-presence="dnd"] > .avatar::after {
+    border-color: #f23f43 !important;
+}
+
+.friend-item .dm-unread {
+    margin-left: auto;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 9px;
+    background: #f23f43;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+}
+
+.friend-item .dm-unread[hidden] {
+    display: none;
+}
+
+.friend-item.has-unread > p {
+    font-weight: 700 !important;
+    color: #060607 !important;
+}
+
+html.theme-dark body .friend-item.has-unread > p {
+    color: #f2f3f5 !important;
+}
+
+html.theme-dark body .friend-item .dm-unread {
+    color: #fff !important;
+}

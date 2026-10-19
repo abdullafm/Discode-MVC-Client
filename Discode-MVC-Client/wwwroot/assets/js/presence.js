@@ -20,6 +20,7 @@
         document.dispatchEvent(new CustomEvent("discode-stories-changed"));
         document.dispatchEvent(new CustomEvent("discode-posts-changed"));
         document.dispatchEvent(new CustomEvent("discode-notifications-changed"));
+        document.dispatchEvent(new CustomEvent("discode-dm-changed"));
         refreshFriends();
         joinWatchedProfile();
     }
@@ -46,6 +47,7 @@
                     .build();
 
                 connection.on("PresenceChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-user-presence", { detail: { userId: data.userId, status: data.status } }));
                     if (window.discodeFriends) window.discodeFriends.setPresence(data.userId, data.status);
                 });
 
@@ -61,6 +63,10 @@
 
                 connection.on("PostsChanged", function () {
                     document.dispatchEvent(new CustomEvent("discode-posts-changed"));
+                });
+
+                connection.on("DirectMessage", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-dm-message", { detail: data }));
                 });
 
                 connection.on("NotificationsChanged", function () {

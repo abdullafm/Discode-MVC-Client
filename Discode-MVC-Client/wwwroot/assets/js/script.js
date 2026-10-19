@@ -165,7 +165,7 @@ function openToggle() {
         var img = row.querySelector("img");
         if (img) img.src = item.avatarUrl || item.avatar || "/assets/img/img-icon-profile.jpeg";
         var links = row.querySelectorAll("a");
-        var href = "./dm.html?name=" + encodeURIComponent(username);
+        var href = "/Dm/Index?name=" + encodeURIComponent(username);
         for (var i = 0; i < links.length; i++) {
             links[i].setAttribute("href", href);
             if (links[i].classList.contains("online-act"))

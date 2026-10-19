@@ -11,8 +11,8 @@
     var screenVideo = document.getElementById("call-screen-video");
     if (!micBtn || !camBtn || !screenBtn || !stage || !camVideo || !screenVideo) return;
 
-    var unmuteSound = new Audio("assets/css/audio/discord-unmute-sound.mp3");
-    var muteSound = new Audio("assets/css/audio/discordmute_IZNcLx2.mp3");
+    var unmuteSound = new Audio("/assets/css/audio/discord-unmute-sound.mp3");
+    var muteSound = new Audio("/assets/css/audio/discordmute_IZNcLx2.mp3");
 
     function paintMic(muted, playSound) {
         if (playSound === undefined) playSound = true;
