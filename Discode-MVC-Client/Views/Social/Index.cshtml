@@ -133,16 +133,34 @@
                     <canvas class="story-canvas" id="story-canvas" width="540" height="960"></canvas>
                     <div class="story-edit-top">
                         <button type="button" id="story-discard" aria-label="Discard"><i class="fa-solid fa-xmark"></i></button>
+                        <button type="button" class="story-draw-done" id="story-draw-done" hidden>Done</button>
                         <div class="story-edit-tools">
-                            <button type="button" data-tool="text" aria-label="Text"><i class="fa-solid fa-font"></i></button>
-                            <button type="button" data-tool="draw" aria-label="Draw"><i class="fa-solid fa-pen"></i></button>
-                            <button type="button" data-tool="sticker" aria-label="Sticker"><i class="fa-solid fa-face-grin-stars"></i></button>
+                            <div class="story-tool-dropdown">
+                                <button type="button" class="story-tool-trigger" id="story-tool-trigger" aria-haspopup="menu" aria-expanded="false">
+                                    <i class="fa-solid fa-wand-magic-sparkles" id="story-tool-icon"></i>
+                                    <span id="story-tool-label">Tools</span>
+                                    <i class="fa-solid fa-chevron-down story-tool-caret"></i>
+                                </button>
+                                <div class="story-tool-menu" id="story-tool-menu" role="menu" hidden>
+                                    <button type="button" role="menuitem" data-tool="text"><i class="fa-solid fa-font"></i><span>Text</span></button>
+                                    <button type="button" role="menuitem" data-tool="draw"><i class="fa-solid fa-pen"></i><span>Draw</span></button>
+                                    <button type="button" role="menuitem" data-tool="sticker"><i class="fa-solid fa-face-grin-stars"></i><span>Sticker</span></button>
+                                </div>
+                            </div>
                             <button type="button" id="story-undo" aria-label="Undo"><i class="fa-solid fa-rotate-left"></i></button>
                         </div>
                     </div>
                     <div class="story-edit-panel" id="story-edit-panel" hidden>
                         <div id="story-tool-text" hidden>
-                            <input id="story-text" maxlength="80" placeholder="Add text" autocomplete="off">
+                            <button type="button" id="story-text-close" aria-label="Cancel"><i class="fa-solid fa-xmark"></i></button>
+                            <div class="story-text-styles" id="story-text-styles">
+                                <button type="button" data-text-style="classic" class="on">Classic</button>
+                                <button type="button" data-text-style="modern">Modern</button>
+                                <button type="button" data-text-style="neon">Neon</button>
+                                <button type="button" data-text-style="typewriter">Typewriter</button>
+                                <button type="button" data-text-style="strong">Strong</button>
+                            </div>
+                            <input id="story-text" maxlength="80" placeholder="Start typing" autocomplete="off">
                             <div class="story-colors">
                                 <button type="button" data-color="#ffffff" style="background:#ffffff"></button>
                                 <button type="button" data-color="#111111" style="background:#111111"></button>
@@ -151,9 +169,13 @@
                                 <button type="button" data-color="#5865f2" style="background:#5865f2"></button>
                                 <button type="button" data-color="#3ba55d" style="background:#3ba55d"></button>
                             </div>
-                            <button type="button" id="story-text-add">Add</button>
+                            <button type="button" id="story-text-add">Done</button>
                         </div>
                         <div id="story-tool-draw" hidden>
+                            <div class="story-brush">
+                                <span class="story-brush-dot" id="story-brush-dot"></span>
+                                <input type="range" id="story-brush-size" min="3" max="44" value="10" aria-label="Brush size">
+                            </div>
                             <div class="story-colors">
                                 <button type="button" data-color="#ffffff" style="background:#ffffff"></button>
                                 <button type="button" data-color="#111111" style="background:#111111"></button>
@@ -164,14 +186,7 @@
                             </div>
                         </div>
                         <div id="story-tool-sticker" hidden>
-                            <button type="button" class="story-sticker" data-sticker="😂">😂</button>
-                            <button type="button" class="story-sticker" data-sticker="🔥">🔥</button>
-                            <button type="button" class="story-sticker" data-sticker="❤️">❤️</button>
-                            <button type="button" class="story-sticker" data-sticker="✨">✨</button>
-                            <button type="button" class="story-sticker" data-sticker="😭">😭</button>
-                            <button type="button" class="story-sticker" data-sticker="👍">👍</button>
-                            <button type="button" class="story-sticker" data-sticker="💀">💀</button>
-                            <button type="button" class="story-sticker" data-sticker="🎉">🎉</button>
+                            <div class="story-emoji-picker" id="story-emoji-picker"></div>
                         </div>
                     </div>
                     <div class="story-filters" id="story-filters">

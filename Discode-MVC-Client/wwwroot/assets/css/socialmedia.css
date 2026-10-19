@@ -3758,3 +3758,615 @@ html.theme-dark body .views-row p,
 html.theme-dark body .views-empty {
     color: #949ba4 !important;
 }
+
+/* ============================================================
+   STORY EDITOR TOOL DROPDOWN
+   ============================================================ */
+
+.story-tool-dropdown {
+    position: relative;
+}
+
+.story-edit-top .story-tool-trigger {
+    width: auto;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    backdrop-filter: blur(8px);
+    transition: background 0.15s ease;
+}
+
+.story-edit-top .story-tool-trigger:hover {
+    background: rgba(0, 0, 0, 0.62);
+}
+
+.story-edit-top .story-tool-trigger.on:hover {
+    background: #f2f3f5;
+}
+
+.story-tool-caret {
+    font-size: 10px;
+    transition: transform 0.18s ease;
+}
+
+.story-tool-trigger[aria-expanded="true"] .story-tool-caret {
+    transform: rotate(180deg);
+}
+
+.story-tool-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 8;
+    min-width: 170px;
+    padding: 6px;
+    border-radius: 14px;
+    background: rgba(24, 25, 28, 0.94);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: live-dialog-in 0.14s ease;
+}
+
+.story-tool-menu[hidden] {
+    display: none;
+}
+
+.story-edit-top .story-tool-menu button {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+}
+
+.story-edit-top .story-tool-menu button i {
+    width: 18px;
+    text-align: center;
+}
+
+.story-edit-top .story-tool-menu button:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.story-edit-top .story-tool-menu button.on {
+    background: linear-gradient(135deg, #f23f43, #e1306c);
+    color: #fff;
+}
+
+html.theme-dark body .story-edit-top .story-tool-menu button.on {
+    background: linear-gradient(135deg, #f23f43, #e1306c) !important;
+    color: #fff !important;
+}
+
+html.theme-dark body .story-tool-trigger span,
+html.theme-dark body .story-tool-menu button span {
+    color: inherit !important;
+}
+
+/* ============================================================
+   STORY EDITOR TOOL PANEL (text / draw / sticker)
+   ============================================================ */
+
+.story-edit-panel {
+    display: block;
+    padding: 14px;
+    border-radius: 20px;
+    background: rgba(18, 19, 22, 0.72);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.story-edit-panel > div {
+    animation: live-dialog-in 0.16s ease;
+}
+
+#story-tool-text {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "input add" "colors colors";
+    gap: 12px 10px;
+    align-items: center;
+}
+
+#story-tool-text[hidden],
+#story-tool-draw[hidden],
+#story-tool-sticker[hidden] {
+    display: none;
+}
+
+.story-edit-panel #story-text {
+    grid-area: input;
+    height: 44px;
+    padding: 0 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 15px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.story-edit-panel #story-text:focus {
+    border-color: #e1306c;
+    background: rgba(255, 255, 255, 0.14);
+}
+
+#story-tool-text .story-colors {
+    grid-area: colors;
+}
+
+.story-edit-panel .story-colors {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.story-edit-panel .story-colors button {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.28);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.story-edit-panel .story-colors button:hover {
+    transform: scale(1.12);
+}
+
+.story-edit-panel .story-colors button.on {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 3px rgba(18, 19, 22, 0.9), 0 0 0 5px #fff;
+}
+
+#story-tool-draw {
+    display: block;
+}
+
+.story-edit-panel #story-text-add {
+    grid-area: add;
+    height: 44px;
+    padding: 0 22px;
+    border-radius: 999px;
+    border: 0;
+    background: linear-gradient(135deg, #f23f43, #e1306c);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    box-shadow: 0 6px 16px rgba(242, 63, 67, 0.35);
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.story-edit-panel #story-text-add:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+}
+
+#story-tool-sticker {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+}
+
+.story-edit-panel .story-sticker {
+    height: 52px;
+    border-radius: 14px;
+    font-size: 30px;
+    background: rgba(255, 255, 255, 0.08);
+    transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.story-edit-panel .story-sticker:hover {
+    background: rgba(255, 255, 255, 0.18);
+    transform: scale(1.06);
+}
+
+html.theme-dark body .story-edit-panel #story-text-add {
+    color: #fff !important;
+}
+
+/* ============================================================
+   INSTAGRAM-STYLE TEXT MODE
+   ============================================================ */
+
+#story-editor.text-mode .story-edit-top,
+#story-editor.text-mode .story-filters,
+#story-editor.text-mode .story-share {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#story-editor.text-mode .story-edit-panel {
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(6px);
+    box-shadow: none;
+    z-index: 7;
+}
+
+#story-editor.text-mode #story-tool-text {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 70px 18px 90px;
+}
+
+#story-editor.text-mode #story-tool-text[hidden] {
+    display: none;
+}
+
+#story-editor.text-mode .story-edit-panel #story-text {
+    flex: 0 0 auto;
+    width: 100%;
+    height: auto;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    font-size: 34px;
+    font-weight: 800;
+    text-align: center;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+    caret-color: #fff;
+}
+
+#story-editor.text-mode .story-edit-panel #story-text:focus {
+    background: transparent;
+}
+
+#story-editor.text-mode .story-edit-panel #story-text::placeholder {
+    color: rgba(255, 255, 255, 0.55);
+    text-shadow: none;
+}
+
+#story-editor.text-mode #story-text-close {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: none;
+}
+
+#story-text-close {
+    display: none;
+}
+
+#story-editor.text-mode #story-text-close {
+    display: block;
+}
+
+#story-editor.text-mode .story-edit-panel #story-text-add {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    height: 40px;
+    padding: 0 20px;
+    background: #fff;
+    color: #111;
+    box-shadow: none;
+}
+
+html.theme-dark body #story-editor.text-mode .story-edit-panel #story-text-add {
+    color: #111 !important;
+}
+
+#story-editor.text-mode #story-tool-text .story-colors {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 28px;
+    justify-content: center;
+    gap: 14px;
+}
+
+#story-editor.text-mode .story-edit-panel .story-colors button {
+    width: 34px;
+    height: 34px;
+}
+
+/* ============================================================
+   STORY DRAW BRUSH SIZE
+   ============================================================ */
+
+#story-tool-draw {
+    position: relative;
+}
+
+.story-brush {
+    position: absolute;
+    left: -2px;
+    bottom: calc(100% + 30px);
+    width: 46px;
+    padding: 12px 0 14px;
+    border-radius: 24px;
+    background: rgba(18, 19, 22, 0.72);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.story-brush-dot {
+    display: block;
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35);
+    transition: transform 0.08s ease;
+}
+
+.story-edit-panel .story-brush input[type="range"] {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 190px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    writing-mode: vertical-lr;
+    direction: rtl;
+    accent-color: #ffffff;
+    cursor: pointer;
+}
+
+.story-edit-top,
+.story-brush,
+.story-edit-panel {
+    user-select: none;
+}
+
+.story-edit-panel #story-text {
+    user-select: text;
+}
+
+/* ============================================================
+   STORY TEXT STYLES
+   ============================================================ */
+
+.story-text-styles {
+    display: none;
+}
+
+#story-editor.text-mode .story-text-styles {
+    position: absolute;
+    bottom: 86px;
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: 6px;
+    padding: 0 12px;
+    overflow-x: auto;
+    justify-content: safe center;
+    scrollbar-width: none;
+}
+
+#story-editor.text-mode .story-text-styles::-webkit-scrollbar {
+    display: none;
+}
+
+#story-editor.text-mode .story-text-styles button {
+    flex: 0 0 auto;
+    height: 34px;
+    padding: 0 12px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+#story-editor.text-mode .story-text-styles button.on {
+    background: #fff;
+    color: #111;
+    border-color: #fff;
+}
+
+.story-text-styles [data-text-style="classic"] { font-weight: 700; }
+.story-text-styles [data-text-style="modern"] { font-weight: 800; }
+.story-text-styles [data-text-style="neon"] { font-weight: 600; text-shadow: 0 0 8px #e1306c; }
+.story-text-styles [data-text-style="neon"].on { text-shadow: none; }
+.story-text-styles [data-text-style="typewriter"] { font-family: "Courier New", Courier, monospace; font-weight: 700; }
+.story-text-styles [data-text-style="strong"] { font-family: "Arial Black", Impact, sans-serif; font-weight: 900; text-transform: uppercase; }
+
+html.theme-dark body #story-editor.text-mode .story-text-styles button {
+    color: #fff !important;
+}
+
+html.theme-dark body #story-editor.text-mode .story-text-styles button.on {
+    color: #111 !important;
+}
+
+#story-editor.text-mode .story-edit-panel #story-text {
+    width: auto;
+    min-width: 190px;
+    max-width: 100%;
+    field-sizing: content;
+}
+
+#story-editor.text-mode .story-edit-panel #story-text.look-modern {
+    font-weight: 800;
+    border-radius: 14px;
+    text-shadow: none;
+}
+
+#story-editor.text-mode .story-edit-panel #story-text.look-neon {
+    font-weight: 600;
+}
+
+#story-editor.text-mode .story-edit-panel #story-text.look-typewriter {
+    font-family: "Courier New", Courier, monospace;
+}
+
+#story-editor.text-mode .story-edit-panel #story-text.look-strong {
+    font-family: "Arial Black", Impact, sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.story-text-styles,
+.story-filters {
+    cursor: grab;
+}
+
+.story-text-styles.dragging,
+.story-filters.dragging {
+    cursor: grabbing;
+    user-select: none;
+}
+
+.story-text-styles.dragging button,
+.story-filters.dragging button {
+    cursor: grabbing;
+}
+
+.story-text-styles {
+    touch-action: pan-x;
+}
+
+/* ============================================================
+   STORY STICKER PICKER (emojis from the backend)
+   ============================================================ */
+
+#story-tool-sticker {
+    display: block;
+}
+
+#story-tool-sticker[hidden] {
+    display: none;
+}
+
+.story-emoji-picker {
+    display: flex;
+    flex-wrap: wrap;
+    height: 270px;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.story-emoji-picker .emoji-tabs,
+.story-emoji-picker .emoji-scroll {
+    height: calc(100% - 40px);
+}
+
+.story-emoji-picker .emoji-tabs {
+    width: 44px;
+    padding: 4px 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 0;
+    border-radius: 12px;
+    scrollbar-width: none;
+}
+
+.story-emoji-picker .emoji-tabs button,
+.story-emoji-picker .emoji-choice {
+    color: #e3e5e8;
+}
+
+.story-emoji-picker .emoji-tabs button.on,
+.story-emoji-picker .emoji-tabs button:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+.story-emoji-picker .emoji-choice {
+    width: 100%;
+    height: 38px;
+    font-size: 24px;
+    border-radius: 10px;
+}
+
+.story-emoji-picker .emoji-choice:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.story-emoji-picker .emoji-scroll {
+    padding: 0 6px 6px 10px;
+    scrollbar-width: thin;
+}
+
+.story-emoji-picker .emoji-group h3 {
+    margin: 10px 4px 6px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.story-emoji-picker .emoji-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.story-emoji-picker .emoji-foot {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.story-emoji-picker .emoji-loading {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+html.theme-dark body .story-emoji-picker .emoji-group h3,
+html.theme-dark body .story-emoji-picker .emoji-foot-text,
+html.theme-dark body .story-emoji-picker .emoji-loading {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.story-edit-top .story-draw-done {
+    position: absolute;
+    left: 48px;
+    top: 0;
+    width: auto;
+    height: 36px;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: #fff;
+    color: #111;
+    font-size: 14px;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.story-edit-top .story-draw-done[hidden] {
+    display: none;
+}
+
+.story-edit-top .story-draw-done:hover {
+    background: #f2f3f5;
+}
+
+html.theme-dark body .story-edit-top .story-draw-done {
+    color: #111 !important;
+}

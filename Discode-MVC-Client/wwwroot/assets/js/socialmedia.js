@@ -898,15 +898,48 @@ function wrapText(ctx, text, max) {
     return lines.length ? lines : [""];
 }
 
+var TEXT_FONTS = {
+    classic: "700 {size}px Nunito Sans, sans-serif",
+    modern: "800 {size}px Nunito Sans, sans-serif",
+    neon: "600 {size}px Nunito Sans, sans-serif",
+    typewriter: "700 {size}px 'Courier New', Courier, monospace",
+    strong: "900 {size}px 'Arial Black', Impact, Nunito Sans, sans-serif"
+};
+
+function textStyleOf(item) {
+    return TEXT_FONTS[item.style] ? item.style : "classic";
+}
+
 function itemFont(item) {
-    return item.type === "sticker"
-        ? item.size + "px sans-serif"
-        : "700 " + item.size + "px Nunito Sans, sans-serif";
+    if (item.type === "sticker") return item.size + "px sans-serif";
+    return TEXT_FONTS[textStyleOf(item)].replace("{size}", item.size);
+}
+
+function itemText(item) {
+    return textStyleOf(item) === "strong" ? String(item.text).toUpperCase() : item.text;
+}
+
+function contrastColor(hex) {
+    var r = parseInt(hex.slice(1, 3), 16);
+    var g = parseInt(hex.slice(3, 5), 16);
+    var b = parseInt(hex.slice(5, 7), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.55 ? "#111111" : "#ffffff";
+}
+
+function roundedFill(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+    ctx.fill();
 }
 
 function itemBox(ctx, item) {
     ctx.font = itemFont(item);
-    var lines = item.type === "sticker" ? [item.text] : wrapText(ctx, item.text, STORY_W - 80);
+    var lines = item.type === "sticker" ? [item.text] : wrapText(ctx, itemText(item), STORY_W - 80);
     var lineH = item.size * 1.15;
     var width = 0;
     lines.forEach(function (line) {
@@ -937,6 +970,66 @@ function drawStroke(ctx, stroke) {
     ctx.restore();
 }
 
+var HANDLES = [
+    { id: "nw", fx: 0, fy: 0, cursor: "nwse-resize" },
+    { id: "n", fx: 0.5, fy: 0, cursor: "ns-resize" },
+    { id: "ne", fx: 1, fy: 0, cursor: "nesw-resize" },
+    { id: "e", fx: 1, fy: 0.5, cursor: "ew-resize" },
+    { id: "se", fx: 1, fy: 1, cursor: "nwse-resize" },
+    { id: "s", fx: 0.5, fy: 1, cursor: "ns-resize" },
+    { id: "sw", fx: 0, fy: 1, cursor: "nesw-resize" },
+    { id: "w", fx: 0, fy: 0.5, cursor: "ew-resize" }
+];
+
+function itemScaleX(item) {
+    return item.sx || 1;
+}
+
+function itemScaleY(item) {
+    return item.sy || 1;
+}
+
+function itemRect(ctx, item) {
+    var box = itemBox(ctx, item);
+    var halfW = box.width * itemScaleX(item) / 2 + 12;
+    var halfH = box.height * itemScaleY(item) / 2 + 8;
+    return { l: item.x - halfW, t: item.y - halfH, r: item.x + halfW, b: item.y + halfH };
+}
+
+function handlePoint(rect, handle) {
+    return { x: rect.l + (rect.r - rect.l) * handle.fx, y: rect.t + (rect.b - rect.t) * handle.fy };
+}
+
+function handleAt(point) {
+    if (!storyDraft || storyDraft.selected < 0) return null;
+    var ctx = document.getElementById("story-canvas").getContext("2d");
+    var rect = itemRect(ctx, storyDraft.items[storyDraft.selected]);
+    for (var i = 0; i < HANDLES.length; i++) {
+        var spot = handlePoint(rect, HANDLES[i]);
+        if (Math.hypot(point.x - spot.x, point.y - spot.y) <= 22) return HANDLES[i];
+    }
+    return null;
+}
+
+function drawHandles(ctx, rect) {
+    HANDLES.forEach(function (handle) {
+        var spot = handlePoint(rect, handle);
+        ctx.fillStyle = "#ffffff";
+        ctx.strokeStyle = "rgba(0,0,0,0.35)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        if (handle.id.length === 2) {
+            ctx.arc(spot.x, spot.y, 10, 0, Math.PI * 2);
+        } else if (handle.id === "n" || handle.id === "s") {
+            ctx.rect(spot.x - 14, spot.y - 5, 28, 10);
+        } else {
+            ctx.rect(spot.x - 5, spot.y - 14, 10, 28);
+        }
+        ctx.fill();
+        ctx.stroke();
+    });
+}
+
 function drawItem(ctx, item, selected) {
     var box = itemBox(ctx, item);
     ctx.save();
@@ -944,18 +1037,40 @@ function drawItem(ctx, item, selected) {
     ctx.textBaseline = "middle";
     ctx.font = itemFont(item);
     if (selected) {
+        var rect = itemRect(ctx, item);
         ctx.strokeStyle = "rgba(255,255,255,0.9)";
         ctx.lineWidth = 2;
         ctx.setLineDash([6, 4]);
-        ctx.strokeRect(item.x - box.width / 2 - 12, item.y - box.height / 2 - 8, box.width + 24, box.height + 16);
+        ctx.strokeRect(rect.l, rect.t, rect.r - rect.l, rect.b - rect.t);
         ctx.setLineDash([]);
+        drawHandles(ctx, rect);
     }
+    ctx.translate(item.x, item.y);
+    ctx.scale(itemScaleX(item), itemScaleY(item));
+    ctx.translate(-item.x, -item.y);
     box.lines.forEach(function (line, index) {
         var y = item.y - box.height / 2 + box.lineH / 2 + index * box.lineH;
-        if (item.type === "text") {
-            ctx.lineWidth = 6;
-            ctx.strokeStyle = item.color === "#111111" ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.55)";
-            ctx.strokeText(line, item.x, y);
+        var look = textStyleOf(item);
+        if (item.type === "text" && look === "modern") {
+            var lineWidth = ctx.measureText(line).width;
+            ctx.fillStyle = item.color;
+            roundedFill(ctx, item.x - lineWidth / 2 - item.size * 0.4, y - box.lineH / 2 + 2, lineWidth + item.size * 0.8, box.lineH - 4, item.size * 0.3);
+            ctx.fillStyle = contrastColor(item.color);
+            ctx.fillText(line, item.x, y);
+        } else if (item.type === "text" && look === "neon") {
+            ctx.fillStyle = "#ffffff";
+            ctx.shadowColor = item.color === "#111111" ? "#ffffff" : item.color;
+            [34, 18, 8].forEach(function (blur) {
+                ctx.shadowBlur = blur;
+                ctx.fillText(line, item.x, y);
+            });
+        } else if (item.type === "text") {
+            if (item.color !== "#111111") {
+                ctx.lineWidth = 6;
+                ctx.lineJoin = "round";
+                ctx.strokeStyle = "rgba(0,0,0,0.55)";
+                ctx.strokeText(line, item.x, y);
+            }
             ctx.fillStyle = item.color;
             ctx.fillText(line, item.x, y);
         } else {
@@ -989,10 +1104,42 @@ function paintDraft() {
     });
 }
 
+function paintBrush() {
+    var dot = document.getElementById("story-brush-dot");
+    var size = storyDraft ? storyDraft.brush : 10;
+    dot.style.transform = "scale(" + (size / 44) + ")";
+    dot.style.background = storyDraft ? storyDraft.ink : "#ffffff";
+    document.getElementById("story-brush-size").value = String(size);
+}
+
+function applyTextLook() {
+    var input = document.getElementById("story-text");
+    var style = storyDraft ? storyDraft.textStyle : "classic";
+    var color = storyDraft ? storyDraft.textColor : "#ffffff";
+    var names = Object.keys(TEXT_FONTS);
+    for (var i = 0; i < names.length; i++) input.classList.toggle("look-" + names[i], names[i] === style);
+    input.style.setProperty("color", style === "modern" ? contrastColor(color) : style === "neon" ? "#ffffff" : color, "important");
+    input.style.setProperty("background", style === "modern" ? color : "", style === "modern" ? "important" : "");
+    input.style.setProperty("text-shadow", style === "neon" ? "0 0 8px " + (color === "#111111" ? "#fff" : color) + ", 0 0 22px " + (color === "#111111" ? "#fff" : color) + ", 0 0 40px " + (color === "#111111" ? "#fff" : color) : "", style === "neon" ? "important" : "");
+    var chips = document.querySelectorAll("#story-text-styles [data-text-style]");
+    for (var j = 0; j < chips.length; j++) chips[j].classList.toggle("on", chips[j].getAttribute("data-text-style") === style);
+}
+
 function markColors(box, current) {
     if (!box) return;
     var dots = box.querySelectorAll("[data-color]");
     for (var i = 0; i < dots.length; i++) dots[i].classList.toggle("on", dots[i].getAttribute("data-color") === current);
+}
+
+var STORY_TOOLS = {
+    text: { label: "Text", icon: "fa-font" },
+    draw: { label: "Draw", icon: "fa-pen" },
+    sticker: { label: "Sticker", icon: "fa-face-grin-stars" }
+};
+
+function closeToolMenu() {
+    document.getElementById("story-tool-menu").hidden = true;
+    document.getElementById("story-tool-trigger").setAttribute("aria-expanded", "false");
 }
 
 function renderToolPanel() {
@@ -1002,19 +1149,32 @@ function renderToolPanel() {
     for (var i = 0; i < buttons.length; i++) {
         buttons[i].classList.toggle("on", buttons[i].getAttribute("data-tool") === tool);
     }
+    document.getElementById("story-draw-done").hidden = tool !== "draw";
+    var trigger = document.getElementById("story-tool-trigger");
+    var current = STORY_TOOLS[tool] || { label: "Tools", icon: "fa-wand-magic-sparkles" };
+    trigger.classList.toggle("on", !!tool);
+    document.getElementById("story-tool-icon").className = "fa-solid " + current.icon;
+    document.getElementById("story-tool-label").textContent = current.label;
     document.getElementById("story-editor").classList.toggle("drawing", tool === "draw");
+    document.getElementById("story-editor").classList.toggle("text-mode", tool === "text");
     var textTool = document.getElementById("story-tool-text");
     var drawTool = document.getElementById("story-tool-draw");
     var stickerTool = document.getElementById("story-tool-sticker");
+    if (tool === "sticker" && typeof fillEmojiPanel === "function") {
+        var emojiPicker = document.getElementById("story-emoji-picker");
+        if (!emojiPicker.childElementCount) fillEmojiPanel(emojiPicker, "story-emoji", null, { skip: ["Flags"] });
+    }
     if (textTool) textTool.hidden = tool !== "text";
     if (drawTool) drawTool.hidden = tool !== "draw";
     if (stickerTool) stickerTool.hidden = tool !== "sticker";
     panel.hidden = !tool;
     if (tool === "text") {
         markColors(textTool, storyDraft.textColor);
+        applyTextLook();
         document.getElementById("story-text").focus();
     } else if (tool === "draw") {
         markColors(drawTool, storyDraft.ink);
+        paintBrush();
     }
 }
 
@@ -1048,7 +1208,9 @@ function openStoryEditor(url) {
             selected: -1,
             undo: [],
             ink: "#ffffff",
-            textColor: "#ffffff"
+            brush: 10,
+            textColor: "#ffffff",
+            textStyle: "classic"
         };
         document.getElementById("story-share-avatar").src = avatarFor(ME);
         document.getElementById("story-editor").hidden = false;
@@ -1064,11 +1226,25 @@ function hitItem(point) {
     for (var i = storyDraft.items.length - 1; i >= 0; i--) {
         var item = storyDraft.items[i];
         var box = item.box || itemBox(ctx, item);
-        if (Math.abs(point.x - item.x) <= box.width / 2 + 16 && Math.abs(point.y - item.y) <= box.height / 2 + 16) {
+        if (Math.abs(point.x - item.x) <= box.width * itemScaleX(item) / 2 + 16 && Math.abs(point.y - item.y) <= box.height * itemScaleY(item) / 2 + 16) {
             return i;
         }
     }
     return -1;
+}
+
+function addStorySticker(emoji) {
+    storyDraft.items.push({
+        type: "sticker",
+        text: emoji,
+        x: STORY_W / 2,
+        y: STORY_H / 2,
+        size: 78,
+        color: "#ffffff"
+    });
+    storyDraft.undo.push("item");
+    storyDraft.selected = storyDraft.items.length - 1;
+    paintDraft();
 }
 
 function addStoryText() {
@@ -1082,11 +1258,14 @@ function addStoryText() {
         x: STORY_W / 2,
         y: STORY_H / 2 + (storyDraft.items.length % 3) * 64 - 64,
         size: 42,
-        color: storyDraft.textColor
+        color: storyDraft.textColor,
+        style: storyDraft.textStyle
     });
     storyDraft.undo.push("item");
     storyDraft.selected = storyDraft.items.length - 1;
     input.value = "";
+    storyDraft.tool = null;
+    renderToolPanel();
     paintDraft();
 }
 
@@ -1142,40 +1321,149 @@ document.querySelector(".story-edit-tools").addEventListener("click", function (
         paintDraft();
         return;
     }
+    if (event.target.closest("#story-tool-trigger")) {
+        var menu = document.getElementById("story-tool-menu");
+        menu.hidden = !menu.hidden;
+        document.getElementById("story-tool-trigger").setAttribute("aria-expanded", menu.hidden ? "false" : "true");
+        return;
+    }
     var button = event.target.closest("[data-tool]");
     if (!button) return;
     var tool = button.getAttribute("data-tool");
     storyDraft.tool = storyDraft.tool === tool ? null : tool;
+    closeToolMenu();
     renderToolPanel();
+});
+
+document.addEventListener("click", function (event) {
+    if (!event.target.closest(".story-tool-dropdown")) closeToolMenu();
+    if (!storyDraft || (storyDraft.tool !== "sticker" && storyDraft.tool !== "draw")) return;
+    if (document.getElementById("story-editor").hidden) return;
+    if (event.target.closest("#story-edit-panel, .story-edit-top")) return;
+    if (storyDraft.tool === "draw" && event.target.closest("#story-canvas")) return;
+    storyDraft.tool = null;
+    renderToolPanel();
+});
+
+document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") closeToolMenu();
 });
 
 document.getElementById("story-edit-panel").addEventListener("click", function (event) {
     if (!storyDraft) return;
+    if (storyDraft.tool === "text" && (event.target.id === "story-edit-panel" || event.target.id === "story-tool-text")) {
+        var box = document.getElementById("story-text");
+        if (box.value.trim()) {
+            box.focus();
+        } else {
+            storyDraft.tool = null;
+            renderToolPanel();
+        }
+        return;
+    }
+    var chip = event.target.closest("[data-text-style]");
+    if (chip) {
+        storyDraft.textStyle = chip.getAttribute("data-text-style");
+        applyTextLook();
+        document.getElementById("story-text").focus();
+        return;
+    }
     var color = event.target.closest("[data-color]");
     if (color) {
         var value = color.getAttribute("data-color");
-        if (storyDraft.tool === "draw") storyDraft.ink = value;
-        else storyDraft.textColor = value;
+        if (storyDraft.tool === "draw") {
+            storyDraft.ink = value;
+            paintBrush();
+        } else {
+            storyDraft.textColor = value;
+            applyTextLook();
+        }
         var dots = color.parentNode.children;
         for (var i = 0; i < dots.length; i++) dots[i].classList.toggle("on", dots[i] === color);
         return;
     }
-    var sticker = event.target.closest("[data-sticker]");
-    if (sticker) {
-        storyDraft.items.push({
-            type: "sticker",
-            text: sticker.getAttribute("data-sticker"),
-            x: STORY_W / 2,
-            y: STORY_H / 2,
-            size: 78,
-            color: "#ffffff"
-        });
-        storyDraft.undo.push("item");
-        storyDraft.selected = storyDraft.items.length - 1;
-        paintDraft();
+    var emojiTab = event.target.closest("#story-emoji-picker [data-emoji-tab]");
+    if (emojiTab) {
+        var picker = document.getElementById("story-emoji-picker");
+        var section = document.getElementById("story-emoji-" + emojiTab.getAttribute("data-emoji-tab"));
+        if (section) picker.querySelector(".emoji-scroll").scrollTop = section.offsetTop;
+        var emojiTabs = picker.querySelectorAll("[data-emoji-tab]");
+        for (var t = 0; t < emojiTabs.length; t++) emojiTabs[t].classList.toggle("on", emojiTabs[t] === emojiTab);
+        return;
+    }
+    var emojiChoice = event.target.closest("#story-emoji-picker .emoji-choice");
+    if (emojiChoice) {
+        addStorySticker(emojiChoice.getAttribute("data-emoji"));
         return;
     }
     if (event.target.closest("#story-text-add")) addStoryText();
+    if (event.target.closest("#story-text-close")) {
+        document.getElementById("story-text").value = "";
+        storyDraft.tool = null;
+        renderToolPanel();
+    }
+});
+
+function enableDragScroll(row) {
+    var pressed = false;
+    var moved = false;
+    var startX = 0;
+    var startLeft = 0;
+
+    row.addEventListener("pointerdown", function (event) {
+        if (event.pointerType === "touch") return;
+        pressed = true;
+        moved = false;
+        startX = event.clientX;
+        startLeft = row.scrollLeft;
+    });
+
+    window.addEventListener("pointermove", function (event) {
+        if (!pressed) return;
+        var shift = event.clientX - startX;
+        if (Math.abs(shift) > 4) {
+            moved = true;
+            row.classList.add("dragging");
+        }
+        if (moved) row.scrollLeft = startLeft - shift;
+    });
+
+    window.addEventListener("pointerup", function () {
+        pressed = false;
+        row.classList.remove("dragging");
+    });
+
+    row.addEventListener("click", function (event) {
+        if (!moved) return;
+        moved = false;
+        event.stopPropagation();
+        event.preventDefault();
+    }, true);
+
+    row.addEventListener("wheel", function (event) {
+        if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+        row.scrollLeft += event.deltaY;
+        event.preventDefault();
+    }, { passive: false });
+}
+
+document.getElementById("story-draw-done").addEventListener("click", function () {
+    if (!storyDraft) return;
+    storyDraft.tool = null;
+    renderToolPanel();
+});
+
+enableDragScroll(document.getElementById("story-text-styles"));
+enableDragScroll(document.getElementById("story-filters"));
+
+document.getElementById("story-brush-size").addEventListener("input", function () {
+    if (!storyDraft) return;
+    storyDraft.brush = Number(this.value);
+    paintBrush();
+});
+
+document.getElementById("story-edit-panel").addEventListener("mousedown", function (event) {
+    if (event.target.closest("#story-tool-text [data-color], #story-text-styles [data-text-style]")) event.preventDefault();
 });
 
 document.getElementById("story-edit-panel").addEventListener("keydown", function (event) {
@@ -1199,9 +1487,15 @@ document.getElementById("story-canvas").addEventListener("pointerdown", function
     this.setPointerCapture(event.pointerId);
     var point = canvasPoint(event);
     if (storyDraft.tool === "draw") {
-        storyDraft.drawing = { color: storyDraft.ink, size: 10, points: [point] };
+        storyDraft.drawing = { color: storyDraft.ink, size: storyDraft.brush, points: [point] };
         storyDraft.selected = -1;
         paintDraft();
+        return;
+    }
+    var handle = handleAt(point);
+    if (handle) {
+        var target = storyDraft.items[storyDraft.selected];
+        storyDraft.resize = { index: storyDraft.selected, handle: handle.id, start: point, sx: itemScaleX(target), sy: itemScaleY(target) };
         return;
     }
     var hit = hitItem(point);
@@ -1222,12 +1516,40 @@ document.getElementById("story-canvas").addEventListener("pointermove", function
         paintDraft();
         return;
     }
-    if (!storyDraft.drag) return;
+    if (storyDraft.resize) {
+        resizeItem(point);
+        return;
+    }
+    if (!storyDraft.drag) {
+        var over = storyDraft.tool === "draw" ? null : handleAt(point);
+        this.style.cursor = over ? over.cursor : "";
+        return;
+    }
     var item = storyDraft.items[storyDraft.drag.index];
     item.x = point.x - storyDraft.drag.dx;
     item.y = point.y - storyDraft.drag.dy;
     paintDraft();
 });
+
+function clampScale(value) {
+    return Math.min(8, Math.max(0.2, value));
+}
+
+function resizeItem(point) {
+    var job = storyDraft.resize;
+    var item = storyDraft.items[job.index];
+    if (job.handle.length === 2) {
+        var from = Math.hypot(job.start.x - item.x, job.start.y - item.y) || 1;
+        var ratio = Math.hypot(point.x - item.x, point.y - item.y) / from;
+        item.sx = clampScale(job.sx * ratio);
+        item.sy = clampScale(job.sy * ratio);
+    } else if (job.handle === "e" || job.handle === "w") {
+        item.sx = clampScale(job.sx * Math.abs(point.x - item.x) / (Math.abs(job.start.x - item.x) || 1));
+    } else {
+        item.sy = clampScale(job.sy * Math.abs(point.y - item.y) / (Math.abs(job.start.y - item.y) || 1));
+    }
+    paintDraft();
+}
 
 document.getElementById("story-canvas").addEventListener("pointerup", function () {
     if (!storyDraft) return;
@@ -1237,6 +1559,7 @@ document.getElementById("story-canvas").addEventListener("pointerup", function (
     }
     storyDraft.drawing = null;
     storyDraft.drag = null;
+    storyDraft.resize = null;
 });
 
 document.getElementById("story-close").addEventListener("click", function () {
@@ -1292,6 +1615,16 @@ document.addEventListener("discode-stories-changed", function () {
 document.addEventListener("discode-friends-changed", function () {
     refreshStories();
 });
+
+document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) refreshStories();
+});
+
+setInterval(function () {
+    if (!window.discodeLive && !document.hidden) refreshStories();
+}, 10000);
+
+refreshStories();
 document.getElementById("story-next").addEventListener("click", nextStory);
 document.getElementById("story-prev").addEventListener("click", prevStory);
 

@@ -1,0 +1,59 @@
+wwwroot\assets\css\admin.css
+wwwroot\assets\css\audio\call.mp3
+wwwroot\assets\css\audio\discord-unmute-sound.mp3
+wwwroot\assets\css\audio\discordmute_IZNcLx2.mp3
+wwwroot\assets\css\audio\join-voice.mp3
+wwwroot\assets\css\audio\leave-voice.mp3
+wwwroot\assets\css\audio\notification.mp3
+wwwroot\assets\css\discover.css
+wwwroot\assets\css\dm.css
+wwwroot\assets\css\group.css
+wwwroot\assets\css\login.css
+wwwroot\assets\css\nitro.css
+wwwroot\assets\css\register.css
+wwwroot\assets\css\server.css
+wwwroot\assets\css\socialmedia.css
+wwwroot\assets\css\style.css
+wwwroot\assets\icons\favicon.ico
+wwwroot\assets\img\1641b16ec6ac0c4e733d.svg
+wwwroot\assets\img\Azaan.jpeg
+wwwroot\assets\img\bg-img list.png
+wwwroot\assets\img\img-icon 1.png
+wwwroot\assets\img\img-icon 2.png
+wwwroot\assets\img\img-icon 3.png
+wwwroot\assets\img\img-icon 4.jpeg
+wwwroot\assets\img\img-icon-profile.jpeg
+wwwroot\assets\img\img-icon.png
+wwwroot\assets\img\nitro-banner.jpg
+wwwroot\assets\img\nitro-key.png
+wwwroot\assets\img\nitro-star.png
+wwwroot\assets\img\nitro-wumpus.png
+wwwroot\assets\js\admin.js
+wwwroot\assets\js\call.js
+wwwroot\assets\js\discover.js
+wwwroot\assets\js\dm.js
+wwwroot\assets\js\emoji.js
+wwwroot\assets\js\group.js
+wwwroot\assets\js\groups.js
+wwwroot\assets\js\i18n.js
+wwwroot\assets\js\live.js
+wwwroot\assets\js\login.js
+wwwroot\assets\js\nav.js
+wwwroot\assets\js\nitro.js
+wwwroot\assets\js\presence.js
+wwwroot\assets\js\profile.js
+wwwroot\assets\js\register.js
+wwwroot\assets\js\script.js
+wwwroot\assets\js\server.js
+wwwroot\assets\js\socialmedia.js
+wwwroot\assets\js\theme.js
+wwwroot\uploads\avatars\.gitkeep
+wwwroot\uploads\avatars\63803260-478b-4f47-a400-13044e002e9b.jpg
+wwwroot\uploads\avatars\abacec53-bb63-4805-ac44-637d4a2d6f8d.jpg
+wwwroot\uploads\avatars\d0e497c8-99ef-455a-a067-81311b432850.jpg
+wwwroot\uploads\live\.gitkeep
+wwwroot\uploads\live\127093c64238498398a5c6bbdb21e522.jpg
+wwwroot\uploads\posts\.gitkeep
+wwwroot\uploads\stories\.gitkeep
+wwwroot\uploads\stories\8431c07637984eed8df2a8f1d0162202.jpg
+wwwroot\uploads\stories\b04fb42297f849ba8290008cb9e30f63.jpg

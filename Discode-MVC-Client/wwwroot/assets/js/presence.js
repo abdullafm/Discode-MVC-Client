@@ -17,6 +17,8 @@
     function onConnected() {
         window.discodeLive = true;
         document.dispatchEvent(new CustomEvent("discode-live-changed"));
+        document.dispatchEvent(new CustomEvent("discode-stories-changed"));
+        document.dispatchEvent(new CustomEvent("discode-posts-changed"));
         refreshFriends();
         joinWatchedProfile();
     }

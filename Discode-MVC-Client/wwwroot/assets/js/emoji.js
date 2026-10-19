@@ -31,7 +31,9 @@
 
     // Builds the emoji picker from the backend. `decorate(choice, character)` is optional; when it is
     // given every choice contains an <img> that the page fills in (for example with Twemoji pictures).
-    window.fillEmojiPanel = function (panel, prefix, decorate) {
+    // `options.skip` is an optional list of category names to leave out.
+    window.fillEmojiPanel = function (panel, prefix, decorate, options) {
+        var skip = (options && options.skip) || [];
         panel.textContent = "";
         var tabs = make("div", "emoji-tabs");
         var scroll = make("div", "emoji-scroll");
@@ -55,7 +57,9 @@
         loadEmojis().then(function (categories) {
             tabs.textContent = "";
             scroll.textContent = "";
-            categories.forEach(function (category, index) {
+            categories.filter(function (category) {
+                return skip.indexOf(category.name) === -1;
+            }).forEach(function (category, index) {
                 var tab = make("button");
                 tab.type = "button";
                 tab.title = category.name;
