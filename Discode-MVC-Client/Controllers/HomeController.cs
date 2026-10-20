@@ -13,44 +13,53 @@ namespace Discode_MVC_Client.Controllers
 {
     [Authorize]
     [Route("[controller]/[action]")]
-    public class HomeController : Controller
+    public class HomeController : ApiControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _configuration;
 
         public HomeController(IHttpClientFactory httpClientFactory, IWebHostEnvironment environment, IConfiguration configuration)
+            : base(httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
             _environment = environment;
             _configuration = configuration;
         }
 
-        public async Task<IActionResult> Index()
+        [HttpGet]
+        public async Task<IActionResult> Index(string? tab, string? search)
         {
-            var displayName = User.Identity?.Name ?? "";
-            var fallback = new ProfileVM
+            var (profile, profileStatus) = await GetAsync<ProfileVM>("api/account/profile");
+            if (profileStatus == System.Net.HttpStatusCode.Unauthorized)
+                return await SessionExpiredAsync();
+
+            var model = new HomeIndexVM
             {
-                DisplayName = displayName,
-                UserName = User.FindFirst("userName")?.Value ?? displayName,
-                Email = User.FindFirst(ClaimTypes.Email)?.Value ?? ""
+                Tab = HomeIndexVM.Tabs.Contains(tab) ? tab! : "online",
+                Search = search?.Trim() ?? string.Empty,
+                ApiUnavailable = profile is null && profileStatus is null
             };
+            ApplyProfile(model, profile ?? FallbackProfile());
 
-            try
+            var friends = GetAsync<List<FriendRequestVM>>("api/friend");
+            var requests = GetAsync<FriendPendingVM>("api/friend/pending");
+            var blocked = GetAsync<List<FriendRequestVM>>("api/block");
+            var notifications = GetAsync<List<NotificationVM>>("api/notification");
+            await Task.WhenAll(friends, requests, blocked, notifications);
+
+            model.Friends = friends.Result.Data ?? new List<FriendRequestVM>();
+            model.Requests = requests.Result.Data ?? new FriendPendingVM();
+            model.Blocked = blocked.Result.Data ?? new List<FriendRequestVM>();
+            model.Notifications = notifications.Result.Data ?? new List<NotificationVM>();
+
+            if (model.Tab == "add" && model.Search.Length > 0)
             {
-                var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var profile = await client.GetFromJsonAsync<ProfileVM>("api/account/profile");
-                if (profile is not null)
-                    return View(ToHome(profile));
-            }
-            catch (HttpRequestException)
-            {
-            }
-            catch (JsonException)
-            {
+                var (users, _) = await GetAsync<List<UserSearchVM>>("api/account/search?searchName=" + Uri.EscapeDataString(model.Search));
+                model.SearchResults = users ?? new List<UserSearchVM>();
             }
 
-            return View(ToHome(fallback));
+            return View(model);
         }
 
         [HttpGet]
@@ -180,44 +189,6 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> SearchUsers(string searchName)
-        {
-            if (string.IsNullOrWhiteSpace(searchName))
-                return Ok(Array.Empty<UserSearchVM>());
-
-            try
-            {
-                var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var users = await client.GetFromJsonAsync<List<UserSearchVM>>(
-                    "api/account/search?searchName=" + Uri.EscapeDataString(searchName.Trim()));
-
-                return Ok(users ?? new List<UserSearchVM>());
-            }
-            catch (HttpRequestException)
-            {
-                return StatusCode(503, Array.Empty<UserSearchVM>());
-            }
-            catch (JsonException)
-            {
-                return Ok(Array.Empty<UserSearchVM>());
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public Task<IActionResult> SendFriendRequest([FromBody] SendFriendRequestVM model)
-        {
-            if (model is null || (string.IsNullOrWhiteSpace(model.UserName) && string.IsNullOrWhiteSpace(model.UserId)))
-                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a user." } }));
-
-            return ForwardToApi(client => client.PostAsJsonAsync("api/friend/request", new
-            {
-                userId = string.IsNullOrWhiteSpace(model.UserId) ? null : model.UserId.Trim(),
-                userName = model.UserName?.Trim()
-            }));
-        }
-
-        [HttpGet]
         public async Task<IActionResult> Friends()
         {
             try
@@ -234,59 +205,6 @@ namespace Discode_MVC_Client.Controllers
             {
                 return Ok(Array.Empty<FriendRequestVM>());
             }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> FriendPending()
-        {
-            try
-            {
-                var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var data = await client.GetFromJsonAsync<FriendPendingVM>("api/friend/pending");
-                return Ok(data ?? new FriendPendingVM());
-            }
-            catch (HttpRequestException)
-            {
-                return StatusCode(503, new FriendPendingVM());
-            }
-            catch (JsonException)
-            {
-                return Ok(new FriendPendingVM());
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public Task<IActionResult> CancelFriendRequest([FromBody] FriendRequestIdVM model)
-            => ForwardFriendAction(model, id => $"api/friend/request/{id}", HttpMethod.Delete);
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public Task<IActionResult> AcceptFriendRequest([FromBody] FriendRequestIdVM model)
-            => ForwardFriendAction(model, id => $"api/friend/request/{id}/accept", HttpMethod.Post);
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public Task<IActionResult> DeclineFriendRequest([FromBody] FriendRequestIdVM model)
-            => ForwardFriendAction(model, id => $"api/friend/request/{id}/decline", HttpMethod.Post);
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public Task<IActionResult> RemoveFriend([FromBody] FriendRequestIdVM model)
-            => ForwardFriendAction(model, id => $"api/friend/{id}", HttpMethod.Delete);
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public Task<IActionResult> BlockUser([FromBody] BlockUserVM model)
-        {
-            if (model is null || (string.IsNullOrWhiteSpace(model.UserName) && string.IsNullOrWhiteSpace(model.UserId)))
-                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a user." } }));
-
-            return ForwardToApi(client => client.PostAsJsonAsync("api/block", new
-            {
-                userId = string.IsNullOrWhiteSpace(model.UserId) ? null : model.UserId.Trim(),
-                userName = model.UserName?.Trim()
-            }));
         }
 
         [HttpGet]
@@ -411,50 +329,6 @@ namespace Discode_MVC_Client.Controllers
                 file.CopyTo(stream);
 
             return Ok(new { imageUrl = "/uploads/posts/" + fileName });
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Notifications()
-        {
-            try
-            {
-                var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var notifications = await client.GetFromJsonAsync<List<NotificationVM>>("api/notification");
-                return Ok(notifications ?? new List<NotificationVM>());
-            }
-            catch (HttpRequestException ex)
-            {
-                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<NotificationVM>());
-            }
-            catch (JsonException)
-            {
-                return Ok(Array.Empty<NotificationVM>());
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public Task<IActionResult> ReadAllNotifications()
-            => ForwardToApi(client => client.PostAsJsonAsync("api/notification/read", new { }));
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public Task<IActionResult> ReadNotification([FromBody] PostIdVM model)
-        {
-            if (model is null || model.Id <= 0)
-                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Notification not found." } }));
-
-            return ForwardToApi(client => client.PostAsJsonAsync($"api/notification/{model.Id}/read", new { }));
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public Task<IActionResult> DeleteNotification([FromBody] PostIdVM model)
-        {
-            if (model is null || model.Id <= 0)
-                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Notification not found." } }));
-
-            return ForwardToApi(client => client.DeleteAsync($"api/notification/{model.Id}"));
         }
 
         [HttpGet]
@@ -659,30 +533,6 @@ namespace Discode_MVC_Client.Controllers
             return Ok(new { imageUrl = "/uploads/stories/" + fileName });
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Blocked()
-        {
-            try
-            {
-                var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var data = await client.GetFromJsonAsync<List<FriendRequestVM>>("api/block");
-                return Ok(data ?? new List<FriendRequestVM>());
-            }
-            catch (HttpRequestException)
-            {
-                return StatusCode(503, Array.Empty<FriendRequestVM>());
-            }
-            catch (JsonException)
-            {
-                return Ok(Array.Empty<FriendRequestVM>());
-            }
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public Task<IActionResult> UnblockUser([FromBody] FriendRequestIdVM model)
-            => ForwardFriendAction(model, id => $"api/block/{id}", HttpMethod.Delete);
-
         private async Task<IActionResult> GetPosts(string url)
         {
             try
@@ -701,10 +551,21 @@ namespace Discode_MVC_Client.Controllers
             }
         }
 
-        private static HomeVM ToHome(ProfileVM profile) => new()
+        private ProfileVM FallbackProfile()
         {
-            Profile = profile,
-            Update = new UpdateProfileVM
+            var displayName = User.Identity?.Name ?? string.Empty;
+            return new ProfileVM
+            {
+                DisplayName = displayName,
+                UserName = User.FindFirst("userName")?.Value ?? displayName,
+                Email = User.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty
+            };
+        }
+
+        private static void ApplyProfile(HomeVM home, ProfileVM profile)
+        {
+            home.Profile = profile;
+            home.Update = new UpdateProfileVM
             {
                 UserName = profile.UserName,
                 DisplayName = profile.DisplayName,
@@ -713,8 +574,8 @@ namespace Discode_MVC_Client.Controllers
                 IsPublic = profile.IsPublic,
                 Pronouns = profile.Pronouns,
                 Bio = profile.Bio
-            }
-        };
+            };
+        }
 
         private static async Task<T?> ReadJsonAsync<T>(HttpResponseMessage response) where T : class
         {
@@ -726,19 +587,6 @@ namespace Discode_MVC_Client.Controllers
             {
                 return null;
             }
-        }
-
-        private Task<IActionResult> ForwardFriendAction(FriendRequestIdVM model, Func<int, string> url, HttpMethod method)
-        {
-            if (model is null || model.Id <= 0)
-                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Friend request not found." } }));
-
-            return ForwardToApi(client =>
-            {
-                if (method == HttpMethod.Delete)
-                    return client.DeleteAsync(url(model.Id));
-                return client.PostAsJsonAsync(url(model.Id), new { });
-            });
         }
 
         private async Task<IActionResult> ForwardToApi(Func<HttpClient, Task<HttpResponseMessage>> send)

@@ -138,10 +138,16 @@
     var profile = document.getElementById("me-profile");
     if (!profile) return;
 
+    function paintVisitorStatus(status) {
+        var item = STATUSES[status] || STATUSES.invisible;
+        var dot = profile.querySelector(".me-dot");
+        if (dot) dot.style.background = item.color;
+    }
+
     function paintPop() {
         var item = STATUSES[state.status];
         pop.querySelector(".me-dot").style.background = item.color;
-        profile.querySelector(".me-dot").style.background = item.color;
+        if (!profile.classList.contains("visitor-view")) profile.querySelector(".me-dot").style.background = item.color;
         pop.querySelector(".me-mini").style.background = item.color;
         document.getElementById("me-status-label").textContent = item.label;
         var pronouns = document.getElementById("me-pronouns");
@@ -558,16 +564,17 @@
         var bioBlock = profile.querySelector(".me-bio-block");
         var pronounText = info.pronouns || "";
         var bioText = info.bio || "";
+        var statusText = info.status || "";
         if (pronouns) {
             pronouns.hidden = !pronounText;
             pronouns.textContent = pronounText;
         }
         profile.classList.toggle("has-pronouns", !!pronounText);
         if (bubble && bubbleText) {
-            bubble.classList.toggle("has-bio", !!bioText);
-            bubbleText.textContent = (info.emoji ? info.emoji + " " : "") + bioText;
+            bubble.classList.toggle("has-bio", !!statusText);
+            bubbleText.textContent = (info.emoji ? info.emoji + " " : "") + statusText;
         }
-        profile.classList.toggle("has-status", !!bioText);
+        profile.classList.toggle("has-status", !!statusText);
         if (bio) {
             bio.hidden = !bioText;
             bio.textContent = bioText;
@@ -589,6 +596,7 @@
         paintPerson(row ? {
             pronouns: row.getAttribute("data-pronouns") || "",
             bio: row.getAttribute("data-bio") || "",
+            status: row.getAttribute("data-bio") || "",
             emoji: row.getAttribute("data-emoji") || ""
         } : {});
         loadVisitor(name);
@@ -610,6 +618,11 @@
 
     document.addEventListener("discode-posts-changed", function () {
         if (!profile.classList.contains("d-none")) renderMyPosts();
+    });
+
+    document.addEventListener("discode-user-presence", function (event) {
+        if (profile.classList.contains("d-none") || !profile.classList.contains("visitor-view")) return;
+        if (event.detail && event.detail.userId === viewingUserId) paintVisitorStatus(event.detail.status);
     });
 
     document.addEventListener("discode-friends-changed", function () {
@@ -672,6 +685,7 @@
 
     function paintVisitor(data) {
         viewingUserId = data.userId || "";
+        paintVisitorStatus(data.status);
         if (window.discodePresence) window.discodePresence.watchProfile(viewingUserId);
         var displayName = data.displayName || data.userName || "";
         var viewName = document.getElementById("me-view-name");
@@ -684,7 +698,7 @@
         if (face) face.src = data.avatarUrl || DEFAULT_AVATAR;
         var joined = formatJoined(data.memberSince);
         if (since && joined) since.textContent = joined;
-        paintPerson({ pronouns: data.pronouns || "", bio: data.bio || "", emoji: "" });
+        paintPerson({ pronouns: data.pronouns || "", bio: data.bio || "", status: data.customStatus || "", emoji: "" });
         setPrivateView(!!data.isPrivate, displayName);
         var requestId = data.relation === "pending-received" ? (data.requestId || pendingRequestId(data.userName)) : 0;
         var incoming = !!requestId;
@@ -700,6 +714,8 @@
                 (data.relation === "pending-sent" ? "Request Sent" : "Request Pending") + "</span>";
         }
     }
+
+    var ownBubble = null;
 
     function setVisitor(on) {
         profile.classList.toggle("visitor-view", on);
@@ -717,7 +733,14 @@
             if (label) label.textContent = on ? "Message" : "Edit Profile";
         }
         if (add) add.hidden = !on;
+        var ownBubbleEl = document.getElementById("me-status-bubble");
+        var ownBubbleText = document.getElementById("me-status-bubble-text");
+        if (on && !ownBubble && ownBubbleEl && ownBubbleText) {
+            ownBubble = { text: ownBubbleText.textContent, hasStatus: ownBubbleEl.classList.contains("has-bio") };
+        }
+        if (on) paintVisitorStatus("offline");
         if (!on) {
+            paintPop();
             if (title) title.textContent = ownName;
             var ownInput = document.getElementById("me-display-input");
             if (ownInput) ownInput.value = ownName;
@@ -727,6 +750,12 @@
             if (face) face.src = ownPhoto;
             if (since) since.textContent = ownSince;
             profile.classList.remove("has-pronouns", "has-status");
+            if (ownBubble && ownBubbleEl && ownBubbleText) {
+                ownBubbleText.textContent = ownBubble.text;
+                ownBubbleEl.classList.toggle("has-bio", ownBubble.hasStatus);
+                profile.classList.toggle("has-status", ownBubble.hasStatus);
+                ownBubble = null;
+            }
             var viewPronouns = document.getElementById("me-view-pronouns");
             if (viewPronouns) viewPronouns.hidden = true;
             var bioBlock = profile.querySelector(".me-bio-block");

@@ -1,14 +1,22 @@
-﻿@model HomeVM
+﻿@using System.Globalization
+@model DmPageVM
 @{
     Layout = "_HomeLayout";
+    var chat = Model.Chat;
+    var shownName = chat is null ? (Model.Name.Length > 0 ? Model.Name : "Direct Messages") : (string.IsNullOrWhiteSpace(chat.DisplayName) ? chat.UserName : chat.DisplayName);
+    var avatar = chat is null || string.IsNullOrWhiteSpace(chat.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : chat.AvatarUrl;
+    var culture = CultureInfo.InvariantCulture;
+    DateTime Local(DateTime utc) => DateTime.SpecifyKind(utc, DateTimeKind.Utc).AddMinutes(Model.UtcOffsetMinutes);
+    long Millis(DateTime utc) => new DateTimeOffset(DateTime.SpecifyKind(utc, DateTimeKind.Utc)).ToUnixTimeMilliseconds();
+    var status = chat is not null && chat.Status != "online" ? " " + chat.Status : "";
 }
 <main class="friends-view dm-view show-main">
-    <section id="dm-chat">
+    <section id="dm-chat" data-user-name="@chat?.UserName" data-user-id="@chat?.UserId">
         <div class="dm-chat">
             <div class="dm-bar">
                 <div class="dm-bar-name">
                     <i class="fa-solid fa-at"></i>
-                    <h1 id="dm-title"></h1>
+                    <h1 id="dm-title">@shownName</h1>
                 </div>
                 <div class="dm-bar-tools">
                     <i class="fa-solid fa-phone" id="dm-call" role="button" tabindex="0" aria-label="Start a call"></i>
@@ -65,28 +73,65 @@
             <div class="call-resize" id="call-resize" role="separator" aria-orientation="horizontal" aria-label="Resize call" tabindex="0"></div>
             <div class="dm-scroll">
                 <div class="dm-intro">
-                    <img id="dm-avatar" src="~/assets/img/img-icon-profile.jpeg" alt="">
-                    <h2 id="dm-name"></h2>
-                    <p class="dm-handle" id="dm-handle"></p>
-                    <p class="dm-start" id="dm-start">This is the beginning of your direct message history with <strong id="dm-start-name"></strong>.</p>
+                    <img id="dm-avatar" src="@avatar" alt="">
+                    <h2 id="dm-name">@(chat is null ? "" : shownName)</h2>
+                    <p class="dm-handle" id="dm-handle">@chat?.UserName</p>
+                    @if (chat is not null)
+                    {
+                        <p class="dm-start" id="dm-start">This is the beginning of your direct message history with <strong id="dm-start-name">@shownName</strong>.</p>
+                    }
+                    else if (Model.Error.Length > 0)
+                    {
+                        <p class="dm-start" id="dm-start">@Model.Error</p>
+                    }
+                    else
+                    {
+                        <p class="dm-start" id="dm-start">Pick a friend from your friends list to start a conversation.</p>
+                    }
                     <div class="dm-meta">
                         <span>No servers in common</span>
                         <button type="button">Remove Friend</button>
                         <button type="button">Block</button>
                     </div>
                 </div>
-                <div class="dm-wave" id="dm-wave-box" hidden>
+                <div class="dm-wave" id="dm-wave-box" hidden="@(chat is null || chat.Messages.Count > 0)">
                     <span class="dm-hand" aria-hidden="true">&#128075;</span>
-                    <button type="button" id="dm-wave">Wave</button>
+                    <button type="button" id="dm-wave">Wave to @shownName</button>
                 </div>
-                <div class="dm-messages" id="dm-messages"></div>
+                <div class="dm-messages" id="dm-messages">
+                    @if (chat is not null)
+                    {
+                        MessageVM? previous = null;
+                        foreach (var message in chat.Messages)
+                        {
+                            var sentAt = Local(message.CreatedAt);
+                            var newDay = previous is null || Local(previous.CreatedAt).Date != sentAt.Date;
+                            var compact = !newDay && previous!.SenderUserName == message.SenderUserName && (message.CreatedAt - previous.CreatedAt).TotalMinutes < 5;
+                            if (newDay)
+                            {
+                                <div class="dm-divider"><span>@sentAt.ToString("MMMM d, yyyy", culture)</span></div>
+                            }
+                            <div class="dm-msg@(compact ? " compact" : "")" data-id="@message.Id" data-sender="@message.SenderUserName" data-time="@Millis(message.CreatedAt)">
+                                <img class="dm-msg-avatar" alt="" src="@(string.IsNullOrWhiteSpace(message.SenderAvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : message.SenderAvatarUrl)">
+                                <div class="dm-msg-body">
+                                    <div class="dm-msg-head">
+                                        <strong>@(string.IsNullOrWhiteSpace(message.SenderDisplayName) ? message.SenderUserName : message.SenderDisplayName)</strong>
+                                        <time>@sentAt.ToString("h:mm tt", culture)</time>
+                                    </div>
+                                    <div class="dm-msg-text">@message.Text</div>
+                                </div>
+                            </div>
+                            previous = message;
+                        }
+                    }
+                </div>
             </div>
             <p class="dm-error" id="dm-error" hidden></p>
-            <form class="dm-compose" id="dm-compose">
+            <form class="dm-compose" id="dm-compose" hidden="@(chat is null)">
                 <button type="button" aria-label="Add"><i class="fa-solid fa-plus"></i></button>
                 <div class="dm-input-wrap">
-                    <span class="dm-placeholder" id="dm-placeholder" aria-hidden="true">Message</span>
-                    <div class="rich-text" id="dm-input" contenteditable="true" role="textbox" aria-label="Message" data-placeholder="Message" data-empty="1"></div>
+                    <span class="dm-placeholder" id="dm-placeholder" aria-hidden="true">Message @@@shownName</span>
+                    <div class="rich-text" id="dm-input" contenteditable="true" role="textbox" aria-label="Message" data-placeholder="Message @@@shownName" data-empty="1"></div>
                 </div>
                 <div class="dm-compose-tools">
                     <button type="button" id="dm-emoji" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>
@@ -99,28 +144,22 @@
     <section id="dm-profile">
         <div class="dm-profile">
             <div class="dm-banner">
-                <button type="button" id="dm-profile-close" aria-label="Close profile"><i class="fa-solid fa-user"></i></button>
+                <button type="button" id="dm-profile-close" aria-label="Close profile" title="@(chat is null ? "" : chat.IsFriend ? "Friends" : "Not friends")"><i class="fa-solid @(chat is not null && chat.IsFriend ? "fa-user-check" : "fa-user")"></i></button>
                 <button type="button" aria-label="More"><i class="fa-solid fa-ellipsis"></i></button>
             </div>
             <div class="dm-profile-photo">
-                <img class="dm-profile-avatar" id="dm-profile-avatar" src="~/assets/img/img-icon-profile.jpeg" alt="">
-                <span class="dm-status"></span>
+                <img class="dm-profile-avatar" id="dm-profile-avatar" src="@avatar" alt="">
+                <span class="dm-status@(status)"></span>
             </div>
             <div class="dm-profile-card">
-                <h2 id="dm-profile-name"></h2>
-                <p id="dm-profile-handle"></p>
+                <h2 id="dm-profile-name">@(chat is null ? "" : shownName)</h2>
+                <p id="dm-profile-handle">@chat?.UserName</p>
             </div>
             <div class="dm-profile-body">
-                <p class="dm-clock" id="dm-clock"></p>
                 <p class="dm-since-label">Member Since</p>
-                <p id="dm-since"></p>
+                <p id="dm-since">@(chat is null ? "" : Local(chat.MemberSince).ToString("MMM d, yyyy", culture))</p>
             </div>
             <button type="button" class="dm-full">View Full Profile</button>
         </div>
     </section>
 </main>
-
-@section Scripts {
-    <script src="~/assets/js/call.js" asp-append-version="true"></script>
-    <script src="~/assets/js/dm.js" asp-append-version="true"></script>
-}

@@ -1,6 +1,36 @@
-@model HomeVM
+@model HomeIndexVM
 @{
     Layout = "_HomeLayout";
+    var showList = Model.Tab is "online" or "all";
+    var tabLabel = Model.Tab switch
+    {
+        "all" => "All",
+        "pending" => "Pending",
+        "blocked" => "Blocked",
+        "add" => "Add Friend",
+        _ => "Online"
+    };
+    var received = Model.Requests.Received;
+    var sent = Model.Requests.Sent;
+    var defaultAvatar = "/assets/img/img-icon-profile.jpeg";
+
+    string PresenceOf(string? status) => status is "online" or "idle" or "dnd" ? status : "offline";
+    string PresenceLabel(string? status) => PresenceOf(status) switch
+    {
+        "online" => "Online",
+        "idle" => "Idle",
+        "dnd" => "Do Not Disturb",
+        _ => "Offline"
+    };
+    string Ago(DateTime createdAt)
+    {
+        var utc = DateTime.SpecifyKind(createdAt, DateTimeKind.Utc);
+        var seconds = Math.Max(1, (int)(DateTime.UtcNow - utc).TotalSeconds);
+        if (seconds < 60) return seconds + "s";
+        if (seconds < 3600) return seconds / 60 + "m";
+        if (seconds < 86400) return seconds / 3600 + "h";
+        return seconds / 86400 + "d";
+    }
 }
 <main class="friends-view show-main">
     <section id="friends-toolbar">
@@ -19,29 +49,29 @@
                 <nav class="friend-filters" aria-label="Friend filters">
                     <button type="button" class="friend-filter-pick" id="friend-filter-pick" aria-expanded="false"
                             aria-controls="friend-filter-menu">
-                        <span id="friend-filter-label" data-i18n="Online">Online</span>
-                        <span class="friend-badge" id="pending-badge-pick" hidden>0</span>
+                        <span id="friend-filter-label" data-i18n="@tabLabel">@tabLabel</span>
+                        <span class="friend-badge" id="pending-badge-pick" hidden="@(received.Count == 0)">@received.Count</span>
                         <i class="fa-solid fa-chevron-down"></i>
                     </button>
                     <div class="friend-filter-menu" id="friend-filter-menu">
                         <span class="friend-filter-glide" aria-hidden="true"></span>
-                        <button type="button" class="active" data-filter="online">
+                        <button type="button" class="@(Model.Tab == "online" ? "active" : "")" data-filter="online">
                             <span class="friend-filter-icon friend-status-dot online" aria-hidden="true"></span>
                             <span class="friend-filter-text" data-i18n="Online">Online</span>
                             <i class="fa-solid fa-check friend-filter-check" aria-hidden="true"></i>
                         </button>
-                        <button type="button" data-filter="all">
+                        <button type="button" class="@(Model.Tab == "all" ? "active" : "")" data-filter="all">
                             <i class="fa-solid fa-user-group friend-filter-icon" aria-hidden="true"></i>
                             <span class="friend-filter-text" data-i18n="All">All</span>
                             <i class="fa-solid fa-check friend-filter-check" aria-hidden="true"></i>
                         </button>
-                        <button type="button" data-filter="pending">
+                        <button type="button" class="@(Model.Tab == "pending" ? "active" : "")" data-filter="pending">
                             <i class="fa-solid fa-user-clock friend-filter-icon" aria-hidden="true"></i>
                             <span class="friend-filter-text" data-i18n="Pending">Pending</span>
-                            <span class="friend-badge" id="pending-badge" hidden>0</span>
+                            <span class="friend-badge" id="pending-badge" hidden="@(received.Count == 0)">@received.Count</span>
                             <i class="fa-solid fa-check friend-filter-check" aria-hidden="true"></i>
                         </button>
-                        <button type="button" data-filter="blocked">
+                        <button type="button" class="@(Model.Tab == "blocked" ? "active" : "")" data-filter="blocked">
                             <i class="fa-regular fa-circle-xmark friend-filter-icon" aria-hidden="true"></i>
                             <span class="friend-filter-text" data-i18n="Blocked">Blocked</span>
                             <i class="fa-solid fa-check friend-filter-check" aria-hidden="true"></i>
@@ -55,27 +85,77 @@
             </div>
             <div class="header-actions">
                 <div class="notify-box">
-                    <button type="button" id="notify-open" aria-label="Notifications" aria-expanded="false"
-                            aria-controls="notify-panel">
+                    <button type="button" id="notify-open" aria-label="Notifications" aria-expanded="false" aria-controls="notify-panel">
                         <i class="fa-solid fa-bell"></i>
-                        <span class="notify-count" id="notify-count" hidden>0</span>
+                        <span class="notify-count" id="notify-count" hidden="@(Model.UnreadCount == 0)">@(Model.UnreadCount > 99 ? "99+" : Model.UnreadCount.ToString())</span>
                     </button>
                     <div class="notify-panel" id="notify-panel" hidden>
                         <div class="notify-header">
                             <div class="notify-header-left">
                                 <h2 data-i18n="Notifications">Notifications</h2>
-                                <span class="notify-unread-badge" id="notify-unread-badge" hidden>0 Unread</span>
+                                <span class="notify-unread-badge" id="notify-unread-badge" hidden="@(Model.UnreadCount == 0)">@Model.UnreadCount Unread</span>
                             </div>
                             <div class="notify-header-actions">
-                                <button type="button" class="notify-mark-read-btn" id="notify-mark-all" title="Mark all as read" aria-label="Mark all as read">
-                                    <i class="fa-solid fa-check-double"></i>
-                                    <span data-i18n="Mark all as read">Mark all as read</span>
-                                </button>
+                                <form asp-controller="Notification" asp-action="MarkAllAsRead" method="post" data-notify-form>
+                                    <button type="submit" class="notify-mark-read-btn" id="notify-mark-all" title="Mark all as read" aria-label="Mark all as read" disabled="@(Model.UnreadCount == 0)">
+                                        <i class="fa-solid fa-check-double"></i>
+                                        <span data-i18n="Mark all as read">Mark all as read</span>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                         <div class="notify-list-wrap">
-                            <div id="notify-list"></div>
-                            <div class="notify-empty" id="notify-empty" hidden>
+                            <div id="notify-list">
+                                @foreach (var notification in Model.Notifications)
+                                {
+                                    <div class="notify-item@(notification.IsRead ? "" : " unread")" data-id="@notification.Id">
+                                        <div class="notify-avatar-wrap">
+                                            @if (string.IsNullOrWhiteSpace(notification.ActorAvatarUrl))
+                                            {
+                                                <div class="notify-avatar-letter">@(string.IsNullOrEmpty(notification.ActorUserName) ? "U" : notification.ActorUserName[..1].ToUpperInvariant())</div>
+                                            }
+                                            else
+                                            {
+                                                <img class="notify-avatar-img" src="@notification.ActorAvatarUrl" alt="@notification.ActorUserName">
+                                            }
+                                            <span class="notify-badge-icon @(notification.Type == "PostComment" ? "badge-comment" : "badge-like")"><i class="fa-solid @(notification.Type == "PostComment" ? "fa-comment" : "fa-heart")"></i></span>
+                                        </div>
+                                        <a class="notify-content" href="@Url.Action("Open", "Notification", new { id = notification.Id })">
+                                            <div class="notify-headline">
+                                                <span class="notify-author">@notification.ActorUserName</span>
+                                                <span class="notify-action">
+                                                    @(notification.Type switch
+                                                    {
+                                                        "PostLike" => "liked your post",
+                                                        "PostComment" => "commented on your post",
+                                                        "CommentLike" => "liked your comment",
+                                                        "StoryLike" => "liked your story",
+                                                        _ => "sent you a notification"
+                                                    })
+                                                </span>
+                                            </div>
+                                            @if (!string.IsNullOrEmpty(notification.Snippet))
+                                            {
+                                                <div class="notify-snippet">“@notification.Snippet”</div>
+                                            }
+                                            <div class="notify-meta">
+                                                <span class="notify-time">@Ago(notification.CreatedAt)</span>
+                                                @if (!notification.IsRead)
+                                                {
+                                                    <span class="notify-unread-dot" title="Unread"></span>
+                                                }
+                                            </div>
+                                        </a>
+                                        <div class="notify-actions">
+                                            <form asp-controller="Notification" asp-action="Delete" method="post" data-notify-form>
+                                                <input type="hidden" name="id" value="@notification.Id">
+                                                <button type="submit" class="notify-btn notify-btn-dismiss" aria-label="Dismiss notification" title="Dismiss"><i class="fa-solid fa-xmark"></i></button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            <div class="notify-empty" id="notify-empty" hidden="@(Model.Notifications.Count > 0)">
                                 <div class="notify-empty-icon">
                                     <i class="fa-solid fa-bell-slash"></i>
                                 </div>
@@ -91,163 +171,254 @@
 
     <section id="friends-body">
         <div class="friends-body">
-            <section id="friends-online">
+            @if (TempData["Success"] is string success)
+            {
+                <p class="flash flash-ok" role="status">@success</p>
+            }
+            @if (TempData["Error"] is string error)
+            {
+                <p class="flash flash-error" role="alert">@error</p>
+            }
+            @if (Model.ApiUnavailable)
+            {
+                <p class="flash flash-error" role="alert">The service is unavailable right now. Please try again later.</p>
+            }
+            <section id="friends-online" hidden="@(!showList)">
                 <div class="friends-online">
                     <label class="friends-search">
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="search" placeholder="Search" aria-label="Search" data-i18n-placeholder="Search" autocomplete="off" name="friend-search">
                     </label>
-                    <h2 id="friends-online-title">Online — <span>0</span></h2>
-                    <h2 id="friends-all-title" hidden>All friends — <span>0</span></h2>
-                    <div class="friends-online-list" id="friends-all-list"></div>
-                    <template id="friend-row">
-                        <div class="online-row" data-presence="online">
-                            <a class="online-main" href="#">
-                                <span class="online-face">
-                                    <img alt=""><span class="online-dot"></span>
-                                </span>
-                                <span class="online-copy"><strong></strong><span data-i18n="Online">Online</span></span>
-                            </a>
-                            <a class="online-act" href="#" aria-label="Message">
-                                <i class="fa-solid fa-comment"></i>
-                            </a>
-                            <button type="button" class="online-act" aria-label="More">
-                                <i class="fa-solid fa-ellipsis"></i>
-                            </button>
-                        </div>
-                    </template>
-                </div>
-        </section>
-        <section id="friends-pending" hidden>
-            <div class="friends-online">
-                <label class="friends-search">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="search" placeholder="Search" aria-label="Search" data-i18n-placeholder="Search" autocomplete="off" name="friend-search">
-                </label>
-                <h2 id="friends-pending-title" hidden>Received — <span></span></h2>
-                <div class="friends-online-list" id="friends-pending-list"></div>
-                <template id="friend-request-row">
-                    <div class="online-row request-row">
-                        <div class="online-main">
-                            <span class="online-face"><img alt=""></span>
-                            <span class="online-copy">
-                                <span class="request-name">
-                                    <strong></strong>
-                                    <span class="request-badge" hidden>
-                                        <i class="fa-solid fa-heart"></i><span></span>
+                    <h2 id="friends-online-title" hidden="@(Model.Tab != "online" || Model.OnlineCount == 0)">Online — <span>@Model.OnlineCount</span></h2>
+                    <h2 id="friends-all-title" hidden="@(Model.Tab != "all" || Model.Friends.Count == 0)">All friends — <span>@Model.Friends.Count</span></h2>
+                    <div class="friends-online-list" id="friends-all-list">
+                        @foreach (var friend in Model.Friends)
+                        {
+                            var presence = PresenceOf(friend.Status);
+                            var chatUrl = Url.Action("Index", "Dm", new { name = friend.UserName });
+                            <div class="online-row" data-presence="@presence" data-user="@friend.UserName" data-user-id="@friend.UserId" data-id="@friend.Id" hidden="@(Model.Tab == "online" && presence == "offline")">
+                                <a class="online-main" href="@chatUrl">
+                                    <span class="online-face">
+                                        <img alt="" src="@(string.IsNullOrWhiteSpace(friend.AvatarUrl) ? defaultAvatar : friend.AvatarUrl)"><span class="online-dot@(presence == "online" ? "" : " " + presence)"></span>
                                     </span>
-                                </span>
-                                <span class="request-user"></span>
-                            </span>
+                                    <span class="online-copy"><strong>@friend.Name</strong><span data-i18n="@PresenceLabel(friend.Status)">@PresenceLabel(friend.Status)</span></span>
+                                </a>
+                                <a class="online-act" href="@chatUrl" aria-label="Message @friend.Name">
+                                    <i class="fa-solid fa-comment"></i>
+                                </a>
+                                <button type="button" class="online-act" aria-label="More">
+                                    <i class="fa-solid fa-ellipsis"></i>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </section>
+            <section id="friends-pending" hidden="@(Model.Tab != "pending")">
+                <div class="friends-online">
+                    <label class="friends-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="search" placeholder="Search" aria-label="Search" data-i18n-placeholder="Search" autocomplete="off" name="friend-search">
+                    </label>
+                    <h2 id="friends-pending-title" hidden="@(received.Count == 0)">Received — <span>@received.Count</span></h2>
+                    <div class="friends-online-list" id="friends-pending-list">
+                        @foreach (var request in received)
+                        {
+                            <div class="online-row request-row" data-id="@request.Id" data-user="@request.UserName">
+                                <div class="online-main">
+                                    <span class="online-face"><img alt="" src="@(string.IsNullOrWhiteSpace(request.AvatarUrl) ? defaultAvatar : request.AvatarUrl)"></span>
+                                    <span class="online-copy">
+                                        <span class="request-name"><strong>@request.Name</strong></span>
+                                        <span class="request-user">@request.UserName</span>
+                                    </span>
+                                </div>
+                                <form asp-controller="Friend" asp-action="Accept" method="post" data-friend-form>
+                                    <input type="hidden" name="id" value="@request.Id">
+                                    <input type="hidden" name="tab" value="pending">
+                                    <button type="submit" class="online-act request-accept" aria-label="Accept"><i class="fa-solid fa-check"></i></button>
+                                </form>
+                                <form asp-controller="Friend" asp-action="Decline" method="post" data-friend-form>
+                                    <input type="hidden" name="id" value="@request.Id">
+                                    <input type="hidden" name="tab" value="pending">
+                                    <button type="submit" class="online-act request-decline" aria-label="Decline"><i class="fa-solid fa-xmark"></i></button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                    <h2 id="friends-sent-title" hidden="@(sent.Count == 0)">Sent — <span>@sent.Count</span></h2>
+                    <div class="friends-online-list" id="friends-sent-list">
+                        @foreach (var request in sent)
+                        {
+                            var hasAvatar = !string.IsNullOrWhiteSpace(request.AvatarUrl);
+                            <div class="online-row sent-row" data-id="@request.Id" data-user="@request.UserName">
+                                <div class="online-main">
+                                    <span class="online-face@(hasAvatar ? "" : " sent-face")">
+                                        @if (hasAvatar)
+                                        {
+                                            <img alt="" src="@request.AvatarUrl">
+                                        }
+                                        else
+                                        {
+                                            <span class="sent-letter">@(string.IsNullOrEmpty(request.Name) ? "?" : request.Name[..1].ToUpperInvariant())</span>
+                                        }
+                                    </span>
+                                    <span class="online-copy">
+                                        <strong>@request.Name</strong>
+                                        <span class="request-user">@request.UserName</span>
+                                    </span>
+                                </div>
+                                <form asp-controller="Friend" asp-action="Cancel" method="post" data-friend-form>
+                                    <input type="hidden" name="id" value="@request.Id">
+                                    <input type="hidden" name="tab" value="pending">
+                                    <button type="submit" class="online-act request-decline sent-cancel" aria-label="Cancel"><i class="fa-solid fa-xmark"></i></button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </section>
+            <section id="friends-blocked" hidden="@(Model.Tab != "blocked")">
+                <div class="friends-online">
+                    <label class="friends-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="search" placeholder="Search" aria-label="Search" data-i18n-placeholder="Search" autocomplete="off" name="friend-search">
+                    </label>
+                    <h2 id="friends-blocked-title" hidden="@(Model.Blocked.Count == 0)">Blocked — <span>@Model.Blocked.Count</span></h2>
+                    <div class="friends-online-list" id="friends-blocked-list">
+                        @foreach (var blocked in Model.Blocked)
+                        {
+                            <div class="online-row blocked-row" data-id="@blocked.Id" data-user="@blocked.UserName">
+                                <div class="online-main">
+                                    <span class="online-face"><img alt="" src="@(string.IsNullOrWhiteSpace(blocked.AvatarUrl) ? defaultAvatar : blocked.AvatarUrl)"></span>
+                                    <span class="online-copy">
+                                        <strong>@blocked.Name</strong>
+                                        <span class="request-user">@blocked.UserName</span>
+                                    </span>
+                                </div>
+                                <form asp-controller="Friend" asp-action="Unblock" method="post" data-friend-form>
+                                    <input type="hidden" name="id" value="@blocked.Id">
+                                    <input type="hidden" name="tab" value="blocked">
+                                    <button type="submit" class="online-act blocked-unblock" aria-label="Unblock"><i class="fa-solid fa-user-xmark"></i></button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </section>
+            <section id="friends-add" hidden="@(Model.Tab != "add")">
+                <div class="friends-add">
+                    <div class="inline-search-container">
+                        <div class="inline-search-header">
+                            <h3 data-i18n="Quick Search">Quick Search</h3>
+                            <p data-i18n="Find users by username instantly">Find users by username instantly</p>
                         </div>
-                        <button type="button" class="online-act request-accept" aria-label="Accept">
-                            <i class="fa-solid fa-check"></i>
-                        </button>
-                        <button type="button" class="online-act request-decline" aria-label="Decline">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                </template>
-                <h2 id="friends-sent-title" hidden>Sent — <span></span></h2>
-                <div class="friends-online-list" id="friends-sent-list"></div>
-                <template id="friend-sent-row">
-                    <div class="online-row sent-row">
-                        <div class="online-main">
-                            <span class="online-face sent-face">
-                                <img alt="" hidden>
-                                <span class="sent-letter"></span>
-                            </span>
-                            <span class="online-copy">
-                                <strong></strong>
-                                <span class="request-user"></span>
-                            </span>
-                        </div>
-                        <button type="button" class="online-act request-decline sent-cancel"
-                                aria-label="Cancel">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                </template>
-            </div>
-        </section>
-        <section id="friends-blocked" hidden>
-            <div class="friends-online">
-                <label class="friends-search">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="search" placeholder="Search" aria-label="Search" data-i18n-placeholder="Search" autocomplete="off" name="friend-search">
-                </label>
-                <h2 id="friends-blocked-title" hidden>Blocked — <span></span></h2>
-                <div class="friends-online-list" id="friends-blocked-list"></div>
-                <template id="blocked-row">
-                    <div class="online-row blocked-row">
-                        <div class="online-main">
-                            <span class="online-face"><img alt=""></span>
-                            <span class="online-copy">
-                                <strong></strong>
-                                <span class="request-user"></span>
-                            </span>
-                        </div>
-                        <button type="button" class="online-act blocked-unblock" aria-label="Unblock">
-                            <i class="fa-solid fa-user-xmark"></i>
-                        </button>
-                    </div>
-                </template>
-            </div>
-        </section>
-        <section id="friends-add" hidden>
-            <div class="friends-add">
-                <div class="inline-search-container">
-                    <div class="inline-search-header">
-                        <h3 data-i18n="Quick Search">Quick Search</h3>
-                        <p data-i18n="Find users by username instantly">Find users by username instantly</p>
-                    </div>
-                    <div class="inline-search-wrapper">
-                        <i class="fa-solid fa-magnifying-glass inline-search-icon"></i>
-                        <input type="text" id="inline-search-input" placeholder="Search users..." autocomplete="off">
-                        <button type="button" class="inline-search-clear" id="inline-search-clear" hidden aria-label="Clear">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                    <div class="inline-search-results-card" id="inline-search-results-card" hidden>
-                        <div class="inline-search-loading" id="inline-search-loading" hidden>
-                            <div class="loading-spinner"></div>
-                        </div>
-                        <table class="inline-search-table" id="inline-search-table" hidden>
-                            <thead>
-                                <tr>
-                                    <th>User</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="inline-search-tbody"></tbody>
-                        </table>
-                        <div class="inline-search-no-results" id="inline-search-no-results" hidden>
-                            <i class="fa-solid fa-user-slash"></i>
-                            <p>No users found matching "<span id="inline-search-query"></span>"</p>
+                        <form asp-controller="Home" asp-action="Index" method="get" class="inline-search-wrapper" id="inline-search-form">
+                            <input type="hidden" name="tab" value="add">
+                            <i class="fa-solid fa-magnifying-glass inline-search-icon"></i>
+                            <input type="text" id="inline-search-input" name="search" value="@Model.Search" placeholder="Search users..." autocomplete="off">
+                            <button type="button" class="inline-search-clear" id="inline-search-clear" hidden="@(Model.Search.Length == 0)" aria-label="Clear">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </form>
+                        <div class="inline-search-results-card" id="inline-search-results-card" hidden="@(Model.Search.Length == 0)">
+                            @if (Model.SearchResults.Count > 0)
+                            {
+                                <table class="inline-search-table" id="inline-search-table">
+                                    <thead>
+                                        <tr>
+                                            <th>User</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="inline-search-tbody">
+                                        @foreach (var user in Model.SearchResults)
+                                        {
+                                            var blockedUser = Model.Blocked.FirstOrDefault(item => string.Equals(item.UserName, user.UserName, StringComparison.OrdinalIgnoreCase));
+                                            var alreadySent = sent.Any(item => string.Equals(item.UserName, user.UserName, StringComparison.OrdinalIgnoreCase));
+                                            <tr>
+                                                <td>
+                                                    <div class="inline-search-user-cell" data-username="@user.UserName" data-avatar="@user.AvatarUrl" style="cursor:pointer">
+                                                        <div class="inline-search-user-avatar">
+                                                            @if (string.IsNullOrWhiteSpace(user.AvatarUrl))
+                                                            {
+                                                                @user.UserName[..1].ToUpperInvariant()
+                                                            }
+                                                            else
+                                                            {
+                                                                <img src="@user.AvatarUrl" alt="@user.UserName">
+                                                            }
+                                                        </div>
+                                                        <div class="inline-search-user-info">
+                                                            <span class="inline-search-user-username">@user.UserName</span>
+                                                            <span class="inline-search-user-display">@user.DisplayName</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="inline-search-status-cell">
+                                                    <div class="status-indicator">
+                                                        <span class="status-dot offline"></span>
+                                                        <span class="status-text">Offline</span>
+                                                    </div>
+                                                </td>
+                                                <td class="inline-search-action-cell">
+                                                    @if (blockedUser is not null)
+                                                    {
+                                                        <form asp-controller="Friend" asp-action="Unblock" method="post" data-friend-form>
+                                                            <input type="hidden" name="id" value="@blockedUser.Id">
+                                                            <input type="hidden" name="tab" value="add">
+                                                            <input type="hidden" name="returnUrl" value="@Url.Action("Index", "Home", new { tab = "add", search = Model.Search })">
+                                                            <button type="submit" class="button-blocked"><i class="fa-solid fa-user-slash"></i><span class="label-default">Blocked</span><span class="label-hover">Unblock</span></button>
+                                                        </form>
+                                                    }
+                                                    else if (alreadySent)
+                                                    {
+                                                        <button type="button" class="button-sent" disabled><i class="fa-solid fa-check"></i><span>Request Sent</span></button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <form asp-controller="Friend" asp-action="Send" method="post" data-friend-form>
+                                                            <input type="hidden" name="userName" value="@user.UserName">
+                                                            <input type="hidden" name="userId" value="@user.Id">
+                                                            <input type="hidden" name="tab" value="pending">
+                                                            <button type="submit"><i class="fa-solid fa-user-plus"></i><span>Add Friend</span></button>
+                                                        </form>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                            else if (Model.Search.Length > 0)
+                            {
+                                <div class="inline-search-no-results">
+                                    <i class="fa-solid fa-user-slash"></i>
+                                    <p>No users found matching "<span id="inline-search-query">@Model.Search</span>"</p>
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
-        <section id="friends-empty" hidden>
-            <div class="friends-empty">
-                <img src="~/assets/img/1641b16ec6ac0c4e733d.svg" alt="img-centre">
-                <p>No one's around to play with Wumpus.</p>
-            </div>
-        </section>
-        <section id="active-now" hidden>
-            <div class="active-now">
-                <h2 data-i18n="Active Now">Active Now</h2>
-                <div class="active-now-message">
-                    <h3>It's quiet for now...</h3>
-                    <p>
-                        When a friend starts an activity—like playing a game or hanging out on voice—we'll show
-                        it here!
-                    </p>
+            </section>
+            <section id="friends-empty" hidden>
+                <div class="friends-empty">
+                    <img src="~/assets/img/1641b16ec6ac0c4e733d.svg" alt="img-centre">
+                    <p>No one's around to play with Wumpus.</p>
                 </div>
-            </div>
-        </section>
-    </div>
-</section>
+            </section>
+            <section id="active-now" hidden>
+                <div class="active-now">
+                    <h2 data-i18n="Active Now">Active Now</h2>
+                    <div class="active-now-message">
+                        <h3>It's quiet for now...</h3>
+                        <p>
+                            When a friend starts an activity—like playing a game or hanging out on voice—we'll show
+                            it here!
+                        </p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </section>
 </main>

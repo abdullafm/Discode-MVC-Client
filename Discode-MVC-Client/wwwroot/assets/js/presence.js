@@ -6,6 +6,37 @@
     var connection = null;
     var watchedProfile = "";
 
+    var IDLE_MS = window.discodeIdleMs || 5 * 60 * 1000;
+    var lastActive = Date.now();
+    var away = false;
+
+    function sendAway(value) {
+        away = value;
+        if (isConnected()) connection.invoke("SetAway", value).catch(function () {});
+    }
+
+    function markActive() {
+        lastActive = Date.now();
+        if (away) sendAway(false);
+    }
+
+    ["mousemove", "mousedown", "keydown", "touchstart", "wheel", "scroll"].forEach(function (name) {
+        document.addEventListener(name, markActive, { passive: true, capture: true });
+    });
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) markActive();
+    });
+    window.setInterval(function () {
+        if (!away && isConnected() && Date.now() - lastActive >= IDLE_MS) sendAway(true);
+    }, Math.max(500, Math.min(10000, IDLE_MS / 3)));
+
+    var offlineTimers = {};
+
+    function applyPresence(data) {
+        document.dispatchEvent(new CustomEvent("discode-user-presence", { detail: { userId: data.userId, status: data.status } }));
+        if (window.discodeFriends) window.discodeFriends.setPresence(data.userId, data.status);
+    }
+
     function isConnected() {
         return !!connection && connection.state === signalR.HubConnectionState.Connected;
     }
@@ -16,6 +47,8 @@
 
     function onConnected() {
         window.discodeLive = true;
+        away = false;
+        lastActive = Date.now();
         document.dispatchEvent(new CustomEvent("discode-live-changed"));
         document.dispatchEvent(new CustomEvent("discode-stories-changed"));
         document.dispatchEvent(new CustomEvent("discode-posts-changed"));
@@ -47,8 +80,12 @@
                     .build();
 
                 connection.on("PresenceChanged", function (data) {
-                    document.dispatchEvent(new CustomEvent("discode-user-presence", { detail: { userId: data.userId, status: data.status } }));
-                    if (window.discodeFriends) window.discodeFriends.setPresence(data.userId, data.status);
+                    window.clearTimeout(offlineTimers[data.userId]);
+                    if (data.status === "offline") {
+                        offlineTimers[data.userId] = window.setTimeout(function () { applyPresence(data); }, 3500);
+                        return;
+                    }
+                    applyPresence(data);
                 });
 
                 connection.on("StatusChanged", function (status) {

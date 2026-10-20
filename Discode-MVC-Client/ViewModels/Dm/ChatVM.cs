@@ -8,6 +8,7 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public string AvatarUrl { get; set; } = string.Empty;
         public string Status { get; set; } = "offline";
         public DateTime MemberSince { get; set; }
+        public bool IsFriend { get; set; }
         public List<MessageVM> Messages { get; set; } = new List<MessageVM>();
     }
 }

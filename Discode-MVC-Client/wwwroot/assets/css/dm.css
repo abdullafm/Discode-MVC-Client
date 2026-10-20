@@ -608,13 +608,6 @@ section#dm-profile.no-motion .dm-profile {
     padding: 16px 28px;
 }
 
-.dm-clock {
-    margin-bottom: 16px;
-    color: #060607;
-    font-size: 14px;
-    font-weight: 600;
-}
-
 .dm-since-label {
     color: #060607;
     font-size: 12px;

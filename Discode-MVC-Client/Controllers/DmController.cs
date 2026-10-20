@@ -9,40 +9,38 @@ using System.Text.Json;
 namespace Discode_MVC_Client.Controllers
 {
     [Authorize]
-    public class DmController : Controller
+    public class DmController : ApiControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;
 
-        public DmController(IHttpClientFactory httpClientFactory)
+        public DmController(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? name)
         {
-            var displayName = User.Identity?.Name ?? "";
-            var fallback = new ProfileVM
-            {
-                DisplayName = displayName,
-                UserName = User.FindFirst("userName")?.Value ?? displayName,
-                Email = User.FindFirst(ClaimTypes.Email)?.Value ?? ""
-            };
+            var (profile, profileStatus) = await GetAsync<ProfileVM>("api/account/profile");
+            if (profileStatus == System.Net.HttpStatusCode.Unauthorized)
+                return await SessionExpiredAsync();
 
-            try
+            var page = new DmPageVM { Name = name?.Trim() ?? string.Empty };
+            if (int.TryParse(Request.Cookies["tz"], out var offset) && Math.Abs(offset) <= 14 * 60)
+                page.UtcOffsetMinutes = offset;
+
+            if (page.Name.Length > 0)
             {
-                var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var profile = await client.GetFromJsonAsync<ProfileVM>("api/account/profile");
-                if (profile is not null)
-                    return View(ToHome(profile));
-            }
-            catch (HttpRequestException)
-            {
-            }
-            catch (JsonException)
-            {
+                var (chat, chatStatus) = await GetAsync<ChatVM>("api/dm/" + Uri.EscapeDataString(page.Name));
+                page.Chat = chat;
+                if (chat is null)
+                    page.Error = chatStatus is null ? "The API is not running. Start Discode-API-FinalProject and try again." : "This conversation is not available.";
             }
 
-            return View(ToHome(fallback));
+            ApplyProfile(page, profile ?? FallbackProfile());
+            ViewData["Title"] = "Discord | " + (page.Chat is null
+                ? (page.Name.Length > 0 ? page.Name : "Direct Messages")
+                : (string.IsNullOrWhiteSpace(page.Chat.DisplayName) ? page.Chat.UserName : page.Chat.DisplayName));
+            return View(page);
         }
 
         [HttpGet]
@@ -61,32 +59,6 @@ namespace Discode_MVC_Client.Controllers
             catch (JsonException)
             {
                 return Ok(Array.Empty<ConversationVM>());
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> Chat(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name))
-                return BadRequest(new { errors = new[] { "Choose a friend." } });
-
-            try
-            {
-                var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var response = await client.GetAsync("api/dm/" + Uri.EscapeDataString(name.Trim()));
-                if (!response.IsSuccessStatusCode)
-                    return StatusCode((int)response.StatusCode, new { errors = new[] { "This conversation is not available." } });
-
-                var chat = await response.Content.ReadFromJsonAsync<ChatVM>();
-                return Ok(chat ?? new ChatVM());
-            }
-            catch (HttpRequestException)
-            {
-                return StatusCode(503, new { errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
-            }
-            catch (JsonException)
-            {
-                return StatusCode(502, new { errors = new[] { "The chat could not be read." } });
             }
         }
 
@@ -140,10 +112,21 @@ namespace Discode_MVC_Client.Controllers
             }
         }
 
-        private static HomeVM ToHome(ProfileVM profile) => new()
+        private ProfileVM FallbackProfile()
         {
-            Profile = profile,
-            Update = new UpdateProfileVM
+            var displayName = User.Identity?.Name ?? string.Empty;
+            return new ProfileVM
+            {
+                DisplayName = displayName,
+                UserName = User.FindFirst("userName")?.Value ?? displayName,
+                Email = User.FindFirst(ClaimTypes.Email)?.Value ?? string.Empty
+            };
+        }
+
+        private static void ApplyProfile(HomeVM home, ProfileVM profile)
+        {
+            home.Profile = profile;
+            home.Update = new UpdateProfileVM
             {
                 UserName = profile.UserName,
                 DisplayName = profile.DisplayName,
@@ -152,7 +135,7 @@ namespace Discode_MVC_Client.Controllers
                 IsPublic = profile.IsPublic,
                 Pronouns = profile.Pronouns,
                 Bio = profile.Bio
-            }
-        };
+            };
+        }
     }
 }

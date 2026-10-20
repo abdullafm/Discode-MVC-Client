@@ -2,16 +2,17 @@
 var micO = false;
 var headO = false;
 
-window.onload = function () {
+function startDmPage() {
     setTimeout(function () {
         var loader = document.getElementById("loader");
         if (loader) loader.remove();
     }, 2000);
-    openDm();
+    if (!document.getElementById("dm-chat")) return;
+    showDmPage();
     var call = new URLSearchParams(window.location.search).get("call");
     if (call === "voice" || call === "video") startDmCall();
     if (call === "video" && window.openCallCamera) window.openCallCamera();
-};
+}
 
 var x = new Audio("/assets/css/audio/discordmute_IZNcLx2.mp3");
 var y = new Audio("/assets/css/audio/discord-unmute-sound.mp3");
@@ -111,26 +112,6 @@ function paintDmStatus(status) {
     dot.className = "dm-status" + (status && status !== "online" ? " " + status : "");
 }
 
-function paintDm(chat) {
-    var name = chat.displayName || chat.userName;
-    var avatar = chat.avatarUrl || DEFAULT_AVATAR;
-    document.title = "Discord | " + name;
-    document.getElementById("dm-title").textContent = name;
-    document.getElementById("dm-name").textContent = name;
-    document.getElementById("dm-handle").textContent = chat.userName;
-    document.getElementById("dm-start-name").textContent = name;
-    document.getElementById("dm-wave").textContent = "Wave to " + name;
-    document.getElementById("dm-input").setAttribute("data-placeholder", "Message @" + name);
-    document.getElementById("dm-placeholder").textContent = "Message @" + name;
-    document.getElementById("dm-avatar").src = avatar;
-    document.getElementById("dm-profile-avatar").src = avatar;
-    document.getElementById("dm-profile-name").textContent = name;
-    document.getElementById("dm-profile-handle").textContent = chat.userName;
-    document.getElementById("dm-since").textContent = new Date(utcMillis(chat.memberSince)).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-    document.getElementById("dm-clock").textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    paintDmStatus(chat.status);
-}
-
 function messageTime(stamp) {
     return new Date(stamp).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
@@ -201,35 +182,29 @@ function scrollDmToEnd() {
     scroller.scrollTop = scroller.scrollHeight;
 }
 
-function renderMessages(list) {
-    var box = document.getElementById("dm-messages");
-    while (box.firstChild) box.removeChild(box.firstChild);
-    document.getElementById("dm-wave-box").hidden = list.length > 0;
-    list.forEach(function (message) { appendMessage(message, true); });
-    scrollDmToEnd();
-}
-
-function openDm() {
-    var params = new URLSearchParams(window.location.search);
-    var name = params.get("name") || "";
-    if (!name) {
-        document.getElementById("dm-title").textContent = "Direct Messages";
-        document.getElementById("dm-start").textContent = "Pick a friend from your friends list to start a conversation.";
-        document.getElementById("dm-compose").hidden = true;
-        return;
+function showDmPage() {
+    var chat = document.getElementById("dm-chat");
+    var userName = chat ? chat.getAttribute("data-user-name") : "";
+    if (!userName) return;
+    dmPartner = { userName: userName, userId: chat.getAttribute("data-user-id") };
+    window.discodeOpenDm = userName;
+    var stamps = document.querySelectorAll("#dm-messages .dm-msg");
+    for (var i = 0; i < stamps.length; i++) {
+        var when = stamps[i].querySelector("time");
+        if (when) when.textContent = messageTime(Number(stamps[i].getAttribute("data-time")));
     }
-    dmRequest("/Dm/Chat?name=" + encodeURIComponent(name)).then(function (chat) {
-        dmPartner = chat;
-        window.discodeOpenDm = chat.userName;
-        paintDm(chat);
-        renderMessages(chat.messages || []);
-        if (window.matchMedia("(max-width: 1100px)").matches) setDmProfile(false, true);
-        document.dispatchEvent(new CustomEvent("discode-dm-read", { detail: { userName: chat.userName } }));
-    }).catch(function (err) {
-        document.getElementById("dm-title").textContent = name;
-        document.getElementById("dm-start").textContent = err.message;
-        document.getElementById("dm-compose").hidden = true;
-    });
+    var texts = document.querySelectorAll("#dm-messages .dm-msg-text");
+    for (var j = 0; j < texts.length; j++) {
+        var text = texts[j].textContent;
+        FLAG_RE.lastIndex = 0;
+        if (!FLAG_RE.test(text)) continue;
+        FLAG_RE.lastIndex = 0;
+        while (texts[j].firstChild) texts[j].removeChild(texts[j].firstChild);
+        nodesForText(text).forEach(function (node) { texts[j].appendChild(node); });
+    }
+    scrollDmToEnd();
+    if (window.matchMedia("(max-width: 1100px)").matches) setDmProfile(false, true);
+    document.dispatchEvent(new CustomEvent("discode-dm-read", { detail: { userName: userName } }));
 }
 
 var dmQueue = Promise.resolve();
@@ -253,12 +228,10 @@ function submitDm(text) {
     var partner = dmPartner.userName;
     var typed = text === undefined ? dmInput.innerHTML : null;
     if (typed !== null) {
-        // clear at once so the box is free for the next message, even while this one is still sending
         while (dmInput.firstChild) dmInput.removeChild(dmInput.firstChild);
         focusDmInput();
         markEmpty(dmInput);
     }
-    // messages go out one after another so they keep their order
     dmQueue = dmQueue.then(function () {
         return dmRequest("/Dm/Send", "POST", { userName: partner, text: message });
     }).then(function (sent) {
@@ -345,51 +318,53 @@ function startDmCall() {
     joinVoiceSound.play().catch(function() {});
 }
 
-document.getElementById("dm-call").addEventListener("click", startDmCall);
-document.getElementById("dm-video").addEventListener("click", function () {
-    startDmCall();
-    if (window.openCallCamera) window.openCallCamera();
-});
+function bindDmCall() {
+    document.getElementById("dm-call").addEventListener("click", startDmCall);
+    document.getElementById("dm-video").addEventListener("click", function () {
+        startDmCall();
+        if (window.openCallCamera) window.openCallCamera();
+    });
 
-document.getElementById("call-hangup").addEventListener("click", function () {
-    document.getElementById("call-stage").hidden = true;
-    document.querySelector(".dm-chat").classList.remove("call-chat");
-    callInviteCardClosed = false;
-    setCallInviteCardVisible(true);
-    if (profileOpenBeforeCall) setDmProfile(true);
-});
+    document.getElementById("call-hangup").addEventListener("click", function () {
+        document.getElementById("call-stage").hidden = true;
+        document.querySelector(".dm-chat").classList.remove("call-chat");
+        callInviteCardClosed = false;
+        setCallInviteCardVisible(true);
+        if (profileOpenBeforeCall) setDmProfile(true);
+    });
 
-document.querySelector(".call-phone-add").addEventListener("click", function () {
-    var current = document.getElementById("dm-title");
-    var name = current ? current.textContent.trim() : "";
-    if (typeof openNewMessage === "function") openNewMessage(name ? [name] : []);
-});
+    document.querySelector(".call-phone-add").addEventListener("click", function () {
+        var current = document.getElementById("dm-title");
+        var name = current ? current.textContent.trim() : "";
+        if (typeof openNewMessage === "function") openNewMessage(name ? [name] : []);
+    });
 
-document.getElementById("call-phone-add-close").addEventListener("click", function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    callInviteCardClosed = true;
-    setCallInviteCardVisible(false);
-});
+    document.getElementById("call-phone-add-close").addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        callInviteCardClosed = true;
+        setCallInviteCardVisible(false);
+    });
 
-var phoneChat = document.querySelector(".call-phone-chat");
-if (phoneChat) phoneChat.addEventListener("click", function () {
-    document.querySelector(".dm-chat").classList.add("call-chat");
-});
+    var phoneChat = document.querySelector(".call-phone-chat");
+    if (phoneChat) phoneChat.addEventListener("click", function () {
+        document.querySelector(".dm-chat").classList.add("call-chat");
+    });
 
-document.querySelector(".call-phone-back").addEventListener("click", function () {
-    document.querySelector(".dm-chat").classList.add("call-chat");
-});
+    document.querySelector(".call-phone-back").addEventListener("click", function () {
+        document.querySelector(".dm-chat").classList.add("call-chat");
+    });
 
-document.querySelector(".call-return").addEventListener("click", function () {
-    document.querySelector(".dm-chat").classList.remove("call-chat");
-});
+    document.querySelector(".call-return").addEventListener("click", function () {
+        document.querySelector(".dm-chat").classList.remove("call-chat");
+    });
 
-document.querySelector(".dm-full").addEventListener("click", function () {
-    var name = document.getElementById("dm-profile-name").textContent;
-    var photo = document.getElementById("dm-profile-avatar").getAttribute("src");
-    if (window.openUserProfile) window.openUserProfile(name, photo);
-});
+    document.querySelector(".dm-full").addEventListener("click", function () {
+        if (!dmPartner) return;
+        var photo = document.getElementById("dm-profile-avatar").getAttribute("src");
+        if (window.openUserProfile) window.openUserProfile(dmPartner.userName, photo);
+    });
+}
 
 function setDmProfile(open, instant) {
     var panel = document.getElementById("dm-profile");
@@ -409,22 +384,24 @@ function setDmProfile(open, instant) {
     }
 }
 
-document.getElementById("dm-profile-toggle").addEventListener("click", function () {
-    setDmProfile(document.getElementById("dm-profile").classList.contains("is-collapsed"));
-});
+function bindDmCompose() {
+    document.getElementById("dm-profile-toggle").addEventListener("click", function () {
+        setDmProfile(document.getElementById("dm-profile").classList.contains("is-collapsed"));
+    });
 
-document.getElementById("dm-profile-close").addEventListener("click", function () {
-    setDmProfile(false);
-});
+    document.getElementById("dm-profile-close").addEventListener("click", function () {
+        setDmProfile(false);
+    });
 
-document.getElementById("dm-compose").addEventListener("submit", function (event) {
-    event.preventDefault();
-    submitDm();
-});
+    document.getElementById("dm-compose").addEventListener("submit", function (event) {
+        event.preventDefault();
+        submitDm();
+    });
 
-document.getElementById("dm-wave").addEventListener("click", function () {
-    submitDm("\uD83D\uDC4B");
-});
+    document.getElementById("dm-wave").addEventListener("click", function () {
+        submitDm("\uD83D\uDC4B");
+    });
+}
 
 var emojiField = null;
 var savedRange = null;
@@ -614,68 +591,82 @@ function insertEmoji(emoji) {
     insertNodes(emojiField, nodesForText(emoji));
 }
 
-document.getElementById("dm-emoji").addEventListener("mousedown", rememberCaret);
-document.getElementById("dm-emoji").addEventListener("click", function () {
-    openEmojiPanel(this, document.getElementById("dm-input"));
-});
-
-document.getElementById("emoji-panel").addEventListener("mousedown", function (event) {
-    if (event.target.closest(".emoji-choice")) event.preventDefault();
-});
-
-document.getElementById("emoji-panel").addEventListener("click", function (event) {
-    var tab = event.target.closest("[data-emoji-tab]");
-    if (tab) {
-        var scroller = this.querySelector(".emoji-scroll");
-        var section = document.getElementById("emoji-" + tab.getAttribute("data-emoji-tab"));
-        if (section) scroller.scrollTop = section.offsetTop;
-        var tabs = this.querySelectorAll("[data-emoji-tab]");
-        for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle("on", tabs[i] === tab);
-        return;
-    }
-    var choice = event.target.closest(".emoji-choice");
-    if (!choice) return;
-    insertEmoji(choice.getAttribute("data-emoji") || choice.textContent);
-});
-
 var dmInput = document.getElementById("dm-input");
-dmInput.addEventListener("focus", function () {
-    this.setAttribute("data-empty", "0");
-});
-dmInput.addEventListener("input", function () {
-    markEmpty(this);
-});
-dmInput.addEventListener("keydown", function (event) {
-    if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
-    event.preventDefault();
-    submitDm();
-});
-dmInput.addEventListener("blur", function () {
-    markEmpty(this);
-});
-document.getElementById("dm-compose").addEventListener("mousedown", function (event) {
-    if (event.target.closest("button") || event.target.closest("#dm-input")) return;
-    event.preventDefault();
-    dmInput.focus();
-});
 
-document.getElementById("dm-input").addEventListener("paste", function (event) {
-    event.preventDefault();
-    var text = (event.clipboardData || window.clipboardData).getData("text") || "";
-    if (!text) return;
-    insertNodes(this, nodesForText(text));
-});
+function syncDmPlaceholder() {
+    var field = document.getElementById("dm-input");
+    var hint = document.getElementById("dm-placeholder");
+    if (!field || !hint) return;
+    hint.hidden = !!fieldValue(field).replace(/\n/g, "").trim();
+}
 
-document.addEventListener("click", function (event) {
-    if (event.target.closest("#emoji-panel, #dm-emoji")) return;
-    closeEmojiPanel();
-});
+function bindDmInput() {
+    var observed = document.getElementById("dm-input");
+    new MutationObserver(syncDmPlaceholder).observe(observed, { childList: true, characterData: true, subtree: true });
+    observed.addEventListener("input", syncDmPlaceholder);
+    syncDmPlaceholder();
+    document.getElementById("dm-emoji").addEventListener("mousedown", rememberCaret);
+    document.getElementById("dm-emoji").addEventListener("click", function () {
+        openEmojiPanel(this, document.getElementById("dm-input"));
+    });
 
-var logoutBtn = document.getElementById("me-logout");
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", function () {
-        if (confirm("Are you sure you want to log out?")) {
-            window.location.href = "/Account/Login";
+    document.getElementById("emoji-panel").addEventListener("mousedown", function (event) {
+        if (event.target.closest(".emoji-choice")) event.preventDefault();
+    });
+
+    document.getElementById("emoji-panel").addEventListener("click", function (event) {
+        var tab = event.target.closest("[data-emoji-tab]");
+        if (tab) {
+            var scroller = this.querySelector(".emoji-scroll");
+            var section = document.getElementById("emoji-" + tab.getAttribute("data-emoji-tab"));
+            if (section) scroller.scrollTop = section.offsetTop;
+            var tabs = this.querySelectorAll("[data-emoji-tab]");
+            for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle("on", tabs[i] === tab);
+            return;
         }
+        var choice = event.target.closest(".emoji-choice");
+        if (!choice) return;
+        insertEmoji(choice.getAttribute("data-emoji") || choice.textContent);
+    });
+
+    dmInput.addEventListener("focus", function () {
+        this.setAttribute("data-empty", "0");
+    });
+    dmInput.addEventListener("input", function () {
+        markEmpty(this);
+    });
+    dmInput.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+        event.preventDefault();
+        submitDm();
+    });
+    dmInput.addEventListener("blur", function () {
+        markEmpty(this);
+    });
+    document.getElementById("dm-compose").addEventListener("mousedown", function (event) {
+        if (event.target.closest("button") || event.target.closest("#dm-input")) return;
+        event.preventDefault();
+        dmInput.focus();
+    });
+
+    document.getElementById("dm-input").addEventListener("paste", function (event) {
+        event.preventDefault();
+        var text = (event.clipboardData || window.clipboardData).getData("text") || "";
+        if (!text) return;
+        insertNodes(this, nodesForText(text));
+    });
+
+    document.addEventListener("click", function (event) {
+        if (event.target.closest("#emoji-panel, #dm-emoji")) return;
+        closeEmojiPanel();
     });
 }
+
+if (document.getElementById("dm-chat")) {
+    bindDmCall();
+    bindDmCompose();
+    bindDmInput();
+}
+
+if (document.readyState === "complete") startDmPage();
+else window.addEventListener("load", startDmPage);

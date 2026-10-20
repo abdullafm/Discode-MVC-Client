@@ -32,7 +32,6 @@ wwwroot\assets\js\admin.js
 wwwroot\assets\js\call.js
 wwwroot\assets\js\directmessages.js
 wwwroot\assets\js\discover.js
-wwwroot\assets\js\dm.js
 wwwroot\assets\js\emoji.js
 wwwroot\assets\js\group.js
 wwwroot\assets\js\groups.js
@@ -41,6 +40,7 @@ wwwroot\assets\js\live.js
 wwwroot\assets\js\login.js
 wwwroot\assets\js\nav.js
 wwwroot\assets\js\nitro.js
+wwwroot\assets\js\notifications.js
 wwwroot\assets\js\presence.js
 wwwroot\assets\js\profile.js
 wwwroot\assets\js\register.js
@@ -48,6 +48,7 @@ wwwroot\assets\js\script.js
 wwwroot\assets\js\server.js
 wwwroot\assets\js\socialmedia.js
 wwwroot\assets\js\theme.js
+wwwroot\assets\js\timezone.js
 wwwroot\uploads\avatars\.gitkeep
 wwwroot\uploads\avatars\63803260-478b-4f47-a400-13044e002e9b.jpg
 wwwroot\uploads\avatars\abacec53-bb63-4805-ac44-637d4a2d6f8d.jpg
@@ -63,3 +64,4 @@ wwwroot\uploads\stories\6de88986d5184d87be79d4d0f8a5cdbe.jpg
 wwwroot\uploads\stories\8431c07637984eed8df2a8f1d0162202.jpg
 wwwroot\uploads\stories\b04fb42297f849ba8290008cb9e30f63.jpg
 wwwroot\uploads\stories\ee6453a1c97741d78e8894c501c2e3a7.jpg
+wwwroot\assets\js\dm.js
