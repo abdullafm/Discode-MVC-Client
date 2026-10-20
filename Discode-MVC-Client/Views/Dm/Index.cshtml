@@ -106,12 +106,20 @@
                         {
                             var sentAt = Local(message.CreatedAt);
                             var newDay = previous is null || Local(previous.CreatedAt).Date != sentAt.Date;
-                            var compact = !newDay && previous!.SenderUserName == message.SenderUserName && (message.CreatedAt - previous.CreatedAt).TotalMinutes < 5;
+                            var compact = !newDay && message.ReplyTo is null && previous!.SenderUserName == message.SenderUserName && (message.CreatedAt - previous.CreatedAt).TotalMinutes < 5;
                             if (newDay)
                             {
                                 <div class="dm-divider"><span>@sentAt.ToString("MMMM d, yyyy", culture)</span></div>
                             }
-                            <div class="dm-msg@(compact ? " compact" : "")" data-id="@message.Id" data-sender="@message.SenderUserName" data-time="@Millis(message.CreatedAt)" data-mine="@(message.Mine ? "1" : "0")">
+                            <div class="dm-msg@(compact ? " compact" : "")@(message.ReplyTo is null ? "" : " has-reply")" data-id="@message.Id" data-sender="@message.SenderUserName" data-time="@Millis(message.CreatedAt)" data-mine="@(message.Mine ? "1" : "0")">
+                                @if (message.ReplyTo is not null)
+                                {
+                                    <div class="dm-msg-reply" data-reply-id="@message.ReplyTo.MessageId" role="button" tabindex="0">
+                                        <img class="dm-reply-avatar" alt="" src="@(string.IsNullOrWhiteSpace(message.ReplyTo.SenderAvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : message.ReplyTo.SenderAvatarUrl)">
+                                        <strong>@(string.IsNullOrWhiteSpace(message.ReplyTo.SenderDisplayName) ? message.ReplyTo.SenderUserName : message.ReplyTo.SenderDisplayName)</strong>
+                                        <span class="dm-reply-text">@message.ReplyTo.Text</span>
+                                    </div>
+                                }
                                 <img class="dm-msg-avatar" alt="" src="@(string.IsNullOrWhiteSpace(message.SenderAvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : message.SenderAvatarUrl)">
                                 <div class="dm-msg-body">
                                     <div class="dm-msg-head">
@@ -154,6 +162,10 @@
                 </div>
             </div>
             <p class="dm-error" id="dm-error" hidden></p>
+            <div class="dm-reply-bar" id="dm-reply-bar" hidden>
+                <span>Replying to <strong id="dm-reply-name"></strong></span>
+                <button type="button" id="dm-reply-cancel" aria-label="Cancel reply"><i class="fa-solid fa-circle-xmark"></i></button>
+            </div>
             <form class="dm-compose" id="dm-compose" hidden="@(chat is null)">
                 <button type="button" aria-label="Add"><i class="fa-solid fa-plus"></i></button>
                 <div class="dm-input-wrap">
@@ -209,5 +221,18 @@
         <button type="button" role="menuitem" data-menu="speak"><i class="fa-solid fa-volume-high"></i><span>Speak Message</span></button>
         <hr data-own-only>
         <button type="button" role="menuitem" class="is-danger" data-menu="delete" data-own-only><i class="fa-solid fa-trash-can"></i><span>Delete Message</span></button>
+    </div>
+    <div class="dm-modal" id="dm-pin-modal" role="dialog" aria-modal="true" aria-labelledby="dm-pin-title" hidden>
+        <div class="dm-modal-backdrop" data-close></div>
+        <div class="dm-modal-card">
+            <button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>
+            <h2 id="dm-pin-title">Pin It. Pin It Good.</h2>
+            <p class="dm-modal-text">Hey, just double checking that you want to pin this message to the current channel for posterity and greatness?</p>
+            <div class="dm-pin-preview" id="dm-pin-preview"></div>
+            <div class="dm-modal-actions">
+                <button type="button" class="dm-modal-cancel" data-close>Cancel</button>
+                <button type="button" class="dm-modal-confirm" id="dm-pin-confirm">Oh yeah. Pin it</button>
+            </div>
+        </div>
     </div>
 </main>

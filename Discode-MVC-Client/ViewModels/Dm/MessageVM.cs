@@ -12,5 +12,6 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public DateTime? EditedAt { get; set; }
         public bool Mine { get; set; }
         public List<ReactionVM> Reactions { get; set; } = new();
+        public ReplyVM? ReplyTo { get; set; }
     }
 }

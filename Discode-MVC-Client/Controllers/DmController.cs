@@ -69,7 +69,7 @@ namespace Discode_MVC_Client.Controllers
             if (model is null || string.IsNullOrWhiteSpace(model.UserName))
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a friend." } }));
 
-            return ForwardToApi(client => client.PostAsJsonAsync("api/dm/" + Uri.EscapeDataString(model.UserName.Trim()), new { text = model.Text ?? string.Empty }));
+            return ForwardToApi(client => client.PostAsJsonAsync("api/dm/" + Uri.EscapeDataString(model.UserName.Trim()), new { text = model.Text ?? string.Empty, replyToMessageId = model.ReplyToMessageId }));
         }
 
         [HttpPost]

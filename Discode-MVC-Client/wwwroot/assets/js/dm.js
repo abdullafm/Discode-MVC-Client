@@ -139,6 +139,27 @@ function messageTools(mine) {
     return tools;
 }
 
+function dmReplyHeader(reply) {
+    var header = document.createElement("div");
+    header.className = "dm-msg-reply";
+    header.setAttribute("data-reply-id", String(reply.messageId));
+    header.setAttribute("role", "button");
+    header.setAttribute("tabindex", "0");
+    var face = document.createElement("img");
+    face.className = "dm-reply-avatar";
+    face.alt = "";
+    face.src = reply.senderAvatarUrl || DEFAULT_AVATAR;
+    var who = document.createElement("strong");
+    who.textContent = reply.senderDisplayName || reply.senderUserName;
+    var text = document.createElement("span");
+    text.className = "dm-reply-text";
+    text.textContent = reply.text;
+    header.appendChild(face);
+    header.appendChild(who);
+    header.appendChild(text);
+    return header;
+}
+
 function dmEditedLabel() {
     var label = document.createElement("span");
     label.className = "dm-msg-edited";
@@ -170,15 +191,17 @@ function appendMessage(message, forceScroll) {
         divider.appendChild(label);
         box.appendChild(divider);
     }
-    var compact = !newDay && last && last.getAttribute("data-sender") === message.senderUserName &&
+    var compact = !newDay && !message.replyTo && last && last.getAttribute("data-sender") === message.senderUserName &&
         stamp - Number(last.getAttribute("data-time")) < 5 * 60 * 1000 && box.lastElementChild === last;
 
     var row = document.createElement("div");
-    row.className = "dm-msg" + (compact ? " compact" : "");
+    row.className = "dm-msg" + (compact ? " compact" : "") + (message.replyTo ? " has-reply" : "");
     row.setAttribute("data-id", String(message.id));
     row.setAttribute("data-sender", message.senderUserName);
     row.setAttribute("data-time", String(stamp));
     row.setAttribute("data-mine", message.mine ? "1" : "0");
+
+    if (message.replyTo) row.appendChild(dmReplyHeader(message.replyTo));
 
     var face = document.createElement("img");
     face.className = "dm-msg-avatar";
@@ -268,13 +291,15 @@ function submitDm(text) {
     showDmError("");
     var partner = dmPartner.userName;
     var typed = text === undefined ? dmInput.innerHTML : null;
+    var replyId = dmReply ? dmReply.id : null;
+    if (dmReply) dmCancelReply();
     if (typed !== null) {
         while (dmInput.firstChild) dmInput.removeChild(dmInput.firstChild);
         focusDmInput();
         markEmpty(dmInput);
     }
     dmQueue = dmQueue.then(function () {
-        return dmRequest("/Dm/Send", "POST", { userName: partner, text: message });
+        return dmRequest("/Dm/Send", "POST", { userName: partner, text: message, replyToMessageId: replyId });
     }).then(function (sent) {
         appendMessage(sent);
     }).catch(function (err) {
@@ -635,6 +660,33 @@ function insertEmoji(emoji) {
 var dmInput = document.getElementById("dm-input");
 
 var dmPicker = { mode: "", row: null };
+var dmReply = null;
+
+function dmCancelReply() {
+    if (!dmReply) return;
+    var marked = document.querySelector("#dm-messages .dm-msg.is-replying");
+    if (marked) marked.classList.remove("is-replying");
+    dmReply = null;
+    document.getElementById("dm-reply-bar").hidden = true;
+}
+
+function dmStartReply(row) {
+    dmCancelReply();
+    var head = row.querySelector(".dm-msg-head strong");
+    dmReply = { id: Number(row.getAttribute("data-id")) };
+    row.classList.add("is-replying");
+    document.getElementById("dm-reply-name").textContent = head ? head.textContent : "";
+    document.getElementById("dm-reply-bar").hidden = false;
+    focusDmInput();
+}
+
+function dmJumpTo(messageId) {
+    var target = document.querySelector('#dm-messages .dm-msg[data-id="' + messageId + '"]');
+    if (!target) return;
+    target.scrollIntoView({ block: "center", behavior: "smooth" });
+    target.classList.add("is-flash");
+    setTimeout(function () { target.classList.remove("is-flash"); }, 1600);
+}
 
 function dmMessageText(row) {
     var clone = row.querySelector(".dm-msg-text").cloneNode(true);
@@ -806,11 +858,7 @@ function dmOpenMenu(anchor, row) {
         dmCloseMenu();
         return;
     }
-    var mine = row.getAttribute("data-mine") === "1";
-    var gated = menu.querySelectorAll("[data-own-only]");
-    for (var i = 0; i < gated.length; i++) gated[i].hidden = !mine;
-    menu.setAttribute("data-row", row.getAttribute("data-id"));
-    menu.hidden = false;
+    dmShowMenu(row);
     var rect = anchor.getBoundingClientRect();
     var width = menu.offsetWidth;
     var height = menu.offsetHeight;
@@ -820,6 +868,61 @@ function dmOpenMenu(anchor, row) {
     if (top + height > window.innerHeight - 8) top = Math.max(8, window.innerHeight - height - 8);
     menu.style.left = left + "px";
     menu.style.top = top + "px";
+}
+
+function dmShowMenu(row) {
+    var menu = document.getElementById("dm-msg-menu");
+    var mine = row.getAttribute("data-mine") === "1";
+    var gated = menu.querySelectorAll("[data-own-only]");
+    for (var i = 0; i < gated.length; i++) gated[i].hidden = !mine;
+    menu.setAttribute("data-row", row.getAttribute("data-id"));
+    menu.hidden = false;
+    return menu;
+}
+
+function dmOpenMenuAt(row, x, y) {
+    if (dmPicker.mode) dmClosePicker();
+    var menu = dmShowMenu(row);
+    var width = menu.offsetWidth;
+    var height = menu.offsetHeight;
+    var left = Math.max(8, Math.min(x, window.innerWidth - width - 8));
+    var top = Math.max(8, Math.min(y, window.innerHeight - height - 8));
+    menu.style.left = left + "px";
+    menu.style.top = top + "px";
+}
+
+function dmClosePinModal() {
+    var modal = document.getElementById("dm-pin-modal");
+    modal.hidden = true;
+    document.getElementById("dm-pin-preview").textContent = "";
+}
+
+function dmOpenPinModal(row) {
+    var preview = document.getElementById("dm-pin-preview");
+    preview.textContent = "";
+    var face = document.createElement("img");
+    face.className = "dm-pin-avatar";
+    face.alt = "";
+    face.src = row.querySelector(".dm-msg-avatar").getAttribute("src");
+    var body = document.createElement("div");
+    body.className = "dm-pin-body";
+    var head = document.createElement("div");
+    head.className = "dm-pin-head";
+    var who = document.createElement("strong");
+    who.textContent = row.querySelector(".dm-msg-head strong").textContent;
+    var when = document.createElement("time");
+    when.textContent = row.querySelector(".dm-msg-head time").textContent;
+    head.appendChild(who);
+    head.appendChild(when);
+    var text = document.createElement("div");
+    text.className = "dm-pin-text";
+    nodesForText(dmMessageText(row)).forEach(function (node) { text.appendChild(node); });
+    body.appendChild(head);
+    body.appendChild(text);
+    preview.appendChild(face);
+    preview.appendChild(body);
+    document.getElementById("dm-pin-modal").hidden = false;
+    document.getElementById("dm-pin-confirm").focus();
 }
 
 function dmCopy(text) {
@@ -840,6 +943,11 @@ function bindDmMessages() {
             else dmCancelEdit(editing);
             return;
         }
+        var quoted = event.target.closest(".dm-msg-reply");
+        if (quoted) {
+            dmJumpTo(quoted.getAttribute("data-reply-id"));
+            return;
+        }
         var chip = event.target.closest(".dm-reaction");
         if (chip) {
             dmReact(chip.closest(".dm-msg"), chip.getAttribute("data-emoji"));
@@ -853,10 +961,28 @@ function bindDmMessages() {
         else if (act === "picker" || act === "reaction-add") dmOpenPicker(button, "reaction", row);
         else if (act === "edit-picker") dmOpenPicker(button, "edit", row);
         else if (act === "edit") dmStartEdit(row);
+        else if (act === "reply") dmStartReply(row);
         else if (act === "more") dmOpenMenu(button, row);
     });
 
+    box.addEventListener("contextmenu", function (event) {
+        var row = event.target.closest(".dm-msg");
+        if (!row || event.target.closest(".dm-edit, a, .dm-msg-tools")) return;
+        event.preventDefault();
+        dmOpenMenuAt(row, event.clientX, event.clientY);
+    });
+
+    document.addEventListener("contextmenu", function (event) {
+        if (!event.target.closest("#dm-msg-menu, #dm-messages")) dmCloseMenu();
+    });
+
     box.addEventListener("keydown", function (event) {
+        var quote = event.target.closest && event.target.closest(".dm-msg-reply");
+        if (quote && (event.key === "Enter" || event.key === " ")) {
+            event.preventDefault();
+            dmJumpTo(quote.getAttribute("data-reply-id"));
+            return;
+        }
         if (event.target.tagName !== "TEXTAREA") return;
         var row = event.target.closest(".dm-msg");
         if (event.key === "Escape") {
@@ -881,6 +1007,8 @@ function bindDmMessages() {
         if (!row) return;
         if (item.getAttribute("data-act") === "react") dmReact(row, item.textContent.trim());
         else if (action === "edit") dmStartEdit(row);
+        else if (action === "reply") dmStartReply(row);
+        else if (action === "pin") dmOpenPinModal(row);
         else if (action === "copy-text") dmCopy(dmMessageText(row));
         else if (action === "copy-link") dmCopy(window.location.origin + window.location.pathname + window.location.search + "#message-" + row.getAttribute("data-id"));
         else if (action === "reaction") dmOpenPicker(row.querySelector('[data-act="picker"]') || row, "reaction", row);
@@ -913,10 +1041,22 @@ function bindDmMessages() {
     });
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
+            var pinModal = document.getElementById("dm-pin-modal");
+            if (!pinModal.hidden) {
+                dmClosePinModal();
+                return;
+            }
+            var busy = !document.getElementById("dm-msg-menu").hidden || dmPicker.mode || document.querySelector(".dm-msg.is-editing");
             dmCloseMenu();
             if (dmPicker.mode) dmClosePicker();
+            if (!busy) dmCancelReply();
         }
     });
+    document.getElementById("dm-reply-cancel").addEventListener("click", dmCancelReply);
+    document.getElementById("dm-pin-modal").addEventListener("click", function (event) {
+        if (event.target.closest("[data-close]")) dmClosePinModal();
+    });
+    document.getElementById("dm-pin-confirm").addEventListener("click", dmClosePinModal);
     window.addEventListener("resize", function () {
         dmCloseMenu();
         if (dmPicker.mode) dmClosePicker();
