@@ -1,0 +1,29 @@
+@using System.Globalization
+@model PinnedMessagesVM
+@{
+    var culture = CultureInfo.InvariantCulture;
+}
+<div class="dm-pins-head">
+    <i class="fa-solid fa-thumbtack"></i>
+    <h2>Pinned Messages</h2>
+</div>
+<div class="dm-pins-list">
+    @if (Model.Messages.Count == 0)
+    {
+        <p class="dm-pins-empty">This conversation doesn't have any pinned messages... yet.</p>
+    }
+    @foreach (var message in Model.Messages)
+    {
+        var sentAt = DateTime.SpecifyKind(message.CreatedAt, DateTimeKind.Utc).AddMinutes(Model.UtcOffsetMinutes);
+        <div class="dm-pin-card" data-jump="@message.Id" role="button" tabindex="0">
+            <img class="dm-pin-avatar" alt="" src="@(string.IsNullOrWhiteSpace(message.SenderAvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : message.SenderAvatarUrl)">
+            <div class="dm-pin-body">
+                <div class="dm-pin-head">
+                    <strong>@(string.IsNullOrWhiteSpace(message.SenderDisplayName) ? message.SenderUserName : message.SenderDisplayName)</strong>
+                    <time>@sentAt.ToString("M/d/yy, h:mm tt", culture)</time>
+                </div>
+                <div class="dm-pin-text">@message.Text@if (message.EditedAt is not null){<span class="dm-msg-edited">(edited)</span>}</div>
+            </div>
+        </div>
+    }
+</div>

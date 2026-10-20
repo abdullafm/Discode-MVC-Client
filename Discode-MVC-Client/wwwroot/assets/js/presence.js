@@ -110,6 +110,10 @@
                     document.dispatchEvent(new CustomEvent("discode-dm-edited", { detail: data }));
                 });
 
+                connection.on("DirectMessagePinned", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-dm-pinned", { detail: data }));
+                });
+
                 connection.on("DirectMessageReaction", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-dm-reaction", { detail: data }));
                 });

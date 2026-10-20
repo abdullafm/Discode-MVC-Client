@@ -21,7 +21,7 @@
                 <div class="dm-bar-tools">
                     <i class="fa-solid fa-phone" id="dm-call" role="button" tabindex="0" aria-label="Start a call"></i>
                     <i class="fa-solid fa-video" id="dm-video" role="button" tabindex="0" aria-label="Start a video call"></i>
-                    <i class="fa-solid fa-thumbtack"></i>
+                    <i class="fa-solid fa-thumbtack" id="dm-pins-toggle" role="button" tabindex="0" aria-label="Pinned Messages"></i>
                     <i class="fa-solid fa-user-plus"></i>
                     <button type="button" id="dm-profile-toggle" class="on" aria-label="Profile"><i class="fa-solid fa-user"></i></button>
                     <label class="dm-search">
@@ -111,7 +111,7 @@
                             {
                                 <div class="dm-divider"><span>@sentAt.ToString("MMMM d, yyyy", culture)</span></div>
                             }
-                            <div class="dm-msg@(compact ? " compact" : "")@(message.ReplyTo is null ? "" : " has-reply")" data-id="@message.Id" data-sender="@message.SenderUserName" data-time="@Millis(message.CreatedAt)" data-mine="@(message.Mine ? "1" : "0")">
+                            <div class="dm-msg@(compact ? " compact" : "")@(message.ReplyTo is null ? "" : " has-reply")" data-id="@message.Id" data-sender="@message.SenderUserName" data-time="@Millis(message.CreatedAt)" data-mine="@(message.Mine ? "1" : "0")" data-pinned="@(message.PinnedAt is null ? "0" : "1")">
                                 @if (message.ReplyTo is not null)
                                 {
                                     <div class="dm-msg-reply" data-reply-id="@message.ReplyTo.MessageId" role="button" tabindex="0">
@@ -222,6 +222,7 @@
         <hr data-own-only>
         <button type="button" role="menuitem" class="is-danger" data-menu="delete" data-own-only><i class="fa-solid fa-trash-can"></i><span>Delete Message</span></button>
     </div>
+    <div class="dm-pins-popover" id="dm-pins-popover" hidden></div>
     <div class="dm-modal" id="dm-pin-modal" role="dialog" aria-modal="true" aria-labelledby="dm-pin-title" hidden>
         <div class="dm-modal-backdrop" data-close></div>
         <div class="dm-modal-card">

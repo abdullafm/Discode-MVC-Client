@@ -200,6 +200,7 @@ function appendMessage(message, forceScroll) {
     row.setAttribute("data-sender", message.senderUserName);
     row.setAttribute("data-time", String(stamp));
     row.setAttribute("data-mine", message.mine ? "1" : "0");
+    row.setAttribute("data-pinned", message.pinnedAt ? "1" : "0");
 
     if (message.replyTo) row.appendChild(dmReplyHeader(message.replyTo));
 
@@ -876,6 +877,8 @@ function dmShowMenu(row) {
     var gated = menu.querySelectorAll("[data-own-only]");
     for (var i = 0; i < gated.length; i++) gated[i].hidden = !mine;
     menu.setAttribute("data-row", row.getAttribute("data-id"));
+    var pin = menu.querySelector('[data-menu="pin"] span');
+    if (pin) pin.textContent = row.getAttribute("data-pinned") === "1" ? "Unpin Message" : "Pin Message";
     menu.hidden = false;
     return menu;
 }
@@ -891,13 +894,82 @@ function dmOpenMenuAt(row, x, y) {
     menu.style.top = top + "px";
 }
 
+var dmPinRow = null;
+
 function dmClosePinModal() {
     var modal = document.getElementById("dm-pin-modal");
     modal.hidden = true;
     document.getElementById("dm-pin-preview").textContent = "";
+    dmPinRow = null;
+}
+
+function dmSetPinned(row, pinned) {
+    showDmError("");
+    dmRequest("/Dm/Pin", "POST", { id: Number(row.getAttribute("data-id")), pinned: pinned }).then(function (reply) {
+        row.setAttribute("data-pinned", reply.pinnedAt ? "1" : "0");
+        dmRefreshPins();
+    }).catch(function (err) {
+        showDmError(err.message);
+    });
+}
+
+function dmPinsOpen() {
+    return !document.getElementById("dm-pins-popover").hidden;
+}
+
+function dmClosePins() {
+    document.getElementById("dm-pins-popover").hidden = true;
+}
+
+function dmLoadPins() {
+    var popover = document.getElementById("dm-pins-popover");
+    if (!dmPartner) return Promise.resolve();
+    return fetch("/Dm/Pins?name=" + encodeURIComponent(dmPartner.userName), {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    }).then(function (response) {
+        if (!response.ok) throw new Error("pins");
+        return response.text();
+    }).then(function (html) {
+        popover.innerHTML = html;
+        var texts = popover.querySelectorAll(".dm-pin-text");
+        for (var i = 0; i < texts.length; i++) {
+            var edited = texts[i].querySelector(".dm-msg-edited");
+            var text = edited ? texts[i].firstChild.textContent : texts[i].textContent;
+            FLAG_RE.lastIndex = 0;
+            if (!FLAG_RE.test(text)) continue;
+            FLAG_RE.lastIndex = 0;
+            while (texts[i].firstChild) texts[i].removeChild(texts[i].firstChild);
+            nodesForText(text).forEach(function (node) { texts[i].appendChild(node); });
+            if (edited) texts[i].appendChild(edited);
+        }
+    });
+}
+
+function dmRefreshPins() {
+    if (dmPinsOpen()) dmLoadPins().catch(function () {});
+}
+
+function dmTogglePins() {
+    var popover = document.getElementById("dm-pins-popover");
+    if (dmPinsOpen()) {
+        dmClosePins();
+        return;
+    }
+    dmLoadPins().then(function () {
+        var anchor = document.getElementById("dm-pins-toggle").getBoundingClientRect();
+        popover.hidden = false;
+        var width = popover.offsetWidth;
+        var left = Math.max(8, Math.min(anchor.right - width + 40, window.innerWidth - width - 8));
+        popover.style.left = left + "px";
+        popover.style.top = (anchor.bottom + 10) + "px";
+    }).catch(function () {
+        showDmError("Could not load the pinned messages.");
+    });
 }
 
 function dmOpenPinModal(row) {
+    dmPinRow = row;
     var preview = document.getElementById("dm-pin-preview");
     preview.textContent = "";
     var face = document.createElement("img");
@@ -1008,7 +1080,10 @@ function bindDmMessages() {
         if (item.getAttribute("data-act") === "react") dmReact(row, item.textContent.trim());
         else if (action === "edit") dmStartEdit(row);
         else if (action === "reply") dmStartReply(row);
-        else if (action === "pin") dmOpenPinModal(row);
+        else if (action === "pin") {
+            if (row.getAttribute("data-pinned") === "1") dmSetPinned(row, false);
+            else dmOpenPinModal(row);
+        }
         else if (action === "copy-text") dmCopy(dmMessageText(row));
         else if (action === "copy-link") dmCopy(window.location.origin + window.location.pathname + window.location.search + "#message-" + row.getAttribute("data-id"));
         else if (action === "reaction") dmOpenPicker(row.querySelector('[data-act="picker"]') || row, "reaction", row);
@@ -1046,6 +1121,10 @@ function bindDmMessages() {
                 dmClosePinModal();
                 return;
             }
+            if (dmPinsOpen()) {
+                dmClosePins();
+                return;
+            }
             var busy = !document.getElementById("dm-msg-menu").hidden || dmPicker.mode || document.querySelector(".dm-msg.is-editing");
             dmCloseMenu();
             if (dmPicker.mode) dmClosePicker();
@@ -1056,8 +1135,41 @@ function bindDmMessages() {
     document.getElementById("dm-pin-modal").addEventListener("click", function (event) {
         if (event.target.closest("[data-close]")) dmClosePinModal();
     });
-    document.getElementById("dm-pin-confirm").addEventListener("click", dmClosePinModal);
+    document.getElementById("dm-pin-confirm").addEventListener("click", function () {
+        var row = dmPinRow;
+        dmClosePinModal();
+        if (row) dmSetPinned(row, true);
+    });
+
+    var pinsToggle = document.getElementById("dm-pins-toggle");
+    pinsToggle.addEventListener("click", function (event) {
+        event.stopPropagation();
+        dmTogglePins();
+    });
+    pinsToggle.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            dmTogglePins();
+        }
+    });
+    document.getElementById("dm-pins-popover").addEventListener("click", function (event) {
+        var card = event.target.closest("[data-jump]");
+        if (!card) return;
+        dmClosePins();
+        dmJumpTo(card.getAttribute("data-jump"));
+    });
+    document.addEventListener("click", function (event) {
+        if (dmPinsOpen() && !event.target.closest("#dm-pins-popover, #dm-pins-toggle")) dmClosePins();
+    });
+    document.addEventListener("discode-dm-pinned", function (event) {
+        var data = event.detail;
+        if (!data) return;
+        var row = box.querySelector('.dm-msg[data-id="' + data.messageId + '"]');
+        if (row) row.setAttribute("data-pinned", data.pinnedAt ? "1" : "0");
+        dmRefreshPins();
+    });
     window.addEventListener("resize", function () {
+        dmClosePins();
         dmCloseMenu();
         if (dmPicker.mode) dmClosePicker();
     });

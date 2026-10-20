@@ -13,5 +13,6 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public bool Mine { get; set; }
         public List<ReactionVM> Reactions { get; set; } = new();
         public ReplyVM? ReplyTo { get; set; }
+        public DateTime? PinnedAt { get; set; }
     }
 }

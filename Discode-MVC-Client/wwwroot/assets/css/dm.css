@@ -1609,3 +1609,105 @@ html.theme-dark .dm-modal-cancel {
 html.theme-dark .dm-modal-cancel:hover {
     background: #2b2d31;
 }
+
+.dm-bar-tools #dm-pins-toggle.on {
+    color: #060607;
+}
+
+.dm-pins-popover {
+    position: fixed;
+    z-index: 90;
+    width: min(460px, calc(100vw - 16px));
+    max-height: min(70vh, 640px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #e3e5e8;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #060607;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+}
+
+.dm-pins-popover[hidden] {
+    display: none;
+}
+
+.dm-pins-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: none;
+    padding: 16px;
+    border-bottom: 1px solid #e3e5e8;
+}
+
+.dm-pins-head i {
+    color: #80848e;
+    font-size: 22px;
+}
+
+.dm-pins-head h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.dm-pins-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.dm-pins-empty {
+    margin: 12px 8px;
+    color: #80848e !important;
+    font-size: 14px;
+    text-align: center;
+}
+
+.dm-pin-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 12px;
+    border: 1px solid #e3e5e8;
+    border-radius: 8px;
+    background: #f9fafb;
+    cursor: pointer;
+}
+
+.dm-pin-card:hover {
+    background: #f2f3f5;
+}
+
+.dm-pins-popover .dm-pin-avatar {
+    width: 40px;
+    height: 40px;
+}
+
+html.theme-dark .dm-pins-popover {
+    border-color: #1e1f22;
+    background: #111214;
+    color: #f2f3f5;
+}
+
+html.theme-dark .dm-pins-head {
+    border-bottom-color: #1e1f22;
+}
+
+html.theme-dark .dm-pins-head i {
+    color: #b5bac1;
+}
+
+html.theme-dark .dm-pin-card {
+    border-color: #1e1f22;
+    background: #111214;
+}
+
+html.theme-dark .dm-pin-card:hover {
+    background: #1e1f22;
+}

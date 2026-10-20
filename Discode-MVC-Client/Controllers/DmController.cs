@@ -82,6 +82,33 @@ namespace Discode_MVC_Client.Controllers
             return ForwardToApi(client => client.PutAsJsonAsync($"api/dm/messages/{model.Id}", new { text = model.Text ?? string.Empty }));
         }
 
+        [HttpGet]
+        public async Task<IActionResult> Pins(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return BadRequest(new { errors = new[] { "Choose a friend." } });
+
+            var (messages, status) = await GetAsync<List<MessageVM>>("api/dm/" + Uri.EscapeDataString(name.Trim()) + "/pins");
+            if (status == System.Net.HttpStatusCode.Unauthorized)
+                return Unauthorized();
+
+            var model = new PinnedMessagesVM { Messages = messages ?? new List<MessageVM>() };
+            if (int.TryParse(Request.Cookies["tz"], out var offset) && Math.Abs(offset) <= 14 * 60)
+                model.UtcOffsetMinutes = offset;
+
+            return PartialView("_PinnedMessages", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Pin([FromBody] PinMessageVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return ForwardToApi(client => client.PutAsJsonAsync($"api/dm/messages/{model.Id}/pin", new { pinned = model.Pinned }));
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public Task<IActionResult> React([FromBody] ReactMessageVM model)
