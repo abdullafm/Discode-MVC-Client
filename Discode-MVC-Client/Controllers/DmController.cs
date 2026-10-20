@@ -74,6 +74,26 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> Edit([FromBody] EditMessageVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return ForwardToApi(client => client.PutAsJsonAsync($"api/dm/messages/{model.Id}", new { text = model.Text ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> React([FromBody] ReactMessageVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return ForwardToApi(client => client.PutAsJsonAsync($"api/dm/messages/{model.Id}/reactions", new { emoji = model.Emoji ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> Read([FromBody] DmTargetVM model)
         {
             if (model is null || string.IsNullOrWhiteSpace(model.UserName))

@@ -111,14 +111,41 @@
                             {
                                 <div class="dm-divider"><span>@sentAt.ToString("MMMM d, yyyy", culture)</span></div>
                             }
-                            <div class="dm-msg@(compact ? " compact" : "")" data-id="@message.Id" data-sender="@message.SenderUserName" data-time="@Millis(message.CreatedAt)">
+                            <div class="dm-msg@(compact ? " compact" : "")" data-id="@message.Id" data-sender="@message.SenderUserName" data-time="@Millis(message.CreatedAt)" data-mine="@(message.Mine ? "1" : "0")">
                                 <img class="dm-msg-avatar" alt="" src="@(string.IsNullOrWhiteSpace(message.SenderAvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : message.SenderAvatarUrl)">
                                 <div class="dm-msg-body">
                                     <div class="dm-msg-head">
                                         <strong>@(string.IsNullOrWhiteSpace(message.SenderDisplayName) ? message.SenderUserName : message.SenderDisplayName)</strong>
                                         <time>@sentAt.ToString("h:mm tt", culture)</time>
                                     </div>
-                                    <div class="dm-msg-text">@message.Text</div>
+                                    <div class="dm-msg-text">@message.Text@if (message.EditedAt is not null){<span class="dm-msg-edited">(edited)</span>}</div>
+                                    @if (message.Reactions.Count > 0)
+                                    {
+                                        <div class="dm-reactions">
+                                            @foreach (var reaction in message.Reactions)
+                                            {
+                                                <button type="button" class="dm-reaction@(reaction.Reacted ? " mine" : "")" data-emoji="@reaction.Emoji" aria-pressed="@(reaction.Reacted ? "true" : "false")"><span class="dm-reaction-emoji">@reaction.Emoji</span><span class="dm-reaction-count">@reaction.Count</span></button>
+                                            }
+                                            <button type="button" class="dm-reaction-add emoji-open" data-act="reaction-add" aria-label="Add reaction"><i class="fa-regular fa-face-smile"></i></button>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="dm-msg-tools" role="toolbar" aria-label="Message actions">
+                                    <button type="button" class="dm-react" data-act="react" aria-label="React with heart">&#10084;&#65039;</button>
+                                    <button type="button" class="dm-react" data-act="react" aria-label="React with 100">&#128175;</button>
+                                    <button type="button" class="dm-react" data-act="react" aria-label="React with laughing">&#128518;</button>
+                                    <span class="dm-tools-sep"></span>
+                                    <button type="button" class="emoji-open" data-act="picker" aria-label="Add reaction"><i class="fa-regular fa-face-smile"></i></button>
+                                    @if (message.Mine)
+                                    {
+                                        <button type="button" data-act="edit" aria-label="Edit"><i class="fa-solid fa-pen"></i></button>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" data-act="reply" aria-label="Reply"><i class="fa-solid fa-reply"></i></button>
+                                    }
+                                    <button type="button" data-act="forward" aria-label="Forward"><i class="fa-solid fa-share"></i></button>
+                                    <button type="button" data-act="more" aria-label="More"><i class="fa-solid fa-ellipsis"></i></button>
                                 </div>
                             </div>
                             previous = message;
@@ -162,4 +189,25 @@
             <button type="button" class="dm-full">View Full Profile</button>
         </div>
     </section>
+    <div class="dm-msg-menu" id="dm-msg-menu" role="menu" hidden>
+        <div class="dm-menu-quick">
+            <button type="button" class="dm-react" data-act="react" aria-label="React with heart">&#10084;&#65039;</button>
+        </div>
+        <button type="button" role="menuitem" class="emoji-open" data-menu="reaction"><i class="fa-solid fa-face-smile"></i><span>Add Reaction</span><i class="fa-solid fa-chevron-right dm-menu-arrow"></i></button>
+        <hr>
+        <button type="button" role="menuitem" data-menu="edit" data-own-only><i class="fa-solid fa-pen"></i><span>Edit Message</span></button>
+        <button type="button" role="menuitem" data-menu="reply"><i class="fa-solid fa-reply"></i><span>Reply</span></button>
+        <button type="button" role="menuitem" data-menu="forward"><i class="fa-solid fa-share"></i><span>Forward</span></button>
+        <hr>
+        <button type="button" role="menuitem" data-menu="copy-text"><i class="fa-solid fa-copy"></i><span>Copy Text</span></button>
+        <button type="button" role="menuitem" data-menu="pin"><i class="fa-solid fa-thumbtack"></i><span>Pin Message</span></button>
+        <button type="button" role="menuitem" data-menu="bookmark"><i class="fa-regular fa-bookmark"></i><span>Bookmark Message</span></button>
+        <button type="button" role="menuitem" data-menu="reminder"><i class="fa-solid fa-clock"></i><span>Create Reminder</span><i class="fa-solid fa-chevron-right dm-menu-arrow"></i></button>
+        <button type="button" role="menuitem" data-menu="apps"><i class="fa-solid fa-shapes"></i><span>Apps</span><i class="fa-solid fa-chevron-right dm-menu-arrow"></i></button>
+        <button type="button" role="menuitem" data-menu="unread"><i class="fa-solid fa-comment-dots"></i><span>Mark Unread</span></button>
+        <button type="button" role="menuitem" data-menu="copy-link"><i class="fa-solid fa-link"></i><span>Copy Message Link</span></button>
+        <button type="button" role="menuitem" data-menu="speak"><i class="fa-solid fa-volume-high"></i><span>Speak Message</span></button>
+        <hr data-own-only>
+        <button type="button" role="menuitem" class="is-danger" data-menu="delete" data-own-only><i class="fa-solid fa-trash-can"></i><span>Delete Message</span></button>
+    </div>
 </main>

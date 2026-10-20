@@ -120,6 +120,32 @@ function dayLabel(stamp) {
     return new Date(stamp).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
 }
 
+function messageTools(mine) {
+    var tools = document.createElement("div");
+    tools.className = "dm-msg-tools";
+    tools.setAttribute("role", "toolbar");
+    tools.setAttribute("aria-label", "Message actions");
+    tools.innerHTML =
+        '<button type="button" class="dm-react" data-act="react" aria-label="React with heart">\u2764\uFE0F</button>' +
+        '<button type="button" class="dm-react" data-act="react" aria-label="React with 100">\uD83D\uDCAF</button>' +
+        '<button type="button" class="dm-react" data-act="react" aria-label="React with laughing">\uD83D\uDE06</button>' +
+        '<span class="dm-tools-sep"></span>' +
+        '<button type="button" class="emoji-open" data-act="picker" aria-label="Add reaction"><i class="fa-regular fa-face-smile"></i></button>' +
+        (mine
+            ? '<button type="button" data-act="edit" aria-label="Edit"><i class="fa-solid fa-pen"></i></button>'
+            : '<button type="button" data-act="reply" aria-label="Reply"><i class="fa-solid fa-reply"></i></button>') +
+        '<button type="button" data-act="forward" aria-label="Forward"><i class="fa-solid fa-share"></i></button>' +
+        '<button type="button" data-act="more" aria-label="More"><i class="fa-solid fa-ellipsis"></i></button>';
+    return tools;
+}
+
+function dmEditedLabel() {
+    var label = document.createElement("span");
+    label.className = "dm-msg-edited";
+    label.textContent = "(edited)";
+    return label;
+}
+
 function messageNodes(text) {
     var holder = document.createElement("div");
     holder.className = "dm-msg-text";
@@ -152,6 +178,7 @@ function appendMessage(message, forceScroll) {
     row.setAttribute("data-id", String(message.id));
     row.setAttribute("data-sender", message.senderUserName);
     row.setAttribute("data-time", String(stamp));
+    row.setAttribute("data-mine", message.mine ? "1" : "0");
 
     var face = document.createElement("img");
     face.className = "dm-msg-avatar";
@@ -170,8 +197,11 @@ function appendMessage(message, forceScroll) {
     head.appendChild(who);
     head.appendChild(when);
     body.appendChild(head);
-    body.appendChild(messageNodes(message.text));
+    var textHolder = messageNodes(message.text);
+    if (message.editedAt) textHolder.appendChild(dmEditedLabel());
+    body.appendChild(textHolder);
     row.appendChild(body);
+    row.appendChild(messageTools(message.mine));
     box.appendChild(row);
     document.getElementById("dm-wave-box").hidden = true;
     if (forceScroll || message.mine || atBottom) scrollDmToEnd();
@@ -195,12 +225,23 @@ function showDmPage() {
     }
     var texts = document.querySelectorAll("#dm-messages .dm-msg-text");
     for (var j = 0; j < texts.length; j++) {
-        var text = texts[j].textContent;
+        var edited = texts[j].querySelector(".dm-msg-edited");
+        var text = edited ? texts[j].firstChild.textContent : texts[j].textContent;
         FLAG_RE.lastIndex = 0;
         if (!FLAG_RE.test(text)) continue;
         FLAG_RE.lastIndex = 0;
         while (texts[j].firstChild) texts[j].removeChild(texts[j].firstChild);
         nodesForText(text).forEach(function (node) { texts[j].appendChild(node); });
+        if (edited) texts[j].appendChild(edited);
+    }
+    var faces = document.querySelectorAll("#dm-messages .dm-reaction-emoji");
+    for (var k = 0; k < faces.length; k++) {
+        var symbol = faces[k].textContent;
+        FLAG_RE.lastIndex = 0;
+        if (!FLAG_RE.test(symbol)) continue;
+        FLAG_RE.lastIndex = 0;
+        while (faces[k].firstChild) faces[k].removeChild(faces[k].firstChild);
+        nodesForText(symbol).forEach(function (node) { faces[k].appendChild(node); });
     }
     scrollDmToEnd();
     if (window.matchMedia("(max-width: 1100px)").matches) setDmProfile(false, true);
@@ -593,6 +634,313 @@ function insertEmoji(emoji) {
 
 var dmInput = document.getElementById("dm-input");
 
+var dmPicker = { mode: "", row: null };
+
+function dmMessageText(row) {
+    var clone = row.querySelector(".dm-msg-text").cloneNode(true);
+    var edited = clone.querySelector(".dm-msg-edited");
+    if (edited) edited.remove();
+    return fieldValue(clone);
+}
+
+function dmCancelEdit(row) {
+    var editor = row.querySelector(".dm-edit");
+    if (editor) editor.remove();
+    var holder = row.querySelector(".dm-msg-text");
+    if (holder) holder.hidden = false;
+    row.classList.remove("is-editing");
+}
+
+function dmGrowEditor(area) {
+    area.style.height = "auto";
+    area.style.height = area.scrollHeight + "px";
+}
+
+function dmStartEdit(row) {
+    if (row.getAttribute("data-mine") !== "1" || row.querySelector(".dm-edit")) return;
+    var open = document.querySelector("#dm-messages .dm-msg.is-editing");
+    if (open) dmCancelEdit(open);
+    var holder = row.querySelector(".dm-msg-text");
+    var box = document.createElement("div");
+    box.className = "dm-edit";
+    box.innerHTML =
+        '<div class="dm-edit-box">' +
+        '<textarea rows="1" maxlength="2000" aria-label="Edit message"></textarea>' +
+        '<button type="button" class="dm-edit-emoji emoji-open" data-act="edit-picker" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>' +
+        '</div>' +
+        '<p class="dm-edit-hint">escape to <a href="#" data-edit="cancel">cancel</a> \u2022 enter to <a href="#" data-edit="save">save</a></p>';
+    holder.hidden = true;
+    holder.parentNode.insertBefore(box, holder.nextSibling);
+    row.classList.add("is-editing");
+    var area = box.querySelector("textarea");
+    area.value = dmMessageText(row);
+    dmGrowEditor(area);
+    area.focus();
+    area.setSelectionRange(area.value.length, area.value.length);
+    var scroller = document.querySelector(".dm-scroll");
+    if (scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 160) scrollDmToEnd();
+}
+
+function dmApplyEdit(row, message) {
+    dmCancelEdit(row);
+    var holder = row.querySelector(".dm-msg-text");
+    while (holder.firstChild) holder.removeChild(holder.firstChild);
+    nodesForText(message.text).forEach(function (node) { holder.appendChild(node); });
+    if (message.editedAt) holder.appendChild(dmEditedLabel());
+}
+
+function dmSaveEdit(row) {
+    var area = row.querySelector(".dm-edit textarea");
+    if (!area) return;
+    var text = area.value.trim();
+    if (!text) return;
+    if (text === dmMessageText(row).trim()) {
+        dmCancelEdit(row);
+        return;
+    }
+    showDmError("");
+    dmRequest("/Dm/Edit", "POST", { id: Number(row.getAttribute("data-id")), text: text }).then(function (message) {
+        dmApplyEdit(row, message);
+    }).catch(function (err) {
+        showDmError(err.message);
+    });
+}
+
+function dmRenderReactions(row, reactions) {
+    var body = row.querySelector(".dm-msg-body");
+    var box = body.querySelector(".dm-reactions");
+    if (!reactions || reactions.length === 0) {
+        if (box) box.remove();
+        return;
+    }
+    if (!box) {
+        box = document.createElement("div");
+        box.className = "dm-reactions";
+        body.appendChild(box);
+    }
+    while (box.firstChild) box.removeChild(box.firstChild);
+    reactions.forEach(function (reaction) {
+        var chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "dm-reaction" + (reaction.reacted ? " mine" : "");
+        chip.setAttribute("data-emoji", reaction.emoji);
+        chip.setAttribute("aria-pressed", reaction.reacted ? "true" : "false");
+        var face = document.createElement("span");
+        face.className = "dm-reaction-emoji";
+        nodesForText(reaction.emoji).forEach(function (node) { face.appendChild(node); });
+        var count = document.createElement("span");
+        count.className = "dm-reaction-count";
+        count.textContent = String(reaction.count);
+        chip.appendChild(face);
+        chip.appendChild(count);
+        box.appendChild(chip);
+    });
+    var add = document.createElement("button");
+    add.type = "button";
+    add.className = "dm-reaction-add emoji-open";
+    add.setAttribute("data-act", "reaction-add");
+    add.setAttribute("aria-label", "Add reaction");
+    add.innerHTML = '<i class="fa-regular fa-face-smile"></i>';
+    box.appendChild(add);
+}
+
+function dmReact(row, emoji) {
+    showDmError("");
+    dmRequest("/Dm/React", "POST", { id: Number(row.getAttribute("data-id")), emoji: emoji }).then(function (reply) {
+        dmRenderReactions(row, reply.reactions || []);
+    }).catch(function (err) {
+        showDmError(err.message);
+    });
+}
+
+function dmClosePicker() {
+    dmPicker.mode = "";
+    closeEmojiPanel();
+}
+
+function dmOpenPicker(anchor, mode, row) {
+    var panel = document.getElementById("emoji-panel");
+    if (!panel.hidden && dmPicker.mode === mode && dmPicker.row === row) {
+        dmClosePicker();
+        return;
+    }
+    emojiField = null;
+    dmPicker = { mode: mode, row: row };
+    if (!panel.childElementCount && typeof fillEmojiPanel === "function") {
+        fillEmojiPanel(panel, "emoji", function (choice, emoji) {
+            var img = choice.querySelector("img");
+            if (!img) return;
+            img.alt = countryLabel(emoji) || "";
+            img.src = flagCode(emoji) ? flagSrc(emoji) : twemojiSrc(emoji);
+            if (flagCode(emoji)) {
+                img.onerror = function () {
+                    img.onerror = null;
+                    img.src = twemojiSrc(emoji);
+                };
+            }
+        });
+    }
+    panel.hidden = false;
+    panel.style.position = "fixed";
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+    var rect = anchor.getBoundingClientRect();
+    var width = panel.offsetWidth || 340;
+    var height = panel.offsetHeight || 300;
+    var left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
+    var top = rect.top - height - 8;
+    if (top < 8) top = Math.min(rect.bottom + 8, window.innerHeight - height - 8);
+    panel.style.left = left + "px";
+    panel.style.top = Math.max(8, top) + "px";
+}
+
+function dmCloseMenu() {
+    var menu = document.getElementById("dm-msg-menu");
+    if (menu) menu.hidden = true;
+    menu.removeAttribute("data-row");
+}
+
+function dmOpenMenu(anchor, row) {
+    var menu = document.getElementById("dm-msg-menu");
+    if (!menu.hidden && menu.getAttribute("data-row") === row.getAttribute("data-id")) {
+        dmCloseMenu();
+        return;
+    }
+    var mine = row.getAttribute("data-mine") === "1";
+    var gated = menu.querySelectorAll("[data-own-only]");
+    for (var i = 0; i < gated.length; i++) gated[i].hidden = !mine;
+    menu.setAttribute("data-row", row.getAttribute("data-id"));
+    menu.hidden = false;
+    var rect = anchor.getBoundingClientRect();
+    var width = menu.offsetWidth;
+    var height = menu.offsetHeight;
+    var left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
+    var top = rect.bottom + 6;
+    if (top + height > window.innerHeight - 8) top = Math.max(8, rect.top - height - 6);
+    if (top + height > window.innerHeight - 8) top = Math.max(8, window.innerHeight - height - 8);
+    menu.style.left = left + "px";
+    menu.style.top = top + "px";
+}
+
+function dmCopy(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(function () {});
+}
+
+function bindDmMessages() {
+    var box = document.getElementById("dm-messages");
+    var menu = document.getElementById("dm-msg-menu");
+    var panel = document.getElementById("emoji-panel");
+
+    box.addEventListener("click", function (event) {
+        var hint = event.target.closest("[data-edit]");
+        if (hint) {
+            event.preventDefault();
+            var editing = hint.closest(".dm-msg");
+            if (hint.getAttribute("data-edit") === "save") dmSaveEdit(editing);
+            else dmCancelEdit(editing);
+            return;
+        }
+        var chip = event.target.closest(".dm-reaction");
+        if (chip) {
+            dmReact(chip.closest(".dm-msg"), chip.getAttribute("data-emoji"));
+            return;
+        }
+        var button = event.target.closest(".dm-msg-tools button, .dm-edit-emoji, .dm-reaction-add");
+        if (!button) return;
+        var row = button.closest(".dm-msg");
+        var act = button.getAttribute("data-act");
+        if (act === "react") dmReact(row, button.textContent.trim());
+        else if (act === "picker" || act === "reaction-add") dmOpenPicker(button, "reaction", row);
+        else if (act === "edit-picker") dmOpenPicker(button, "edit", row);
+        else if (act === "edit") dmStartEdit(row);
+        else if (act === "more") dmOpenMenu(button, row);
+    });
+
+    box.addEventListener("keydown", function (event) {
+        if (event.target.tagName !== "TEXTAREA") return;
+        var row = event.target.closest(".dm-msg");
+        if (event.key === "Escape") {
+            event.preventDefault();
+            dmCancelEdit(row);
+        } else if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+            event.preventDefault();
+            dmSaveEdit(row);
+        }
+    });
+
+    box.addEventListener("input", function (event) {
+        if (event.target.tagName === "TEXTAREA") dmGrowEditor(event.target);
+    });
+
+    menu.addEventListener("click", function (event) {
+        var item = event.target.closest("[data-menu], [data-act]");
+        if (!item) return;
+        var row = box.querySelector('.dm-msg[data-id="' + menu.getAttribute("data-row") + '"]');
+        var action = item.getAttribute("data-menu");
+        dmCloseMenu();
+        if (!row) return;
+        if (item.getAttribute("data-act") === "react") dmReact(row, item.textContent.trim());
+        else if (action === "edit") dmStartEdit(row);
+        else if (action === "copy-text") dmCopy(dmMessageText(row));
+        else if (action === "copy-link") dmCopy(window.location.origin + window.location.pathname + window.location.search + "#message-" + row.getAttribute("data-id"));
+        else if (action === "reaction") dmOpenPicker(row.querySelector('[data-act="picker"]') || row, "reaction", row);
+    });
+
+    panel.addEventListener("click", function (event) {
+        if (!dmPicker.mode) return;
+        var choice = event.target.closest(".emoji-choice");
+        if (!choice) return;
+        if (dmPicker.mode === "edit" && dmPicker.row) {
+            var area = dmPicker.row.querySelector(".dm-edit textarea");
+            if (area) {
+                var emoji = choice.getAttribute("data-emoji") || choice.textContent;
+                var start = area.selectionStart;
+                var end = area.selectionEnd;
+                area.value = area.value.slice(0, start) + emoji + area.value.slice(end);
+                area.setSelectionRange(start + emoji.length, start + emoji.length);
+                dmGrowEditor(area);
+                area.focus();
+            }
+        }
+        if (dmPicker.mode === "reaction" && dmPicker.row) {
+            dmReact(dmPicker.row, choice.getAttribute("data-emoji") || choice.textContent);
+        }
+        dmClosePicker();
+    }, true);
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest("#dm-msg-menu, .dm-msg-tools [data-act='more']")) dmCloseMenu();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            dmCloseMenu();
+            if (dmPicker.mode) dmClosePicker();
+        }
+    });
+    window.addEventListener("resize", function () {
+        dmCloseMenu();
+        if (dmPicker.mode) dmClosePicker();
+    });
+    document.querySelector(".dm-scroll").addEventListener("scroll", function () {
+        dmCloseMenu();
+        if (dmPicker.mode) dmClosePicker();
+    });
+
+    document.addEventListener("discode-dm-reaction", function (event) {
+        var data = event.detail;
+        if (!data) return;
+        var row = box.querySelector('.dm-msg[data-id="' + data.messageId + '"]');
+        if (row) dmRenderReactions(row, data.reactions || []);
+    });
+
+    document.addEventListener("discode-dm-edited", function (event) {
+        var data = event.detail;
+        if (!data || !data.message) return;
+        var row = box.querySelector('.dm-msg[data-id="' + data.message.id + '"]');
+        if (row && !row.classList.contains("is-editing")) dmApplyEdit(row, data.message);
+    });
+}
+
 function syncDmPlaceholder() {
     var field = document.getElementById("dm-input");
     var hint = document.getElementById("dm-placeholder");
@@ -607,6 +955,8 @@ function bindDmInput() {
     syncDmPlaceholder();
     document.getElementById("dm-emoji").addEventListener("mousedown", rememberCaret);
     document.getElementById("dm-emoji").addEventListener("click", function () {
+        dmPicker.mode = "";
+        document.getElementById("emoji-panel").style.position = "";
         openEmojiPanel(this, document.getElementById("dm-input"));
     });
 
@@ -657,7 +1007,7 @@ function bindDmInput() {
     });
 
     document.addEventListener("click", function (event) {
-        if (event.target.closest("#emoji-panel, #dm-emoji")) return;
+        if (event.target.closest("#emoji-panel, #dm-emoji, .emoji-open")) return;
         closeEmojiPanel();
     });
 }
@@ -666,6 +1016,7 @@ if (document.getElementById("dm-chat")) {
     bindDmCall();
     bindDmCompose();
     bindDmInput();
+    bindDmMessages();
 }
 
 if (document.readyState === "complete") startDmPage();

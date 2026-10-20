@@ -106,6 +106,14 @@
                     document.dispatchEvent(new CustomEvent("discode-dm-message", { detail: data }));
                 });
 
+                connection.on("DirectMessageEdited", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-dm-edited", { detail: data }));
+                });
+
+                connection.on("DirectMessageReaction", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-dm-reaction", { detail: data }));
+                });
+
                 connection.on("NotificationsChanged", function () {
                     document.dispatchEvent(new CustomEvent("discode-notifications-changed"));
                 });

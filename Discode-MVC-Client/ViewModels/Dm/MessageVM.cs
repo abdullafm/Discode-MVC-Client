@@ -9,6 +9,8 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public string SenderAvatarUrl { get; set; } = string.Empty;
         public string Text { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
+        public DateTime? EditedAt { get; set; }
         public bool Mine { get; set; }
+        public List<ReactionVM> Reactions { get; set; } = new();
     }
 }
