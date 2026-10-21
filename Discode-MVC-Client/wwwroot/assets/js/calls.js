@@ -28,6 +28,7 @@
     var remoteScreenStream = null;
     var peerScreen = null;
     var watchingPeerScreen = false;
+    var focusedScreen = "";
     var peerMuted = false;
     var peerDeafened = false;
     var AUDIO_KEY = "discode-call-audio";
@@ -221,6 +222,12 @@
         if (parts.name) parts.name.textContent = info.name || "";
     }
 
+    function canFocus(tile, keeping) {
+        if (!tile) return false;
+        if (tile.classList.contains("is-screen")) return !tile.classList.contains("is-unwatched");
+        return tile.classList.contains("has-video") || (!!focusedScreen && !!keeping);
+    }
+
     function screenInfo() {
         if (screenState !== "on" || !screenStream) return null;
         var track = screenStream.getVideoTracks()[0];
@@ -281,6 +288,12 @@
         fillTile(peerFace, { camera: peerCamera ? "on" : "off", stream: remoteVideoStream, muted: peerMuted, deafened: peerDeafened, name: state ? name(state) : "" });
         fillScreenTile("call-screen-peer", theirsShown, remoteScreenStream, peerScreen, state ? name(state) : "", !watchingPeerScreen);
         fillScreenTile("call-screen-me", mineShown, screenStream, screenInfo(), myName ? myName.textContent.trim() : "");
+        avatar.parentNode.id = "call-me-face";
+        if (focusedScreen && !canFocus(document.getElementById(focusedScreen))) focusedScreen = "";
+        stage.classList.toggle("has-focus", !!focusedScreen);
+        [].forEach.call(document.querySelectorAll("#call-faces > .call-face"), function (tile) {
+            tile.classList.toggle("is-focused", focusedScreen === tile.id);
+        });
     }
 
     var cameraError = "";
@@ -347,8 +360,26 @@
     }
 
     document.addEventListener("click", function (event) {
+        var tile = event.target.closest && event.target.closest("#call-faces > .call-face");
+        if (tile && !event.target.closest(".call-screen-watch, .call-tile-retry") && tile.id && (focusedScreen || canFocus(tile))) {
+            if (canFocus(tile)) {
+                focusedScreen = focusedScreen === tile.id ? "" : tile.id;
+                renderTiles();
+            } else if (focusedScreen && tile.id !== focusedScreen) {
+                focusedScreen = tile.id;
+                renderTiles();
+            }
+            return;
+        }
         if (event.target.closest && event.target.closest("#call-screen-peer .call-screen-watch")) {
             watchingPeerScreen = true;
+            renderTiles();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && focusedScreen) {
+            focusedScreen = "";
             renderTiles();
         }
     });
