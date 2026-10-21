@@ -312,7 +312,7 @@
             renderTiles();
             return;
         }
-        if (!state || state.joined === false || state.status !== "active") {
+        if (!state || state.joined === false) {
             if (buttons && buttons.setScreenButton) buttons.setScreenButton(false);
             return;
         }
@@ -333,7 +333,7 @@
             var track = stream.getVideoTracks()[0];
             if (track) track.onended = function () { setScreen(false); };
             if (screenSender && track) screenSender.replaceTrack(track).catch(function () {});
-            sendMuteState();
+            if (state.status === "active") sendMuteState();
             renderTiles();
         }).catch(function () {
             if (token !== screenToken) return;
