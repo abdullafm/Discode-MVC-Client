@@ -29,6 +29,7 @@
     var peerScreen = null;
     var watchingPeerScreen = false;
     var focusedScreen = "";
+    var watchSince = 0;
     var peerMuted = false;
     var peerDeafened = false;
     var AUDIO_KEY = "discode-call-audio";
@@ -168,6 +169,7 @@
 
     function sendMuteState() {
         sendSignal("mute", { muted: micIsMuted(), deafened: audioState.deafened, camera: cameraState === "on", screen: screenInfo() });
+        if (state) invoke("SetCallScreen", state.callId, screenState === "on").catch(function () {});
     }
 
     function applyMute() {
@@ -278,15 +280,16 @@
         var peerFace = document.getElementById("call-peer-face");
         if (!stage || !avatar || !peerFace) return;
         var mineShown = screenState === "on" && !!screenStream;
-        var theirsShown = !!peerScreen && !!remoteScreenStream;
-        if (!peerScreen) watchingPeerScreen = false;
+        var ghostShown = !!state && state.joined === false && !!state.peerScreen;
+        var theirsShown = (!!peerScreen && !!remoteScreenStream) || ghostShown;
+        if (!peerScreen && !ghostShown && Date.now() - watchSince > 15000) watchingPeerScreen = false;
         var video = cameraState !== "off" || peerCamera || mineShown || theirsShown;
         stage.classList.toggle("is-video", video);
         stage.classList.toggle("has-screen-tile", mineShown || theirsShown);
         var myName = document.querySelector("#user-panel .me-display");
         fillTile(avatar.parentNode, { camera: cameraState, stream: cameraStream, muted: audioState.muted, deafened: audioState.deafened, name: myName ? myName.textContent.trim() : "", error: cameraError });
         fillTile(peerFace, { camera: peerCamera ? "on" : "off", stream: remoteVideoStream, muted: peerMuted, deafened: peerDeafened, name: state ? name(state) : "" });
-        fillScreenTile("call-screen-peer", theirsShown, remoteScreenStream, peerScreen, state ? name(state) : "", !watchingPeerScreen);
+        fillScreenTile("call-screen-peer", theirsShown, ghostShown ? null : remoteScreenStream, ghostShown ? null : peerScreen, state ? name(state) : "", ghostShown || !watchingPeerScreen);
         fillScreenTile("call-screen-me", mineShown, screenStream, screenInfo(), myName ? myName.textContent.trim() : "");
         avatar.parentNode.id = "call-me-face";
         if (focusedScreen && !canFocus(document.getElementById(focusedScreen))) focusedScreen = "";
@@ -382,6 +385,8 @@
         }
         if (event.target.closest && event.target.closest("#call-screen-peer .call-screen-watch")) {
             watchingPeerScreen = true;
+            watchSince = Date.now();
+            if (state && state.joined === false) answer(false);
             renderTiles();
         }
     });

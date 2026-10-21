@@ -2525,7 +2525,7 @@ html.theme-dark body .conversation-sidebar .user-panel .user-controls > button:h
     transition: width 0.55s ease, margin 0.55s ease, opacity 0.4s ease, transform 0.55s ease;
 }
 
-.call-faces.is-me-away .call-face:not(.is-peer) {
+.call-faces.is-me-away .call-face:not(.is-peer):not(.is-screen) {
     width: 0;
     margin-left: -28px;
     opacity: 0;
@@ -2552,7 +2552,7 @@ html.theme-dark .dm-call-join {
     text-decoration: underline;
 }
 
-.call-faces:not(.is-callee).is-me-away .call-face:not(.is-peer) {
+.call-faces:not(.is-callee).is-me-away .call-face:not(.is-peer):not(.is-screen) {
     margin-left: 0;
     margin-right: -28px;
 }
@@ -2777,7 +2777,7 @@ html.theme-dark .dm-call-join {
 }
 
 .call-stage.is-video .call-face.is-peer.is-away,
-.call-stage.is-video .call-faces.is-me-away .call-face:not(.is-peer) {
+.call-stage.is-video .call-faces.is-me-away .call-face:not(.is-peer):not(.is-screen) {
     flex: 0 0 0;
     max-width: 0;
     margin-left: -16px;
@@ -2785,7 +2785,7 @@ html.theme-dark .dm-call-join {
 }
 
 .call-stage.is-video .call-faces.is-callee .call-face.is-peer.is-away,
-.call-stage.is-video .call-faces:not(.is-callee).is-me-away .call-face:not(.is-peer) {
+.call-stage.is-video .call-faces:not(.is-callee).is-me-away .call-face:not(.is-peer):not(.is-screen) {
     margin-left: 0;
     margin-right: -16px;
 }
