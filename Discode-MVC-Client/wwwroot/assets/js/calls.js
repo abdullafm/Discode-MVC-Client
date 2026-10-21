@@ -280,7 +280,7 @@
         var peerFace = document.getElementById("call-peer-face");
         if (!stage || !avatar || !peerFace) return;
         var mineShown = screenState === "on" && !!screenStream;
-        var ghostShown = !!state && state.joined === false && !!state.peerScreen;
+        var ghostShown = !!state && (state.joined === false || (state.status === "ringing" && state.role === "callee")) && !!state.peerScreen;
         var theirsShown = (!!peerScreen && !!remoteScreenStream) || ghostShown;
         if (!peerScreen && !ghostShown && Date.now() - watchSince > 15000) watchingPeerScreen = false;
         var video = cameraState !== "off" || peerCamera || mineShown || theirsShown;
@@ -337,6 +337,7 @@
             stopScreenStream();
             screenState = "off";
             if (buttons && buttons.setScreenButton) buttons.setScreenButton(false);
+            if (state) invoke("SetCallScreen", state.callId, false).catch(function () {});
             if (state && state.status === "active") sendMuteState();
             renderTiles();
             return;
@@ -362,6 +363,7 @@
             var track = stream.getVideoTracks()[0];
             if (track) track.onended = function () { setScreen(false); };
             if (screenSender && track) screenSender.replaceTrack(track).catch(function () {});
+            invoke("SetCallScreen", state.callId, true).catch(function () {});
             if (state.status === "active") sendMuteState();
             renderTiles();
         }).catch(function () {
@@ -386,7 +388,7 @@
         if (event.target.closest && event.target.closest("#call-screen-peer .call-screen-watch")) {
             watchingPeerScreen = true;
             watchSince = Date.now();
-            if (state && state.joined === false) answer(false);
+            if (state && (state.joined === false || (state.status === "ringing" && state.role === "callee"))) answer(false);
             renderTiles();
         }
     });
@@ -832,7 +834,7 @@
 
     document.addEventListener("discode-call-updated", function (event) {
         if (!state || !event.detail || state.callId !== event.detail.callId) return;
-        stopRing();
+        if (event.detail.status === "active") stopRing();
         state = event.detail;
         if (state.joined === false) teardownMedia();
         render();
