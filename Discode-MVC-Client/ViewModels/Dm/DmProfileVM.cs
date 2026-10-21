@@ -12,6 +12,7 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public string Bio { get; set; } = string.Empty;
         public string Pronouns { get; set; } = string.Empty;
         public string CustomStatus { get; set; } = string.Empty;
+        public bool IsPrivate { get; set; }
         public DateTime MemberSince { get; set; }
         public int UtcOffsetMinutes { get; set; }
 
@@ -34,6 +35,7 @@ namespace Discode_MVC_Client.ViewModels.Dm
                 Bio = chat.Bio,
                 Pronouns = chat.Pronouns,
                 CustomStatus = chat.CustomStatus,
+                IsPrivate = chat.IsPrivate,
                 MemberSince = chat.MemberSince,
                 UtcOffsetMinutes = utcOffsetMinutes
             };
@@ -51,6 +53,7 @@ namespace Discode_MVC_Client.ViewModels.Dm
                 Bio = profile.Bio,
                 Pronouns = profile.Pronouns,
                 CustomStatus = profile.CustomStatus,
+                IsPrivate = profile.IsPrivate,
                 MemberSince = profile.MemberSince,
                 UtcOffsetMinutes = utcOffsetMinutes
             };

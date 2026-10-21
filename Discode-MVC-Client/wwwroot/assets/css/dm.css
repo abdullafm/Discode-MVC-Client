@@ -2070,3 +2070,37 @@ html.theme-dark .dm-msg.is-undelivered .dm-msg-text,
 html.theme-dark .dm-msg-undelivered {
     color: #f23f42;
 }
+
+.dm-private-head {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 100px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-left: 16px;
+    color: #060607;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.dm-private-note {
+    margin: 16px 20px 0;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: #e3e5e8;
+    color: #060607;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+html.theme-dark .dm-private-head {
+    color: #f2f3f5;
+}
+
+html.theme-dark .dm-private-note {
+    background: #232428;
+    color: #dbdee1;
+}

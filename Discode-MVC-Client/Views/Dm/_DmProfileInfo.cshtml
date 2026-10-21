@@ -5,6 +5,10 @@
     var status = Model.HasChat && Model.Status != "online" ? " " + Model.Status : "";
     var joined = DateTime.SpecifyKind(Model.MemberSince, DateTimeKind.Utc).AddMinutes(Model.UtcOffsetMinutes);
 }
+@if (Model.IsPrivate)
+{
+    <div class="dm-private-head"><i class="fa-solid fa-lock"></i> <span>Private Profile</span></div>
+}
 <div class="dm-profile-photo">
     <img class="dm-profile-avatar" id="dm-profile-avatar" src="@avatar" alt="">
     <span class="dm-status@(status)"></span>
@@ -17,6 +21,10 @@
     <h2 id="dm-profile-name">@(Model.HasChat ? Model.Name : "")</h2>
     <p id="dm-profile-handle">@Model.UserName@if (!string.IsNullOrWhiteSpace(Model.Pronouns)) { <text> • @Model.Pronouns</text> }</p>
 </div>
+@if (Model.IsPrivate)
+{
+    <p class="dm-private-note">@Model.Name's profile is private, so some info is hidden. Add them as a friend to see more.</p>
+}
 <div class="dm-profile-body">
     @if (!string.IsNullOrWhiteSpace(Model.Bio))
     {

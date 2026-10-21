@@ -15,6 +15,7 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public int? FriendRequestId { get; set; }
         public string Relation { get; set; } = "none";
         public int? BlockId { get; set; }
+        public bool IsPrivate { get; set; }
         public List<MessageVM> Messages { get; set; } = new List<MessageVM>();
     }
 }
