@@ -2592,7 +2592,7 @@ html.theme-dark .dm-call-join {
     gap: 16px;
     padding: 0 24px;
     box-sizing: border-box;
-    align-items: stretch;
+    align-items: center;
 }
 
 .call-stage.is-video .call-face {
@@ -2600,7 +2600,9 @@ html.theme-dark .dm-call-join {
     min-width: 0;
     max-width: 560px;
     width: auto;
-    height: 100%;
+    height: auto;
+    max-height: 100%;
+    aspect-ratio: 16 / 9;
     border-radius: 12px;
     background: #1b1c1f;
     overflow: hidden;
