@@ -2,7 +2,7 @@
 @{
     var returnUrl = Url.Action("Index", "Dm", new { name = Model.UserName });
 }
-<i hidden data-relation="@Model.Relation"></i>
+<i hidden data-relation="@Model.Relation" data-can-message="@(Model.CanMessage ? "1" : "0")"></i>
 @if (Model.Relation == "blocked" && Model.BlockId is not null)
 {
     <form asp-controller="Friend" asp-action="Unblock" method="post" class="dm-meta-form">

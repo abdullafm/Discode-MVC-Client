@@ -2070,3 +2070,12 @@ html.theme-dark .dm-msg.is-undelivered .dm-msg-text,
 html.theme-dark .dm-msg-undelivered {
     color: #f23f42;
 }
+
+.dm-input-wrap.is-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.dm-input-wrap.is-disabled .rich-text {
+    pointer-events: none;
+}

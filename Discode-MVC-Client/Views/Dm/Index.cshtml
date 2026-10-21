@@ -93,12 +93,12 @@
                         <div id="dm-relation" class="dm-meta-forms">
                             @if (chat is not null)
                             {
-                                <partial name="_DmRelation" model="new DmRelationVM { UserName = chat.UserName, Relation = chat.Relation, FriendRequestId = chat.FriendRequestId, BlockId = chat.BlockId }" />
+                                <partial name="_DmRelation" model="new DmRelationVM { UserName = chat.UserName, Relation = chat.Relation, FriendRequestId = chat.FriendRequestId, BlockId = chat.BlockId, CanMessage = chat.CanMessage }" />
                             }
                         </div>
                     </div>
                 </div>
-                <div class="dm-wave" id="dm-wave-box" hidden="@(chat is null || chat.Messages.Count > 0)">
+                <div class="dm-wave" id="dm-wave-box" hidden="@(chat is null || chat.Messages.Count > 0 || !chat.CanMessage)">
                     <span class="dm-hand" aria-hidden="true">&#128075;</span>
                     <button type="button" id="dm-wave">Wave to @shownName</button>
                 </div>
@@ -178,11 +178,15 @@
                 <span>Replying to <strong id="dm-reply-name"></strong></span>
                 <button type="button" id="dm-reply-cancel" aria-label="Cancel reply"><i class="fa-solid fa-circle-xmark"></i></button>
             </div>
-            <form class="dm-compose" id="dm-compose" hidden="@(chat is null)">
+            <form class="dm-compose" id="dm-compose" hidden="@(chat is null)" data-can-text="Message @@@shownName" data-cant-text="You can message @shownName once you are friends.">
                 <button type="button" aria-label="Add"><i class="fa-solid fa-plus"></i></button>
-                <div class="dm-input-wrap">
-                    <span class="dm-placeholder" id="dm-placeholder" aria-hidden="true">Message @@@shownName</span>
-                    <div class="rich-text" id="dm-input" contenteditable="true" role="textbox" aria-label="Message" data-placeholder="Message @@@shownName" data-empty="1"></div>
+                @{
+                    var canMessage = chat is null || chat.CanMessage;
+                    var composePlaceholder = canMessage ? "Message @" + shownName : "You can message " + shownName + " once you are friends.";
+                }
+                <div class="dm-input-wrap@(canMessage ? "" : " is-disabled")">
+                    <span class="dm-placeholder" id="dm-placeholder" aria-hidden="true">@composePlaceholder</span>
+                    <div class="rich-text" id="dm-input" contenteditable="@(canMessage ? "true" : "false")" role="textbox" aria-label="Message" data-placeholder="@composePlaceholder" data-empty="1"></div>
                 </div>
                 <div class="dm-compose-tools">
                     <button type="button" id="dm-emoji" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>
