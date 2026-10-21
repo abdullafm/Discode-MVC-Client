@@ -2463,3 +2463,80 @@ html.theme-dark body .conversation-sidebar .user-panel .user-controls > button:h
     margin-left: 0;
     margin-right: -28px;
 }
+
+.call-answer-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 16px;
+    z-index: 5;
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+}
+
+.call-answer-bar[hidden] {
+    display: none;
+}
+
+.call-answer-btn {
+    width: 82px;
+    height: 62px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 12px;
+    color: #ffffff !important;
+    font-size: 22px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.call-answer-btn.is-accept {
+    background: #248046;
+}
+
+.call-answer-btn.is-accept:hover {
+    background: #1a6334;
+}
+
+.call-answer-btn.is-decline {
+    background: #da373c;
+}
+
+.call-answer-btn.is-decline:hover {
+    background: #b02a2e;
+}
+
+.call-stage.is-incoming .call-bar,
+.call-stage.is-joinable .call-bar {
+    display: none;
+}
+
+.call-stage.is-joinable #call-answer-decline {
+    display: none;
+}
+
+.call-stage.is-incoming #call-mute {
+    display: none;
+}
+
+.call-face:not(.is-peer) {
+    transition: width 0.55s ease, margin 0.55s ease, opacity 0.4s ease, transform 0.55s ease;
+}
+
+.call-faces.is-me-away .call-face:not(.is-peer) {
+    width: 0;
+    margin-left: -28px;
+    opacity: 0;
+    transform: scale(0.4);
+    pointer-events: none;
+}
+
+.call-faces.is-callee .call-face.is-peer img {
+    box-shadow: none;
+}
+
+.call-faces.is-callee .call-face:not(.is-peer) img {
+    box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.12);
+}

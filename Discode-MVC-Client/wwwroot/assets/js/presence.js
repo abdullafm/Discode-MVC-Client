@@ -107,6 +107,10 @@
                     document.dispatchEvent(new CustomEvent("discode-call-accepted", { detail: data }));
                 });
 
+                connection.on("CallUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-call-updated", { detail: data }));
+                });
+
                 connection.on("CallPeerLeft", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-call-peer", { detail: { callId: data.callId, present: false } }));
                 });

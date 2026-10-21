@@ -310,14 +310,14 @@
 
     function render() {
         var incoming = !!state && state.status === "ringing" && state.role === "callee";
-        invite.hidden = !incoming;
+        invite.hidden = !incoming || onDmPageOf(state);
         if (incoming) {
             document.getElementById("incoming-call-avatar").src = state.other.avatarUrl || "/assets/img/img-icon-profile.jpeg";
             document.getElementById("incoming-call-name").textContent = name(state);
             document.getElementById("incoming-call-kind").textContent = state.video ? "Incoming Video Call" : "Incoming Voice Call";
         }
 
-        var inCall = !!state && !incoming;
+        var inCall = !!state && !incoming && state.joined !== false;
         if (sidebarCall) {
             sidebarCall.hidden = !inCall;
             if (inCall) {
@@ -358,7 +358,7 @@
         if (call) {
             state = call;
             if (call.status === "ringing" && call.role === "callee") startRing(1);
-            if (call.status === "active") beginMedia(call);
+            if (call.status === "active" && call.joined !== false) beginMedia(call);
             render();
             emit("");
         } else if (state) {
@@ -399,6 +399,14 @@
 
     document.addEventListener("discode-call-signal", function (event) {
         handleSignal(event.detail);
+    });
+
+    document.addEventListener("discode-call-updated", function (event) {
+        if (!state || !event.detail || state.callId !== event.detail.callId) return;
+        stopRing();
+        state = event.detail;
+        render();
+        emit("");
     });
 
     document.addEventListener("discode-call-peer", function (event) {
@@ -460,10 +468,30 @@
         });
     }
 
+    function answer(video) {
+        if (!state) return Promise.resolve();
+        if (state.role === "callee" && state.status === "ringing") {
+            accept();
+            return Promise.resolve();
+        }
+        if (state.joined === false) return start(state.other.userName, video);
+        return Promise.resolve();
+    }
+
     function decline() {
         if (!state) return;
-        invoke("DeclineCall", state.callId).catch(function () {});
-        setState(null, "");
+        var call = state;
+        invoke("DeclineCall", call.callId).catch(function () {
+            if (state && state.callId === call.callId) setState(null, "");
+        });
+        if (call.role === "callee" && call.status === "ringing") {
+            stopRing();
+            state = Object.assign({}, call, { status: "active", joined: false, peerPresent: true });
+            render();
+            emit("");
+        } else {
+            setState(null, "");
+        }
     }
 
     function end() {
@@ -483,6 +511,8 @@
     window.discodeCalls = {
         current: function () { return state; },
         start: start,
+        answer: answer,
+        decline: decline,
         end: end,
         ready: function (callback) {
             if (isReady) callback();

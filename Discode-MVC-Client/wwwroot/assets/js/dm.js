@@ -512,13 +512,22 @@ function dmSetCallStatus(call) {
     var stage = document.getElementById("call-stage");
     if (!call) return;
     var ringing = call.status === "ringing";
+    var incoming = ringing && call.role === "callee";
+    var joinable = call.status === "active" && call.joined === false;
     stage.classList.toggle("is-ringing", ringing);
+    stage.classList.toggle("is-incoming", incoming);
+    stage.classList.toggle("is-joinable", joinable);
+    var answerBar = document.getElementById("call-answer-bar");
+    if (answerBar) answerBar.hidden = !(incoming || joinable);
     var faces = document.getElementById("call-faces");
-    if (faces) faces.classList.toggle("is-callee", call.role === "callee");
+    if (faces) {
+        faces.classList.toggle("is-callee", call.role === "callee");
+        faces.classList.toggle("is-me-away", joinable);
+    }
     var peerFace = document.getElementById("call-peer-face");
     if (peerFace) {
-        peerFace.classList.toggle("is-waiting", ringing);
-        peerFace.classList.toggle("is-away", !ringing && call.peerPresent === false);
+        peerFace.classList.toggle("is-waiting", ringing && call.role === "caller");
+        peerFace.classList.toggle("is-away", call.status === "active" && !joinable && call.peerPresent === false);
     }
 }
 
@@ -541,9 +550,16 @@ function startDmCall(video) {
     var calls = window.discodeCalls;
     if (!calls) return;
     var current = calls.current();
-    if (current && current.other.userName === dmPartner.userName) {
+    if (current && current.other.userName === dmPartner.userName && current.joined !== false) {
         dmShowCallStage();
         dmSetCallStatus(current);
+        return;
+    }
+    if (current && current.other.userName === dmPartner.userName) {
+        showDmError("");
+        calls.answer(video).catch(function (error) {
+            dmNotice(error.message);
+        });
         return;
     }
     showDmError("");
@@ -603,6 +619,20 @@ function bindDmCall() {
     document.getElementById("dm-video").addEventListener("click", function () {
         startDmCall(true);
         if (window.openCallCamera) window.openCallCamera();
+    });
+
+    var answerWith = function (video) {
+        if (!window.discodeCalls) return;
+        window.discodeCalls.answer(video).then(function () {
+            if (video && window.openCallCamera) window.openCallCamera();
+        }).catch(function (error) {
+            dmNotice(error.message);
+        });
+    };
+    document.getElementById("call-answer-video").addEventListener("click", function () { answerWith(true); });
+    document.getElementById("call-answer-voice").addEventListener("click", function () { answerWith(false); });
+    document.getElementById("call-answer-decline").addEventListener("click", function () {
+        if (window.discodeCalls) window.discodeCalls.decline();
     });
 
     document.getElementById("call-hangup").addEventListener("click", function () {
