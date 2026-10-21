@@ -14,6 +14,7 @@
     var mediaCallId = "";
     var pendingCandidates = [];
     var remoteAudio = null;
+    var voiceConnected = false;
 
     var ringtone = new Audio("/assets/css/audio/call.mp3");
     ringtone.loop = true;
@@ -107,9 +108,11 @@
         if (peer) {
             peer.onicecandidate = null;
             peer.ontrack = null;
+            peer.onconnectionstatechange = null;
             peer.close();
             peer = null;
         }
+        voiceConnected = false;
         pendingCandidates = [];
         if (remoteAudio) remoteAudio.srcObject = null;
     }
@@ -145,6 +148,10 @@
         peer = new RTCPeerConnection({ iceServers: ICE_SERVERS });
         peer.onicecandidate = function (event) {
             if (event.candidate) sendSignal("candidate", { candidate: event.candidate });
+        };
+        peer.onconnectionstatechange = function () {
+            voiceConnected = !!peer && peer.connectionState === "connected";
+            render();
         };
         peer.ontrack = function (event) {
             var audio = ensureRemoteAudio();
@@ -249,9 +256,9 @@
         if (sidebarCall) {
             sidebarCall.hidden = !inCall;
             if (inCall) {
-                var connected = state.status === "active";
+                var connected = state.status === "active" && voiceConnected;
                 sidebarCall.classList.toggle("is-connected", connected);
-                document.getElementById("sidebar-call-status").textContent = connected ? "Voice Connected" : "Connecting";
+                document.getElementById("sidebar-call-status").textContent = connected ? "Connected" : "Connecting";
                 var link = document.getElementById("sidebar-call-name");
                 link.textContent = name(state);
                 link.setAttribute("href", "/Dm/Index?name=" + encodeURIComponent(state.other.userName));
