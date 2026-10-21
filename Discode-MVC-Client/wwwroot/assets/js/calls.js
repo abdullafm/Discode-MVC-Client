@@ -113,6 +113,7 @@
         if (source !== "sidebar") paintSidebar();
         if (source !== "stage") paintStage();
         applyMute();
+        if (audioState.muted) setSpeaking("me", false);
         if (remoteAudio) remoteAudio.muted = audioState.deafened;
         saveAudio();
         if (state && state.status === "active") sendMuteState();
@@ -170,7 +171,71 @@
         return remoteAudio;
     }
 
+    var meterContext = null;
+    var localMeter = null;
+    var remoteMeter = null;
+
+    function meterAudioContext() {
+        if (!meterContext) {
+            var Context = window.AudioContext || window.webkitAudioContext;
+            if (!Context) return null;
+            meterContext = new Context();
+        }
+        if (meterContext.state === "suspended") meterContext.resume().catch(function () {});
+        return meterContext;
+    }
+
+    document.addEventListener("click", function () {
+        if (meterContext && meterContext.state === "suspended") meterContext.resume().catch(function () {});
+    });
+
+    function startMeter(stream, onSpeaking) {
+        var context = meterAudioContext();
+        if (!context || !stream || !stream.getAudioTracks().length) return null;
+        var source = context.createMediaStreamSource(stream);
+        var analyser = context.createAnalyser();
+        analyser.fftSize = 512;
+        source.connect(analyser);
+        var buffer = new Uint8Array(analyser.fftSize);
+        var lastLoud = 0;
+        var speaking = false;
+        var timer = setInterval(function () {
+            analyser.getByteTimeDomainData(buffer);
+            var peak = 0;
+            for (var i = 0; i < buffer.length; i++) {
+                var level = Math.abs(buffer[i] - 128) / 128;
+                if (level > peak) peak = level;
+            }
+            var now = Date.now();
+            if (peak > 0.03) lastLoud = now;
+            var next = now - lastLoud < 350;
+            if (next !== speaking) {
+                speaking = next;
+                onSpeaking(next);
+            }
+        }, 80);
+        return {
+            stop: function () {
+                clearInterval(timer);
+                try {
+                    source.disconnect();
+                } catch (e) {}
+                if (speaking) onSpeaking(false);
+            }
+        };
+    }
+
+    function setSpeaking(who, on) {
+        var face = who === "me" ? document.getElementById("call-avatar") : document.getElementById("call-peer-face");
+        if (who === "me" && face) face = face.parentNode;
+        if (face) face.classList.toggle("is-speaking", !!on);
+    }
+
     function closePeer() {
+        if (remoteMeter) {
+            remoteMeter.stop();
+            remoteMeter = null;
+        }
         if (peer) {
             peer.onicecandidate = null;
             peer.ontrack = null;
@@ -185,6 +250,11 @@
 
     function teardownMedia() {
         closePeer();
+        if (localMeter) {
+            localMeter.stop();
+            localMeter = null;
+        }
+        setSpeaking("me", false);
         if (localStream) {
             localStream.getTracks().forEach(function (track) { track.stop(); });
             localStream = null;
@@ -202,6 +272,10 @@
         }
         micPromise = navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
             localStream = stream;
+            if (localMeter) localMeter.stop();
+            localMeter = startMeter(stream, function (on) {
+                setSpeaking("me", on && !audioState.muted);
+            });
             return stream;
         }).catch(function () {
             return null;
@@ -223,6 +297,10 @@
             var audio = ensureRemoteAudio();
             audio.srcObject = event.streams[0] || new MediaStream([event.track]);
             audio.muted = audioState.deafened;
+            if (remoteMeter) remoteMeter.stop();
+            remoteMeter = startMeter(audio.srcObject, function (on) {
+                setSpeaking("peer", on);
+            });
             var promise = audio.play();
             if (promise && promise.catch) promise.catch(function () {});
         };

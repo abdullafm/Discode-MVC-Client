@@ -2556,3 +2556,11 @@ html.theme-dark .dm-call-join {
     margin-left: 0;
     margin-right: -28px;
 }
+
+.call-face img {
+    transition: box-shadow 0.18s ease;
+}
+
+.call-face.is-speaking img {
+    box-shadow: 0 0 0 4px #23a559, 0 0 18px rgba(35, 165, 89, 0.65) !important;
+}
