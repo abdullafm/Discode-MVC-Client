@@ -12,6 +12,7 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public string CustomStatus { get; set; } = string.Empty;
         public DateTime MemberSince { get; set; }
         public bool IsFriend { get; set; }
+        public int? FriendRequestId { get; set; }
         public List<MessageVM> Messages { get; set; } = new List<MessageVM>();
     }
 }

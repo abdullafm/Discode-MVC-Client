@@ -182,6 +182,10 @@ body .friends-view.dm-view {
     font-size: 14px;
 }
 
+.dm-meta-form {
+    display: contents;
+}
+
 .dm-meta span::after {
     content: "•";
     margin-left: 8px;

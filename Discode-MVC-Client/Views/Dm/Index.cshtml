@@ -90,8 +90,21 @@
                     }
                     <div class="dm-meta">
                         <span>No servers in common</span>
-                        <button type="button">Remove Friend</button>
-                        <button type="button">Block</button>
+                        @if (chat is not null && chat.IsFriend && chat.FriendRequestId is not null)
+                        {
+                            <form asp-controller="Friend" asp-action="Remove" method="post" class="dm-meta-form">
+                                <input type="hidden" name="id" value="@chat.FriendRequestId">
+                                <input type="hidden" name="returnUrl" value="@Url.Action("Index", "Dm", new { name = chat.UserName })">
+                                <button type="submit">Remove Friend</button>
+                            </form>
+                        }
+                        @if (chat is not null)
+                        {
+                            <form asp-controller="Friend" asp-action="Block" method="post" class="dm-meta-form">
+                                <input type="hidden" name="userName" value="@chat.UserName">
+                                <button type="submit">Block</button>
+                            </form>
+                        }
                     </div>
                 </div>
                 <div class="dm-wave" id="dm-wave-box" hidden="@(chat is null || chat.Messages.Count > 0)">
