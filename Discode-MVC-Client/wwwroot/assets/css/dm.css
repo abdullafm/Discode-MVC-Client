@@ -2220,8 +2220,8 @@ html.theme-dark .dm-msg-tools button.dm-tool-delete:hover {
     box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.12);
 }
 
-.call-face.is-peer::before,
-.call-face.is-peer::after {
+.call-face::before,
+.call-face::after {
     content: "";
     position: absolute;
     inset: 0;
@@ -2233,11 +2233,11 @@ html.theme-dark .dm-msg-tools button.dm-tool-delete:hover {
     pointer-events: none;
 }
 
-.call-face.is-peer.is-waiting::before {
+.call-face.is-waiting::before {
     animation: call-wave 2.4s ease-out infinite;
 }
 
-.call-face.is-peer.is-waiting::after {
+.call-face.is-waiting::after {
     animation: call-wave 2.4s ease-out 1.2s infinite;
 }
 

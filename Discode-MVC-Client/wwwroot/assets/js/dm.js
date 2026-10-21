@@ -556,6 +556,8 @@ function dmSetCallStatus(call) {
         faces.classList.toggle("is-callee", call.role === "callee");
         faces.classList.toggle("is-me-away", joinable);
     }
+    var myFace = document.getElementById("call-avatar");
+    if (myFace && myFace.parentNode) myFace.parentNode.classList.toggle("is-waiting", incoming);
     var peerFace = document.getElementById("call-peer-face");
     if (peerFace) {
         peerFace.classList.toggle("is-waiting", ringing && call.role === "caller");
