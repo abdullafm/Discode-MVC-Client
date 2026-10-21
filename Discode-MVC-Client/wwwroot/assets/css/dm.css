@@ -2540,3 +2540,14 @@ html.theme-dark body .conversation-sidebar .user-panel .user-controls > button:h
 .call-faces.is-callee .call-face:not(.is-peer) img {
     box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.12);
 }
+
+.dm-call-join,
+html.theme-dark .dm-call-join {
+    color: #00a8fc !important;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.dm-call-join:hover {
+    text-decoration: underline;
+}

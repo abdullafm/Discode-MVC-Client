@@ -11,7 +11,7 @@
     var status = chat is not null && chat.Status != "online" ? " " + chat.Status : "";
 }
 <main class="friends-view dm-view show-main">
-    <section id="dm-chat" data-user-name="@chat?.UserName" data-user-id="@chat?.UserId">
+    <section id="dm-chat" data-user-name="@chat?.UserName" data-user-id="@chat?.UserId" data-ongoing-call="@chat?.OngoingCallMessageId">
         <div class="dm-chat">
             <div class="dm-bar">
                 <div class="dm-bar-name">

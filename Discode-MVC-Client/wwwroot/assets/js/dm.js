@@ -198,6 +198,33 @@ function dmCallDuration(seconds) {
     return Math.floor(seconds / 3600) + " hours";
 }
 
+var dmOngoingCall = 0;
+
+function dmRefreshJoinLinks() {
+    if (!dmPartner) return;
+    var calls = window.discodeCalls;
+    var current = calls && calls.current();
+    var inCall = !!current && current.other.userName === dmPartner.userName && current.joined !== false;
+    var rows = document.querySelectorAll("#dm-messages .dm-call-msg");
+    for (var i = 0; i < rows.length; i++) {
+        var wanted = dmOngoingCall > 0 && Number(rows[i].getAttribute("data-id")) === dmOngoingCall && !inCall;
+        var existing = rows[i].querySelector(".dm-call-join-wrap");
+        if (wanted && !existing) {
+            var wrap = document.createElement("span");
+            wrap.className = "dm-call-join-wrap";
+            wrap.appendChild(document.createTextNode(" \u2014 "));
+            var link = document.createElement("a");
+            link.className = "dm-call-join";
+            link.setAttribute("href", "#");
+            link.textContent = "Join call";
+            wrap.appendChild(link);
+            rows[i].querySelector(".dm-call-text").appendChild(wrap);
+        } else if (!wanted && existing) {
+            existing.remove();
+        }
+    }
+}
+
 function dmFillCallRow(row, message) {
     var missed = !!message.callMissed && !message.mine;
     row.classList.toggle("is-missed", missed);
@@ -213,6 +240,7 @@ function dmFillCallRow(row, message) {
     }
     text.appendChild(who);
     text.appendChild(document.createTextNode(message.callSeconds == null ? " started a call." : " started a call that lasted " + dmCallDuration(message.callSeconds) + "."));
+    dmRefreshJoinLinks();
 }
 
 function dmBuildCallRow(message, stamp) {
@@ -254,7 +282,9 @@ function appendMessage(message, forceScroll) {
         box.appendChild(divider);
     }
     if (message.isCall) {
+        dmOngoingCall = message.id;
         box.appendChild(dmBuildCallRow(message, stamp));
+        dmRefreshJoinLinks();
         document.getElementById("dm-wave-box").hidden = true;
         if (forceScroll || message.mine || atBottom) scrollDmToEnd();
         return;
@@ -321,6 +351,8 @@ function showDmPage() {
     var userName = chat ? chat.getAttribute("data-user-name") : "";
     if (!userName) return;
     dmPartner = { userName: userName, userId: chat.getAttribute("data-user-id") };
+    dmOngoingCall = Number(chat.getAttribute("data-ongoing-call")) || 0;
+    dmRefreshJoinLinks();
     if (window.discodePresence) window.discodePresence.watchProfile(dmPartner.userId);
     window.discodeOpenDm = userName;
     var stamps = document.querySelectorAll("#dm-messages .dm-msg");
@@ -568,7 +600,14 @@ function startDmCall(video) {
     });
 }
 
+document.addEventListener("discode-call-over", function (event) {
+    if (!event.detail || Number(event.detail.messageId) !== dmOngoingCall) return;
+    dmOngoingCall = 0;
+    dmRefreshJoinLinks();
+});
+
 document.addEventListener("discode-call-state", function (event) {
+    dmRefreshJoinLinks();
     if (!dmPartner) return;
     var call = event.detail.call;
     var stage = document.getElementById("call-stage");
@@ -1361,6 +1400,12 @@ function bindDmMessages() {
     var panel = document.getElementById("emoji-panel");
 
     box.addEventListener("click", function (event) {
+        var join = event.target.closest(".dm-call-join");
+        if (join) {
+            event.preventDefault();
+            startDmCall(false);
+            return;
+        }
         var hint = event.target.closest("[data-edit]");
         if (hint) {
             event.preventDefault();

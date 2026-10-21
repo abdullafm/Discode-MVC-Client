@@ -392,6 +392,9 @@
 
     document.addEventListener("discode-call-ended", function (event) {
         var data = event.detail;
+        if (data && (data.reason === "ended" || data.reason === "cancelled")) {
+            document.dispatchEvent(new CustomEvent("discode-call-over", { detail: data }));
+        }
         if (!state || !data || state.callId !== data.callId) return;
         play(leaveSound);
         setState(null, data.reason);
@@ -437,8 +440,12 @@
         setAudio({ muted: audioState.muted, deafened: !!event.detail.deafened }, "stage");
     });
 
+    var pendingEnd = Promise.resolve();
+
     function start(userName, video) {
-        return invoke("StartCall", userName, !!video).then(function (call) {
+        return pendingEnd.then(function () {
+            return invoke("StartCall", userName, !!video);
+        }).then(function (call) {
             state = call;
             if (call.status === "active") {
                 play(joinSound);
@@ -496,7 +503,7 @@
 
     function end() {
         if (!state) return;
-        invoke("EndCall", state.callId, false).catch(function () {});
+        pendingEnd = invoke("EndCall", state.callId, false).catch(function () {});
         play(leaveSound);
         setState(null, "");
     }
