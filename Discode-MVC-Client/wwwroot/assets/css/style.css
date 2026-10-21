@@ -7592,6 +7592,10 @@ html.theme-dark body .friend-item[data-presence="dnd"] > .avatar::after {
     display: none;
 }
 
+body .conversation-sidebar .direct-messages .friend-list .friend-item:hover > .dm-unread {
+    visibility: hidden;
+}
+
 .friend-item.has-unread > p {
     font-weight: 700 !important;
     color: #060607 !important;
