@@ -4,8 +4,21 @@
     var origAdd = EventTarget.prototype.addEventListener;
     var origRemove = EventTarget.prototype.removeEventListener;
 
+    var keepers = /\/(calls|presence|i18n|theme|timezone|nav)\.js|signalr/i;
+    var swapping = false;
+    var lateReady = [];
+
+    function fromKeeper() {
+        var lines = (new Error().stack || "").split("\n");
+        return keepers.test(lines[3] || "");
+    }
+
     EventTarget.prototype.addEventListener = function (type, fn, opts) {
-        bag.push({ target: this, type: type, fn: fn, opts: opts });
+        if (swapping && type === "DOMContentLoaded" && this === document) {
+            lateReady.push(fn);
+            return;
+        }
+        if (!fromKeeper()) bag.push({ target: this, type: type, fn: fn, opts: opts });
         return origAdd.call(this, type, fn, opts);
     };
 
@@ -23,7 +36,7 @@
 
     function isAppPage(url) {
         if (url.origin !== location.origin) return false;
-        return /\.html$/i.test(url.pathname);
+        return /\.html$/i.test(url.pathname) || /^\/(Home|Dm|Social|Nitro)\/Index\/?$/i.test(url.pathname);
     }
 
     function sheetHref(link) {
@@ -53,12 +66,29 @@
         var i = 0;
         function next() {
             if (i >= list.length) {
-                if (typeof window.onload === "function") window.onload();
+                swapping = false;
+                var late = lateReady;
+                lateReady = [];
+                late.forEach(function (fn) {
+                    try {
+                        fn.call(document, new Event("DOMContentLoaded"));
+                    } catch (e) {
+                        setTimeout(function () { throw e; });
+                    }
+                });
+                if (typeof window.onload === "function") {
+                    try {
+                        window.onload();
+                    } catch (e) {
+                        setTimeout(function () { throw e; });
+                    }
+                }
+                document.dispatchEvent(new CustomEvent("discode-page-ready"));
                 return;
             }
             var old = list[i++];
             var src = old.getAttribute("src") || "";
-            if (/theme\.js|nav\.js/.test(src)) {
+            if (/theme\.js|nav\.js|calls\.js|presence\.js|signalr/i.test(src)) {
                 next();
                 return;
             }
@@ -75,6 +105,10 @@
             next();
         }
         next();
+    }
+
+    function hasLayout(html) {
+        return html.indexOf('id="incoming-call"') !== -1;
     }
 
     var busy = false;
@@ -99,8 +133,10 @@
         var mode = replace === "pop" ? "pop" : (replace ? "replace" : "push");
         fetch(nextUrl.href, { credentials: "same-origin" }).then(function (response) {
             if (!response.ok) throw new Error("nav");
+            if (response.redirected && !isAppPage(new URL(response.url))) throw new Error("nav");
             return response.text();
         }).then(function (html) {
+            if (!hasLayout(html)) throw new Error("nav");
             var doc = new DOMParser().parseFromString(html, "text/html");
             if (mode === "replace") history.replaceState({ discode: 1 }, "", path);
             else if (mode === "push") history.pushState({ discode: 1 }, "", path);
@@ -115,6 +151,8 @@
             syncStyles(doc);
             dropPageListeners();
             window.onload = null;
+            window.discodeOpenDm = "";
+            swapping = true;
             var scripts = [].slice.call(doc.body.querySelectorAll("script"));
             scripts.forEach(function (script) {
                 if (script.parentNode) script.parentNode.removeChild(script);
@@ -122,6 +160,7 @@
             document.body.replaceWith(document.importNode(doc.body, true));
             window.scrollTo(0, 0);
             busy = false;
+            if (window.DiscodeLang && window.DiscodeLang.rebind) window.DiscodeLang.rebind();
             runScripts(scripts);
         }).catch(function () {
             busy = false;
@@ -163,6 +202,10 @@
         event.preventDefault();
         go(url.pathname + url.search);
     }, true);
+
+    listen(window, "pagehide", function () {
+        swapping = false;
+    });
 
     listen(document, "submit", function (event) {
         var form = event.target;

@@ -35,6 +35,8 @@
     var sidebarCall = document.getElementById("sidebar-call");
     var userPanel = document.getElementById("user-panel");
     if (!invite) return;
+    var sidebarHangup = null;
+    var watcher = null;
 
     function play(sound) {
         try {
@@ -83,9 +85,9 @@
         return audioState.muted;
     }
 
-    var micIcon = document.getElementById("mic");
-    var headIcon = document.getElementById("head");
-    var headButton = document.getElementById("headp-btn");
+    var micIcon = null;
+    var headIcon = null;
+    var headButton = null;
 
     function readSidebar() {
         return {
@@ -138,8 +140,10 @@
         paintStage();
     }
 
-    if (micIcon || headIcon) {
-        var watcher = new MutationObserver(function () {
+    function watchSidebarIcons() {
+        if (watcher) watcher.disconnect();
+        if (!micIcon && !headIcon) return;
+        watcher = new MutationObserver(function () {
             setAudio(readSidebar(), "sidebar");
         });
         [micIcon, headIcon].forEach(function (icon) {
@@ -295,7 +299,7 @@
         remoteAudio = document.createElement("audio");
         remoteAudio.autoplay = true;
         remoteAudio.hidden = true;
-        document.body.appendChild(remoteAudio);
+        document.documentElement.appendChild(remoteAudio);
         return remoteAudio;
     }
 
@@ -612,7 +616,8 @@
         pending.forEach(function (callback) { callback(); });
     }
 
-    document.addEventListener("discode-hub-connected", function () {
+    document.addEventListener("discode-hub-connected", function (event) {
+        if (event.detail && event.detail.pageSwap && isReady) return;
         invoke("GetMyCall").then(finishSync).catch(function () { finishSync(state); });
     });
 
@@ -712,7 +717,7 @@
         var call = state;
         stopRing();
         invoke("AcceptCall", call.callId).then(function () {
-            if (!onDmPageOf(call)) window.location.href = "/Dm/Index?name=" + encodeURIComponent(call.other.userName);
+            if (!onDmPageOf(call)) window.discodeGo("/Dm/Index?name=" + encodeURIComponent(call.other.userName));
         }).catch(function () {
             setState(null, "unavailable");
         });
@@ -759,12 +764,32 @@
         }
     }
 
+    function bindPage() {
+        invite = document.getElementById("incoming-call");
+        sidebarCall = document.getElementById("sidebar-call");
+        userPanel = document.getElementById("user-panel");
+        micIcon = document.getElementById("mic");
+        headIcon = document.getElementById("head");
+        headButton = document.getElementById("headp-btn");
+        document.getElementById("incoming-call-accept").addEventListener("click", accept);
+        document.getElementById("incoming-call-decline").addEventListener("click", decline);
+        sidebarHangup = document.getElementById("sidebar-call-hangup");
+        if (sidebarHangup) sidebarHangup.addEventListener("click", end);
+        watchSidebarIcons();
+    }
+
+    bindPage();
     loadAudio();
 
-    document.getElementById("incoming-call-accept").addEventListener("click", accept);
-    document.getElementById("incoming-call-decline").addEventListener("click", decline);
-    var sidebarHangup = document.getElementById("sidebar-call-hangup");
-    if (sidebarHangup) sidebarHangup.addEventListener("click", end);
+    document.addEventListener("discode-page-ready", function () {
+        if (!document.getElementById("incoming-call")) return;
+        bindPage();
+        paintSidebar();
+        paintStage();
+        render();
+        renderTiles();
+        emit("");
+    });
 
     window.discodeCalls = {
         current: function () { return state; },

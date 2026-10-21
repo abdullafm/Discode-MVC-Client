@@ -238,7 +238,7 @@ function createMessage() {
         return !!name && list.indexOf(name) === index;
     }).sort();
     if (members.length === 1) {
-        window.location.href = "/Dm/Index?name=" + encodeURIComponent(members[0]);
+        window.discodeGo("/Dm/Index?name=" + encodeURIComponent(members[0]));
         return;
     }
     var groups = loadGroups();

@@ -826,7 +826,7 @@
             }
         });
 
-        observer.observe(document.body, { childList: true, subtree: true });
+        observer.observe(document.documentElement, { childList: true, subtree: true });
     }
 
     window.DiscodeLang = {
@@ -838,6 +838,10 @@
             return translateText(key, getSavedLang());
         },
         apply: function () {
+            applyLanguage(getSavedLang());
+        },
+        rebind: function () {
+            bindLangControls();
             applyLanguage(getSavedLang());
         },
         translations: TRANSLATIONS

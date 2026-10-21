@@ -45,19 +45,25 @@
         if (watchedProfile && isConnected()) connection.invoke("WatchProfile", watchedProfile).catch(function () {});
     }
 
-    function onConnected() {
+    function onConnected(pageSwap) {
         window.discodeLive = true;
-        away = false;
-        lastActive = Date.now();
+        if (pageSwap !== true) {
+            away = false;
+            lastActive = Date.now();
+        }
         document.dispatchEvent(new CustomEvent("discode-live-changed"));
         document.dispatchEvent(new CustomEvent("discode-stories-changed"));
         document.dispatchEvent(new CustomEvent("discode-posts-changed"));
         document.dispatchEvent(new CustomEvent("discode-notifications-changed"));
         document.dispatchEvent(new CustomEvent("discode-dm-changed"));
-        document.dispatchEvent(new CustomEvent("discode-hub-connected"));
+        document.dispatchEvent(new CustomEvent("discode-hub-connected", { detail: { pageSwap: pageSwap === true } }));
         refreshFriends();
         joinWatchedProfile();
     }
+
+    document.addEventListener("discode-page-ready", function () {
+        if (isConnected()) onConnected(true);
+    });
 
     function refreshFriends() {
         document.dispatchEvent(new CustomEvent("discode-friends-changed"));
@@ -205,9 +211,9 @@
 
                 connection.onreconnecting(function () { window.discodeLive = false; });
                 connection.onclose(function () { window.discodeLive = false; });
-                connection.onreconnected(onConnected);
+                connection.onreconnected(function () { onConnected(); });
 
-                return connection.start().then(onConnected);
+                return connection.start().then(function () { onConnected(); });
             })
             .catch(function () {});
     }

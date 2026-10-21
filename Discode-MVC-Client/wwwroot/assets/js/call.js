@@ -14,13 +14,15 @@
     var unmuteSound = new Audio("/assets/css/audio/discord-unmute-sound.mp3");
     var muteSound = new Audio("/assets/css/audio/discordmute_IZNcLx2.mp3");
 
+    var quiet = false;
+
     function paintMic(muted, playSound) {
         if (playSound === undefined) playSound = true;
         micBtn.classList.toggle("is-off", muted);
         micBtn.setAttribute("aria-pressed", muted ? "true" : "false");
         micBtn.querySelector("i").className = muted ? "fa-solid fa-microphone-slash" : "fa-solid fa-microphone";
         muteBadge.classList.toggle("is-gone", !muted);
-        document.dispatchEvent(new CustomEvent("discode-call-mic", { detail: { muted: muted } }));
+        if (!quiet) document.dispatchEvent(new CustomEvent("discode-call-mic", { detail: { muted: muted } }));
         if (playSound) {
             if (muted) {
                 muteSound.currentTime = 0;
@@ -40,7 +42,7 @@
             deafenBtn.querySelector("i").className = "fa-solid fa-headphones";
         }
         muteBadge.classList.toggle("is-deaf", deafened);
-        document.dispatchEvent(new CustomEvent("discode-call-deafen", { detail: { deafened: deafened } }));
+        if (!quiet) document.dispatchEvent(new CustomEvent("discode-call-deafen", { detail: { deafened: deafened } }));
         if (phoneSoundBtn) {
             phoneSoundBtn.classList.toggle("is-off", deafened);
             phoneSoundBtn.setAttribute("aria-pressed", deafened ? "true" : "false");
@@ -64,8 +66,10 @@
         paintMic(!enabled, false);
     }
 
+    quiet = true;
     paintDeafen(false, false);
     paintMic(true, false);
+    quiet = false;
 
     window.discodeCallControls = {
         set: function (muted, deafened) {
