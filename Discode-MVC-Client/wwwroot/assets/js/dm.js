@@ -463,6 +463,8 @@ function dmSetCallStatus(call) {
     var ringing = call.status === "ringing";
     label.textContent = ringing ? (call.role === "caller" ? "Calling\u2026" : "Ringing\u2026") : "Connected";
     stage.classList.toggle("is-ringing", ringing);
+    var peerFace = document.getElementById("call-peer-face");
+    if (peerFace) peerFace.classList.toggle("is-waiting", ringing);
 }
 
 function dmNotice(text) {
@@ -518,6 +520,9 @@ document.addEventListener("discode-call-state", function (event) {
 
 function dmShowCallStage() {
     var profile = document.getElementById("dm-profile");
+    var peerAvatar = document.getElementById("call-peer-avatar");
+    var partnerPhoto = document.getElementById("dm-profile-avatar") || document.getElementById("dm-avatar");
+    if (peerAvatar && partnerPhoto) peerAvatar.src = partnerPhoto.getAttribute("src");
     var avatar = document.getElementById("call-avatar");
     avatar.src = dmPanelPhoto();
     var photo = dmPanelPhoto();

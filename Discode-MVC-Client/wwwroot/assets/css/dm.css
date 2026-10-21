@@ -2131,7 +2131,7 @@ html.theme-dark .dm-msg-tools button.dm-tool-delete:hover {
     text-align: center;
 }
 
-.call-stage.is-ringing .call-face img {
+.call-stage.is-ringing .call-face.is-peer img {
     animation: call-ring 1.4s ease-in-out infinite;
 }
 
@@ -2253,4 +2253,20 @@ html.theme-dark .dm-msg-tools button.dm-tool-delete:hover {
     background: #f23f42;
     color: #ffffff !important;
     cursor: pointer;
+}
+
+.call-faces {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+}
+
+.call-face.is-peer img {
+    transition: opacity 0.3s ease, filter 0.3s ease;
+}
+
+.call-face.is-peer.is-waiting img {
+    opacity: 0.4;
+    filter: grayscale(0.6);
 }

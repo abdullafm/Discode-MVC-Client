@@ -40,9 +40,15 @@
                 <video id="call-screen-video" class="call-screen-video" autoplay playsinline muted hidden></video>
                 <video id="call-cam-video" class="call-cam-video" autoplay playsinline muted hidden></video>
                 <div class="call-person">
-                    <div class="call-face">
-                        <img id="call-avatar" alt="">
-                        <span class="call-mute" id="call-mute"><i class="fa-solid fa-microphone-slash"></i></span>
+                    <div class="call-faces">
+                        <div class="call-face">
+                            <img id="call-avatar" alt="">
+                            <span class="call-mute" id="call-mute"><i class="fa-solid fa-microphone-slash"></i></span>
+                        </div>
+                        <div class="call-face is-peer" id="call-peer-face">
+                            <img id="call-peer-avatar" alt="">
+                            <span class="call-mute is-gone" id="call-peer-mute"><i class="fa-solid fa-microphone-slash"></i></span>
+                        </div>
                     </div>
                     <p class="call-phone-label"></p>
                     <p class="call-status" id="call-status"></p>

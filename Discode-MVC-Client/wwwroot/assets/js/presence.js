@@ -107,6 +107,10 @@
                     document.dispatchEvent(new CustomEvent("discode-call-accepted", { detail: data }));
                 });
 
+                connection.on("CallSignal", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-call-signal", { detail: data }));
+                });
+
                 connection.on("CallEnded", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-call-ended", { detail: data }));
                 });

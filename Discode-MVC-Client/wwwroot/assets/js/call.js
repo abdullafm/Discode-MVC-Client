@@ -20,6 +20,7 @@
         micBtn.setAttribute("aria-pressed", muted ? "true" : "false");
         micBtn.querySelector("i").className = muted ? "fa-solid fa-microphone-slash" : "fa-solid fa-microphone";
         muteBadge.classList.toggle("is-gone", !muted);
+        document.dispatchEvent(new CustomEvent("discode-call-mic", { detail: { muted: muted } }));
         if (playSound) {
             if (muted) {
                 muteSound.currentTime = 0;
@@ -38,6 +39,7 @@
             deafenBtn.setAttribute("aria-pressed", deafened ? "true" : "false");
             deafenBtn.querySelector("i").className = "fa-solid fa-headphones";
         }
+        document.dispatchEvent(new CustomEvent("discode-call-deafen", { detail: { deafened: deafened } }));
         if (phoneSoundBtn) {
             phoneSoundBtn.classList.toggle("is-off", deafened);
             phoneSoundBtn.setAttribute("aria-pressed", deafened ? "true" : "false");
@@ -63,6 +65,11 @@
 
     paintDeafen(false, false);
     paintMic(true, false);
+
+    window.discodeCallControls = {
+        setMuted: function (muted) { paintMic(muted, false); },
+        isMuted: function () { return micBtn.classList.contains("is-off"); }
+    };
 
     var camStream = null;
 
