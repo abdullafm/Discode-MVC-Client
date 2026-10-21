@@ -145,7 +145,7 @@
     }
 
     function sendMuteState() {
-        sendSignal("mute", { muted: micIsMuted() });
+        sendSignal("mute", { muted: micIsMuted(), deafened: audioState.deafened });
     }
 
     function applyMute() {
@@ -154,9 +154,11 @@
         localStream.getAudioTracks().forEach(function (track) { track.enabled = !muted; });
     }
 
-    function showPeerMuted(muted) {
+    function showPeerMuted(muted, deafened) {
         var badge = document.getElementById("call-peer-mute");
-        if (badge) badge.classList.toggle("is-gone", !muted);
+        if (!badge) return;
+        badge.classList.toggle("is-gone", !muted && !deafened);
+        badge.classList.toggle("is-deaf", !!deafened);
     }
 
     function ensureRemoteAudio() {
@@ -189,7 +191,7 @@
         }
         micPromise = null;
         mediaCallId = "";
-        showPeerMuted(false);
+        showPeerMuted(false, false);
     }
 
     function openMic() {
@@ -302,7 +304,7 @@
             if (peer && peer.remoteDescription) peer.addIceCandidate(data.candidate).catch(function () {});
             else pendingCandidates.push(data.candidate);
         } else if (data.type === "mute") {
-            showPeerMuted(!!data.muted);
+            showPeerMuted(!!data.muted, !!data.deafened);
         }
     }
 

@@ -39,6 +39,7 @@
             deafenBtn.setAttribute("aria-pressed", deafened ? "true" : "false");
             deafenBtn.querySelector("i").className = "fa-solid fa-headphones";
         }
+        muteBadge.classList.toggle("is-deaf", deafened);
         document.dispatchEvent(new CustomEvent("discode-call-deafen", { detail: { deafened: deafened } }));
         if (phoneSoundBtn) {
             phoneSoundBtn.classList.toggle("is-off", deafened);

@@ -2404,3 +2404,41 @@ html.theme-dark .dm-call-msg.is-missed .dm-call-text,
 html.theme-dark .dm-call-msg.is-missed .dm-call-text strong {
     color: #f23f42;
 }
+
+.call-mute .deaf-icon {
+    display: none;
+    position: relative;
+}
+
+.call-mute.is-deaf .fa-microphone-slash {
+    display: none;
+}
+
+.call-mute.is-deaf .deaf-icon {
+    display: inline-block;
+}
+
+.call-mute .deaf-icon::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 130%;
+    height: 2px;
+    border-radius: 2px;
+    background: #ffffff;
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+#call-mic.is-off,
+#call-deafen.is-off {
+    background: rgba(242, 63, 67, 0.14);
+}
+
+body .conversation-sidebar .user-panel .user-controls > button:has(i.mute) {
+    background-color: rgba(218, 55, 60, 0.14);
+}
+
+html.theme-dark body .conversation-sidebar .user-panel .user-controls > button:has(i.mute) {
+    background-color: rgba(218, 55, 60, 0.22);
+}
