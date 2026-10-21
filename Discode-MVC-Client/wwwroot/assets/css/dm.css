@@ -2946,3 +2946,21 @@ html.theme-dark .dm-call-join {
     padding: 6px 10px;
     font-size: 12px;
 }
+
+.call-stage.is-video .call-tile-name,
+.call-stage.is-video .call-screen-badge {
+    transition: opacity 0.18s ease;
+}
+
+.call-stage.is-video:not(:hover) .call-screen-badge,
+.call-stage.is-video:not(:hover) .call-face.is-screen .call-tile-name {
+    opacity: 0;
+}
+
+.call-stage.is-video:not(:hover) .call-tile-name span {
+    display: none;
+}
+
+.call-stage.is-video:not(:hover) .call-face:not(.is-screen) .call-tile-name:not(:has(i:not([hidden]))) {
+    opacity: 0;
+}
