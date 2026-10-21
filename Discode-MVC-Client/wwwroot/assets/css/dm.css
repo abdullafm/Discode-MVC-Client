@@ -2964,3 +2964,12 @@ html.theme-dark .dm-call-join {
 .call-stage.is-video:not(:hover) .call-face:not(.is-screen) .call-tile-name:not(:has(i:not([hidden]))) {
     opacity: 0;
 }
+
+.call-stage.is-video .call-bar {
+    transition: opacity 0.18s ease;
+}
+
+.call-stage.is-video:not(:hover) .call-bar {
+    opacity: 0;
+    pointer-events: none;
+}
