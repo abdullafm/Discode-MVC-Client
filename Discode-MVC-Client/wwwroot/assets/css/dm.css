@@ -186,6 +186,18 @@ body .friends-view.dm-view {
     display: contents;
 }
 
+.dm-meta .dm-meta-pending {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.7;
+    cursor: default;
+}
+
+.dm-meta .dm-meta-pending:hover {
+    background: #e9e9ea;
+}
+
 .dm-meta span::after {
     content: "•";
     margin-left: 8px;
