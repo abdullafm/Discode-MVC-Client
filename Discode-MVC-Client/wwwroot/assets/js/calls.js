@@ -408,6 +408,7 @@
         if (!state || !event.detail || state.callId !== event.detail.callId) return;
         stopRing();
         state = event.detail;
+        if (state.joined === false) teardownMedia();
         render();
         emit("");
     });
@@ -503,9 +504,17 @@
 
     function end() {
         if (!state) return;
-        pendingEnd = invoke("EndCall", state.callId, false).catch(function () {});
+        var call = state;
+        pendingEnd = invoke("EndCall", call.callId, false).catch(function () {});
         play(leaveSound);
-        setState(null, "");
+        if (call.status === "active" && call.joined !== false && call.peerPresent !== false) {
+            teardownMedia();
+            state = Object.assign({}, call, { joined: false });
+            render();
+            emit("");
+        } else {
+            setState(null, "");
+        }
     }
 
     loadAudio();

@@ -676,7 +676,8 @@ function bindDmCall() {
 
     document.getElementById("call-hangup").addEventListener("click", function () {
         if (window.discodeCalls) window.discodeCalls.end();
-        dmCloseCallStage();
+        var current = window.discodeCalls && window.discodeCalls.current();
+        if (!current || !dmPartner || current.other.userName !== dmPartner.userName) dmCloseCallStage();
     });
 
     document.querySelector(".call-phone-add").addEventListener("click", function () {

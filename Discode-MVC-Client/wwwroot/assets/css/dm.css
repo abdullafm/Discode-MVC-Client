@@ -2551,3 +2551,8 @@ html.theme-dark .dm-call-join {
 .dm-call-join:hover {
     text-decoration: underline;
 }
+
+.call-faces:not(.is-callee).is-me-away .call-face:not(.is-peer) {
+    margin-left: 0;
+    margin-right: -28px;
+}
