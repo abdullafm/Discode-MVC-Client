@@ -514,7 +514,10 @@ function dmSetCallStatus(call) {
     var ringing = call.status === "ringing";
     stage.classList.toggle("is-ringing", ringing);
     var peerFace = document.getElementById("call-peer-face");
-    if (peerFace) peerFace.classList.toggle("is-waiting", ringing);
+    if (peerFace) {
+        peerFace.classList.toggle("is-waiting", ringing);
+        peerFace.classList.toggle("is-away", !ringing && call.peerPresent === false);
+    }
 }
 
 function dmNotice(text) {

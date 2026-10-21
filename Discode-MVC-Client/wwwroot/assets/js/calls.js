@@ -321,7 +321,7 @@
         if (sidebarCall) {
             sidebarCall.hidden = !inCall;
             if (inCall) {
-                var connected = state.status === "active" && voiceConnected;
+                var connected = state.status === "active" && (voiceConnected || state.peerPresent === false);
                 sidebarCall.classList.toggle("is-connected", connected);
                 document.getElementById("sidebar-call-status").textContent = connected ? "Connected" : "Connecting";
                 var link = document.getElementById("sidebar-call-name");
@@ -401,6 +401,21 @@
         handleSignal(event.detail);
     });
 
+    document.addEventListener("discode-call-peer", function (event) {
+        var data = event.detail;
+        if (!state || state.callId !== data.callId) return;
+        state.peerPresent = !!data.present;
+        if (!data.present) {
+            closePeer();
+            showPeerMuted(false, false);
+            play(leaveSound);
+        } else {
+            play(joinSound);
+        }
+        render();
+        emit("");
+    });
+
     document.addEventListener("discode-call-mic", function (event) {
         setAudio({ muted: !!event.detail.muted, deafened: audioState.deafened && !!event.detail.muted }, "stage");
     });
@@ -412,10 +427,15 @@
     function start(userName, video) {
         return invoke("StartCall", userName, !!video).then(function (call) {
             state = call;
-            startRing(0.5);
-            ringTimer = setTimeout(function () {
-                if (state && state.callId === call.callId && state.status === "ringing") invoke("EndCall", call.callId, true).catch(function () {});
-            }, RING_MS);
+            if (call.status === "active") {
+                play(joinSound);
+                beginMedia(call);
+            } else {
+                startRing(0.5);
+                ringTimer = setTimeout(function () {
+                    if (state && state.callId === call.callId && state.status === "ringing") invoke("EndCall", call.callId, true).catch(function () {});
+                }, RING_MS);
+            }
             render();
             emit("");
             return call;
