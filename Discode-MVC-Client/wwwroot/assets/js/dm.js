@@ -352,6 +352,9 @@ function dmShowIdleNote() {
     box.appendChild(note);
     document.getElementById("dm-wave-box").hidden = true;
     scrollDmToEnd();
+    setTimeout(function () {
+        if (note.parentNode) note.parentNode.removeChild(note);
+    }, 10000);
 }
 
 function dmCheckIdleNote() {
