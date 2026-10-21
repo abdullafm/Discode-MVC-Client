@@ -27,6 +27,7 @@
     var screenSender = null;
     var remoteScreenStream = null;
     var peerScreen = null;
+    var watchingPeerScreen = false;
     var peerMuted = false;
     var peerDeafened = false;
     var AUDIO_KEY = "discode-call-audio";
@@ -237,12 +238,13 @@
         tile.id = id;
         tile.innerHTML = "<video class=\"call-screen-tile-video\" autoplay playsinline muted></video>" +
             "<div class=\"call-screen-badge\"><span class=\"call-screen-quality\"></span><b>LIVE</b></div>" +
+            "<button type=\"button\" class=\"call-screen-watch\">Watch Stream</button>" +
             "<div class=\"call-tile-name\"><i class=\"fa-solid fa-display\"></i><span></span></div>";
         faces.insertBefore(tile, faces.firstChild);
         return tile;
     }
 
-    function fillScreenTile(id, show, stream, info, label) {
+    function fillScreenTile(id, show, stream, info, label, unwatched) {
         var tile = document.getElementById(id);
         if (!show) {
             if (tile) {
@@ -258,6 +260,7 @@
         if (video.srcObject !== stream) video.srcObject = stream;
         var playing = video.play();
         if (playing && playing.catch) playing.catch(function () {});
+        tile.classList.toggle("is-unwatched", !!unwatched);
         tile.querySelector(".call-screen-quality").textContent = info ? info.h + "P " + info.fps + "FPS" : "";
         tile.querySelector(".call-tile-name span").textContent = label;
     }
@@ -269,13 +272,14 @@
         if (!stage || !avatar || !peerFace) return;
         var mineShown = screenState === "on" && !!screenStream;
         var theirsShown = !!peerScreen && !!remoteScreenStream;
+        if (!peerScreen) watchingPeerScreen = false;
         var video = cameraState !== "off" || peerCamera || mineShown || theirsShown;
         stage.classList.toggle("is-video", video);
         stage.classList.toggle("has-screen-tile", mineShown || theirsShown);
         var myName = document.querySelector("#user-panel .me-display");
         fillTile(avatar.parentNode, { camera: cameraState, stream: cameraStream, muted: audioState.muted, deafened: audioState.deafened, name: myName ? myName.textContent.trim() : "", error: cameraError });
         fillTile(peerFace, { camera: peerCamera ? "on" : "off", stream: remoteVideoStream, muted: peerMuted, deafened: peerDeafened, name: state ? name(state) : "" });
-        fillScreenTile("call-screen-peer", theirsShown, remoteScreenStream, peerScreen, state ? name(state) : "");
+        fillScreenTile("call-screen-peer", theirsShown, remoteScreenStream, peerScreen, state ? name(state) : "", !watchingPeerScreen);
         fillScreenTile("call-screen-me", mineShown, screenStream, screenInfo(), myName ? myName.textContent.trim() : "");
     }
 
@@ -341,6 +345,13 @@
             if (buttons && buttons.setScreenButton) buttons.setScreenButton(false);
         });
     }
+
+    document.addEventListener("click", function (event) {
+        if (event.target.closest && event.target.closest("#call-screen-peer .call-screen-watch")) {
+            watchingPeerScreen = true;
+            renderTiles();
+        }
+    });
 
     document.addEventListener("discode-call-screen", function (event) {
         setScreen(!!event.detail.on);
