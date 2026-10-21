@@ -2878,6 +2878,10 @@ html.theme-dark .dm-call-join {
     cursor: zoom-in;
 }
 
+.call-stage.has-focus .call-faces > .call-face:not(.is-focused):not(.is-mini) {
+    display: none;
+}
+
 .call-stage.has-focus .call-faces {
     position: relative;
     gap: 0;
@@ -2902,7 +2906,7 @@ html.theme-dark .dm-call-join {
     background: #000000;
 }
 
-.call-stage.has-focus .call-faces > .call-face:not(.is-focused) {
+.call-stage.has-focus .call-faces > .call-face.is-mini {
     position: absolute;
     right: 14px;
     bottom: 14px;
@@ -2917,36 +2921,28 @@ html.theme-dark .dm-call-join {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
-.call-stage.has-focus .call-faces > .call-face:not(.is-focused) ~ .call-face:not(.is-focused) {
-    bottom: 134px;
-}
-
-.call-stage.has-focus .call-faces > .call-face:not(.is-focused) ~ .call-face:not(.is-focused) ~ .call-face:not(.is-focused) {
-    bottom: 254px;
-}
-
-.call-stage.has-focus .call-faces > .call-face:not(.is-focused) > img {
+.call-stage.has-focus .call-faces > .call-face.is-mini > img {
     width: 44px;
     height: 44px;
 }
 
-.call-stage.has-focus .call-faces > .call-face:not(.is-focused) .call-tile-name {
+.call-stage.has-focus .call-faces > .call-face.is-mini .call-tile-name {
     left: 6px;
     bottom: 6px;
     padding: 2px 6px;
     font-size: 11px;
 }
 
-.call-stage.has-focus .call-faces > .call-face:not(.is-focused) .call-screen-badge {
+.call-stage.has-focus .call-faces > .call-face.is-mini .call-screen-badge {
     top: 6px;
     right: 6px;
 }
 
-.call-stage.has-focus .call-faces > .call-face:not(.is-focused) .call-screen-quality {
+.call-stage.has-focus .call-faces > .call-face.is-mini .call-screen-quality {
     display: none;
 }
 
-.call-stage.has-focus .call-faces > .call-face:not(.is-focused) .call-screen-watch {
+.call-stage.has-focus .call-faces > .call-face.is-mini .call-screen-watch {
     padding: 6px 10px;
     font-size: 12px;
 }

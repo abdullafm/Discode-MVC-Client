@@ -291,8 +291,17 @@
         avatar.parentNode.id = "call-me-face";
         if (focusedScreen && !canFocus(document.getElementById(focusedScreen))) focusedScreen = "";
         stage.classList.toggle("has-focus", !!focusedScreen);
-        [].forEach.call(document.querySelectorAll("#call-faces > .call-face"), function (tile) {
+        var tilesNow = [].slice.call(document.querySelectorAll("#call-faces > .call-face"));
+        var focusedTile = focusedScreen ? document.getElementById(focusedScreen) : null;
+        var wantScreen = !!focusedTile && !focusedTile.classList.contains("is-screen");
+        var candidates = focusedTile ? tilesNow.filter(function (tile) {
+            if (tile === focusedTile) return false;
+            return wantScreen ? tile.classList.contains("is-screen") : (!tile.classList.contains("is-screen") && tile.classList.contains("has-video"));
+        }) : [];
+        var mini = candidates.filter(function (tile) { return /-me/.test(tile.id); })[0] || candidates[0] || null;
+        tilesNow.forEach(function (tile) {
             tile.classList.toggle("is-focused", focusedScreen === tile.id);
+            tile.classList.toggle("is-mini", tile === mini);
         });
     }
 
