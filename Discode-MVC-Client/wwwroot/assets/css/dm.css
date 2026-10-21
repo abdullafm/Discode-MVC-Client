@@ -2975,15 +2975,15 @@ html.theme-dark .dm-call-join {
 }
 
 .call-stage.has-focus .call-faces > .call-face.is-focused .call-tile-name {
-    left: 24px;
-    bottom: 24px;
-    gap: 10px;
-    padding: 9px 16px;
-    border-radius: 8px;
+    left: 16px;
+    bottom: 16px;
+    gap: 7px;
+    padding: 5px 10px;
+    border-radius: 6px;
     background: #1e1f22;
-    font-size: 18px;
+    font-size: 13px;
 }
 
 .call-stage.has-focus .call-faces > .call-face.is-focused .call-tile-name i {
-    font-size: 18px;
+    font-size: 13px;
 }
