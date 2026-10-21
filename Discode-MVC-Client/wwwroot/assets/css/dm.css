@@ -182,7 +182,8 @@ body .friends-view.dm-view {
     font-size: 14px;
 }
 
-.dm-meta-form {
+.dm-meta-form,
+.dm-meta-forms {
     display: contents;
 }
 

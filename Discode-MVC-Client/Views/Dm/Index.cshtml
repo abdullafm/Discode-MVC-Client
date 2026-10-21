@@ -90,41 +90,12 @@
                     }
                     <div class="dm-meta">
                         <span>No servers in common</span>
-                        @if (chat is not null && chat.Relation == "friend" && chat.FriendRequestId is not null)
-                        {
-                            <form asp-controller="Friend" asp-action="Remove" method="post" class="dm-meta-form">
-                                <input type="hidden" name="id" value="@chat.FriendRequestId">
-                                <input type="hidden" name="returnUrl" value="@Url.Action("Index", "Dm", new { name = chat.UserName })">
-                                <button type="submit">Remove Friend</button>
-                            </form>
-                        }
-                        else if (chat is not null && chat.Relation == "none")
-                        {
-                            <form asp-controller="Friend" asp-action="Send" method="post" class="dm-meta-form">
-                                <input type="hidden" name="userName" value="@chat.UserName">
-                                <input type="hidden" name="returnUrl" value="@Url.Action("Index", "Dm", new { name = chat.UserName })">
-                                <button type="submit">Add Friend</button>
-                            </form>
-                        }
-                        else if (chat is not null && chat.Relation == "pending-sent")
-                        {
-                            <button type="button" class="dm-meta-pending" disabled><i class="fa-regular fa-clock"></i> Pending</button>
-                        }
-                        else if (chat is not null && chat.Relation == "pending-received" && chat.FriendRequestId is not null)
-                        {
-                            <form asp-controller="Friend" asp-action="Accept" method="post" class="dm-meta-form">
-                                <input type="hidden" name="id" value="@chat.FriendRequestId">
-                                <input type="hidden" name="returnUrl" value="@Url.Action("Index", "Dm", new { name = chat.UserName })">
-                                <button type="submit">Accept Friend Request</button>
-                            </form>
-                        }
-                        @if (chat is not null)
-                        {
-                            <form asp-controller="Friend" asp-action="Block" method="post" class="dm-meta-form">
-                                <input type="hidden" name="userName" value="@chat.UserName">
-                                <button type="submit">Block</button>
-                            </form>
-                        }
+                        <div id="dm-relation" class="dm-meta-forms">
+                            @if (chat is not null)
+                            {
+                                <partial name="_DmRelation" model="new DmRelationVM { UserName = chat.UserName, Relation = chat.Relation, FriendRequestId = chat.FriendRequestId }" />
+                            }
+                        </div>
                     </div>
                 </div>
                 <div class="dm-wave" id="dm-wave-box" hidden="@(chat is null || chat.Messages.Count > 0)">

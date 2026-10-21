@@ -355,6 +355,37 @@ function dmSyncPartnerMessages() {
     if (title && name && name.textContent) title.textContent = name.textContent;
 }
 
+function dmPaintRelation(relation) {
+    var button = document.getElementById("dm-profile-close");
+    var icon = button ? button.querySelector("i") : null;
+    if (!button || !icon) return;
+    var friend = relation === "friend";
+    button.setAttribute("title", friend ? "Friends" : "Not friends");
+    icon.className = "fa-solid " + (friend ? "fa-user-check" : "fa-user");
+}
+
+function dmRefreshRelation() {
+    if (!dmPartner) return;
+    fetch("/Dm/Relation?name=" + encodeURIComponent(dmPartner.userName), {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    }).then(function (response) {
+        if (!response.ok) throw new Error("relation");
+        return response.text();
+    }).then(function (html) {
+        var holder = document.getElementById("dm-relation");
+        if (!holder) return;
+        holder.innerHTML = html;
+        var marker = holder.querySelector("[data-relation]");
+        dmPaintRelation(marker ? marker.getAttribute("data-relation") : "none");
+    }).catch(function () {});
+}
+
+document.addEventListener("discode-friends-changed", function () {
+    dmRefreshRelation();
+    dmRefreshProfile();
+});
+
 document.addEventListener("discode-profile-changed", function (event) {
     if (dmPartner && event.detail && event.detail.userId === dmPartner.userId) dmRefreshProfile();
 });

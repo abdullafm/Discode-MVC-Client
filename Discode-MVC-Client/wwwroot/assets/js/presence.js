@@ -59,10 +59,10 @@
     }
 
     function refreshFriends() {
+        document.dispatchEvent(new CustomEvent("discode-friends-changed"));
         if (!window.discodeFriends) return;
         window.discodeFriends.reload();
         window.discodeFriends.reloadFriends();
-        document.dispatchEvent(new CustomEvent("discode-friends-changed"));
     }
 
     function connect() {
