@@ -848,9 +848,29 @@ function dmDeleteMessage(row) {
     });
 }
 
+function dmRegroupMessage(row) {
+    var before = row.previousElementSibling;
+    var grouped = !!before && before.classList.contains("dm-msg") && !row.classList.contains("has-reply") &&
+        before.getAttribute("data-sender") === row.getAttribute("data-sender") &&
+        Number(row.getAttribute("data-time")) - Number(before.getAttribute("data-time")) < 5 * 60 * 1000;
+    row.classList.toggle("compact", grouped);
+}
+
+function dmTidyAfterRemove(before, after) {
+    if (before && before.classList.contains("dm-divider") && !(after && after.classList.contains("dm-msg"))) before.remove();
+    if (after && after.classList.contains("dm-msg")) dmRegroupMessage(after);
+    var wave = document.getElementById("dm-wave-box");
+    if (wave && !document.querySelector("#dm-messages .dm-msg")) wave.hidden = false;
+}
+
 function dmRemoveMessage(id) {
     var row = document.querySelector('#dm-messages .dm-msg[data-id="' + id + '"]');
-    if (row) row.remove();
+    if (row) {
+        var before = row.previousElementSibling;
+        var after = row.nextElementSibling;
+        row.remove();
+        dmTidyAfterRemove(before, after);
+    }
     document.querySelectorAll('.dm-msg-reply[data-reply-id="' + id + '"]').forEach(function (quote) { quote.remove(); });
     document.querySelectorAll('#dm-pins-popover [data-jump="' + id + '"]').forEach(function (card) { card.remove(); });
     if (dmReply && dmReply.id === Number(id)) dmCancelReply();
