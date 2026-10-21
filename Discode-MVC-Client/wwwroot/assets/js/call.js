@@ -72,7 +72,8 @@
             paintDeafen(deafened, false);
             paintMic(muted, false);
         },
-        isMuted: function () { return micBtn.classList.contains("is-off"); }
+        isMuted: function () { return micBtn.classList.contains("is-off"); },
+        setCameraButton: function (on) { paintCam(on, true); }
     };
 
     var camStream = null;
@@ -84,10 +85,14 @@
         camVideo.srcObject = null;
     }
 
-    function paintCam(on) {
+    function paintCam(on, silent) {
         camBtn.classList.toggle("is-off", !on);
         camBtn.setAttribute("aria-pressed", on ? "false" : "true");
         camBtn.querySelector("i").className = on ? "fa-solid fa-video" : "fa-solid fa-video-slash";
+        if (document.getElementById("call-faces")) {
+            if (!silent) document.dispatchEvent(new CustomEvent("discode-call-camera", { detail: { on: on } }));
+            return;
+        }
         camVideo.hidden = false;
         stage.classList.toggle("has-cam", on);
         stage.classList.toggle("has-media", on || stage.classList.contains("has-screen"));

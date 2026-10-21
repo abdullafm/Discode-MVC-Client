@@ -15,6 +15,13 @@
     var pendingCandidates = [];
     var remoteAudio = null;
     var voiceConnected = false;
+    var cameraState = "off";
+    var cameraStream = null;
+    var cameraToken = 0;
+    var videoSender = null;
+    var remoteVideoStream = null;
+    var peerCamera = false;
+    var peerMuted = false;
     var AUDIO_KEY = "discode-call-audio";
     var audioState = { muted: false, deafened: false };
 
@@ -146,7 +153,7 @@
     }
 
     function sendMuteState() {
-        sendSignal("mute", { muted: micIsMuted(), deafened: audioState.deafened });
+        sendSignal("mute", { muted: micIsMuted(), deafened: audioState.deafened, camera: cameraState === "on" });
     }
 
     function applyMute() {
@@ -160,7 +167,123 @@
         if (!badge) return;
         badge.classList.toggle("is-gone", !muted && !deafened);
         badge.classList.toggle("is-deaf", !!deafened);
+        peerMuted = !!muted || !!deafened;
+        renderTiles();
     }
+
+    function tileParts(face) {
+        return {
+            video: face.querySelector(".call-tile-video"),
+            loading: face.querySelector(".call-tile-loading"),
+            error: face.querySelector(".call-tile-error"),
+            micIcon: face.querySelector(".call-tile-name i"),
+            name: face.querySelector(".call-tile-name span")
+        };
+    }
+
+    function fillTile(face, info) {
+        var parts = tileParts(face);
+        var showVideo = info.camera === "on" && !!info.stream;
+        face.classList.toggle("has-video", showVideo);
+        face.classList.toggle("is-loading", info.camera === "starting");
+        if (parts.video) {
+            if (showVideo) {
+                if (parts.video.srcObject !== info.stream) parts.video.srcObject = info.stream;
+                var playing = parts.video.play();
+                if (playing && playing.catch) playing.catch(function () {});
+            } else if (parts.video.srcObject) {
+                parts.video.srcObject = null;
+            }
+        }
+        if (parts.loading) parts.loading.hidden = info.camera !== "starting";
+        if (parts.error) {
+            parts.error.hidden = info.camera !== "error";
+            var detail = parts.error.querySelector("small");
+            if (detail) detail.textContent = info.error ? "Error: " + info.error : "";
+        }
+        if (parts.micIcon) parts.micIcon.hidden = !info.muted;
+        if (parts.name) parts.name.textContent = info.name || "";
+    }
+
+    function renderTiles() {
+        var stage = document.getElementById("call-stage");
+        var avatar = document.getElementById("call-avatar");
+        var peerFace = document.getElementById("call-peer-face");
+        if (!stage || !avatar || !peerFace) return;
+        var video = cameraState !== "off" || peerCamera;
+        stage.classList.toggle("is-video", video);
+        var myName = document.querySelector("#user-panel .me-display");
+        fillTile(avatar.parentNode, { camera: cameraState, stream: cameraStream, muted: audioState.muted, name: myName ? myName.textContent.trim() : "", error: cameraError });
+        fillTile(peerFace, { camera: peerCamera ? "on" : "off", stream: remoteVideoStream, muted: peerMuted, name: state ? name(state) : "" });
+    }
+
+    var cameraError = "";
+
+    function stopCameraStream() {
+        cameraToken++;
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(function (track) { track.stop(); });
+            cameraStream = null;
+        }
+        if (videoSender) videoSender.replaceTrack(null).catch(function () {});
+    }
+
+    function setCamera(on) {
+        var buttons = window.discodeCallControls;
+        if (!on) {
+            stopCameraStream();
+            cameraState = "off";
+            cameraError = "";
+            if (buttons && buttons.setCameraButton) buttons.setCameraButton(false);
+            if (state && state.status === "active") sendMuteState();
+            renderTiles();
+            return;
+        }
+        if (!state || state.joined === false) {
+            if (buttons && buttons.setCameraButton) buttons.setCameraButton(false);
+            return;
+        }
+        if (cameraState === "starting" || cameraState === "on") return;
+        var token = ++cameraToken;
+        cameraState = "starting";
+        cameraError = "";
+        if (buttons && buttons.setCameraButton) buttons.setCameraButton(true);
+        renderTiles();
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            cameraState = "error";
+            cameraError = "NotSupported";
+            renderTiles();
+            return;
+        }
+        navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }).then(function (stream) {
+            if (token !== cameraToken || !state) {
+                stream.getTracks().forEach(function (track) { track.stop(); });
+                return;
+            }
+            cameraStream = stream;
+            cameraState = "on";
+            var track = stream.getVideoTracks()[0];
+            if (videoSender && track) videoSender.replaceTrack(track).catch(function () {});
+            if (state.status === "active") sendMuteState();
+            renderTiles();
+        }).catch(function (error) {
+            if (token !== cameraToken) return;
+            cameraState = "error";
+            cameraError = (error && error.name) || "Unknown";
+            renderTiles();
+        });
+    }
+
+    document.addEventListener("discode-call-camera", function (event) {
+        setCamera(!!event.detail.on);
+    });
+
+    document.addEventListener("click", function (event) {
+        if (event.target.closest && event.target.closest(".call-tile-retry")) {
+            cameraState = "off";
+            setCamera(true);
+        }
+    });
 
     function ensureRemoteAudio() {
         if (remoteAudio) return remoteAudio;
@@ -245,7 +368,11 @@
         }
         voiceConnected = false;
         pendingCandidates = [];
+        videoSender = null;
+        remoteVideoStream = null;
+        peerCamera = false;
         if (remoteAudio) remoteAudio.srcObject = null;
+        renderTiles();
     }
 
     function teardownMedia() {
@@ -255,6 +382,11 @@
             localMeter = null;
         }
         setSpeaking("me", false);
+        stopCameraStream();
+        cameraState = "off";
+        cameraError = "";
+        if (window.discodeCallControls && window.discodeCallControls.setCameraButton) window.discodeCallControls.setCameraButton(false);
+        renderTiles();
         if (localStream) {
             localStream.getTracks().forEach(function (track) { track.stop(); });
             localStream = null;
@@ -283,7 +415,7 @@
         return micPromise;
     }
 
-    function createPeer() {
+    function createPeer(forAnswer) {
         closePeer();
         peer = new RTCPeerConnection({ iceServers: ICE_SERVERS });
         peer.onicecandidate = function (event) {
@@ -294,6 +426,11 @@
             render();
         };
         peer.ontrack = function (event) {
+            if (event.track.kind === "video") {
+                remoteVideoStream = new MediaStream([event.track]);
+                renderTiles();
+                return;
+            }
             var audio = ensureRemoteAudio();
             audio.srcObject = event.streams[0] || new MediaStream([event.track]);
             audio.muted = audioState.deafened;
@@ -309,7 +446,26 @@
         } else {
             peer.addTransceiver("audio", { direction: "recvonly" });
         }
+        if (!forAnswer) {
+            videoSender = peer.addTransceiver("video", { direction: "sendrecv" }).sender;
+            attachCameraTrack();
+        }
         return peer;
+    }
+
+    function attachCameraTrack() {
+        var cameraTrack = cameraStream ? cameraStream.getVideoTracks()[0] : null;
+        if (videoSender && cameraTrack) videoSender.replaceTrack(cameraTrack).catch(function () {});
+    }
+
+    function useOfferedVideo(connection) {
+        var offered = connection.getTransceivers().filter(function (item) {
+            return item.receiver.track && item.receiver.track.kind === "video" && item.mid !== null;
+        })[0];
+        if (!offered) return;
+        offered.direction = "sendrecv";
+        videoSender = offered.sender;
+        attachCameraTrack();
     }
 
     function flushCandidates() {
@@ -323,7 +479,7 @@
     function makeOffer() {
         openMic().then(function () {
             applyMute();
-            var connection = createPeer();
+            var connection = createPeer(false);
             return connection.createOffer().then(function (offer) {
                 return connection.setLocalDescription(offer);
             }).then(function () {
@@ -336,8 +492,9 @@
     function answerOffer(description) {
         openMic().then(function () {
             applyMute();
-            var connection = createPeer();
+            var connection = createPeer(true);
             return connection.setRemoteDescription(description).then(function () {
+                useOfferedVideo(connection);
                 flushCandidates();
                 return connection.createAnswer();
             }).then(function (answer) {
@@ -382,11 +539,13 @@
             if (peer && peer.remoteDescription) peer.addIceCandidate(data.candidate).catch(function () {});
             else pendingCandidates.push(data.candidate);
         } else if (data.type === "mute") {
+            peerCamera = !!data.camera;
             showPeerMuted(!!data.muted, !!data.deafened);
         }
     }
 
     function render() {
+        renderTiles();
         var incoming = !!state && state.status === "ringing" && state.role === "callee";
         invite.hidden = !incoming || onDmPageOf(state);
         if (incoming) {
@@ -624,7 +783,10 @@
                     receivedBytes: bytes,
                     micOpen: !!localStream,
                     micSending: !!localStream && localStream.getAudioTracks().some(function (track) { return track.enabled; }),
-                    speakerMuted: !!remoteAudio && remoteAudio.muted
+                    speakerMuted: !!remoteAudio && remoteAudio.muted,
+                    peerCamera: peerCamera,
+                    remoteVideo: remoteVideoStream ? remoteVideoStream.getVideoTracks().map(function (track) { return track.readyState + (track.muted ? "/muted" : "/live"); }).join(",") : "none",
+                    transceivers: peer ? peer.getTransceivers().map(function (item) { return item.receiver.track.kind + ":" + item.direction + "/" + (item.currentDirection || "-"); }).join(" ") : ""
                 };
             });
         }

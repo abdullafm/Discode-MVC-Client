@@ -2564,3 +2564,219 @@ html.theme-dark .dm-call-join {
 .call-face.is-speaking img {
     box-shadow: 0 0 0 4px #23a559, 0 0 18px rgba(35, 165, 89, 0.65) !important;
 }
+
+.call-tile-video,
+.call-tile-loading,
+.call-tile-error,
+.call-tile-name {
+    display: none;
+}
+
+.call-stage.is-video {
+    height: 440px;
+}
+
+.call-stage.is-video .call-person {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+}
+
+.call-stage.is-video .call-phone-label {
+    display: none;
+}
+
+.call-stage.is-video .call-faces {
+    width: 100%;
+    height: 100%;
+    gap: 16px;
+    padding: 0 24px;
+    box-sizing: border-box;
+    align-items: stretch;
+}
+
+.call-stage.is-video .call-face {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 560px;
+    width: auto;
+    height: 100%;
+    border-radius: 12px;
+    background: #1b1c1f;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.call-stage.is-video .call-face > img {
+    width: 88px;
+    height: 88px;
+    box-shadow: none !important;
+}
+
+.call-stage.is-video .call-face.is-peer {
+    background: #5d6470;
+}
+
+.call-stage.is-video .call-face.has-video > img {
+    display: none;
+}
+
+.call-stage.is-video .call-mute {
+    display: none;
+}
+
+.call-stage.is-video .call-tile-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.call-stage.is-video .call-face.has-video .call-tile-video {
+    display: block;
+}
+
+.call-stage.is-video .call-face:not(.is-peer) .call-tile-video {
+    transform: scaleX(-1);
+}
+
+.call-stage.is-video .call-tile-loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.call-stage.is-video .call-tile-loading[hidden],
+.call-stage.is-video .call-tile-error[hidden] {
+    display: none;
+}
+
+.call-tile-loading span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #b5bac1;
+    animation: call-dots 1.1s ease-in-out infinite;
+}
+
+.call-tile-loading span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.call-tile-loading span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+@keyframes call-dots {
+    0%, 80%, 100% {
+        opacity: 0.35;
+        transform: scale(0.8);
+    }
+
+    40% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.call-stage.is-video .call-face:not(.has-video) > img {
+    display: block;
+}
+
+.call-stage.is-video .call-tile-loading:not([hidden]) ~ img,
+.call-stage.is-video .call-face > .call-tile-loading:not([hidden]) {
+    z-index: 1;
+}
+
+.call-stage.is-video .call-tile-error {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px;
+    background: #1b1c1f;
+    color: #f2f3f5;
+    text-align: center;
+}
+
+.call-tile-error strong {
+    font-size: 17px;
+}
+
+.call-tile-error small {
+    color: #949ba4;
+    font-size: 13px;
+}
+
+.call-tile-retry {
+    margin-top: 6px;
+    padding: 9px 20px;
+    border: 0;
+    border-radius: 6px;
+    background: #4e5058;
+    color: #ffffff !important;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.call-tile-retry:hover {
+    background: #6d6f78;
+}
+
+.call-stage.is-video .call-tile-name {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.call-stage.is-video .call-tile-name i[hidden] {
+    display: none;
+}
+
+.call-stage.is-video .call-face.is-speaking {
+    box-shadow: 0 0 0 3px #23a559;
+}
+
+.call-stage.is-video .call-face.is-peer.is-away,
+.call-stage.is-video .call-faces.is-me-away .call-face:not(.is-peer) {
+    flex: 0 0 0;
+    max-width: 0;
+    margin-left: -16px;
+    padding: 0;
+}
+
+.call-stage.is-video .call-faces.is-callee .call-face.is-peer.is-away,
+.call-stage.is-video .call-faces:not(.is-callee).is-me-away .call-face:not(.is-peer) {
+    margin-left: 0;
+    margin-right: -16px;
+}
+
+.call-stage.is-video #call-cam:not(.is-off) {
+    background: #248046;
+    color: #ffffff;
+}
+
+.call-stage.is-video .call-face.is-loading > img {
+    display: none;
+}

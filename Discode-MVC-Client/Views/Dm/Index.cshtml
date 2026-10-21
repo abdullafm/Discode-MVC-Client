@@ -44,10 +44,20 @@
                         <div class="call-face">
                             <img id="call-avatar" alt="">
                             <span class="call-mute" id="call-mute"><i class="fa-solid fa-microphone-slash"></i><i class="fa-solid fa-headphones deaf-icon"></i></span>
+                            <video class="call-tile-video" autoplay playsinline muted></video>
+                            <div class="call-tile-loading" hidden><span></span><span></span><span></span></div>
+                            <div class="call-tile-error" hidden>
+                                <strong>Failed to start camera</strong>
+                                <small></small>
+                                <button type="button" class="call-tile-retry">Try again</button>
+                            </div>
+                            <div class="call-tile-name"><i class="fa-solid fa-microphone-slash" hidden></i><span></span></div>
                         </div>
                         <div class="call-face is-peer" id="call-peer-face">
                             <img id="call-peer-avatar" alt="">
                             <span class="call-mute is-gone" id="call-peer-mute"><i class="fa-solid fa-microphone-slash"></i><i class="fa-solid fa-headphones deaf-icon"></i></span>
+                            <video class="call-tile-video" autoplay playsinline muted></video>
+                            <div class="call-tile-name"><i class="fa-solid fa-microphone-slash" hidden></i><span></span></div>
                         </div>
                     </div>
                     <p class="call-phone-label"></p>
