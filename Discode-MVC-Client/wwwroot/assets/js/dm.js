@@ -513,6 +513,8 @@ function dmSetCallStatus(call) {
     if (!call) return;
     var ringing = call.status === "ringing";
     stage.classList.toggle("is-ringing", ringing);
+    var faces = document.getElementById("call-faces");
+    if (faces) faces.classList.toggle("is-callee", call.role === "callee");
     var peerFace = document.getElementById("call-peer-face");
     if (peerFace) {
         peerFace.classList.toggle("is-waiting", ringing);
@@ -566,9 +568,7 @@ document.addEventListener("discode-call-state", function (event) {
     if (!wasHere) return;
     var title = document.getElementById("dm-title").textContent;
     var reason = event.detail.reason;
-    if (reason === "declined") dmNotice(title + " declined the call.");
-    else if (reason === "missed") dmNotice(title + " didn't answer.");
-    else if (reason === "unavailable") dmNotice("The call is no longer available.");
+    if (reason === "unavailable") dmNotice("The call is no longer available.");
 });
 
 function dmShowCallStage() {

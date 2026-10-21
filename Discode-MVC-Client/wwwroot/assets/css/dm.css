@@ -2454,3 +2454,12 @@ html.theme-dark body .conversation-sidebar .user-panel .user-controls > button:h
     transform: scale(0.4);
     pointer-events: none;
 }
+
+.call-faces.is-callee .call-face.is-peer {
+    order: -1;
+}
+
+.call-faces.is-callee .call-face.is-peer.is-away {
+    margin-left: 0;
+    margin-right: -28px;
+}

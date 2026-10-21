@@ -404,8 +404,13 @@
     document.addEventListener("discode-call-peer", function (event) {
         var data = event.detail;
         if (!state || state.callId !== data.callId) return;
+        var wasRinging = state.status === "ringing";
         state.peerPresent = !!data.present;
-        if (!data.present) {
+        if (!data.present && wasRinging) {
+            stopRing();
+            state.status = "active";
+            beginMedia(state);
+        } else if (!data.present) {
             closePeer();
             showPeerMuted(false, false);
             play(leaveSound);
