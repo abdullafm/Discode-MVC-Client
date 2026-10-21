@@ -15,6 +15,8 @@
     var pendingCandidates = [];
     var remoteAudio = null;
     var voiceConnected = false;
+    var AUDIO_KEY = "discode-call-audio";
+    var audioState = { muted: false, deafened: false };
 
     var ringtone = new Audio("/assets/css/audio/call.mp3");
     ringtone.loop = true;
@@ -70,7 +72,69 @@
     }
 
     function micIsMuted() {
-        return controls() ? controls().isMuted() : true;
+        return audioState.muted;
+    }
+
+    var micIcon = document.getElementById("mic");
+    var headIcon = document.getElementById("head");
+    var headButton = document.getElementById("headp-btn");
+
+    function readSidebar() {
+        return {
+            muted: !!micIcon && micIcon.classList.contains("mute"),
+            deafened: !!headIcon && headIcon.classList.contains("mute")
+        };
+    }
+
+    function paintSidebar() {
+        if (micIcon) micIcon.className = audioState.muted ? "fa-solid fa-microphone-slash mute" : "fa-solid fa-microphone";
+        if (headIcon) headIcon.className = audioState.deafened ? "fa-solid fa-headphones mute" : "fa-solid fa-headphones";
+        if (headButton) {
+            if (audioState.deafened) headButton.setAttribute("data-deafened", "true");
+            else headButton.removeAttribute("data-deafened");
+        }
+        window.micO = audioState.muted;
+        window.headO = audioState.deafened;
+    }
+
+    function paintStage() {
+        if (controls() && controls().set) controls().set(audioState.muted, audioState.deafened);
+    }
+
+    function saveAudio() {
+        try {
+            if (state) sessionStorage.setItem(AUDIO_KEY, JSON.stringify(audioState));
+        } catch (e) {}
+    }
+
+    function setAudio(next, source) {
+        if (next.muted === audioState.muted && next.deafened === audioState.deafened) return;
+        audioState = next;
+        if (source !== "sidebar") paintSidebar();
+        if (source !== "stage") paintStage();
+        applyMute();
+        if (remoteAudio) remoteAudio.muted = audioState.deafened;
+        saveAudio();
+        if (state && state.status === "active") sendMuteState();
+    }
+
+    function loadAudio() {
+        var saved = null;
+        try {
+            saved = JSON.parse(sessionStorage.getItem(AUDIO_KEY) || "null");
+        } catch (e) {}
+        audioState = saved && typeof saved.muted === "boolean" ? { muted: saved.muted, deafened: !!saved.deafened } : readSidebar();
+        paintSidebar();
+        paintStage();
+    }
+
+    if (micIcon || headIcon) {
+        var watcher = new MutationObserver(function () {
+            setAudio(readSidebar(), "sidebar");
+        });
+        [micIcon, headIcon].forEach(function (icon) {
+            if (icon) watcher.observe(icon, { attributes: true, attributeFilter: ["class"] });
+        });
     }
 
     function sendSignal(type, data) {
@@ -156,8 +220,7 @@
         peer.ontrack = function (event) {
             var audio = ensureRemoteAudio();
             audio.srcObject = event.streams[0] || new MediaStream([event.track]);
-            var deafened = controls() && document.getElementById("call-deafen") && document.getElementById("call-deafen").classList.contains("is-off");
-            audio.muted = !!deafened;
+            audio.muted = audioState.deafened;
             var promise = audio.play();
             if (promise && promise.catch) promise.catch(function () {});
         };
@@ -211,7 +274,7 @@
         mediaCallId = call.callId;
         openMic().then(function (stream) {
             if (!state || state.callId !== call.callId) return;
-            if (controls()) controls().setMuted(!stream);
+            if (!stream) setAudio({ muted: true, deafened: audioState.deafened }, "");
             applyMute();
             sendSignal("ready", {});
         });
@@ -281,6 +344,9 @@
         if (!next) {
             stopRing();
             teardownMedia();
+            try {
+                sessionStorage.removeItem(AUDIO_KEY);
+            } catch (e) {}
         }
         render();
         emit(reason, previous);
@@ -333,13 +399,12 @@
         handleSignal(event.detail);
     });
 
-    document.addEventListener("discode-call-mic", function () {
-        applyMute();
-        if (state && state.status === "active") sendMuteState();
+    document.addEventListener("discode-call-mic", function (event) {
+        setAudio({ muted: !!event.detail.muted, deafened: audioState.deafened && !!event.detail.muted }, "stage");
     });
 
     document.addEventListener("discode-call-deafen", function (event) {
-        if (remoteAudio) remoteAudio.muted = !!event.detail.deafened;
+        setAudio({ muted: audioState.muted, deafened: !!event.detail.deafened }, "stage");
     });
 
     function start(userName, video) {
@@ -381,6 +446,8 @@
         setState(null, "");
     }
 
+    loadAudio();
+
     document.getElementById("incoming-call-accept").addEventListener("click", accept);
     document.getElementById("incoming-call-decline").addEventListener("click", decline);
     var sidebarHangup = document.getElementById("sidebar-call-hangup");
@@ -401,7 +468,13 @@
                 report.forEach(function (item) {
                     if (item.type === "inbound-rtp" && item.kind === "audio") bytes += item.bytesReceived;
                 });
-                return { connection: peer.connectionState, receivedBytes: bytes, micOpen: !!localStream };
+                return {
+                    connection: peer.connectionState,
+                    receivedBytes: bytes,
+                    micOpen: !!localStream,
+                    micSending: !!localStream && localStream.getAudioTracks().some(function (track) { return track.enabled; }),
+                    speakerMuted: !!remoteAudio && remoteAudio.muted
+                };
             });
         }
     };

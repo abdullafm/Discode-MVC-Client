@@ -67,7 +67,10 @@
     paintMic(true, false);
 
     window.discodeCallControls = {
-        setMuted: function (muted) { paintMic(muted, false); },
+        set: function (muted, deafened) {
+            paintDeafen(deafened, false);
+            paintMic(muted, false);
+        },
         isMuted: function () { return micBtn.classList.contains("is-off"); }
     };
 
