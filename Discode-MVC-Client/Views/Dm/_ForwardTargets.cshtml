@@ -1,0 +1,17 @@
+@model ForwardTargetsVM
+@if (Model.People.Count == 0)
+{
+    <p class="dm-forward-empty">You don't have anyone to forward to yet. Add some friends first.</p>
+}
+@foreach (var target in Model.People)
+{
+    <label class="dm-forward-item" data-kind="@target.Kind" data-key="@target.Key" data-name="@target.Name.ToLowerInvariant()">
+        <img class="dm-forward-avatar" alt="" src="@(string.IsNullOrWhiteSpace(target.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : target.AvatarUrl)">
+        <span class="dm-forward-body">
+            <strong>@target.Name</strong>
+            <small>@target.Subtitle</small>
+        </span>
+        <input type="checkbox" class="dm-forward-check" value="@target.Key">
+        <span class="dm-forward-box" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+    </label>
+}

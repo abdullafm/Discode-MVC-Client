@@ -1,5 +1,6 @@
 using Discode_MVC_Client.ViewModels.Account;
 using Discode_MVC_Client.ViewModels.Dm;
+using Discode_MVC_Client.ViewModels.Friends;
 using Discode_MVC_Client.ViewModels.Home;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -82,6 +83,43 @@ namespace Discode_MVC_Client.Controllers
             return ForwardToApi(client => client.PutAsJsonAsync($"api/dm/messages/{model.Id}", new { text = model.Text ?? string.Empty }));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> DeleteMessage([FromBody] EditMessageVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return ForwardToApi(client => client.DeleteAsync($"api/dm/messages/{model.Id}"));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ForwardTargets()
+        {
+            var (friends, status) = await GetAsync<List<FriendRequestVM>>("api/friend");
+            if (status == System.Net.HttpStatusCode.Unauthorized)
+                return Unauthorized();
+
+            var model = new ForwardTargetsVM
+            {
+                People = (friends ?? new List<FriendRequestVM>())
+                    .OrderBy(friend => friend.Name, StringComparer.OrdinalIgnoreCase)
+                    .Select(friend => new ForwardTargetVM { Kind = "user", Key = friend.UserName, Name = friend.Name, Subtitle = friend.UserName, AvatarUrl = friend.AvatarUrl })
+                    .ToList()
+            };
+            return PartialView("_ForwardTargets", model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Forward([FromBody] ForwardMessageVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/dm/messages/{model.Id}/forward", new { userNames = model.UserNames ?? new List<string>(), note = model.Note ?? string.Empty }));
+        }
+
         [HttpGet]
         public async Task<IActionResult> Pins(string name)
         {
@@ -145,6 +183,9 @@ namespace Discode_MVC_Client.Controllers
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
                 var response = await send(client);
+                if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                    return new StatusCodeResult(StatusCodes.Status204NoContent);
+
                 var payload = await response.Content.ReadAsStringAsync();
                 return new ContentResult
                 {

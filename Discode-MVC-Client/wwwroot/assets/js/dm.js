@@ -221,6 +221,12 @@ function appendMessage(message, forceScroll) {
     head.appendChild(who);
     head.appendChild(when);
     body.appendChild(head);
+    if (message.forwarded) {
+        var forwarded = document.createElement("div");
+        forwarded.className = "dm-msg-forwarded";
+        forwarded.innerHTML = '<i class="fa-solid fa-share"></i> Forwarded';
+        body.appendChild(forwarded);
+    }
     var textHolder = messageNodes(message.text);
     if (message.editedAt) textHolder.appendChild(dmEditedLabel());
     body.appendChild(textHolder);
@@ -759,6 +765,23 @@ function dmSaveEdit(row) {
     });
 }
 
+function dmDeleteMessage(row) {
+    showDmError("");
+    dmRequest("/Dm/DeleteMessage", "POST", { id: Number(row.getAttribute("data-id")) }).then(function () {
+        dmRemoveMessage(row.getAttribute("data-id"));
+    }).catch(function (err) {
+        showDmError(err.message);
+    });
+}
+
+function dmRemoveMessage(id) {
+    var row = document.querySelector('#dm-messages .dm-msg[data-id="' + id + '"]');
+    if (row) row.remove();
+    document.querySelectorAll('.dm-msg-reply[data-reply-id="' + id + '"]').forEach(function (quote) { quote.remove(); });
+    document.querySelectorAll('#dm-pins-popover [data-jump="' + id + '"]').forEach(function (card) { card.remove(); });
+    if (dmReply && dmReply.id === Number(id)) dmCancelReply();
+}
+
 function dmRenderReactions(row, reactions) {
     var body = row.querySelector(".dm-msg-body");
     var box = body.querySelector(".dm-reactions");
@@ -892,6 +915,82 @@ function dmOpenMenuAt(row, x, y) {
     var top = Math.max(8, Math.min(y, window.innerHeight - height - 8));
     menu.style.left = left + "px";
     menu.style.top = top + "px";
+}
+
+var dmForwardRow = null;
+
+function dmForwardRefresh() {
+    var checked = document.querySelectorAll("#dm-forward-list .dm-forward-check:checked").length;
+    document.getElementById("dm-forward-submit").disabled = checked === 0;
+}
+
+function dmForwardError(text) {
+    var box = document.getElementById("dm-forward-error");
+    box.textContent = text || "";
+    box.hidden = !text;
+}
+
+function dmCloseForward() {
+    document.getElementById("dm-forward-modal").hidden = true;
+    document.getElementById("dm-forward-list").textContent = "";
+    document.getElementById("dm-forward-preview").textContent = "";
+    document.getElementById("dm-forward-search").value = "";
+    document.getElementById("dm-forward-note").value = "";
+    dmForwardError("");
+    dmForwardRow = null;
+}
+
+function dmOpenForward(row) {
+    dmForwardRow = row;
+    dmForwardError("");
+    var preview = document.getElementById("dm-forward-preview");
+    preview.textContent = "";
+    nodesForText(dmMessageText(row)).forEach(function (node) { preview.appendChild(node); });
+    var list = document.getElementById("dm-forward-list");
+    list.textContent = "";
+    document.getElementById("dm-forward-submit").disabled = true;
+    document.getElementById("dm-forward-modal").hidden = false;
+    document.getElementById("dm-forward-search").focus();
+    fetch("/Dm/ForwardTargets", {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    }).then(function (response) {
+        if (!response.ok) throw new Error("targets");
+        return response.text();
+    }).then(function (html) {
+        if (dmForwardRow !== row) return;
+        list.innerHTML = html;
+    }).catch(function () {
+        dmForwardError("Could not load your friends. Try again.");
+    });
+}
+
+function dmSubmitForward() {
+    var row = dmForwardRow;
+    if (!row) return;
+    var names = [];
+    document.querySelectorAll("#dm-forward-list .dm-forward-check:checked").forEach(function (box) { names.push(box.value); });
+    if (names.length === 0) return;
+    var button = document.getElementById("dm-forward-submit");
+    button.disabled = true;
+    dmForwardError("");
+    dmRequest("/Dm/Forward", "POST", {
+        id: Number(row.getAttribute("data-id")),
+        userNames: names,
+        note: document.getElementById("dm-forward-note").value.trim()
+    }).then(function () {
+        dmCloseForward();
+    }).catch(function (err) {
+        dmForwardError(err.message);
+        button.disabled = false;
+    });
+}
+
+function dmFilterForward() {
+    var term = document.getElementById("dm-forward-search").value.trim().toLowerCase();
+    document.querySelectorAll("#dm-forward-list .dm-forward-item").forEach(function (item) {
+        item.hidden = term.length > 0 && item.getAttribute("data-name").indexOf(term) === -1 && item.getAttribute("data-key").toLowerCase().indexOf(term) === -1;
+    });
 }
 
 var dmPinRow = null;
@@ -1034,6 +1133,7 @@ function bindDmMessages() {
         else if (act === "edit-picker") dmOpenPicker(button, "edit", row);
         else if (act === "edit") dmStartEdit(row);
         else if (act === "reply") dmStartReply(row);
+        else if (act === "forward") dmOpenForward(row);
         else if (act === "more") dmOpenMenu(button, row);
     });
 
@@ -1080,12 +1180,13 @@ function bindDmMessages() {
         if (item.getAttribute("data-act") === "react") dmReact(row, item.textContent.trim());
         else if (action === "edit") dmStartEdit(row);
         else if (action === "reply") dmStartReply(row);
+        else if (action === "forward") dmOpenForward(row);
         else if (action === "pin") {
             if (row.getAttribute("data-pinned") === "1") dmSetPinned(row, false);
             else dmOpenPinModal(row);
         }
+        else if (action === "delete") dmDeleteMessage(row);
         else if (action === "copy-text") dmCopy(dmMessageText(row));
-        else if (action === "copy-link") dmCopy(window.location.origin + window.location.pathname + window.location.search + "#message-" + row.getAttribute("data-id"));
         else if (action === "reaction") dmOpenPicker(row.querySelector('[data-act="picker"]') || row, "reaction", row);
     });
 
@@ -1116,6 +1217,10 @@ function bindDmMessages() {
     });
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") {
+            if (!document.getElementById("dm-forward-modal").hidden) {
+                dmCloseForward();
+                return;
+            }
             var pinModal = document.getElementById("dm-pin-modal");
             if (!pinModal.hidden) {
                 dmClosePinModal();
@@ -1132,6 +1237,18 @@ function bindDmMessages() {
         }
     });
     document.getElementById("dm-reply-cancel").addEventListener("click", dmCancelReply);
+    document.getElementById("dm-forward-modal").addEventListener("click", function (event) {
+        if (event.target.closest("[data-close]")) dmCloseForward();
+    });
+    document.getElementById("dm-forward-list").addEventListener("change", dmForwardRefresh);
+    document.getElementById("dm-forward-search").addEventListener("input", dmFilterForward);
+    document.getElementById("dm-forward-submit").addEventListener("click", dmSubmitForward);
+    document.getElementById("dm-forward-note").addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            dmSubmitForward();
+        }
+    });
     document.getElementById("dm-pin-modal").addEventListener("click", function (event) {
         if (event.target.closest("[data-close]")) dmClosePinModal();
     });
@@ -1183,6 +1300,10 @@ function bindDmMessages() {
         if (!data) return;
         var row = box.querySelector('.dm-msg[data-id="' + data.messageId + '"]');
         if (row) dmRenderReactions(row, data.reactions || []);
+    });
+
+    document.addEventListener("discode-dm-deleted", function (event) {
+        if (event.detail) dmRemoveMessage(event.detail.messageId);
     });
 
     document.addEventListener("discode-dm-edited", function (event) {

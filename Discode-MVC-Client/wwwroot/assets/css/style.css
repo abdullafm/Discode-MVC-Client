@@ -5690,6 +5690,7 @@ html.theme-dark .dm-status {
 }
 
 html.theme-dark .dm-profile-card h2,
+html.theme-dark .dm-profile-text,
 html.theme-dark #dm-since {
     color: var(--d-text) !important;
 }
