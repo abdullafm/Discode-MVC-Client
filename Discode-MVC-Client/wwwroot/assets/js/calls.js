@@ -21,8 +21,9 @@
     var leaveSound = new Audio("/assets/css/audio/leave-voice.mp3");
 
     var invite = document.getElementById("incoming-call");
-    var bar = document.getElementById("active-call-bar");
-    if (!invite || !bar) return;
+    var sidebarCall = document.getElementById("sidebar-call");
+    var userPanel = document.getElementById("user-panel");
+    if (!invite) return;
 
     function play(sound) {
         try {
@@ -244,12 +245,23 @@
             document.getElementById("incoming-call-kind").textContent = state.video ? "Incoming Video Call" : "Incoming Voice Call";
         }
 
-        var showBar = !!state && !incoming && !onDmPageOf(state);
-        bar.hidden = !showBar;
-        if (showBar) {
-            document.getElementById("active-call-text").textContent = (state.status === "ringing" ? "Calling " : "In call with ") + name(state);
-            document.getElementById("active-call-return").setAttribute("href", "/Dm/Index?name=" + encodeURIComponent(state.other.userName));
+        var inCall = !!state && !incoming;
+        if (sidebarCall) {
+            sidebarCall.hidden = !inCall;
+            if (inCall) {
+                var connected = state.status === "active";
+                sidebarCall.classList.toggle("is-connected", connected);
+                document.getElementById("sidebar-call-status").textContent = connected ? "Voice Connected" : "Connecting";
+                var link = document.getElementById("sidebar-call-name");
+                link.textContent = name(state);
+                link.setAttribute("href", "/Dm/Index?name=" + encodeURIComponent(state.other.userName));
+            }
+            var sidebar = sidebarCall.closest(".conversation-sidebar");
+            if (sidebar) sidebar.classList.toggle("has-call", inCall);
         }
+        if (userPanel) userPanel.classList.toggle("in-call", inCall);
+        var inCallLabel = userPanel ? userPanel.querySelector(".in-call-label") : null;
+        if (inCallLabel) inCallLabel.hidden = !inCall;
     }
 
     function emit(reason, previous) {
@@ -364,7 +376,8 @@
 
     document.getElementById("incoming-call-accept").addEventListener("click", accept);
     document.getElementById("incoming-call-decline").addEventListener("click", decline);
-    document.getElementById("active-call-hangup").addEventListener("click", end);
+    var sidebarHangup = document.getElementById("sidebar-call-hangup");
+    if (sidebarHangup) sidebarHangup.addEventListener("click", end);
 
     window.discodeCalls = {
         current: function () { return state; },

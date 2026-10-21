@@ -2147,8 +2147,7 @@ html.theme-dark .dm-msg-tools button.dm-tool-delete:hover {
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
 }
 
-.incoming-call[hidden],
-.active-call-bar[hidden] {
+.incoming-call[hidden] {
     display: none;
 }
 
@@ -2209,40 +2208,6 @@ html.theme-dark .dm-msg-tools button.dm-tool-delete:hover {
     background: #d12f32;
 }
 
-.active-call-bar {
-    position: fixed;
-    left: 50%;
-    bottom: 20px;
-    z-index: 300;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    border-radius: 24px;
-    background: #23a559;
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 600;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-}
-
-.active-call-bar a {
-    color: #ffffff;
-    text-decoration: underline;
-}
-
-.active-call-bar button {
-    width: 30px;
-    height: 30px;
-    display: grid;
-    place-items: center;
-    border: 0;
-    border-radius: 50%;
-    background: #f23f42;
-    color: #ffffff !important;
-    cursor: pointer;
-}
 
 .call-faces {
     display: flex;
@@ -2286,4 +2251,156 @@ html.theme-dark .dm-msg-tools button.dm-tool-delete:hover {
         transform: scale(2.2);
         opacity: 0;
     }
+}
+
+.sidebar-call {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 62px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid #d7d9dc;
+    border-radius: 8px;
+    background: #e3e5e8;
+}
+
+.sidebar-call[hidden] {
+    display: none;
+}
+
+.sidebar-call-info {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.sidebar-call-info strong {
+    color: #c27c0e !important;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.sidebar-call.is-connected .sidebar-call-info strong {
+    color: #1a7f45 !important;
+}
+
+.sidebar-call-info a {
+    overflow: hidden;
+    color: #4e5058;
+    font-size: 12px;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-call button {
+    width: 34px;
+    height: 34px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #4e5058 !important;
+    cursor: pointer;
+}
+
+.sidebar-call button:hover {
+    background: rgba(78, 80, 88, 0.15);
+}
+
+html.theme-dark .sidebar-call {
+    border-color: #1e1f22;
+    background: #232428;
+}
+
+html.theme-dark .sidebar-call-info strong {
+    color: #f0b232 !important;
+}
+
+html.theme-dark .sidebar-call.is-connected .sidebar-call-info strong {
+    color: #23a559 !important;
+}
+
+html.theme-dark .sidebar-call-info a,
+html.theme-dark .sidebar-call button {
+    color: #b5bac1 !important;
+}
+
+body .conversation-sidebar.has-call {
+    padding-bottom: 132px;
+}
+
+#user-panel.in-call .user-details > span:not(.in-call-label) {
+    display: none;
+}
+
+.in-call-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #23a559;
+    font-size: 12px;
+}
+
+.in-call-label[hidden] {
+    display: none;
+}
+
+.dm-msg.dm-call-msg {
+    align-items: center;
+    gap: 14px;
+    margin-top: 6px;
+    padding: 6px 8px 6px 0;
+}
+
+.dm-call-msg > i {
+    width: 40px;
+    flex: none;
+    color: #23a559;
+    font-size: 17px;
+    text-align: center;
+}
+
+.dm-call-msg.is-missed > i,
+.dm-call-msg.is-missed .dm-call-text {
+    color: #f23f42;
+}
+
+.dm-call-text {
+    color: #4e5058;
+    font-size: 15px;
+}
+
+.dm-call-text strong {
+    color: #060607;
+    font-weight: 600;
+}
+
+.dm-call-msg.is-missed .dm-call-text strong {
+    color: #f23f42;
+}
+
+.dm-call-msg time {
+    color: #80848e;
+    font-size: 12px;
+}
+
+html.theme-dark .dm-call-text {
+    color: #b5bac1;
+}
+
+html.theme-dark .dm-call-text strong {
+    color: #f2f3f5;
+}
+
+html.theme-dark .dm-call-msg.is-missed .dm-call-text,
+html.theme-dark .dm-call-msg.is-missed .dm-call-text strong {
+    color: #f23f42;
 }

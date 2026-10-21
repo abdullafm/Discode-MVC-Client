@@ -74,6 +74,13 @@
                     </span><i class="fa fa-xmark"></i></a></template>
         </div>
     </section>
+    <div class="sidebar-call" id="sidebar-call" hidden>
+        <div class="sidebar-call-info">
+            <strong id="sidebar-call-status">Connecting</strong>
+            <a id="sidebar-call-name" href="#"></a>
+        </div>
+        <button type="button" id="sidebar-call-hangup" aria-label="Disconnect"><i class="fa-solid fa-phone-slash"></i></button>
+    </div>
     <div class="user-panel" id="user-panel">
         <div class="user-identity">
             <div class="avatar">
@@ -82,6 +89,7 @@
             <div class="user-details">
                 <p class="me-display">@Model.Profile.DisplayName</p>
                 <span data-i18n="Online">Online</span>
+                <span class="in-call-label" hidden><i class="fa-solid fa-phone-volume"></i> In a call</span>
             </div>
         </div>
         <div class="user-controls">

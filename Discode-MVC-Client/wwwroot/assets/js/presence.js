@@ -123,6 +123,10 @@
                     document.dispatchEvent(new CustomEvent("discode-dm-message", { detail: data }));
                 });
 
+                connection.on("DirectMessageCallUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-dm-call-updated", { detail: data }));
+                });
+
                 connection.on("DirectMessageEdited", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-dm-edited", { detail: data }));
                 });

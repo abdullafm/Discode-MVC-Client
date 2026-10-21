@@ -190,6 +190,52 @@ function messageNodes(text) {
     return holder;
 }
 
+function dmCallDuration(seconds) {
+    if (seconds < 60) return "a few seconds";
+    if (seconds < 120) return "a minute";
+    if (seconds < 3600) return Math.floor(seconds / 60) + " minutes";
+    if (seconds < 7200) return "an hour";
+    return Math.floor(seconds / 3600) + " hours";
+}
+
+function dmFillCallRow(row, message) {
+    var missed = !!message.callMissed && !message.mine;
+    row.classList.toggle("is-missed", missed);
+    var text = row.querySelector(".dm-call-text");
+    text.textContent = "";
+    var who = document.createElement("strong");
+    who.textContent = message.senderDisplayName || message.senderUserName;
+    if (missed) {
+        text.appendChild(document.createTextNode("You missed a call from "));
+        text.appendChild(who);
+        text.appendChild(document.createTextNode("."));
+        return;
+    }
+    text.appendChild(who);
+    text.appendChild(document.createTextNode(message.callSeconds == null ? " started a call." : " started a call that lasted " + dmCallDuration(message.callSeconds) + "."));
+}
+
+function dmBuildCallRow(message, stamp) {
+    var row = document.createElement("div");
+    row.className = "dm-msg dm-call-msg";
+    row.setAttribute("data-id", String(message.id));
+    row.setAttribute("data-sender", message.senderUserName);
+    row.setAttribute("data-time", String(stamp));
+    row.setAttribute("data-mine", message.mine ? "1" : "0");
+    row.setAttribute("data-pinned", "0");
+    var icon = document.createElement("i");
+    icon.className = "fa-solid fa-phone";
+    var text = document.createElement("span");
+    text.className = "dm-call-text";
+    var when = document.createElement("time");
+    when.textContent = messageTime(stamp);
+    row.appendChild(icon);
+    row.appendChild(text);
+    row.appendChild(when);
+    dmFillCallRow(row, message);
+    return row;
+}
+
 function appendMessage(message, forceScroll) {
     var box = document.getElementById("dm-messages");
     if (box.querySelector('[data-id="' + message.id + '"]')) return;
@@ -207,7 +253,13 @@ function appendMessage(message, forceScroll) {
         divider.appendChild(label);
         box.appendChild(divider);
     }
-    var compact = !newDay && !message.replyTo && last && last.getAttribute("data-sender") === message.senderUserName &&
+    if (message.isCall) {
+        box.appendChild(dmBuildCallRow(message, stamp));
+        document.getElementById("dm-wave-box").hidden = true;
+        if (forceScroll || message.mine || atBottom) scrollDmToEnd();
+        return;
+    }
+    var compact = !newDay && !message.replyTo && last && !last.classList.contains("dm-call-msg") && last.getAttribute("data-sender") === message.senderUserName &&
         stamp - Number(last.getAttribute("data-time")) < 5 * 60 * 1000 && box.lastElementChild === last;
 
     var row = document.createElement("div");
@@ -924,8 +976,9 @@ function dmDeleteMessage(row) {
 }
 
 function dmRegroupMessage(row) {
+    if (row.classList.contains("dm-call-msg")) return;
     var before = row.previousElementSibling;
-    var grouped = !!before && before.classList.contains("dm-msg") && !row.classList.contains("has-reply") &&
+    var grouped = !!before && before.classList.contains("dm-msg") && !before.classList.contains("dm-call-msg") && !row.classList.contains("has-reply") &&
         before.getAttribute("data-sender") === row.getAttribute("data-sender") &&
         Number(row.getAttribute("data-time")) - Number(before.getAttribute("data-time")) < 5 * 60 * 1000;
     row.classList.toggle("compact", grouped);
@@ -1309,7 +1362,7 @@ function bindDmMessages() {
 
     box.addEventListener("contextmenu", function (event) {
         var row = event.target.closest(".dm-msg");
-        if (!row || event.target.closest(".dm-edit, a, .dm-msg-tools")) return;
+        if (!row || row.classList.contains("dm-call-msg") || event.target.closest(".dm-edit, a, .dm-msg-tools")) return;
         event.preventDefault();
         dmOpenMenuAt(row, event.clientX, event.clientY);
     });
@@ -1484,6 +1537,13 @@ function bindDmMessages() {
 
     document.addEventListener("discode-dm-deleted", function (event) {
         if (event.detail) dmRemoveMessage(event.detail.messageId);
+    });
+
+    document.addEventListener("discode-dm-call-updated", function (event) {
+        var data = event.detail;
+        if (!data || !data.message) return;
+        var row = box.querySelector('.dm-call-msg[data-id="' + data.message.id + '"]');
+        if (row) dmFillCallRow(row, data.message);
     });
 
     document.addEventListener("discode-dm-edited", function (event) {

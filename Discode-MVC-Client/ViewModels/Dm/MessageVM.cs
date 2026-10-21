@@ -16,5 +16,21 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public DateTime? PinnedAt { get; set; }
         public bool Forwarded { get; set; }
         public bool Undelivered { get; set; }
+        public bool IsCall { get; set; }
+        public int? CallSeconds { get; set; }
+        public bool CallMissed { get; set; }
+
+        public string CallName => string.IsNullOrWhiteSpace(SenderDisplayName) ? SenderUserName : SenderDisplayName;
+        public bool CallMissedForMe => CallMissed && !Mine;
+        public string CallTail => CallSeconds is null ? " started a call." : " started a call that lasted " + CallDuration(CallSeconds.Value) + ".";
+
+        private static string CallDuration(int seconds)
+        {
+            if (seconds < 60) return "a few seconds";
+            if (seconds < 120) return "a minute";
+            if (seconds < 3600) return (seconds / 60) + " minutes";
+            if (seconds < 7200) return "an hour";
+            return (seconds / 3600) + " hours";
+        }
     }
 }
