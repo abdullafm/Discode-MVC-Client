@@ -457,11 +457,9 @@ function setCallInviteCardVisible(open) {
 }
 
 function dmSetCallStatus(call) {
-    var label = document.getElementById("call-status");
     var stage = document.getElementById("call-stage");
-    if (!label || !call) return;
+    if (!call) return;
     var ringing = call.status === "ringing";
-    label.textContent = ringing ? (call.role === "caller" ? "Calling\u2026" : "Ringing\u2026") : "Connected";
     stage.classList.toggle("is-ringing", ringing);
     var peerFace = document.getElementById("call-peer-face");
     if (peerFace) peerFace.classList.toggle("is-waiting", ringing);
