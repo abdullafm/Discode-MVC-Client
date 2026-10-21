@@ -2987,3 +2987,10 @@ html.theme-dark .dm-call-join {
 .call-stage.has-focus .call-faces > .call-face.is-focused .call-tile-name i {
     font-size: 13px;
 }
+
+.dm-system-note {
+    margin: 10px 16px 14px;
+    color: #f23f43;
+    font-size: 15px;
+    line-height: 1.4;
+}

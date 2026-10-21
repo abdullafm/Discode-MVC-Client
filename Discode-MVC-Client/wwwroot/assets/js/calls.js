@@ -2,6 +2,9 @@
     "use strict";
 
     var RING_MS = window.discodeCallRingMs || 30000;
+    var ALONE_MS = window.discodeCallAloneMs || 180000;
+    var aloneTimer = 0;
+    var aloneCallId = "";
     var ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
     var state = null;
     var ringTimer = 0;
@@ -763,7 +766,31 @@
         if (inCallLabel) inCallLabel.hidden = !inCall;
     }
 
+    function watchAlone() {
+        var alone = !!state && state.status === "active" && state.joined !== false && state.peerPresent === false;
+        if (!alone) {
+            clearTimeout(aloneTimer);
+            aloneTimer = 0;
+            aloneCallId = "";
+            return;
+        }
+        if (aloneTimer && aloneCallId === state.callId) return;
+        clearTimeout(aloneTimer);
+        aloneCallId = state.callId;
+        aloneTimer = setTimeout(function () {
+            aloneTimer = 0;
+            if (!state || state.callId !== aloneCallId || state.peerPresent !== false || state.joined === false) return;
+            var userName = state.other.userName;
+            try {
+                sessionStorage.setItem("discode-idle-note", userName);
+            } catch (e) {}
+            end();
+            document.dispatchEvent(new CustomEvent("discode-call-idle", { detail: { userName: userName } }));
+        }, ALONE_MS);
+    }
+
     function emit(reason, previous) {
+        watchAlone();
         document.dispatchEvent(new CustomEvent("discode-call-state", { detail: { call: state, reason: reason || "", previous: previous || null } }));
     }
 

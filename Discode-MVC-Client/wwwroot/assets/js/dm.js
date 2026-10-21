@@ -341,6 +341,31 @@ function appendMessage(message, forceScroll) {
     if (forceScroll || message.mine || atBottom) scrollDmToEnd();
 }
 
+var IDLE_NOTE = "It appears you've been by yourself in this call for more than 3 minutes. The bandwidth patrol has asked me to disconnect you to save bandwidth. That stuff doesn't grow on trees!";
+
+function dmShowIdleNote() {
+    var box = document.getElementById("dm-messages");
+    if (!box) return;
+    var note = document.createElement("div");
+    note.className = "dm-system-note";
+    note.textContent = IDLE_NOTE;
+    box.appendChild(note);
+    document.getElementById("dm-wave-box").hidden = true;
+    scrollDmToEnd();
+}
+
+function dmCheckIdleNote() {
+    var pending = "";
+    try {
+        pending = sessionStorage.getItem("discode-idle-note") || "";
+    } catch (e) {}
+    if (!pending || !dmPartner || pending !== dmPartner.userName) return;
+    try {
+        sessionStorage.removeItem("discode-idle-note");
+    } catch (e) {}
+    dmShowIdleNote();
+}
+
 function scrollDmToEnd() {
     var scroller = document.querySelector(".dm-scroll");
     scroller.scrollTop = scroller.scrollHeight;
@@ -353,6 +378,10 @@ function showDmPage() {
     dmPartner = { userName: userName, userId: chat.getAttribute("data-user-id") };
     dmOngoingCall = Number(chat.getAttribute("data-ongoing-call")) || 0;
     dmRefreshJoinLinks();
+    dmCheckIdleNote();
+    document.addEventListener("discode-call-idle", function () {
+        dmCheckIdleNote();
+    });
     if (window.discodePresence) window.discodePresence.watchProfile(dmPartner.userId);
     window.discodeOpenDm = userName;
     var stamps = document.querySelectorAll("#dm-messages .dm-msg");
