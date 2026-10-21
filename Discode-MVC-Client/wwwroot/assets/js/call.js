@@ -77,7 +77,8 @@
             paintMic(muted, false);
         },
         isMuted: function () { return micBtn.classList.contains("is-off"); },
-        setCameraButton: function (on) { paintCam(on, true); }
+        setCameraButton: function (on) { paintCam(on, true); },
+        setScreenButton: function (on) { paintScreen(on, true); }
     };
 
     var camStream = null;
@@ -122,7 +123,13 @@
         });
     }
 
-    function paintScreen(on) {
+    function paintScreen(on, silent) {
+        if (document.getElementById("call-faces")) {
+            screenBtn.classList.toggle("is-on", on);
+            screenBtn.setAttribute("aria-pressed", on ? "true" : "false");
+            if (!silent) document.dispatchEvent(new CustomEvent("discode-call-screen", { detail: { on: on } }));
+            return;
+        }
         screenBtn.classList.toggle("is-on", on);
         screenBtn.setAttribute("aria-pressed", on ? "true" : "false");
         screenVideo.hidden = false;

@@ -21,6 +21,12 @@
     var videoSender = null;
     var remoteVideoStream = null;
     var peerCamera = false;
+    var screenState = "off";
+    var screenStream = null;
+    var screenToken = 0;
+    var screenSender = null;
+    var remoteScreenStream = null;
+    var peerScreen = null;
     var peerMuted = false;
     var peerDeafened = false;
     var AUDIO_KEY = "discode-call-audio";
@@ -159,7 +165,7 @@
     }
 
     function sendMuteState() {
-        sendSignal("mute", { muted: micIsMuted(), deafened: audioState.deafened, camera: cameraState === "on" });
+        sendSignal("mute", { muted: micIsMuted(), deafened: audioState.deafened, camera: cameraState === "on", screen: screenInfo() });
     }
 
     function applyMute() {
@@ -214,16 +220,63 @@
         if (parts.name) parts.name.textContent = info.name || "";
     }
 
+    function screenInfo() {
+        if (screenState !== "on" || !screenStream) return null;
+        var track = screenStream.getVideoTracks()[0];
+        var settings = track && track.getSettings ? track.getSettings() : {};
+        return { h: Math.round(settings.height || 720), fps: Math.round(settings.frameRate || 30) };
+    }
+
+    function screenTile(id) {
+        var faces = document.getElementById("call-faces");
+        var tile = document.getElementById(id);
+        if (!faces) return null;
+        if (tile) return tile;
+        tile = document.createElement("div");
+        tile.className = "call-face is-screen";
+        tile.id = id;
+        tile.innerHTML = "<video class=\"call-screen-tile-video\" autoplay playsinline muted></video>" +
+            "<div class=\"call-screen-badge\"><span class=\"call-screen-quality\"></span><b>LIVE</b></div>" +
+            "<div class=\"call-tile-name\"><i class=\"fa-solid fa-display\"></i><span></span></div>";
+        faces.insertBefore(tile, faces.firstChild);
+        return tile;
+    }
+
+    function fillScreenTile(id, show, stream, info, label) {
+        var tile = document.getElementById(id);
+        if (!show) {
+            if (tile) {
+                var old = tile.querySelector("video");
+                if (old) old.srcObject = null;
+                tile.parentNode.removeChild(tile);
+            }
+            return;
+        }
+        tile = screenTile(id);
+        if (!tile) return;
+        var video = tile.querySelector("video");
+        if (video.srcObject !== stream) video.srcObject = stream;
+        var playing = video.play();
+        if (playing && playing.catch) playing.catch(function () {});
+        tile.querySelector(".call-screen-quality").textContent = info ? info.h + "P " + info.fps + "FPS" : "";
+        tile.querySelector(".call-tile-name span").textContent = label;
+    }
+
     function renderTiles() {
         var stage = document.getElementById("call-stage");
         var avatar = document.getElementById("call-avatar");
         var peerFace = document.getElementById("call-peer-face");
         if (!stage || !avatar || !peerFace) return;
-        var video = cameraState !== "off" || peerCamera;
+        var mineShown = screenState === "on" && !!screenStream;
+        var theirsShown = !!peerScreen && !!remoteScreenStream;
+        var video = cameraState !== "off" || peerCamera || mineShown || theirsShown;
         stage.classList.toggle("is-video", video);
+        stage.classList.toggle("has-screen-tile", mineShown || theirsShown);
         var myName = document.querySelector("#user-panel .me-display");
         fillTile(avatar.parentNode, { camera: cameraState, stream: cameraStream, muted: audioState.muted, deafened: audioState.deafened, name: myName ? myName.textContent.trim() : "", error: cameraError });
         fillTile(peerFace, { camera: peerCamera ? "on" : "off", stream: remoteVideoStream, muted: peerMuted, deafened: peerDeafened, name: state ? name(state) : "" });
+        fillScreenTile("call-screen-peer", theirsShown, remoteScreenStream, peerScreen, state ? name(state) : "");
+        fillScreenTile("call-screen-me", mineShown, screenStream, screenInfo(), myName ? myName.textContent.trim() : "");
     }
 
     var cameraError = "";
@@ -236,6 +289,62 @@
         }
         if (videoSender) videoSender.replaceTrack(null).catch(function () {});
     }
+
+    function stopScreenStream() {
+        screenToken++;
+        if (screenStream) {
+            screenStream.getTracks().forEach(function (track) {
+                track.onended = null;
+                track.stop();
+            });
+            screenStream = null;
+        }
+        if (screenSender) screenSender.replaceTrack(null).catch(function () {});
+    }
+
+    function setScreen(on) {
+        var buttons = window.discodeCallControls;
+        if (!on) {
+            stopScreenStream();
+            screenState = "off";
+            if (buttons && buttons.setScreenButton) buttons.setScreenButton(false);
+            if (state && state.status === "active") sendMuteState();
+            renderTiles();
+            return;
+        }
+        if (!state || state.joined === false || state.status !== "active") {
+            if (buttons && buttons.setScreenButton) buttons.setScreenButton(false);
+            return;
+        }
+        if (screenState === "starting" || screenState === "on") return;
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+            if (buttons && buttons.setScreenButton) buttons.setScreenButton(false);
+            return;
+        }
+        var token = ++screenToken;
+        screenState = "starting";
+        navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false }).then(function (stream) {
+            if (token !== screenToken || !state) {
+                stream.getTracks().forEach(function (track) { track.stop(); });
+                return;
+            }
+            screenStream = stream;
+            screenState = "on";
+            var track = stream.getVideoTracks()[0];
+            if (track) track.onended = function () { setScreen(false); };
+            if (screenSender && track) screenSender.replaceTrack(track).catch(function () {});
+            sendMuteState();
+            renderTiles();
+        }).catch(function () {
+            if (token !== screenToken) return;
+            screenState = "off";
+            if (buttons && buttons.setScreenButton) buttons.setScreenButton(false);
+        });
+    }
+
+    document.addEventListener("discode-call-screen", function (event) {
+        setScreen(!!event.detail.on);
+    });
 
     function setCamera(on) {
         var buttons = window.discodeCallControls;
@@ -378,7 +487,9 @@
         voiceConnected = false;
         pendingCandidates = [];
         videoSender = null;
+        screenSender = null;
         remoteVideoStream = null;
+        remoteScreenStream = null;
         if (remoteAudio) remoteAudio.srcObject = null;
         renderTiles();
     }
@@ -393,6 +504,10 @@
         stopCameraStream();
         cameraState = "off";
         cameraError = "";
+        stopScreenStream();
+        screenState = "off";
+        peerScreen = null;
+        if (window.discodeCallControls && window.discodeCallControls.setScreenButton) window.discodeCallControls.setScreenButton(false);
         if (window.discodeCallControls && window.discodeCallControls.setCameraButton) window.discodeCallControls.setCameraButton(false);
         renderTiles();
         if (localStream) {
@@ -437,7 +552,9 @@
         };
         peer.ontrack = function (event) {
             if (event.track.kind === "video") {
-                remoteVideoStream = new MediaStream([event.track]);
+                var videos = peer.getTransceivers().filter(function (item) { return item.receiver.track && item.receiver.track.kind === "video"; });
+                if (videos.indexOf(event.transceiver) === 1) remoteScreenStream = new MediaStream([event.track]);
+                else remoteVideoStream = new MediaStream([event.track]);
                 renderTiles();
                 return;
             }
@@ -458,6 +575,7 @@
         }
         if (!forAnswer) {
             videoSender = peer.addTransceiver("video", { direction: "sendrecv" }).sender;
+            screenSender = peer.addTransceiver("video", { direction: "sendrecv" }).sender;
             attachCameraTrack();
         }
         return peer;
@@ -466,15 +584,18 @@
     function attachCameraTrack() {
         var cameraTrack = cameraStream ? cameraStream.getVideoTracks()[0] : null;
         if (videoSender && cameraTrack) videoSender.replaceTrack(cameraTrack).catch(function () {});
+        var screenTrack = screenStream ? screenStream.getVideoTracks()[0] : null;
+        if (screenSender && screenTrack) screenSender.replaceTrack(screenTrack).catch(function () {});
     }
 
     function useOfferedVideo(connection) {
         var offered = connection.getTransceivers().filter(function (item) {
             return item.receiver.track && item.receiver.track.kind === "video" && item.mid !== null;
-        })[0];
-        if (!offered) return;
-        offered.direction = "sendrecv";
-        videoSender = offered.sender;
+        });
+        if (!offered.length) return;
+        offered.forEach(function (item) { item.direction = "sendrecv"; });
+        videoSender = offered[0].sender;
+        screenSender = offered[1] ? offered[1].sender : null;
         attachCameraTrack();
     }
 
@@ -550,6 +671,7 @@
             else pendingCandidates.push(data.candidate);
         } else if (data.type === "mute") {
             peerCamera = !!data.camera;
+            peerScreen = data.screen || null;
             showPeerMuted(!!data.muted, !!data.deafened);
         }
     }
@@ -673,6 +795,7 @@
         } else if (!data.present) {
             closePeer();
             peerCamera = false;
+            peerScreen = null;
             showPeerMuted(false, false);
             play(leaveSound);
         } else {
