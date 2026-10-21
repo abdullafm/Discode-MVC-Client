@@ -48,9 +48,9 @@ wwwroot\assets\js\socialmedia.js
 wwwroot\assets\css\style.css
 wwwroot\assets\js\i18n.js
 wwwroot\assets\js\emoji.js
-wwwroot\assets\js\dm.js
-wwwroot\assets\js\groups.js
 wwwroot\assets\css\dm.css
+wwwroot\assets\js\groups.js
+wwwroot\assets\js\dm.js
 wwwroot\assets\css\admin.css
 wwwroot\assets\js\profile.js
 wwwroot\uploads\live\.gitkeep
