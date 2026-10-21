@@ -2104,3 +2104,22 @@ html.theme-dark .dm-private-note {
     background: #232428;
     color: #dbdee1;
 }
+
+.dm-msg-tools button.dm-tool-delete {
+    display: none;
+    color: #f23f42 !important;
+}
+
+.dm-shift .dm-msg-tools button.dm-tool-delete {
+    display: grid;
+}
+
+.dm-msg-tools button.dm-tool-delete:hover {
+    background: rgba(242, 63, 66, 0.15) !important;
+    color: #f23f42 !important;
+}
+
+html.theme-dark .dm-msg-tools button.dm-tool-delete,
+html.theme-dark .dm-msg-tools button.dm-tool-delete:hover {
+    color: #f23f42 !important;
+}

@@ -135,6 +135,7 @@ function messageTools(mine) {
             ? '<button type="button" data-act="edit" aria-label="Edit"><i class="fa-solid fa-pen"></i></button>'
             : '<button type="button" data-act="reply" aria-label="Reply"><i class="fa-solid fa-reply"></i></button>') +
         '<button type="button" data-act="forward" aria-label="Forward"><i class="fa-solid fa-share"></i></button>' +
+        (mine ? '<button type="button" class="dm-tool-delete" data-act="delete" aria-label="Delete"><i class="fa-solid fa-trash-can"></i></button>' : '') +
         '<button type="button" data-act="more" aria-label="More"><i class="fa-solid fa-ellipsis"></i></button>';
     return tools;
 }
@@ -1207,6 +1208,7 @@ function bindDmMessages() {
         else if (act === "edit") dmStartEdit(row);
         else if (act === "reply") dmStartReply(row);
         else if (act === "forward") dmOpenForward(row);
+        else if (act === "delete") dmDeleteMessage(row);
         else if (act === "more") dmOpenMenu(button, row);
     });
 
@@ -1284,6 +1286,16 @@ function bindDmMessages() {
         }
         dmClosePicker();
     }, true);
+
+    function dmSyncShift(event) {
+        document.body.classList.toggle("dm-shift", !!event.shiftKey);
+    }
+    document.addEventListener("keydown", dmSyncShift);
+    document.addEventListener("keyup", dmSyncShift);
+    document.addEventListener("mousemove", dmSyncShift);
+    window.addEventListener("blur", function () {
+        document.body.classList.remove("dm-shift");
+    });
 
     document.addEventListener("click", function (event) {
         if (!event.target.closest("#dm-msg-menu, .dm-msg-tools [data-act='more']")) dmCloseMenu();

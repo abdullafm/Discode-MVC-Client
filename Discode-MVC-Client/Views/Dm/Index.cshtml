@@ -165,6 +165,10 @@
                                         <button type="button" data-act="reply" aria-label="Reply"><i class="fa-solid fa-reply"></i></button>
                                     }
                                     <button type="button" data-act="forward" aria-label="Forward"><i class="fa-solid fa-share"></i></button>
+                                    @if (message.Mine)
+                                    {
+                                        <button type="button" class="dm-tool-delete" data-act="delete" aria-label="Delete"><i class="fa-solid fa-trash-can"></i></button>
+                                    }
                                     <button type="button" data-act="more" aria-label="More"><i class="fa-solid fa-ellipsis"></i></button>
                                 </div>
                             </div>
