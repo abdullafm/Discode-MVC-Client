@@ -15,5 +15,6 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public ReplyVM? ReplyTo { get; set; }
         public DateTime? PinnedAt { get; set; }
         public bool Forwarded { get; set; }
+        public bool Undelivered { get; set; }
     }
 }

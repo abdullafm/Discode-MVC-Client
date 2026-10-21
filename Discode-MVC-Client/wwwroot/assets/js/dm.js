@@ -195,7 +195,7 @@ function appendMessage(message, forceScroll) {
         stamp - Number(last.getAttribute("data-time")) < 5 * 60 * 1000 && box.lastElementChild === last;
 
     var row = document.createElement("div");
-    row.className = "dm-msg" + (compact ? " compact" : "") + (message.replyTo ? " has-reply" : "");
+    row.className = "dm-msg" + (compact ? " compact" : "") + (message.replyTo ? " has-reply" : "") + (message.undelivered ? " is-undelivered" : "");
     row.setAttribute("data-id", String(message.id));
     row.setAttribute("data-sender", message.senderUserName);
     row.setAttribute("data-time", String(stamp));
@@ -230,6 +230,12 @@ function appendMessage(message, forceScroll) {
     var textHolder = messageNodes(message.text);
     if (message.editedAt) textHolder.appendChild(dmEditedLabel());
     body.appendChild(textHolder);
+    if (message.undelivered) {
+        var failed = document.createElement("div");
+        failed.className = "dm-msg-undelivered";
+        failed.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Your message could not be delivered.';
+        body.appendChild(failed);
+    }
     row.appendChild(body);
     row.appendChild(messageTools(message.mine));
     box.appendChild(row);

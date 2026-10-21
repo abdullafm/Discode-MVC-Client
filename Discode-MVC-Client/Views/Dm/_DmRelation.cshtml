@@ -3,7 +3,15 @@
     var returnUrl = Url.Action("Index", "Dm", new { name = Model.UserName });
 }
 <i hidden data-relation="@Model.Relation"></i>
-@if (Model.Relation == "friend" && Model.FriendRequestId is not null)
+@if (Model.Relation == "blocked" && Model.BlockId is not null)
+{
+    <form asp-controller="Friend" asp-action="Unblock" method="post" class="dm-meta-form">
+        <input type="hidden" name="id" value="@Model.BlockId">
+        <input type="hidden" name="returnUrl" value="@returnUrl">
+        <button type="submit">Unblock</button>
+    </form>
+}
+else if (Model.Relation == "friend" && Model.FriendRequestId is not null)
 {
     <form asp-controller="Friend" asp-action="Remove" method="post" class="dm-meta-form">
         <input type="hidden" name="id" value="@Model.FriendRequestId">
@@ -31,7 +39,11 @@ else if (Model.Relation == "pending-received" && Model.FriendRequestId is not nu
         <button type="submit">Accept Friend Request</button>
     </form>
 }
-<form asp-controller="Friend" asp-action="Block" method="post" class="dm-meta-form">
-    <input type="hidden" name="userName" value="@Model.UserName">
-    <button type="submit">Block</button>
-</form>
+@if (Model.Relation != "blocked")
+{
+    <form asp-controller="Friend" asp-action="Block" method="post" class="dm-meta-form">
+        <input type="hidden" name="userName" value="@Model.UserName">
+        <input type="hidden" name="returnUrl" value="@returnUrl">
+        <button type="submit">Block</button>
+    </form>
+}

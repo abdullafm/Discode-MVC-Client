@@ -2052,3 +2052,21 @@ html.theme-dark .dm-forward-send input {
 html.theme-dark .dm-msg-forwarded {
     color: #949ba4;
 }
+
+.dm-msg.is-undelivered .dm-msg-text {
+    color: #f23f42;
+}
+
+.dm-msg-undelivered {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+    color: #f23f42;
+    font-size: 12px;
+}
+
+html.theme-dark .dm-msg.is-undelivered .dm-msg-text,
+html.theme-dark .dm-msg-undelivered {
+    color: #f23f42;
+}

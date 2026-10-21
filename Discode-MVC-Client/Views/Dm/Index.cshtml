@@ -93,7 +93,7 @@
                         <div id="dm-relation" class="dm-meta-forms">
                             @if (chat is not null)
                             {
-                                <partial name="_DmRelation" model="new DmRelationVM { UserName = chat.UserName, Relation = chat.Relation, FriendRequestId = chat.FriendRequestId }" />
+                                <partial name="_DmRelation" model="new DmRelationVM { UserName = chat.UserName, Relation = chat.Relation, FriendRequestId = chat.FriendRequestId, BlockId = chat.BlockId }" />
                             }
                         </div>
                     </div>
@@ -115,7 +115,7 @@
                             {
                                 <div class="dm-divider"><span>@sentAt.ToString("MMMM d, yyyy", culture)</span></div>
                             }
-                            <div class="dm-msg@(compact ? " compact" : "")@(message.ReplyTo is null ? "" : " has-reply")" data-id="@message.Id" data-sender="@message.SenderUserName" data-time="@Millis(message.CreatedAt)" data-mine="@(message.Mine ? "1" : "0")" data-pinned="@(message.PinnedAt is null ? "0" : "1")">
+                            <div class="dm-msg@(compact ? " compact" : "")@(message.ReplyTo is null ? "" : " has-reply")@(message.Undelivered ? " is-undelivered" : "")" data-id="@message.Id" data-sender="@message.SenderUserName" data-time="@Millis(message.CreatedAt)" data-mine="@(message.Mine ? "1" : "0")" data-pinned="@(message.PinnedAt is null ? "0" : "1")">
                                 @if (message.ReplyTo is not null)
                                 {
                                     <div class="dm-msg-reply" data-reply-id="@message.ReplyTo.MessageId" role="button" tabindex="0">
@@ -135,6 +135,10 @@
                                         <div class="dm-msg-forwarded"><i class="fa-solid fa-share"></i> Forwarded</div>
                                     }
                                     <div class="dm-msg-text">@message.Text@if (message.EditedAt is not null){<span class="dm-msg-edited">(edited)</span>}</div>
+                                    @if (message.Undelivered)
+                                    {
+                                        <div class="dm-msg-undelivered"><i class="fa-solid fa-circle-exclamation"></i> Your message could not be delivered.</div>
+                                    }
                                     @if (message.Reactions.Count > 0)
                                     {
                                         <div class="dm-reactions">
