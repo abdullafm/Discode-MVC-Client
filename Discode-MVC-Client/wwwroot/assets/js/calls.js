@@ -379,7 +379,6 @@
         pendingCandidates = [];
         videoSender = null;
         remoteVideoStream = null;
-        peerCamera = false;
         if (remoteAudio) remoteAudio.srcObject = null;
         renderTiles();
     }
@@ -402,6 +401,7 @@
         }
         micPromise = null;
         mediaCallId = "";
+        peerCamera = false;
         showPeerMuted(false, false);
     }
 
@@ -432,6 +432,7 @@
         };
         peer.onconnectionstatechange = function () {
             voiceConnected = !!peer && peer.connectionState === "connected";
+            if (voiceConnected) sendMuteState();
             render();
         };
         peer.ontrack = function (event) {
@@ -671,6 +672,7 @@
             beginMedia(state);
         } else if (!data.present) {
             closePeer();
+            peerCamera = false;
             showPeerMuted(false, false);
             play(leaveSound);
         } else {
@@ -706,6 +708,7 @@
             }
             render();
             emit("");
+            if (video) setCamera(true);
             return call;
         }).catch(function (error) {
             throw new Error(clean(error));
