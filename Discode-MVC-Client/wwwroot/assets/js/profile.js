@@ -104,7 +104,9 @@
     }
 
     function applyDisplay(name) {
+        var viewingOwn = isMe(viewing);
         ownName = name;
+        if (viewingOwn) viewing = name;
         var nodes = document.querySelectorAll(".me-display");
         for (var i = 0; i < nodes.length; i++) nodes[i].textContent = name;
         var input = document.getElementById("me-display-input");
