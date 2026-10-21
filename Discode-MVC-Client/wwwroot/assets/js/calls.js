@@ -22,6 +22,7 @@
     var remoteVideoStream = null;
     var peerCamera = false;
     var peerMuted = false;
+    var peerDeafened = false;
     var AUDIO_KEY = "discode-call-audio";
     var audioState = { muted: false, deafened: false };
 
@@ -123,6 +124,7 @@
         if (audioState.muted) setSpeaking("me", false);
         if (remoteAudio) remoteAudio.muted = audioState.deafened;
         saveAudio();
+        renderTiles();
         if (state && state.status === "active") sendMuteState();
     }
 
@@ -168,6 +170,7 @@
         badge.classList.toggle("is-gone", !muted && !deafened);
         badge.classList.toggle("is-deaf", !!deafened);
         peerMuted = !!muted || !!deafened;
+        peerDeafened = !!deafened;
         renderTiles();
     }
 
@@ -176,7 +179,8 @@
             video: face.querySelector(".call-tile-video"),
             loading: face.querySelector(".call-tile-loading"),
             error: face.querySelector(".call-tile-error"),
-            micIcon: face.querySelector(".call-tile-name i"),
+            micIcon: face.querySelector(".call-tile-name .fa-microphone-slash"),
+            deafIcon: face.querySelector(".call-tile-name .tile-deaf"),
             name: face.querySelector(".call-tile-name span")
         };
     }
@@ -201,7 +205,8 @@
             var detail = parts.error.querySelector("small");
             if (detail) detail.textContent = info.error ? "Error: " + info.error : "";
         }
-        if (parts.micIcon) parts.micIcon.hidden = !info.muted;
+        if (parts.micIcon) parts.micIcon.hidden = !info.muted || !!info.deafened;
+        if (parts.deafIcon) parts.deafIcon.hidden = !info.deafened;
         if (parts.name) parts.name.textContent = info.name || "";
     }
 
@@ -213,8 +218,8 @@
         var video = cameraState !== "off" || peerCamera;
         stage.classList.toggle("is-video", video);
         var myName = document.querySelector("#user-panel .me-display");
-        fillTile(avatar.parentNode, { camera: cameraState, stream: cameraStream, muted: audioState.muted, name: myName ? myName.textContent.trim() : "", error: cameraError });
-        fillTile(peerFace, { camera: peerCamera ? "on" : "off", stream: remoteVideoStream, muted: peerMuted, name: state ? name(state) : "" });
+        fillTile(avatar.parentNode, { camera: cameraState, stream: cameraStream, muted: audioState.muted, deafened: audioState.deafened, name: myName ? myName.textContent.trim() : "", error: cameraError });
+        fillTile(peerFace, { camera: peerCamera ? "on" : "off", stream: remoteVideoStream, muted: peerMuted, deafened: peerDeafened, name: state ? name(state) : "" });
     }
 
     var cameraError = "";

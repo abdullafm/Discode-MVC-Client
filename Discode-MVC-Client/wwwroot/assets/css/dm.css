@@ -2750,6 +2750,22 @@ html.theme-dark .dm-call-join {
     font-weight: 600;
 }
 
+.call-stage.is-video .call-tile-name .tile-deaf {
+    position: relative;
+}
+
+.call-stage.is-video .call-tile-name .tile-deaf::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 130%;
+    height: 2px;
+    border-radius: 2px;
+    background: #f23f43;
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
 .call-stage.is-video .call-tile-name i[hidden] {
     display: none;
 }
