@@ -190,26 +190,8 @@
                 <button type="button" id="dm-profile-close" aria-label="Close profile" title="@(chat is null ? "" : chat.IsFriend ? "Friends" : "Not friends")"><i class="fa-solid @(chat is not null && chat.IsFriend ? "fa-user-check" : "fa-user")"></i></button>
                 <button type="button" aria-label="More"><i class="fa-solid fa-ellipsis"></i></button>
             </div>
-            <div class="dm-profile-photo">
-                <img class="dm-profile-avatar" id="dm-profile-avatar" src="@avatar" alt="">
-                <span class="dm-status@(status)"></span>
-            </div>
-            <div class="dm-profile-card">
-                <h2 id="dm-profile-name">@(chat is null ? "" : shownName)</h2>
-                <p id="dm-profile-handle">@chat?.UserName@if (chat is not null && !string.IsNullOrWhiteSpace(chat.Pronouns)) { <text> • @chat.Pronouns</text> }</p>
-                @if (chat is not null && !string.IsNullOrWhiteSpace(chat.CustomStatus))
-                {
-                    <p class="dm-profile-custom">@chat.CustomStatus</p>
-                }
-            </div>
-            <div class="dm-profile-body">
-                @if (chat is not null && !string.IsNullOrWhiteSpace(chat.Bio))
-                {
-                    <p class="dm-since-label">Bio</p>
-                    <p class="dm-profile-text">@chat.Bio</p>
-                }
-                <p class="dm-since-label">Member Since</p>
-                <p id="dm-since">@(chat is null ? "" : Local(chat.MemberSince).ToString("MMM d, yyyy", culture))</p>
+            <div id="dm-profile-info">
+                <partial name="_DmProfileInfo" model="DmProfileVM.From(chat, Model.UtcOffsetMinutes)" />
             </div>
             <button type="button" class="dm-full">View Full Profile</button>
         </div>

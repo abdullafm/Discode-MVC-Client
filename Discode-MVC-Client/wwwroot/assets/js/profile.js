@@ -478,7 +478,7 @@
 
     function applyOwnPhoto(src) {
         ownPhoto = src;
-        var faces = document.querySelectorAll("#user-panel .avatar img, #me-pop .me-avatar img, #me-profile .me-profile-avatar img, .set-status-person > img, .settings-me img");
+        var faces = document.querySelectorAll("#user-panel .avatar img, #me-pop .me-avatar img, #me-profile .me-profile-avatar img, .set-status-person > img, .settings-me img, #dm-messages .dm-msg[data-mine=\"1\"] .dm-msg-avatar");
         for (var i = 0; i < faces.length; i++) faces[i].src = src;
     }
 
@@ -524,7 +524,7 @@
                             savedAvatarUrl = data.avatarUrl;
                             var hidden = document.getElementById("Update_AvatarUrl");
                             if (hidden) hidden.value = data.avatarUrl;
-                            applyOwnPhoto(data.avatarUrl + "?v=" + Date.now());
+                            applyOwnPhoto(data.avatarUrl);
                             saveProfile();
                         }).catch(function () {
                             showProfileError("Could not save the photo.");
@@ -622,7 +622,9 @@
 
     document.addEventListener("discode-user-presence", function (event) {
         if (profile.classList.contains("d-none") || !profile.classList.contains("visitor-view")) return;
-        if (event.detail && event.detail.userId === viewingUserId) paintVisitorStatus(event.detail.status);
+        if (!event.detail || event.detail.userId !== viewingUserId) return;
+        paintVisitorStatus(event.detail.status);
+        loadVisitor(viewing);
     });
 
     document.addEventListener("discode-friends-changed", function () {

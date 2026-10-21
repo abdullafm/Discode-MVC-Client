@@ -94,6 +94,22 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> ProfileInfo(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return BadRequest(new { errors = new[] { "Choose a friend." } });
+
+            var (profile, status) = await GetAsync<UserProfileVM>("api/account/users/" + Uri.EscapeDataString(name.Trim()));
+            if (status == System.Net.HttpStatusCode.Unauthorized)
+                return Unauthorized();
+            if (profile is null)
+                return NotFound();
+
+            var offset = int.TryParse(Request.Cookies["tz"], out var minutes) && Math.Abs(minutes) <= 14 * 60 ? minutes : 0;
+            return PartialView("_DmProfileInfo", DmProfileVM.From(profile, offset));
+        }
+
+        [HttpGet]
         public async Task<IActionResult> ForwardTargets()
         {
             var (friends, status) = await GetAsync<List<FriendRequestVM>>("api/friend");

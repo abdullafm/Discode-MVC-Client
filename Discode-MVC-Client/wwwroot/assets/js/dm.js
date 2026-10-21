@@ -326,8 +326,47 @@ document.addEventListener("discode-dm-message", function (event) {
     if (!data.message.mine) dmRequest("/Dm/Read", "POST", { userName: dmPartner.userName }).catch(function () {});
 });
 
+function dmRefreshProfile() {
+    if (!dmPartner) return;
+    fetch("/Dm/ProfileInfo?name=" + encodeURIComponent(dmPartner.userName), {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    }).then(function (response) {
+        if (!response.ok) throw new Error("profile");
+        return response.text();
+    }).then(function (html) {
+        var holder = document.getElementById("dm-profile-info");
+        if (holder) holder.innerHTML = html;
+        dmSyncPartnerMessages();
+    }).catch(function () {});
+}
+
+function dmSyncPartnerMessages() {
+    var avatar = document.getElementById("dm-profile-avatar");
+    var name = document.getElementById("dm-profile-name");
+    var title = document.getElementById("dm-title");
+    var rows = document.querySelectorAll('#dm-messages .dm-msg[data-sender="' + dmPartner.userName + '"]');
+    for (var i = 0; i < rows.length; i++) {
+        var face = rows[i].querySelector(".dm-msg-avatar");
+        var who = rows[i].querySelector(".dm-msg-head strong");
+        if (face && avatar) face.src = avatar.getAttribute("src");
+        if (who && name && name.textContent) who.textContent = name.textContent;
+    }
+    if (title && name && name.textContent) title.textContent = name.textContent;
+}
+
+document.addEventListener("discode-profile-changed", function (event) {
+    if (dmPartner && event.detail && event.detail.userId === dmPartner.userId) dmRefreshProfile();
+});
+
+window.addEventListener("load", function () {
+    if (dmPartner && window.discodePresence) window.discodePresence.watchProfile(dmPartner.userId);
+});
+
 document.addEventListener("discode-user-presence", function (event) {
-    if (dmPartner && event.detail.userId === dmPartner.userId) paintDmStatus(event.detail.status);
+    if (!dmPartner || event.detail.userId !== dmPartner.userId) return;
+    paintDmStatus(event.detail.status);
+    dmRefreshProfile();
 });
 
 var profileOpenBeforeCall = false;

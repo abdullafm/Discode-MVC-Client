@@ -128,6 +128,7 @@
     });
 
     document.addEventListener("discode-dm-changed", load);
+    document.addEventListener("discode-profile-changed", load);
     document.addEventListener("visibilitychange", function () {
         if (!document.hidden) load();
     });

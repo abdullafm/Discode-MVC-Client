@@ -5689,6 +5689,13 @@ html.theme-dark .dm-status {
     border-color: var(--d-side);
 }
 
+html.theme-dark .dm-profile-bubble,
+html.theme-dark .dm-profile-bubble::before,
+html.theme-dark .dm-profile-bubble::after {
+    background: #1e1f22;
+    color: #dbdee1;
+}
+
 html.theme-dark .dm-profile-card h2,
 html.theme-dark .dm-profile-text,
 html.theme-dark #dm-since {

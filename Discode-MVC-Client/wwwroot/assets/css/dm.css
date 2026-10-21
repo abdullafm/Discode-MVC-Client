@@ -614,11 +614,51 @@ section#dm-profile.no-motion .dm-profile {
     font-weight: 700;
 }
 
-.dm-profile-custom {
-    margin-top: 6px;
+#dm-profile-info {
+    display: contents;
+}
+
+.dm-profile-bubble {
+    position: absolute;
+    left: 100px;
+    bottom: 6px;
+    display: flex;
+    align-items: center;
+    max-width: 168px;
+    padding: 8px 12px;
+    border-radius: 16px;
+    background: #ffffff;
     color: #4d5058;
-    font-size: 14px;
-    overflow-wrap: anywhere;
+    font-size: 13px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.dm-profile-bubble span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dm-profile-bubble::before,
+.dm-profile-bubble::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    background: #ffffff;
+}
+
+.dm-profile-bubble::before {
+    left: -7px;
+    bottom: 6px;
+    width: 10px;
+    height: 10px;
+}
+
+.dm-profile-bubble::after {
+    left: -16px;
+    bottom: 0;
+    width: 6px;
+    height: 6px;
 }
 
 .dm-profile-text {

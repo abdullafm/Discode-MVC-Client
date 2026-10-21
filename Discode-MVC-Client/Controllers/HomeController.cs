@@ -185,7 +185,7 @@ namespace Discode_MVC_Client.Controllers
             using (var stream = System.IO.File.Create(path))
                 file.CopyTo(stream);
 
-            return Ok(new { avatarUrl = "/uploads/avatars/" + userId + ".jpg" });
+            return Ok(new { avatarUrl = "/uploads/avatars/" + userId + ".jpg?v=" + DateTime.UtcNow.Ticks });
         }
 
         [HttpGet]

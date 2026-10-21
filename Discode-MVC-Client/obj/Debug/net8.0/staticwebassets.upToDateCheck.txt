@@ -45,16 +45,15 @@ wwwroot\assets\css\audio\discord-unmute-sound.mp3
 wwwroot\assets\css\audio\call.mp3
 wwwroot\assets\css\register.css
 wwwroot\assets\js\socialmedia.js
-wwwroot\assets\css\style.css
+wwwroot\assets\js\profile.js
 wwwroot\assets\js\i18n.js
 wwwroot\assets\js\emoji.js
-wwwroot\assets\css\dm.css
+wwwroot\assets\css\style.css
 wwwroot\assets\js\groups.js
-wwwroot\assets\js\dm.js
+wwwroot\assets\css\dm.css
 wwwroot\assets\css\admin.css
-wwwroot\assets\js\profile.js
+wwwroot\assets\js\dm.js
 wwwroot\uploads\live\.gitkeep
-wwwroot\assets\js\directmessages.js
 wwwroot\assets\js\admin.js
 wwwroot\assets\js\presence.js
 wwwroot\assets\js\call.js
@@ -66,3 +65,4 @@ wwwroot\assets\css\login.css
 wwwroot\uploads\posts\4cdf94a267e8454c881c1380c0edaad1.jpg
 wwwroot\assets\js\notifications.js
 wwwroot\uploads\stories\95e23e1014a649c1b59b199463ebc658.jpg
+wwwroot\assets\js\directmessages.js
