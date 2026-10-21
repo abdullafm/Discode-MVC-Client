@@ -54,6 +54,7 @@
         document.dispatchEvent(new CustomEvent("discode-posts-changed"));
         document.dispatchEvent(new CustomEvent("discode-notifications-changed"));
         document.dispatchEvent(new CustomEvent("discode-dm-changed"));
+        document.dispatchEvent(new CustomEvent("discode-hub-connected"));
         refreshFriends();
         joinWatchedProfile();
     }
@@ -97,6 +98,18 @@
                 });
 
                 connection.on("FriendsChanged", refreshFriends);
+
+                connection.on("IncomingCall", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-call-incoming", { detail: data }));
+                });
+
+                connection.on("CallAccepted", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-call-accepted", { detail: data }));
+                });
+
+                connection.on("CallEnded", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-call-ended", { detail: data }));
+                });
 
                 connection.on("PostsChanged", function () {
                     document.dispatchEvent(new CustomEvent("discode-posts-changed"));

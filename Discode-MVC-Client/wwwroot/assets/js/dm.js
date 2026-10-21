@@ -9,9 +9,24 @@ function startDmPage() {
     }, 2000);
     if (!document.getElementById("dm-chat")) return;
     showDmPage();
+    var syncCall = function () {
+        var current = window.discodeCalls && window.discodeCalls.current();
+        if (!current || !dmPartner || current.other.userName !== dmPartner.userName) return;
+        dmShowCallStage();
+        dmSetCallStatus(current);
+    };
+    syncCall();
+    if (window.discodeCalls) window.discodeCalls.ready(syncCall);
     var call = new URLSearchParams(window.location.search).get("call");
-    if (call === "voice" || call === "video") startDmCall();
-    if (call === "video" && window.openCallCamera) window.openCallCamera();
+    if (call === "voice" || call === "video") {
+        var video = call === "video";
+        var begin = function () {
+            startDmCall(video);
+            if (video && window.openCallCamera) window.openCallCamera();
+        };
+        if (window.discodeCalls) window.discodeCalls.ready(begin);
+        else begin();
+    }
 }
 
 var x = new Audio("/assets/css/audio/discordmute_IZNcLx2.mp3");
@@ -417,19 +432,19 @@ function setCallFace(src) {
     faces.appendChild(face);
 }
 
-function panelPhoto() {
+function dmPanelPhoto() {
     var img = document.querySelector("#user-panel .avatar img");
     return (img && img.getAttribute("src")) || "/assets/img/img-icon-profile.jpeg";
 }
 
-function myPhoto() {
+function dmMyPhoto() {
     return fetch("/api/me").then(function (response) {
         if (!response.ok) throw new Error("me");
         return response.json();
     }).then(function (data) {
-        return data.avatar || data.avatarUrl || data.photo || panelPhoto();
+        return data.avatar || data.avatarUrl || data.photo || dmPanelPhoto();
     }).catch(function () {
-        return panelPhoto();
+        return dmPanelPhoto();
     });
 }
 
@@ -441,13 +456,73 @@ function setCallInviteCardVisible(open) {
     sheet.hidden = !open;
 }
 
-function startDmCall() {
+function dmSetCallStatus(call) {
+    var label = document.getElementById("call-status");
+    var stage = document.getElementById("call-stage");
+    if (!label || !call) return;
+    var ringing = call.status === "ringing";
+    label.textContent = ringing ? (call.role === "caller" ? "Calling\u2026" : "Ringing\u2026") : "Connected";
+    stage.classList.toggle("is-ringing", ringing);
+}
+
+function dmNotice(text) {
+    showDmError(text);
+    if (text) setTimeout(function () { showDmError(""); }, 5000);
+}
+
+function dmCloseCallStage() {
+    document.getElementById("call-stage").hidden = true;
+    document.getElementById("call-stage").classList.remove("is-ringing");
+    document.querySelector(".dm-chat").classList.remove("call-chat");
+    callInviteCardClosed = false;
+    setCallInviteCardVisible(true);
+    if (profileOpenBeforeCall) setDmProfile(true);
+}
+
+function startDmCall(video) {
+    if (!dmPartner) return;
+    var calls = window.discodeCalls;
+    if (!calls) return;
+    var current = calls.current();
+    if (current && current.other.userName === dmPartner.userName) {
+        dmShowCallStage();
+        dmSetCallStatus(current);
+        return;
+    }
+    showDmError("");
+    calls.start(dmPartner.userName, video).catch(function (error) {
+        dmNotice(error.message);
+    });
+}
+
+document.addEventListener("discode-call-state", function (event) {
+    if (!dmPartner) return;
+    var call = event.detail.call;
+    var stage = document.getElementById("call-stage");
+    if (call && call.other.userName === dmPartner.userName) {
+        if (stage.hidden) dmShowCallStage();
+        dmSetCallStatus(call);
+        return;
+    }
+    if (call) return;
+    var previous = event.detail.previous;
+    var wasHere = previous && previous.other.userName === dmPartner.userName;
+    if (!stage.hidden) dmCloseCallStage();
+    if (!wasHere) return;
+    var title = document.getElementById("dm-title").textContent;
+    var reason = event.detail.reason;
+    if (reason === "declined") dmNotice(title + " declined the call.");
+    else if (reason === "missed") dmNotice(title + " didn't answer.");
+    else if (reason === "unavailable") dmNotice("The call is no longer available.");
+});
+
+function dmShowCallStage() {
     var profile = document.getElementById("dm-profile");
     var avatar = document.getElementById("call-avatar");
-    avatar.src = panelPhoto();
-    var photo = panelPhoto();
+    avatar.src = dmPanelPhoto();
+    var photo = dmPanelPhoto();
     setCallFace(photo);
-    myPhoto().then(function (next) {
+    dmMyPhoto().then(function (next) {
         photo = next;
         avatar.src = next;
         setCallFace(next);
@@ -461,23 +536,20 @@ function startDmCall() {
     document.getElementById("call-stage").hidden = false;
     profileOpenBeforeCall = !profile.classList.contains("is-collapsed");
     setDmProfile(false);
-    joinVoiceSound.currentTime = 0;
-    joinVoiceSound.play().catch(function() {});
 }
 
 function bindDmCall() {
-    document.getElementById("dm-call").addEventListener("click", startDmCall);
+    document.getElementById("dm-call").addEventListener("click", function () {
+        startDmCall(false);
+    });
     document.getElementById("dm-video").addEventListener("click", function () {
-        startDmCall();
+        startDmCall(true);
         if (window.openCallCamera) window.openCallCamera();
     });
 
     document.getElementById("call-hangup").addEventListener("click", function () {
-        document.getElementById("call-stage").hidden = true;
-        document.querySelector(".dm-chat").classList.remove("call-chat");
-        callInviteCardClosed = false;
-        setCallInviteCardVisible(true);
-        if (profileOpenBeforeCall) setDmProfile(true);
+        if (window.discodeCalls) window.discodeCalls.end();
+        dmCloseCallStage();
     });
 
     document.querySelector(".call-phone-add").addEventListener("click", function () {

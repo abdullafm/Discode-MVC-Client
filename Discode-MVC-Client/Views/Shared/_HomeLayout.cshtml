@@ -581,6 +581,21 @@
             <input type="hidden" asp-for="Update.Bio" />
             <input type="hidden" name="Update.IsPublic" value="@(Model.Update.IsPublic ? "true" : "false")" />
         </form>
+        <div class="incoming-call" id="incoming-call" role="alertdialog" aria-live="assertive" aria-label="Incoming call" hidden>
+            <img class="incoming-call-avatar" id="incoming-call-avatar" alt="">
+            <div class="incoming-call-body">
+                <strong id="incoming-call-name"></strong>
+                <span id="incoming-call-kind">Incoming Voice Call</span>
+            </div>
+            <button type="button" class="incoming-call-btn is-decline" id="incoming-call-decline" aria-label="Decline"><i class="fa-solid fa-phone-slash"></i></button>
+            <button type="button" class="incoming-call-btn is-accept" id="incoming-call-accept" aria-label="Accept"><i class="fa-solid fa-phone"></i></button>
+        </div>
+        <div class="active-call-bar" id="active-call-bar" hidden>
+            <i class="fa-solid fa-phone-volume"></i>
+            <span id="active-call-text"></span>
+            <a id="active-call-return" href="#">Return</a>
+            <button type="button" id="active-call-hangup" aria-label="Hang up"><i class="fa-solid fa-phone-slash"></i></button>
+        </div>
         <script src="~/assets/js/emoji.js" asp-append-version="true"></script>
         <script src="~/assets/js/groups.js" asp-append-version="true"></script>
         <script src="~/assets/js/profile.js" asp-append-version="true"></script>
@@ -592,6 +607,7 @@
             integrity="sha512-7SRCYIJtR6F8ocwW7UxW6wGKqbSyqREDbfCORCbGLatU0iugBLwyOXpzhkPyHIFdBO0K2VCu57fvP2Twgx1o2A=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script src="~/assets/js/presence.js" asp-append-version="true"></script>
+        <script src="~/assets/js/calls.js" asp-append-version="true"></script>
         <script src="~/assets/js/notifications.js" asp-append-version="true"></script>
         <script src="~/assets/js/directmessages.js" asp-append-version="true"></script>
         @RenderSection("Scripts", required: false)

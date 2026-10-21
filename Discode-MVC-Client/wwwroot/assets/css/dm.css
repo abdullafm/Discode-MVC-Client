@@ -2123,3 +2123,134 @@ html.theme-dark .dm-msg-tools button.dm-tool-delete,
 html.theme-dark .dm-msg-tools button.dm-tool-delete:hover {
     color: #f23f42 !important;
 }
+
+.call-status {
+    margin-top: 2px;
+    color: #b5bac1;
+    font-size: 14px;
+    text-align: center;
+}
+
+.call-stage.is-ringing .call-face img {
+    animation: call-ring 1.4s ease-in-out infinite;
+}
+
+@keyframes call-ring {
+    0% { box-shadow: 0 0 0 0 rgba(88, 101, 242, 0.55); }
+    70% { box-shadow: 0 0 0 18px rgba(88, 101, 242, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(88, 101, 242, 0); }
+}
+
+.incoming-call {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 300;
+    width: 340px;
+    max-width: calc(100vw - 32px);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: #1e1f22;
+    color: #f2f3f5;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+}
+
+.incoming-call[hidden],
+.active-call-bar[hidden] {
+    display: none;
+}
+
+.incoming-call-avatar {
+    width: 48px;
+    height: 48px;
+    flex: none;
+    border-radius: 50%;
+    object-fit: cover;
+    animation: call-ring 1.4s ease-in-out infinite;
+}
+
+.incoming-call-body {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.incoming-call-body strong {
+    overflow: hidden;
+    font-size: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.incoming-call-body span {
+    color: #b5bac1;
+    font-size: 13px;
+}
+
+.incoming-call-btn {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    color: #ffffff !important;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.incoming-call-btn.is-accept {
+    background: #23a559;
+}
+
+.incoming-call-btn.is-accept:hover {
+    background: #1a8a47;
+}
+
+.incoming-call-btn.is-decline {
+    background: #f23f42;
+}
+
+.incoming-call-btn.is-decline:hover {
+    background: #d12f32;
+}
+
+.active-call-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    z-index: 300;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 24px;
+    background: #23a559;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.active-call-bar a {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+.active-call-bar button {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: #f23f42;
+    color: #ffffff !important;
+    cursor: pointer;
+}
