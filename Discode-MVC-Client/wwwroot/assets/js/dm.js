@@ -362,21 +362,6 @@ function dmSyncPartnerMessages() {
     if (title && name && name.textContent) title.textContent = name.textContent;
 }
 
-function dmApplyCanMessage(can) {
-    var form = document.getElementById("dm-compose");
-    var input = document.getElementById("dm-input");
-    var hint = document.getElementById("dm-placeholder");
-    if (!form || !input) return;
-    var text = form.getAttribute(can ? "data-can-text" : "data-cant-text");
-    input.setAttribute("contenteditable", can ? "true" : "false");
-    input.setAttribute("data-placeholder", text);
-    if (hint) hint.textContent = text;
-    var wrap = input.closest(".dm-input-wrap");
-    if (wrap) wrap.classList.toggle("is-disabled", !can);
-    var wave = document.getElementById("dm-wave-box");
-    if (wave) wave.hidden = !can || !!document.querySelector("#dm-messages .dm-msg");
-}
-
 function dmPaintRelation(relation) {
     var button = document.getElementById("dm-profile-close");
     var icon = button ? button.querySelector("i") : null;
@@ -400,7 +385,6 @@ function dmRefreshRelation() {
         holder.innerHTML = html;
         var marker = holder.querySelector("[data-relation]");
         dmPaintRelation(marker ? marker.getAttribute("data-relation") : "none");
-        dmApplyCanMessage(!marker || marker.getAttribute("data-can-message") !== "0");
     }).catch(function () {});
 }
 
@@ -410,9 +394,7 @@ document.addEventListener("discode-friends-changed", function () {
 });
 
 document.addEventListener("discode-profile-changed", function (event) {
-    if (!dmPartner || !event.detail || event.detail.userId !== dmPartner.userId) return;
-    dmRefreshProfile();
-    dmRefreshRelation();
+    if (dmPartner && event.detail && event.detail.userId === dmPartner.userId) dmRefreshProfile();
 });
 
 document.addEventListener("discode-user-presence", function (event) {

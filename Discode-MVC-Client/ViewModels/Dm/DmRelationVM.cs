@@ -6,6 +6,5 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public string Relation { get; set; } = "none";
         public int? FriendRequestId { get; set; }
         public int? BlockId { get; set; }
-        public bool CanMessage { get; set; } = true;
     }
 }
