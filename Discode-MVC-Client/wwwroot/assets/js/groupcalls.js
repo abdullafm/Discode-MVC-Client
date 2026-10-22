@@ -529,12 +529,20 @@
         if (tile) return tile;
         tile = document.createElement("div");
         tile.id = "gcall-" + id;
-        tile.className = "gcall-tile " + className;
-        tile.innerHTML = '<img class="gcall-avatar" alt=""><video class="gcall-video" autoplay playsinline muted></video>' +
-            '<div class="gcall-screen-badge"><span class="gcall-screen-quality"></span><b>LIVE</b></div>' +
-            '<div class="gcall-name"><i class="fa-solid fa-microphone-slash" hidden></i><i class="fa-solid fa-headphones gcall-deaf" hidden></i><i class="fa-solid fa-display gcall-screen-icon" hidden></i><span></span></div>' +
-            '<div class="gcall-loading" hidden><span></span><span></span><span></span></div>' +
-            '<div class="gcall-error" hidden><strong>Failed to start camera</strong><small></small></div>';
+        if (className === "is-screen") {
+            tile.className = "call-face is-screen";
+            tile.innerHTML = '<video class="call-screen-tile-video" autoplay playsinline muted></video>' +
+                '<div class="call-screen-badge"><span class="call-screen-quality"></span><b>LIVE</b></div>' +
+                '<div class="call-tile-name"><i class="fa-solid fa-display"></i><span></span></div>';
+        } else {
+            tile.className = "call-face" + (className === "is-peer" ? " is-peer" : "");
+            tile.innerHTML = '<img alt="">' +
+                '<span class="call-mute is-gone"><i class="fa-solid fa-microphone-slash"></i><i class="fa-solid fa-headphones deaf-icon"></i></span>' +
+                '<video class="call-tile-video" autoplay playsinline muted></video>' +
+                '<div class="call-tile-loading" hidden><span></span><span></span><span></span></div>' +
+                '<div class="call-tile-error" hidden><strong>Failed to start camera</strong><small></small></div>' +
+                '<div class="call-tile-name"><i class="fa-solid fa-microphone-slash" hidden></i><i class="fa-solid fa-headphones tile-deaf" hidden></i><span></span></div>';
+        }
         faces.appendChild(tile);
         return tile;
     }
@@ -542,9 +550,9 @@
     function fillTile(tile, info) {
         var video = tile.querySelector("video");
         var showVideo = !!info.stream && info.on;
-        tile.classList.toggle("has-video", showVideo);
+        tile.classList.toggle("has-video", showVideo && !info.isScreen);
         tile.setAttribute("data-user", info.key);
-        var face = tile.querySelector(".gcall-avatar");
+        var face = tile.querySelector(":scope > img");
         if (face && info.avatar && face.getAttribute("src") !== info.avatar) face.setAttribute("src", info.avatar);
         if (showVideo) {
             if (video.srcObject !== info.stream) video.srcObject = info.stream;
@@ -553,19 +561,22 @@
         } else if (video.srcObject) {
             video.srcObject = null;
         }
-        tile.querySelector(".gcall-name span").textContent = info.name;
-        tile.querySelector(".fa-microphone-slash").hidden = !info.muted || !!info.deafened || !!info.isScreen;
-        tile.querySelector(".gcall-deaf").hidden = !info.deafened || !!info.isScreen;
-        tile.querySelector(".gcall-screen-icon").hidden = !info.isScreen;
-        tile.querySelector(".gcall-screen-quality").textContent = info.quality || "";
-        var loading = tile.querySelector(".gcall-loading");
-        if (loading) loading.hidden = info.loading !== true;
-        var error = tile.querySelector(".gcall-error");
-        if (error) {
-            error.hidden = !info.error;
-            error.querySelector("small").textContent = info.error ? "Error: " + info.error : "";
+        tile.querySelector(".call-tile-name span").textContent = info.name;
+        if (info.isScreen) {
+            tile.querySelector(".call-screen-quality").textContent = info.quality || "";
+            return;
         }
-        tile.classList.toggle("is-speaking", !!speaking[info.key] && !info.isScreen);
+        tile.classList.toggle("is-loading", !!info.loading);
+        var badge = tile.querySelector(".call-mute");
+        badge.classList.toggle("is-gone", !info.muted && !info.deafened);
+        badge.classList.toggle("is-deaf", !!info.deafened);
+        tile.querySelector(".call-tile-name .fa-microphone-slash").hidden = !info.muted || !!info.deafened;
+        tile.querySelector(".tile-deaf").hidden = !info.deafened;
+        tile.querySelector(".call-tile-loading").hidden = !info.loading;
+        var error = tile.querySelector(".call-tile-error");
+        error.hidden = !info.error;
+        error.querySelector("small").textContent = info.error ? "Error: " + info.error : "";
+        tile.classList.toggle("is-speaking", !!speaking[info.key]);
     }
 
     function renderStage() {
@@ -578,11 +589,13 @@
         var wanted = {};
         var myName = document.querySelector("#user-panel .me-display");
         var me = meName();
+        var label = document.getElementById("gcall-label");
+        if (label) label.textContent = call.groupName;
         call.participants.forEach(function (person) {
             var isMe = person.userName === me;
             var peer = peers[person.userId];
             var key = isMe ? "me" : person.userId;
-            var tile = tileFor("t-" + key, "is-person");
+            var tile = tileFor("t-" + key, isMe ? "" : "is-peer");
             wanted["gcall-t-" + key] = true;
             var info = isMe
                 ? { key: "me", name: (myName ? myName.textContent.trim() : "") || person.displayName, avatar: person.avatarUrl || DEFAULT_AVATAR, muted: audioState.muted, deafened: audioState.deafened, stream: cameraStream, on: cameraState === "on", loading: cameraState === "starting", error: cameraState === "error" ? cameraError || "Unknown" : "" }
@@ -593,8 +606,11 @@
                 var screenTile = tileFor("s-" + key, "is-screen");
                 wanted["gcall-s-" + key] = true;
                 var quality = isMe ? screenInfo() : peer.state.screen;
-                fillTile(screenTile, { key: "screen-" + key, name: info.name, avatar: "", stream: isMe ? screenStream : peer.screenStream, on: true, isScreen: true, quality: quality ? quality.h + "P " + quality.fps + "FPS" : "" });
-                faces.insertBefore(screenTile, faces.firstChild);
+                fillTile(screenTile, { key: "screen-" + key, name: info.name, stream: isMe ? screenStream : peer.screenStream, on: true, isScreen: true, quality: quality ? quality.h + "P " + quality.fps + "FPS" : "" });
+                if (screenTile.parentNode === faces && screenTile !== faces.firstChild && !screenTile.hasAttribute("data-placed")) {
+                    faces.insertBefore(screenTile, faces.firstChild);
+                    screenTile.setAttribute("data-placed", "1");
+                }
             }
         });
         [].slice.call(faces.children).forEach(function (child) {
@@ -605,10 +621,22 @@
             }
         });
         if (focused && !wanted[focused]) focused = "";
-        stage.classList.toggle("has-focus", !!focused);
-        [].forEach.call(faces.children, function (child) { child.classList.toggle("is-focused", child.id === focused); });
-        var anyVideo = [].some.call(faces.children, function (child) { return child.classList.contains("has-video"); });
+        var tiles = [].slice.call(faces.children);
+        var anyVideo = tiles.some(function (tile) { return tile.classList.contains("has-video") || tile.classList.contains("is-screen") || tile.classList.contains("is-loading"); });
         stage.classList.toggle("is-video", anyVideo);
+        stage.classList.toggle("has-screen-tile", tiles.some(function (tile) { return tile.classList.contains("is-screen"); }));
+        var focusedTile = focused ? document.getElementById(focused) : null;
+        stage.classList.toggle("has-focus", !!focusedTile);
+        var wantScreen = !!focusedTile && !focusedTile.classList.contains("is-screen");
+        var candidates = focusedTile ? tiles.filter(function (tile) {
+            if (tile === focusedTile) return false;
+            return wantScreen ? tile.classList.contains("is-screen") : (!tile.classList.contains("is-screen") && tile.classList.contains("has-video"));
+        }) : [];
+        var mini = candidates.filter(function (tile) { return /-me$/.test(tile.id); })[0] || candidates[0] || null;
+        tiles.forEach(function (tile) {
+            tile.classList.toggle("is-focused", focused === tile.id);
+            tile.classList.toggle("is-mini", tile === mini);
+        });
         paintButtons();
     }
 
@@ -884,9 +912,10 @@
         });
         document.getElementById("gcall-hangup").addEventListener("click", leave);
         document.getElementById("gcall-faces").addEventListener("click", function (event) {
-            var tile = event.target.closest(".gcall-tile");
+            var tile = event.target.closest(".call-face");
             if (!tile) return;
-            if (!tile.classList.contains("has-video") && !tile.classList.contains("is-screen") && !focused) return;
+            var canFocus = tile.classList.contains("has-video") || tile.classList.contains("is-screen") || !!focused;
+            if (!canFocus) return;
             focused = focused === tile.id ? "" : tile.id;
             renderStage();
         });
