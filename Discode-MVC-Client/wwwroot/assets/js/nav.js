@@ -161,6 +161,9 @@
             window.scrollTo(0, 0);
             busy = false;
             if (window.DiscodeLang && window.DiscodeLang.rebind) window.DiscodeLang.rebind();
+            try {
+                if (window.discodeGroupCache && typeof window.paintGroupRows === "function") window.paintGroupRows(window.discodeGroupCache);
+            } catch (e) {}
             runScripts(scripts);
         }).catch(function () {
             busy = false;
@@ -198,8 +201,9 @@
         } catch (error) {
             return;
         }
-        if (!isAppPage(url) || url.pathname + url.search === shown) return;
+        if (!isAppPage(url)) return;
         event.preventDefault();
+        if (url.pathname + url.search === shown) return;
         go(url.pathname + url.search);
     }, true);
 

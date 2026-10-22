@@ -87,38 +87,57 @@ function togglePin(name) {
     applyPins();
 }
 
-function renderGroupList() {
+function paintGroupRows(groups) {
     var list = document.querySelector(".friend-list");
     var tpl = document.getElementById("group-row");
     if (!list || !tpl) return;
-    var old = list.querySelectorAll("[data-group]");
-    for (var i = 0; i < old.length; i++) old[i].remove();
+    var open = document.getElementById("group-chat");
+    var openId = open ? open.getAttribute("data-group-id") : "";
+    var wanted = {};
+    groups.forEach(function (group) { wanted[String(group.id)] = true; });
+    var existing = {};
+    [].forEach.call(list.querySelectorAll("[data-group]"), function (row) {
+        var id = row.getAttribute("data-group");
+        if (wanted[id]) existing[id] = row;
+        else row.remove();
+    });
+    groups.slice().reverse().forEach(function (group) {
+        var id = String(group.id);
+        var link = existing[id];
+        if (!link) {
+            link = tpl.content.firstElementChild.cloneNode(true);
+            link.href = "/Group/Index?id=" + encodeURIComponent(group.id);
+            link.setAttribute("data-group", id);
+            list.insertBefore(link, list.firstChild);
+        }
+        var photo = link.querySelector(".group-avatar img");
+        var mark = link.querySelector(".group-avatar i");
+        if (photo) {
+            photo.hidden = !group.iconUrl;
+            if (group.iconUrl && photo.getAttribute("src") !== group.iconUrl) photo.src = group.iconUrl;
+        }
+        if (mark) mark.hidden = !!group.iconUrl;
+        var label = link.querySelector("p");
+        var meta = link.querySelector(".group-row-text span");
+        if (label && label.textContent !== group.name) label.textContent = group.name;
+        var count = group.memberCount + " Members";
+        if (meta && meta.textContent !== count) meta.textContent = count;
+        link.classList.toggle("active", id === openId);
+    });
+    applyPins();
+}
+
+function renderGroupList() {
+    if (window.discodeGroupCache) paintGroupRows(window.discodeGroupCache);
     fetch("/Group/Mine", {
         credentials: "same-origin",
         headers: { "X-Requested-With": "XMLHttpRequest" }
     }).then(function (response) {
-        return response.ok ? response.json() : [];
+        return response.ok ? response.json() : null;
     }).then(function (groups) {
-        var stale = list.querySelectorAll("[data-group]");
-        for (var s = 0; s < stale.length; s++) stale[s].remove();
-        (Array.isArray(groups) ? groups : []).slice().reverse().forEach(function (group) {
-            var link = tpl.content.firstElementChild.cloneNode(true);
-            link.href = "/Group/Index?id=" + encodeURIComponent(group.id);
-            link.setAttribute("data-group", String(group.id));
-            var photo = link.querySelector(".group-avatar img");
-            var mark = link.querySelector(".group-avatar i");
-            if (group.iconUrl && photo) {
-                photo.hidden = false;
-                photo.src = group.iconUrl;
-                if (mark) mark.hidden = true;
-            }
-            var label = link.querySelector("p");
-            var meta = link.querySelector(".group-row-text span");
-            if (label) label.textContent = group.name;
-            if (meta) meta.textContent = group.memberCount + " Members";
-            list.insertBefore(link, list.firstChild);
-        });
-        applyPins();
+        if (!Array.isArray(groups)) return;
+        window.discodeGroupCache = groups;
+        paintGroupRows(groups);
     }).catch(function () {});
 }
 
@@ -287,7 +306,10 @@ document.addEventListener("keydown", function (event) {
 
 renderGroupList();
 document.addEventListener("discode-groups-changed", renderGroupList);
-document.addEventListener("discode-hub-connected", renderGroupList);
+document.addEventListener("discode-hub-connected", function (event) {
+    if (event.detail && event.detail.pageSwap) return;
+    renderGroupList();
+});
 document.addEventListener("visibilitychange", function () {
     if (!document.hidden) renderGroupList();
 });
