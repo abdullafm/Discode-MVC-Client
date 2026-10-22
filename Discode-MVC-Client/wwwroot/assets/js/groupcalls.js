@@ -972,6 +972,23 @@
         });
     });
 
+    function refreshActive() {
+        if (!window.discodePresence) return;
+        invoke("GetGroupCalls").then(function (list) {
+            var next = {};
+            (list || []).forEach(function (dto) { next[dto.groupId] = dto; });
+            active = next;
+            render();
+        }).catch(function () {});
+    }
+
+    ["discode-group-updated", "discode-groups-changed"].forEach(function (name) {
+        document.addEventListener(name, function () { setTimeout(refreshActive, 300); });
+    });
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) refreshActive();
+    });
+
     function bindPage() {
         micIcon = document.getElementById("mic");
         headIcon = document.getElementById("head");
@@ -1042,6 +1059,7 @@
 
     document.addEventListener("discode-page-ready", function () {
         bindPage();
+        refreshActive();
         if (call) {
             paintSidebar();
             applyMute();
