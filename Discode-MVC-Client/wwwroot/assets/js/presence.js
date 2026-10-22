@@ -157,6 +157,10 @@
                     document.dispatchEvent(new CustomEvent("discode-dm-pinned", { detail: data }));
                 });
 
+                connection.on("GroupsChanged", function () {
+                    document.dispatchEvent(new CustomEvent("discode-groups-changed"));
+                });
+
                 connection.on("DirectMessagePoll", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-dm-poll-updated", { detail: data }));
                 });

@@ -93,27 +93,26 @@ function renderGroupList() {
     if (!list || !tpl) return;
     var old = list.querySelectorAll("[data-group]");
     for (var i = 0; i < old.length; i++) old[i].remove();
-    var groups = loadGroups();
-    for (var g = groups.length - 1; g >= 0; g--) {
-        var group = groups[g];
-        var count = (group.members ? group.members.length : 0) + 1;
-        var link = tpl.content.firstElementChild.cloneNode(true);
-        link.href = "./group.html?group=" + encodeURIComponent(group.id);
-        link.setAttribute("data-group", group.id);
-        var photo = link.querySelector("img");
-        var mark = link.querySelector(".group-avatar i");
-        if (group.icon && photo) {
-            photo.hidden = false;
-            photo.src = group.icon;
-            if (mark) mark.hidden = true;
-        }
-        var label = link.querySelector("p");
-        var meta = link.querySelector(".group-row-text span");
-        if (label) label.textContent = group.name || (group.members || []).join(", ");
-        if (meta) meta.textContent = count + " Members";
-        list.insertBefore(link, list.firstChild);
-    }
-    applyPins();
+    fetch("/Group/Mine", {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    }).then(function (response) {
+        return response.ok ? response.json() : [];
+    }).then(function (groups) {
+        var stale = list.querySelectorAll("[data-group]");
+        for (var s = 0; s < stale.length; s++) stale[s].remove();
+        (Array.isArray(groups) ? groups : []).slice().reverse().forEach(function (group) {
+            var link = tpl.content.firstElementChild.cloneNode(true);
+            link.href = "/Group/Index?id=" + encodeURIComponent(group.id);
+            link.setAttribute("data-group", String(group.id));
+            var label = link.querySelector("p");
+            var meta = link.querySelector(".group-row-text span");
+            if (label) label.textContent = group.name;
+            if (meta) meta.textContent = group.memberCount + " Members";
+            list.insertBefore(link, list.firstChild);
+        });
+        applyPins();
+    }).catch(function () {});
 }
 
 function renderPicker() {
@@ -192,7 +191,7 @@ function closeNewMessage() {
 function toggleFriend(name) {
     var index = picked.indexOf(name);
     if (index !== -1) picked.splice(index, 1);
-    else if (already.length + picked.length < GROUP_LIMIT) picked.push(name);
+    else if (already.length + picked.length < GROUP_LIMIT - 1) picked.push(name);
     renderPicker();
 }
 
@@ -241,19 +240,36 @@ function createMessage() {
         window.discodeGo("/Dm/Index?name=" + encodeURIComponent(members[0]));
         return;
     }
-    var groups = loadGroups();
-    var existing = null;
-    for (var i = 0; i < groups.length; i++) {
-        var same = groups[i].members.slice().sort().join("\n") === members.join("\n");
-        if (same) existing = groups[i];
-    }
-    if (!existing) {
-        existing = { id: "g" + Date.now().toString(36), name: members.join(", "), members: members.slice() };
-        groups.unshift(existing);
-        saveGroups(groups);
-    }
-    if (window.discodeGo) window.discodeGo("./group.html?group=" + encodeURIComponent(existing.id));
-    else window.location.href = "./group.html?group=" + encodeURIComponent(existing.id);
+    var failure = document.getElementById("new-msg-error");
+    var create = document.getElementById("new-msg-create");
+    if (failure) failure.hidden = true;
+    if (create) create.disabled = true;
+    var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
+    fetch("/Group/Create", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+            "Content-Type": "application/json",
+            "RequestVerificationToken": tokenInput ? tokenInput.value : "",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: JSON.stringify({ userNames: members })
+    }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (data) {
+            if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Could not create the group.");
+            return data;
+        });
+    }).then(function (group) {
+        closeNewMessage();
+        renderGroupList();
+        window.discodeGo("/Group/Index?id=" + encodeURIComponent(group.id));
+    }).catch(function (error) {
+        if (failure) {
+            failure.textContent = error.message;
+            failure.hidden = false;
+        }
+        if (create) create.disabled = false;
+    });
 }
 
 var newButton = document.querySelector(".direct-messages h2 .dm-new");
@@ -287,6 +303,7 @@ document.addEventListener("keydown", function (event) {
 });
 
 renderGroupList();
+document.addEventListener("discode-groups-changed", renderGroupList);
 
 (function () {
     var menu = document.getElementById("row-menu");
