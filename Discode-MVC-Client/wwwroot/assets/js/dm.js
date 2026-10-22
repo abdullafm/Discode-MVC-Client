@@ -337,6 +337,13 @@ function appendMessage(message, forceScroll) {
     if (message.editedAt) textHolder.appendChild(dmEditedLabel());
     body.appendChild(textHolder);
     if (message.attachments && message.attachments.length) body.appendChild(dmBuildAttachments(message.attachments));
+    if (message.isPoll && message.poll) {
+        var pollCard = document.createElement("div");
+        pollCard.className = "dm-poll";
+        body.appendChild(pollCard);
+        dmMountPoll(pollCard, message.poll);
+        row.classList.add("is-poll");
+    }
     if (message.undelivered) {
         var failed = document.createElement("div");
         failed.className = "dm-msg-undelivered";
@@ -697,6 +704,329 @@ function bindDmAttach() {
         overlay.addEventListener("click", close);
         document.addEventListener("keydown", onKey);
         document.body.appendChild(overlay);
+    });
+}
+
+var POLL_EMOJIS = ["😀", "😂", "😍", "😎", "🤔", "😢", "😡", "👍", "👎", "👏", "🙏", "🔥", "❤️", "💯", "🎉", "✅", "❌", "⭐", "🍕", "🍔", "🍟", "🍺", "☕", "🎮", "🎵", "🎬", "⚽", "🏀", "🚗", "✈️", "🏠", "🌍", "🌙", "☀️", "🐶", "🐱", "🦁", "🌹", "💎", "🎁"];
+
+function dmPollStamp(poll) {
+    var text = String(poll.expiresAt || "");
+    return Date.parse(/Z$|[+-]\d\d:\d\d$/.test(text) ? text : text + "Z");
+}
+
+function dmPollSpan(poll) {
+    var left = dmPollStamp(poll) - Date.now();
+    if (poll.ended || left <= 0) return "Poll closed";
+    var minutes = Math.ceil(left / 60000);
+    if (minutes >= 2880) return Math.floor(minutes / 1440) + "d left";
+    if (minutes >= 60) return Math.floor(minutes / 60) + "h left";
+    return Math.max(1, minutes) + "m left";
+}
+
+function dmPollEnded(poll) {
+    return !!poll.ended || dmPollStamp(poll) <= Date.now();
+}
+
+function dmPollVotes(count) {
+    return count + (count === 1 ? " vote" : " votes");
+}
+
+function dmRenderPoll(card) {
+    var poll = card._poll;
+    var ended = dmPollEnded(poll);
+    var results = poll.voted || ended || card._results;
+    var multiple = poll.allowMultiple;
+    card.textContent = "";
+    var title = document.createElement("strong");
+    title.className = "dm-poll-question";
+    title.textContent = poll.question;
+    var hint = document.createElement("span");
+    hint.className = "dm-poll-hint";
+    hint.textContent = multiple ? "Select one or more answers" : "Select one answer";
+    card.appendChild(title);
+    card.appendChild(hint);
+    var list = document.createElement("div");
+    list.className = "dm-poll-options";
+    var top = 0;
+    poll.options.forEach(function (option) { if (option.votes > top) top = option.votes; });
+    poll.options.forEach(function (option) {
+        var row = document.createElement("button");
+        row.type = "button";
+        row.className = "dm-poll-option" + (results ? " is-result" : "") + (results && option.voted ? " is-mine" : "") + (!results && card._selected.indexOf(option.id) !== -1 ? " is-selected" : "");
+        row.disabled = results;
+        if (results) {
+            var percent = poll.totalVoters ? Math.round(option.votes * 100 / poll.totalVoters) : 0;
+            var fill = document.createElement("span");
+            fill.className = "dm-poll-fill";
+            fill.style.width = percent + "%";
+            row.appendChild(fill);
+        }
+        var label = document.createElement("span");
+        label.className = "dm-poll-label-text";
+        if (option.emoji) {
+            var face = document.createElement("span");
+            face.className = "dm-poll-emoji";
+            face.textContent = option.emoji;
+            label.appendChild(face);
+        }
+        var text = document.createElement("span");
+        text.textContent = option.text;
+        label.appendChild(text);
+        row.appendChild(label);
+        if (results) {
+            var stats = document.createElement("span");
+            stats.className = "dm-poll-stats";
+            stats.innerHTML = "<small></small><b></b>";
+            stats.querySelector("small").textContent = dmPollVotes(option.votes);
+            stats.querySelector("b").textContent = (poll.totalVoters ? Math.round(option.votes * 100 / poll.totalVoters) : 0) + "%";
+            row.appendChild(stats);
+            if (option.voted) {
+                var tick = document.createElement("span");
+                tick.className = "dm-poll-tick";
+                tick.innerHTML = '<i class="fa-solid fa-check"></i>';
+                row.appendChild(tick);
+            }
+        } else {
+            var box = document.createElement("span");
+            box.className = "dm-poll-box" + (multiple ? "" : " is-round");
+            box.innerHTML = '<i class="fa-solid fa-check"></i>';
+            row.appendChild(box);
+            row.addEventListener("click", function () {
+                var at = card._selected.indexOf(option.id);
+                if (multiple) {
+                    if (at === -1) card._selected.push(option.id);
+                    else card._selected.splice(at, 1);
+                } else {
+                    card._selected = at === -1 ? [option.id] : [];
+                }
+                dmRenderPoll(card);
+            });
+        }
+        list.appendChild(row);
+    });
+    card.appendChild(list);
+    var foot = document.createElement("div");
+    foot.className = "dm-poll-foot-row";
+    var meta = document.createElement("span");
+    meta.className = "dm-poll-meta";
+    meta.innerHTML = "<b></b><i></i><span></span>";
+    meta.querySelector("b").textContent = dmPollVotes(poll.totalVoters);
+    meta.querySelector("i").textContent = "•";
+    meta.querySelector("span").textContent = dmPollSpan(poll);
+    foot.appendChild(meta);
+    var actions = document.createElement("span");
+    actions.className = "dm-poll-actions";
+    var button = function (label, cls, handler, disabled) {
+        var item = document.createElement("button");
+        item.type = "button";
+        item.className = cls;
+        item.textContent = label;
+        item.disabled = !!disabled;
+        item.addEventListener("click", handler);
+        actions.appendChild(item);
+    };
+    if (!ended) {
+        if (poll.voted) {
+            button("Remove Vote", "dm-poll-secondary", function () { dmPollSend(card, []); });
+        } else if (card._results) {
+            button("Back", "dm-poll-link", function () { card._results = false; dmRenderPoll(card); });
+        } else {
+            button("Show results", "dm-poll-link", function () { card._results = true; dmRenderPoll(card); });
+            button("Vote", "dm-poll-vote", function () { dmPollSend(card, card._selected.slice()); }, card._selected.length === 0);
+        }
+    }
+    foot.appendChild(actions);
+    card.appendChild(foot);
+}
+
+function dmPollSend(card, optionIds) {
+    if (card._busy) return;
+    card._busy = true;
+    var row = card.closest(".dm-msg");
+    dmRequest("/Dm/VotePoll", "POST", { id: Number(row.getAttribute("data-id")), optionIds: optionIds }).then(function (poll) {
+        card._poll = poll;
+        card._results = false;
+        card._selected = [];
+    }).catch(function (error) {
+        showDmError(error.message);
+    }).then(function () {
+        card._busy = false;
+        dmRenderPoll(card);
+    });
+}
+
+function dmMountPoll(card, poll) {
+    card._poll = poll;
+    card._results = false;
+    card._selected = poll.options.filter(function (option) { return option.voted; }).map(function (option) { return option.id; });
+    dmRenderPoll(card);
+}
+
+function dmHydratePolls() {
+    [].forEach.call(document.querySelectorAll("#dm-messages .dm-poll[data-poll]"), function (card) {
+        if (card._poll) return;
+        try {
+            dmMountPoll(card, JSON.parse(card.getAttribute("data-poll")));
+        } catch (e) {}
+    });
+}
+
+document.addEventListener("discode-dm-poll-updated", function (event) {
+    var data = event.detail;
+    if (!data) return;
+    var row = document.querySelector('#dm-messages .dm-msg[data-id="' + data.messageId + '"]');
+    var card = row && row.querySelector(".dm-poll");
+    if (!card || !card._poll) return;
+    card._poll = data.poll;
+    dmRenderPoll(card);
+});
+
+setInterval(function () {
+    [].forEach.call(document.querySelectorAll("#dm-messages .dm-poll"), function (card) {
+        if (card._poll) dmRenderPoll(card);
+    });
+}, 30000);
+
+function bindDmPoll() {
+    var modal = document.getElementById("dm-poll-modal");
+    if (!modal) return;
+    var list = document.getElementById("dm-poll-answers");
+    var question = document.getElementById("dm-poll-question");
+    var picker = document.getElementById("dm-poll-emojis");
+    var errorBox = document.getElementById("dm-poll-error");
+    var activeEmojiRow = null;
+
+    var fail = function (text) {
+        errorBox.textContent = text || "";
+        errorBox.hidden = !text;
+    };
+
+    var addAnswer = function () {
+        if (list.children.length >= 10) return;
+        var row = document.createElement("div");
+        row.className = "dm-poll-answer";
+        row.innerHTML = '<button type="button" class="dm-poll-face" aria-label="Choose an emoji"><i class="fa-regular fa-face-smile"></i></button>' +
+            '<input type="text" maxlength="55" placeholder="Type your answer" autocomplete="off">' +
+            '<button type="button" class="dm-poll-trash" aria-label="Remove answer"><i class="fa-solid fa-trash-can"></i></button>';
+        list.appendChild(row);
+        refreshAnswers();
+    };
+
+    var refreshAnswers = function () {
+        document.getElementById("dm-poll-add").hidden = list.children.length >= 10;
+        [].forEach.call(list.querySelectorAll(".dm-poll-trash"), function (trash) {
+            trash.disabled = list.children.length <= 2;
+        });
+    };
+
+    var closePicker = function () {
+        picker.hidden = true;
+        activeEmojiRow = null;
+    };
+
+    var reset = function () {
+        question.value = "";
+        document.getElementById("dm-poll-count").textContent = "0";
+        document.getElementById("dm-poll-duration").value = "24";
+        document.getElementById("dm-poll-multiple").checked = false;
+        list.textContent = "";
+        addAnswer();
+        addAnswer();
+        fail("");
+        closePicker();
+    };
+
+    var open = function () {
+        if (!dmPartner) return;
+        reset();
+        modal.hidden = false;
+        question.focus();
+    };
+
+    var close = function () {
+        modal.hidden = true;
+        closePicker();
+    };
+
+    picker.innerHTML = '<button type="button" class="dm-poll-emoji-clear">No emoji</button>';
+    POLL_EMOJIS.forEach(function (emoji) {
+        var item = document.createElement("button");
+        item.type = "button";
+        item.textContent = emoji;
+        picker.appendChild(item);
+    });
+    picker.addEventListener("click", function (event) {
+        var item = event.target.closest("button");
+        if (!item || !activeEmojiRow) return;
+        var face = activeEmojiRow.querySelector(".dm-poll-face");
+        var clear = item.classList.contains("dm-poll-emoji-clear");
+        face.setAttribute("data-emoji", clear ? "" : item.textContent);
+        face.innerHTML = clear ? '<i class="fa-regular fa-face-smile"></i>' : "";
+        if (!clear) face.textContent = item.textContent;
+        closePicker();
+    });
+
+    list.addEventListener("click", function (event) {
+        var trash = event.target.closest(".dm-poll-trash");
+        if (trash && list.children.length > 2) {
+            trash.closest(".dm-poll-answer").remove();
+            refreshAnswers();
+            return;
+        }
+        var face = event.target.closest(".dm-poll-face");
+        if (face) {
+            event.stopPropagation();
+            activeEmojiRow = face.closest(".dm-poll-answer");
+            var card = modal.querySelector(".dm-poll-card").getBoundingClientRect();
+            var at = face.getBoundingClientRect();
+            picker.style.left = Math.max(8, at.left - card.left) + "px";
+            picker.style.top = (at.bottom - card.top + 6) + "px";
+            picker.hidden = false;
+        }
+    });
+    document.getElementById("dm-poll-add").addEventListener("click", addAnswer);
+    question.addEventListener("input", function () {
+        document.getElementById("dm-poll-count").textContent = String(question.value.length);
+        fail("");
+    });
+    modal.addEventListener("click", function (event) {
+        if (event.target.closest("[data-close]")) close();
+        else if (!event.target.closest(".dm-poll-emojis")) closePicker();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !modal.hidden) close();
+    });
+    document.addEventListener("discode-dm-poll", open);
+
+    document.getElementById("dm-poll-post").addEventListener("click", function () {
+        var options = [].map.call(list.querySelectorAll(".dm-poll-answer"), function (row) {
+            return { text: row.querySelector("input").value.trim(), emoji: row.querySelector(".dm-poll-face").getAttribute("data-emoji") || "" };
+        }).filter(function (option) { return option.text.length > 0; });
+        if (!question.value.trim()) {
+            fail("Ask a question.");
+            return;
+        }
+        if (options.length < 2) {
+            fail("Add at least two answers.");
+            return;
+        }
+        fail("");
+        var post = document.getElementById("dm-poll-post");
+        post.disabled = true;
+        dmRequest("/Dm/CreatePoll", "POST", {
+            userName: dmPartner.userName,
+            question: question.value.trim(),
+            allowMultiple: document.getElementById("dm-poll-multiple").checked,
+            durationHours: Number(document.getElementById("dm-poll-duration").value),
+            options: options
+        }).then(function (sent) {
+            appendMessage(sent, true);
+            close();
+        }).catch(function (error) {
+            fail(error.message);
+        }).then(function () {
+            post.disabled = false;
+        });
     });
 }
 
@@ -2030,7 +2360,9 @@ if (document.getElementById("dm-chat")) {
     bindDmCompose();
     bindDmInput();
     bindDmAttach();
+    bindDmPoll();
     bindDmMessages();
+    dmHydratePolls();
 }
 
 if (document.readyState === "complete") startDmPage();
