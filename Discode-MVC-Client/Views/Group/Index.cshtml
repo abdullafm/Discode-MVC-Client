@@ -1,0 +1,41 @@
+@model GroupPageVM
+@{
+    Layout = "_HomeLayout";
+    var group = Model.Group;
+}
+<main class="friends-view group-page show-main">
+    <section class="group-page-card">
+        @if (group is null)
+        {
+            <div class="group-page-empty">
+                <i class="fa-solid fa-user-group"></i>
+                <p>@Model.Error</p>
+                <a class="group-page-back" href="/Home/Index">Back to Friends</a>
+            </div>
+        }
+        else
+        {
+            <div class="group-page-head">
+                <span class="group-page-icon"><i class="fa-solid fa-user-group"></i></span>
+                <div>
+                    <h1 id="group-title">@group.Name</h1>
+                    <p class="group-page-count"><span id="group-count">@group.MemberCount</span> of @group.MaxMembers members</p>
+                </div>
+            </div>
+            <h2 class="group-page-subtitle">Members</h2>
+            <ul class="group-page-members" id="group-member-list">
+                @foreach (var member in group.Members)
+                {
+                    <li class="group-page-member" data-user="@member.UserName">
+                        <img alt="" src="@(string.IsNullOrWhiteSpace(member.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : member.AvatarUrl)">
+                        <span class="group-page-name"><strong>@member.Name</strong><small>@member.UserName</small></span>
+                        @if (member.IsOwner)
+                        {
+                            <span class="group-page-owner" title="Group owner"><i class="fa-solid fa-crown"></i> Owner</span>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</main>
