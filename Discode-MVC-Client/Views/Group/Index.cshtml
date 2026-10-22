@@ -52,6 +52,10 @@
                 <div class="dm-messages group-messages" id="group-messages"></div>
             </div>
             <p class="group-error" id="group-error" hidden></p>
+            <div class="dm-reply-bar" id="group-reply-bar" hidden>
+                <span>Replying to <strong id="group-reply-name"></strong></span>
+                <button type="button" id="group-reply-cancel" aria-label="Cancel reply"><i class="fa-solid fa-circle-xmark"></i></button>
+            </div>
             <form class="dm-compose" id="group-compose">
                 <button type="button" id="group-attach" aria-label="Add"><i class="fa-solid fa-plus"></i></button>
                 <input type="file" id="group-file" multiple hidden>
@@ -144,6 +148,43 @@
                 <button type="button" class="dm-poll-post" id="group-poll-post">Post</button>
             </div>
             <div class="dm-poll-emojis" id="group-poll-emojis" hidden></div>
+        </div>
+    </div>
+}
+@if (group is not null)
+{
+    <div class="dm-msg-menu" id="group-msg-menu" role="menu" hidden>
+        <div class="dm-menu-quick">
+            <button type="button" class="dm-react" data-act="react" aria-label="React with heart">&#10084;&#65039;</button>
+        </div>
+        <button type="button" role="menuitem" class="emoji-open" data-menu="reaction"><i class="fa-solid fa-face-smile"></i><span>Add Reaction</span><i class="fa-solid fa-chevron-right dm-menu-arrow"></i></button>
+        <hr>
+        <button type="button" role="menuitem" data-menu="reply"><i class="fa-solid fa-reply"></i><span>Reply</span></button>
+        <button type="button" role="menuitem" data-menu="forward"><i class="fa-solid fa-share"></i><span>Forward</span></button>
+        <hr>
+        <button type="button" role="menuitem" data-menu="copy-text"><i class="fa-solid fa-copy"></i><span>Copy Text</span></button>
+        <hr data-own-only>
+        <button type="button" role="menuitem" class="is-danger" data-menu="delete" data-own-only><i class="fa-solid fa-trash-can"></i><span>Delete Message</span></button>
+    </div>
+    <div class="dm-modal" id="group-forward-modal" role="dialog" aria-modal="true" aria-labelledby="group-forward-title" hidden>
+        <div class="dm-modal-backdrop" data-close></div>
+        <div class="dm-modal-card dm-forward-card">
+            <button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>
+            <h2 id="group-forward-title">Forward To</h2>
+            <p class="dm-modal-text">Select where you want to share this message.</p>
+            <label class="dm-forward-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="search" id="group-forward-search" placeholder="Search" aria-label="Search" autocomplete="off">
+            </label>
+            <div class="dm-forward-list" id="group-forward-list"></div>
+            <div class="dm-forward-foot">
+                <div class="dm-forward-preview" id="group-forward-preview"></div>
+                <p class="dm-forward-error" id="group-forward-error" hidden></p>
+                <div class="dm-forward-send">
+                    <input type="text" id="group-forward-note" maxlength="2000" placeholder="Add an optional message..." aria-label="Optional message" autocomplete="off">
+                    <button type="button" id="group-forward-submit" disabled>Send <i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
         </div>
     </div>
 }

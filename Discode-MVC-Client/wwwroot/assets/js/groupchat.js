@@ -153,10 +153,11 @@
             row.querySelector(".dm-call-text").textContent = message.text;
             row.querySelector("time").textContent = clock(message.createdAt);
         } else {
-            var compact = !newDay && last && !last.classList.contains("group-sys") && last.getAttribute("data-sender") === message.senderUserName && when - Number(last.getAttribute("data-time")) < 5 * 60 * 1000 && box.lastElementChild === last;
+            var compact = !newDay && !message.replyTo && last && !last.classList.contains("group-sys") && last.getAttribute("data-sender") === message.senderUserName && when - Number(last.getAttribute("data-time")) < 5 * 60 * 1000 && box.lastElementChild === last;
             row = document.createElement("div");
             row.className = "dm-msg" + (compact ? " compact" : "");
             row.setAttribute("data-sender", message.senderUserName);
+            row.setAttribute("data-mine", message.senderUserName === meName ? "1" : "0");
             var face = document.createElement("img");
             face.className = "dm-msg-avatar";
             face.alt = "";
@@ -220,8 +221,10 @@
             return;
         }
         if (!text && !ready.length) return;
+        var replyId = window.GroupParts.replyId();
         window.GroupParts.clear();
-        request("/Group/Send", "POST", { id: groupId, text: text, attachments: ready.map(function (item) { return item.data; }) }).then(function (message) {
+        window.GroupParts.cancelReply();
+        request("/Group/Send", "POST", { id: groupId, text: text, replyToMessageId: replyId, attachments: ready.map(function (item) { return item.data; }) }).then(function (message) {
             ready.forEach(function (item) { if (item.previewUrl) URL.revokeObjectURL(item.previewUrl); });
             append(message, true);
         }).catch(function (error) {
@@ -404,6 +407,12 @@
         var data = event.detail;
         if (!data || data.groupId !== groupId || !data.message) return;
         append(data.message, false);
+    });
+
+    document.addEventListener("discode-group-message-deleted", function (event) {
+        var data = event.detail;
+        if (!data || data.groupId !== groupId) return;
+        window.GroupParts.remove(data.messageId);
     });
 
     document.addEventListener("discode-group-message-updated", function (event) {

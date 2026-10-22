@@ -527,7 +527,7 @@ function react(row, emoji) {
     });
 }
 
-function messageTools() {
+function messageTools(mine) {
     var tools = document.createElement("div");
     tools.className = "dm-msg-tools";
     tools.setAttribute("role", "toolbar");
@@ -537,7 +537,11 @@ function messageTools() {
         '<button type="button" class="dm-react" data-act="react" aria-label="React with 100">💯</button>' +
         '<button type="button" class="dm-react" data-act="react" aria-label="React with laughing">😆</button>' +
         '<span class="dm-tools-sep"></span>' +
-        '<button type="button" class="emoji-open" data-act="picker" aria-label="Add reaction"><i class="fa-regular fa-face-smile"></i></button>';
+        '<button type="button" class="emoji-open" data-act="picker" aria-label="Add reaction"><i class="fa-regular fa-face-smile"></i></button>' +
+        (mine ? '' : '<button type="button" data-act="reply" aria-label="Reply"><i class="fa-solid fa-reply"></i></button>') +
+        '<button type="button" data-act="forward" aria-label="Forward"><i class="fa-solid fa-share"></i></button>' +
+        (mine ? '<button type="button" class="dm-tool-delete" data-act="delete" aria-label="Delete"><i class="fa-solid fa-trash-can"></i></button>' : '') +
+        '<button type="button" data-act="more" aria-label="More"><i class="fa-solid fa-ellipsis"></i></button>';
     return tools;
 }
 
@@ -884,6 +888,265 @@ function bindMessages() {
         var act = button.getAttribute("data-act");
         if (act === "react") react(row, button.textContent.trim());
         else if (act === "picker" || act === "reaction-add") openReactionPanel(button, row);
+        else if (act === "reply") startReply(row);
+        else if (act === "forward") openForward(row);
+        else if (act === "delete") deleteMessage(row);
+        else if (act === "more") openMenu(button, row);
+    });
+    ctx.box.addEventListener("click", function (event) {
+        var quote = event.target.closest(".dm-msg-reply");
+        if (quote) jumpTo(quote.getAttribute("data-reply-id"));
+    });
+    ctx.box.addEventListener("contextmenu", function (event) {
+        var row = event.target.closest(".dm-msg");
+        if (!row || row.classList.contains("group-sys") || event.target.closest("a, .dm-msg-tools")) return;
+        event.preventDefault();
+        openMenuAt(row, event.clientX, event.clientY);
+    });
+    document.addEventListener("contextmenu", function (event) {
+        if (!event.target.closest("#group-msg-menu, #group-messages")) closeMenu();
+    });
+    document.getElementById("group-reply-cancel").addEventListener("click", cancelReply);
+    bindMenu();
+    bindForward();
+}
+
+function replyHeader(reply) {
+    var header = document.createElement("div");
+    header.className = "dm-msg-reply";
+    header.setAttribute("data-reply-id", String(reply.messageId));
+    header.setAttribute("role", "button");
+    header.setAttribute("tabindex", "0");
+    var face = document.createElement("img");
+    face.className = "dm-reply-avatar";
+    face.alt = "";
+    face.src = reply.senderAvatarUrl || "/assets/img/img-icon-profile.jpeg";
+    var who = document.createElement("strong");
+    who.textContent = reply.senderDisplayName || reply.senderUserName;
+    var text = document.createElement("span");
+    text.className = "dm-reply-text";
+    text.textContent = reply.text || "Click to see attachment";
+    header.appendChild(face);
+    header.appendChild(who);
+    header.appendChild(text);
+    return header;
+}
+
+function jumpTo(messageId) {
+    var target = ctx.box.querySelector('.dm-msg[data-id="' + messageId + '"]');
+    if (!target) return;
+    target.scrollIntoView({ block: "center", behavior: "smooth" });
+    target.classList.add("is-flash");
+    setTimeout(function () { target.classList.remove("is-flash"); }, 1600);
+}
+
+function messageText(row) {
+    var holder = row.querySelector(".dm-msg-text");
+    return holder ? fieldValue(holder) : "";
+}
+
+var reply = null;
+
+function cancelReply() {
+    if (!reply) return;
+    var marked = ctx.box.querySelector(".dm-msg.is-replying");
+    if (marked) marked.classList.remove("is-replying");
+    reply = null;
+    document.getElementById("group-reply-bar").hidden = true;
+}
+
+function startReply(row) {
+    cancelReply();
+    var head = row.querySelector(".dm-msg-head strong");
+    reply = { id: Number(row.getAttribute("data-id")) };
+    row.classList.add("is-replying");
+    document.getElementById("group-reply-name").textContent = head ? head.textContent : "";
+    document.getElementById("group-reply-bar").hidden = false;
+    ctx.input.focus();
+}
+
+function regroup(row) {
+    if (!row || !row.classList.contains("dm-msg") || row.classList.contains("group-sys")) return;
+    var before = row.previousElementSibling;
+    var grouped = !!before && before.classList.contains("dm-msg") && !before.classList.contains("group-sys") && !row.classList.contains("has-reply") &&
+        before.getAttribute("data-sender") === row.getAttribute("data-sender") &&
+        Number(row.getAttribute("data-time")) - Number(before.getAttribute("data-time")) < 5 * 60 * 1000;
+    row.classList.toggle("compact", grouped);
+}
+
+function removeMessage(id) {
+    var row = ctx.box.querySelector('.dm-msg[data-id="' + id + '"]');
+    if (row) {
+        var before = row.previousElementSibling;
+        var after = row.nextElementSibling;
+        row.remove();
+        if (before && before.classList.contains("dm-divider") && !(after && after.classList.contains("dm-msg"))) before.remove();
+        if (after && after.classList.contains("dm-msg")) regroup(after);
+    }
+    [].forEach.call(ctx.box.querySelectorAll('.dm-msg-reply[data-reply-id="' + id + '"]'), function (quote) {
+        quote.parentNode.classList.remove("has-reply");
+        quote.remove();
+    });
+    if (reply && reply.id === Number(id)) cancelReply();
+}
+
+function deleteMessage(row) {
+    ctx.showError("");
+    ctx.request("/Group/DeleteMessage", "POST", { id: ctx.groupId, messageId: Number(row.getAttribute("data-id")) }).then(function () {
+        removeMessage(row.getAttribute("data-id"));
+    }).catch(function (error) {
+        ctx.showError(error.message);
+    });
+}
+
+function menuEl() {
+    return document.getElementById("group-msg-menu");
+}
+
+function closeMenu() {
+    var menu = menuEl();
+    if (!menu) return;
+    menu.hidden = true;
+    menu.removeAttribute("data-row");
+}
+
+function showMenu(row) {
+    var menu = menuEl();
+    var mine = row.getAttribute("data-mine") === "1";
+    var gated = menu.querySelectorAll("[data-own-only]");
+    for (var i = 0; i < gated.length; i++) gated[i].hidden = !mine;
+    menu.setAttribute("data-row", row.getAttribute("data-id"));
+    menu.hidden = false;
+    return menu;
+}
+
+function openMenu(anchor, row) {
+    var menu = menuEl();
+    if (!menu.hidden && menu.getAttribute("data-row") === row.getAttribute("data-id")) {
+        closeMenu();
+        return;
+    }
+    showMenu(row);
+    var rect = anchor.getBoundingClientRect();
+    var width = menu.offsetWidth;
+    var height = menu.offsetHeight;
+    var left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
+    var top = rect.bottom + 6;
+    if (top + height > window.innerHeight - 8) top = Math.max(8, rect.top - height - 6);
+    menu.style.left = left + "px";
+    menu.style.top = top + "px";
+}
+
+function openMenuAt(row, x, y) {
+    if (picker.row) closePanel();
+    var menu = showMenu(row);
+    var width = menu.offsetWidth;
+    var height = menu.offsetHeight;
+    menu.style.left = Math.max(8, Math.min(x, window.innerWidth - width - 8)) + "px";
+    menu.style.top = Math.max(8, Math.min(y, window.innerHeight - height - 8)) + "px";
+}
+
+function bindMenu() {
+    var menu = menuEl();
+    menu.addEventListener("click", function (event) {
+        var item = event.target.closest("[data-menu], [data-act]");
+        if (!item) return;
+        var row = ctx.box.querySelector('.dm-msg[data-id="' + menu.getAttribute("data-row") + '"]');
+        var action = item.getAttribute("data-menu");
+        closeMenu();
+        if (!row) return;
+        if (item.getAttribute("data-act") === "react") react(row, item.textContent.trim());
+        else if (action === "reply") startReply(row);
+        else if (action === "forward") openForward(row);
+        else if (action === "delete") deleteMessage(row);
+        else if (action === "copy-text") {
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(messageText(row)).catch(function () {});
+        } else if (action === "reaction") openReactionPanel(row.querySelector('[data-act="picker"]') || row, row);
+    });
+    document.addEventListener("click", function (event) {
+        if (!menu.hidden && !event.target.closest("#group-msg-menu, .dm-msg-tools")) closeMenu();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !menu.hidden) closeMenu();
+    });
+}
+
+var forwardRow = null;
+
+function forwardError(text) {
+    var box = document.getElementById("group-forward-error");
+    box.textContent = text || "";
+    box.hidden = !text;
+}
+
+function closeForward() {
+    document.getElementById("group-forward-modal").hidden = true;
+    document.getElementById("group-forward-list").textContent = "";
+    document.getElementById("group-forward-preview").textContent = "";
+    document.getElementById("group-forward-search").value = "";
+    document.getElementById("group-forward-note").value = "";
+    forwardError("");
+    forwardRow = null;
+}
+
+function openForward(row) {
+    forwardRow = row;
+    forwardError("");
+    var preview = document.getElementById("group-forward-preview");
+    preview.textContent = "";
+    nodesForText(messageText(row)).forEach(function (node) { preview.appendChild(node); });
+    var list = document.getElementById("group-forward-list");
+    list.textContent = "";
+    document.getElementById("group-forward-submit").disabled = true;
+    document.getElementById("group-forward-modal").hidden = false;
+    document.getElementById("group-forward-search").focus();
+    fetch("/Dm/ForwardTargets", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+        if (!response.ok) throw new Error("targets");
+        return response.text();
+    }).then(function (html) {
+        if (forwardRow !== row) return;
+        list.innerHTML = html;
+    }).catch(function () {
+        forwardError("Could not load your friends. Try again.");
+    });
+}
+
+function bindForward() {
+    var modal = document.getElementById("group-forward-modal");
+    var list = document.getElementById("group-forward-list");
+    var submit = document.getElementById("group-forward-submit");
+    modal.addEventListener("click", function (event) {
+        if (event.target.closest("[data-close]")) closeForward();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !modal.hidden) closeForward();
+    });
+    list.addEventListener("change", function () {
+        submit.disabled = list.querySelectorAll(".dm-forward-check:checked").length === 0;
+    });
+    document.getElementById("group-forward-search").addEventListener("input", function () {
+        var term = this.value.trim().toLowerCase();
+        [].forEach.call(list.querySelectorAll(".dm-forward-item"), function (item) {
+            item.hidden = term.length > 0 && item.getAttribute("data-name").indexOf(term) === -1 && item.getAttribute("data-key").toLowerCase().indexOf(term) === -1;
+        });
+    });
+    submit.addEventListener("click", function () {
+        var row = forwardRow;
+        if (!row) return;
+        var names = [];
+        [].forEach.call(list.querySelectorAll(".dm-forward-check:checked"), function (box) { names.push(box.value); });
+        if (names.length === 0) return;
+        submit.disabled = true;
+        forwardError("");
+        ctx.request("/Group/ForwardMessage", "POST", {
+            id: ctx.groupId,
+            messageId: Number(row.getAttribute("data-id")),
+            userNames: names,
+            note: document.getElementById("group-forward-note").value.trim()
+        }).then(closeForward).catch(function (error) {
+            forwardError(error.message);
+            submit.disabled = false;
+        });
     });
 }
 
@@ -917,6 +1180,9 @@ window.GroupParts = {
         nodesForText(text).forEach(function (node) { ctx.input.appendChild(node); });
         setEmpty(ctx.input);
     },
+    replyId: function () { return reply ? reply.id : null; },
+    cancelReply: cancelReply,
+    remove: removeMessage,
     takeFiles: takeFiles,
     giveBack: giveBack,
     textNodes: nodesForText,
@@ -929,7 +1195,11 @@ window.GroupParts = {
             mountPoll(card, message.poll);
             row.classList.add("is-poll");
         }
-        row.appendChild(messageTools());
+        if (message.replyTo) {
+            row.insertBefore(replyHeader(message.replyTo), row.firstChild);
+            row.classList.add("has-reply");
+        }
+        row.appendChild(messageTools(row.getAttribute("data-mine") === "1"));
         if (message.reactions && message.reactions.length) renderReactions(row, message.reactions);
     },
     update: function (message) {
