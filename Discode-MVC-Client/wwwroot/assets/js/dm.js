@@ -336,6 +336,7 @@ function appendMessage(message, forceScroll) {
     var textHolder = messageNodes(message.text);
     if (message.editedAt) textHolder.appendChild(dmEditedLabel());
     body.appendChild(textHolder);
+    if (message.attachments && message.attachments.length) body.appendChild(dmBuildAttachments(message.attachments));
     if (message.undelivered) {
         var failed = document.createElement("div");
         failed.className = "dm-msg-undelivered";
@@ -438,23 +439,268 @@ function focusDmInput() {
     savedRange = range.cloneRange();
 }
 
+var dmFiles = [];
+var dmFileCounter = 0;
+var DM_MAX_FILES = 10;
+var DM_MAX_BYTES = 25 * 1024 * 1024;
+
+function dmFileKind(type, name) {
+    var kind = String(type || "").toLowerCase();
+    var ext = (String(name || "").split(".").pop() || "").toLowerCase();
+    if (kind.indexOf("image/") === 0 && ext !== "svg") return "image";
+    if (kind.indexOf("video/") === 0) return "video";
+    if (kind.indexOf("audio/") === 0) return "audio";
+    return "file";
+}
+
+function dmFileSize(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (Math.round(bytes / 102.4) / 10) + " KB";
+    return (Math.round(bytes / 104857.6) / 10) + " MB";
+}
+
+function dmBuildAttachments(list) {
+    var holder = document.createElement("div");
+    holder.className = "dm-attachments";
+    list.forEach(function (item) {
+        var kind = dmFileKind(item.contentType, item.fileName);
+        var node;
+        if (kind === "image") {
+            node = document.createElement("a");
+            node.className = "dm-att-media";
+            node.href = item.url;
+            node.target = "_blank";
+            node.rel = "noopener";
+            node.setAttribute("data-att", "image");
+            var picture = document.createElement("img");
+            picture.src = item.url;
+            picture.alt = item.fileName;
+            picture.loading = "lazy";
+            node.appendChild(picture);
+        } else if (kind === "video") {
+            node = document.createElement("video");
+            node.className = "dm-att-video";
+            node.src = item.url;
+            node.controls = true;
+            node.preload = "metadata";
+        } else if (kind === "audio") {
+            node = document.createElement("div");
+            node.className = "dm-att-audio";
+            var label = document.createElement("span");
+            label.textContent = item.fileName;
+            var player = document.createElement("audio");
+            player.src = item.url;
+            player.controls = true;
+            player.preload = "metadata";
+            node.appendChild(label);
+            node.appendChild(player);
+        } else {
+            node = document.createElement("a");
+            node.className = "dm-att-file";
+            node.href = item.url;
+            node.setAttribute("download", item.fileName);
+            node.target = "_blank";
+            node.rel = "noopener";
+            node.innerHTML = '<i class="fa-solid fa-file-lines"></i><span class="dm-att-info"><strong></strong><small></small></span><i class="fa-solid fa-download"></i>';
+            node.querySelector("strong").textContent = item.fileName;
+            node.querySelector("small").textContent = dmFileSize(item.size);
+        }
+        holder.appendChild(node);
+    });
+    return holder;
+}
+
+function dmRenderTray() {
+    var tray = document.getElementById("dm-attach-tray");
+    if (!tray) return;
+    tray.textContent = "";
+    tray.hidden = dmFiles.length === 0;
+    dmFiles.forEach(function (item) {
+        var card = document.createElement("div");
+        card.className = "dm-attach-item is-" + item.state;
+        var thumb = document.createElement("div");
+        thumb.className = "dm-attach-thumb";
+        if (item.previewUrl) {
+            var preview = document.createElement("img");
+            preview.src = item.previewUrl;
+            preview.alt = "";
+            thumb.appendChild(preview);
+        } else {
+            var kind = dmFileKind(item.type, item.name);
+            thumb.innerHTML = '<i class="fa-solid ' + (kind === "video" ? "fa-film" : kind === "audio" ? "fa-music" : "fa-file-lines") + '"></i>';
+        }
+        var name = document.createElement("span");
+        name.className = "dm-attach-name";
+        name.textContent = item.name;
+        name.title = item.name;
+        var info = document.createElement("small");
+        info.textContent = item.state === "error" ? item.error : (item.state === "uploading" ? "Uploading..." : dmFileSize(item.size));
+        var remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "dm-attach-remove";
+        remove.setAttribute("aria-label", "Remove");
+        remove.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        remove.addEventListener("click", function () {
+            dmFiles = dmFiles.filter(function (other) { return other.id !== item.id; });
+            if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+            dmRenderTray();
+        });
+        card.appendChild(thumb);
+        card.appendChild(name);
+        card.appendChild(info);
+        card.appendChild(remove);
+        tray.appendChild(card);
+    });
+}
+
+function dmUploadFile(item) {
+    var form = new FormData();
+    form.append("file", item.file, item.name);
+    return fetch("/Dm/UploadAttachment", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "RequestVerificationToken": dmToken(), "X-Requested-With": "XMLHttpRequest" },
+        body: form
+    }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (data) {
+            if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Could not upload the file.");
+            return data;
+        });
+    }).then(function (data) {
+        item.data = { url: data.url, fileName: data.fileName, contentType: data.contentType, size: data.size };
+        item.state = "ready";
+        item.file = null;
+    }).catch(function (error) {
+        item.state = "error";
+        item.error = error.message;
+    }).then(dmRenderTray);
+}
+
+function dmAddFiles(files) {
+    if (!dmPartner) return;
+    var list = [].slice.call(files || []);
+    for (var i = 0; i < list.length; i++) {
+        var file = list[i];
+        if (dmFiles.length >= DM_MAX_FILES) {
+            showDmError("You can send at most " + DM_MAX_FILES + " files at once.");
+            break;
+        }
+        if (file.size > DM_MAX_BYTES) {
+            showDmError(file.name + " is larger than 25 MB.");
+            continue;
+        }
+        var item = {
+            id: ++dmFileCounter,
+            name: file.name || "file",
+            size: file.size,
+            type: file.type,
+            file: file,
+            previewUrl: dmFileKind(file.type, file.name) === "image" ? URL.createObjectURL(file) : "",
+            state: "uploading",
+            data: null,
+            error: ""
+        };
+        dmFiles.push(item);
+        dmUploadFile(item);
+    }
+    dmRenderTray();
+}
+
+function bindDmAttach() {
+    var button = document.getElementById("dm-attach");
+    var picker = document.getElementById("dm-file");
+    var compose = document.getElementById("dm-compose");
+    if (!button || !picker || !compose) return;
+    var tray = document.createElement("div");
+    tray.id = "dm-attach-tray";
+    tray.className = "dm-attach-tray";
+    tray.hidden = true;
+    compose.parentNode.insertBefore(tray, compose);
+    button.addEventListener("click", function () {
+        picker.click();
+    });
+    picker.addEventListener("change", function () {
+        dmAddFiles(picker.files);
+        picker.value = "";
+    });
+    var chat = document.querySelector(".dm-chat");
+    if (chat) {
+        chat.addEventListener("dragover", function (event) {
+            if (event.dataTransfer && [].indexOf.call(event.dataTransfer.types || [], "Files") !== -1) {
+                event.preventDefault();
+                chat.classList.add("is-dropping");
+            }
+        });
+        chat.addEventListener("dragleave", function (event) {
+            if (!chat.contains(event.relatedTarget)) chat.classList.remove("is-dropping");
+        });
+        chat.addEventListener("drop", function (event) {
+            chat.classList.remove("is-dropping");
+            if (!event.dataTransfer || !event.dataTransfer.files || !event.dataTransfer.files.length) return;
+            event.preventDefault();
+            dmAddFiles(event.dataTransfer.files);
+        });
+    }
+    dmInput.addEventListener("paste", function (event) {
+        var files = event.clipboardData && event.clipboardData.files;
+        if (files && files.length) {
+            event.preventDefault();
+            dmAddFiles(files);
+        }
+    });
+    document.addEventListener("click", function (event) {
+        var link = event.target.closest && event.target.closest("a.dm-att-media");
+        if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        event.preventDefault();
+        var overlay = document.createElement("div");
+        overlay.className = "dm-lightbox";
+        var big = document.createElement("img");
+        big.src = link.href;
+        big.alt = "";
+        overlay.appendChild(big);
+        var close = function () {
+            if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+            document.removeEventListener("keydown", onKey);
+        };
+        var onKey = function (e) {
+            if (e.key === "Escape") close();
+        };
+        overlay.addEventListener("click", close);
+        document.addEventListener("keydown", onKey);
+        document.body.appendChild(overlay);
+    });
+}
+
 function submitDm(text) {
     if (!dmPartner) return;
     var message = (text !== undefined ? text : fieldValue(dmInput)).trim();
-    if (!message) return;
+    var typed = text === undefined ? dmInput.innerHTML : null;
+    var pending = text === undefined ? dmFiles.slice() : [];
+    if (pending.some(function (item) { return item.state === "uploading"; })) {
+        showDmError("Wait for the files to finish uploading.");
+        return;
+    }
+    var attachments = pending.filter(function (item) { return item.state === "ready"; });
+    if (pending.some(function (item) { return item.state === "error"; })) {
+        showDmError("Remove the files that could not be uploaded.");
+        return;
+    }
+    if (!message && !attachments.length) return;
     showDmError("");
     var partner = dmPartner.userName;
-    var typed = text === undefined ? dmInput.innerHTML : null;
     var replyId = dmReply ? dmReply.id : null;
     if (dmReply) dmCancelReply();
     if (typed !== null) {
         while (dmInput.firstChild) dmInput.removeChild(dmInput.firstChild);
         focusDmInput();
         markEmpty(dmInput);
+        dmFiles = [];
+        dmRenderTray();
     }
     dmQueue = dmQueue.then(function () {
-        return dmRequest("/Dm/Send", "POST", { userName: partner, text: message, replyToMessageId: replyId });
+        return dmRequest("/Dm/Send", "POST", { userName: partner, text: message, replyToMessageId: replyId, attachments: attachments.map(function (item) { return item.data; }) });
     }).then(function (sent) {
+        attachments.forEach(function (item) { if (item.previewUrl) URL.revokeObjectURL(item.previewUrl); });
         appendMessage(sent);
     }).catch(function (err) {
         showDmError(err.message);
@@ -462,6 +708,10 @@ function submitDm(text) {
             dmInput.innerHTML = typed;
             markEmpty(dmInput);
             focusDmInput();
+        }
+        if (attachments.length && !dmFiles.length) {
+            dmFiles = attachments;
+            dmRenderTray();
         }
     });
 }
@@ -1750,6 +2000,7 @@ if (document.getElementById("dm-chat")) {
     bindDmCall();
     bindDmCompose();
     bindDmInput();
+    bindDmAttach();
     bindDmMessages();
 }
 
