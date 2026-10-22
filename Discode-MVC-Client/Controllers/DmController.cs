@@ -13,9 +13,9 @@ namespace Discode_MVC_Client.Controllers
     public class DmController : ApiControllerBase
     {
         private const long MaxAttachmentBytes = 25L * 1024 * 1024;
-        private static readonly HashSet<string> BlockedExtensions = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly HashSet<string> DownloadOnlyExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
-            ".html", ".htm", ".xhtml", ".svg", ".js", ".mjs", ".exe", ".bat", ".cmd", ".com", ".msi", ".dll", ".scr", ".ps1", ".vbs", ".jar"
+            ".html", ".htm", ".xhtml", ".svg", ".js", ".mjs"
         };
 
         private readonly IHttpClientFactory _httpClientFactory;
@@ -100,13 +100,10 @@ namespace Discode_MVC_Client.Controllers
                 original = original.Substring(original.Length - 150);
 
             var extension = Path.GetExtension(original).ToLowerInvariant();
-            if (BlockedExtensions.Contains(extension))
-                return BadRequest(new { errors = new[] { "This type of file cannot be sent." } });
-
             var provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
             string? contentType = null;
             var known = extension.Length > 1 && extension.Length <= 10 && extension.Skip(1).All(char.IsLetterOrDigit) && provider.TryGetContentType("x" + extension, out contentType);
-            if (!known)
+            if (!known || DownloadOnlyExtensions.Contains(extension))
             {
                 extension = ".bin";
                 contentType = "application/octet-stream";
