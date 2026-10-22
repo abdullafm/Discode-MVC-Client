@@ -238,6 +238,7 @@ function purgeLegacyPosts() {
 function mapComment(dto) {
     return {
         id: String(dto.id),
+        parentId: dto.parentCommentId ? String(dto.parentCommentId) : "",
         author: dto.authorUserName,
         avatar: dto.authorAvatarUrl || "",
         text: dto.text || "",
@@ -255,6 +256,7 @@ function mapPosts(list) {
             avatar: dto.authorAvatarUrl || "",
             text: dto.text || "",
             image: dto.imageUrl || "",
+            visibility: dto.visibility === "friends" ? "friends" : "public",
             createdAt: utcMillis(dto.createdAt),
             likes: dto.likeCount || 0,
             liked: !!dto.likedByMe,
@@ -405,6 +407,43 @@ function fillText(el, value) {
     FLAG_RE.lastIndex = 0;
 }
 
+var replyTarget = null;
+
+function threadComments(list) {
+    var known = {};
+    list.forEach(function (comment) { known[comment.id] = true; });
+    var children = {};
+    list.forEach(function (comment) {
+        var key = comment.parentId && known[comment.parentId] ? comment.parentId : "0";
+        if (!children[key]) children[key] = [];
+        children[key].push(comment);
+    });
+    var ordered = [];
+    (function walk(parent, depth) {
+        (children[parent] || []).forEach(function (comment) {
+            ordered.push({ comment: comment, depth: depth });
+            walk(comment.id, depth + 1);
+        });
+    })("0", 0);
+    return ordered;
+}
+
+function showReplyChip(card, post) {
+    var chip = card.querySelector(".reply-chip");
+    var form = card.querySelector(".comment-form");
+    if (!chip || !form) return;
+    var active = replyTarget && replyTarget.post === post;
+    chip.hidden = !active || form.hidden;
+    form.removeAttribute("data-parent");
+    if (active) {
+        form.setAttribute("data-parent", replyTarget.id);
+        var label = chip.querySelector("span");
+        if (label) label.textContent = "Replying to " + replyTarget.author;
+        var box = form.querySelector(".rich-text");
+        if (box) box.setAttribute("data-placeholder", "Reply to " + replyTarget.author + "...");
+    }
+}
+
 function renderFeed() {
     closeEmojiPanel();
     var view = currentView === "friends" ? "friends" : "explore";
@@ -429,6 +468,8 @@ function renderFeed() {
         var when = card.querySelector(".post-name time");
         if (name) name.textContent = post.author;
         if (when) when.textContent = timeAgo(post.createdAt);
+        var scope = card.querySelector(".post-scope");
+        if (scope) scope.hidden = post.visibility !== "friends";
         var menu = card.querySelector(".post-author .item-menu");
         if (menu) {
             menu.hidden = !mine;
@@ -454,9 +495,19 @@ function renderFeed() {
         var commentOpen = card.querySelector("[data-comment-post]");
         if (commentOpen) commentOpen.setAttribute("data-comment-post", post.id);
         var comments = card.querySelector(".comment-list");
-        (post.comments || []).forEach(function (comment) {
+        threadComments(post.comments || []).forEach(function (entry) {
+            var comment = entry.comment;
             if (!commentTpl || !comments) return;
             var item = commentTpl.content.firstElementChild.cloneNode(true);
+            if (entry.depth > 0) {
+                item.classList.add("is-reply");
+                item.style.marginLeft = Math.min(entry.depth, 4) * 34 + "px";
+            }
+            var replyButton = item.querySelector("[data-reply-comment]");
+            if (replyButton) {
+                replyButton.setAttribute("data-reply-comment", comment.id);
+                replyButton.setAttribute("data-reply-author", comment.author);
+            }
             setPersonFace(item.querySelector("img"), item.querySelector(".avatar-letter"), comment.author, comment.avatar || DEFAULT_AVATAR);
             var who = item.querySelector("strong");
             var said = item.querySelector("p");
@@ -487,6 +538,7 @@ function renderFeed() {
             form.setAttribute("data-post", post.id);
             form.hidden = openCommentPost !== post.id;
         }
+        showReplyChip(card, post.id);
         list.appendChild(card);
     });
     restoreDraft(list, draft);
@@ -518,6 +570,21 @@ function uploadPostImage() {
     });
 }
 
+function postScope() {
+    var on = document.querySelector("#post-scope button.on");
+    return on ? on.getAttribute("data-scope") : "public";
+}
+
+document.getElementById("post-scope").addEventListener("click", function (event) {
+    var button = event.target.closest("button[data-scope]");
+    if (!button) return;
+    [].forEach.call(this.querySelectorAll("button"), function (item) {
+        var active = item === button;
+        item.classList.toggle("on", active);
+        item.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+});
+
 document.getElementById("post-composer").addEventListener("submit", function (event) {
     event.preventDefault();
     var textBox = document.getElementById("post-text");
@@ -529,7 +596,7 @@ document.getElementById("post-composer").addEventListener("submit", function (ev
     showPostError("");
 
     uploadPostImage().then(function (imageUrl) {
-        return requestJson("/Home/CreatePost", "POST", { text: text, imageUrl: imageUrl });
+        return requestJson("/Home/CreatePost", "POST", { text: text, imageUrl: imageUrl, visibility: postScope() });
     }).then(function () {
         while (textBox.firstChild) textBox.removeChild(textBox.firstChild);
         textBox.setAttribute("data-empty", "1");
@@ -552,8 +619,11 @@ document.querySelector(".social-view").addEventListener("submit", function (even
 
     var submit = event.target.querySelector("button[type=submit]");
     if (submit) submit.disabled = true;
-    requestJson("/Home/CreateComment", "POST", { postId: postId, text: text }).then(function () {
+    var parentId = event.target.getAttribute("data-parent");
+    requestJson("/Home/CreateComment", "POST", { postId: postId, text: text, parentCommentId: parentId ? Number(parentId) : null }).then(function () {
         clearField(box);
+        replyTarget = null;
+        box.setAttribute("data-placeholder", "Add a comment...");
         return loadFeed(currentView);
     }).catch(function () {}).then(function () {
         if (submit) submit.disabled = false;
@@ -1944,6 +2014,28 @@ document.querySelector(".social-view").addEventListener("click", function (event
 
     if (!event.target.closest(".item-menu")) closeDeleteMenus();
 
+    var replyCancel = event.target.closest("[data-reply-cancel]");
+    if (replyCancel) {
+        var cancelCard = replyCancel.closest(".post");
+        replyTarget = null;
+        var cancelForm = cancelCard.querySelector(".comment-form");
+        cancelForm.removeAttribute("data-parent");
+        cancelForm.querySelector(".rich-text").setAttribute("data-placeholder", "Add a comment...");
+        cancelCard.querySelector(".reply-chip").hidden = true;
+        return;
+    }
+    var replyOpen = event.target.closest("[data-reply-comment]");
+    if (replyOpen) {
+        var replyCard = replyOpen.closest(".post");
+        var replyForm = replyCard.querySelector(".comment-form");
+        var replyPost = replyCard.getAttribute("data-post");
+        replyTarget = { post: replyPost, id: replyOpen.getAttribute("data-reply-comment"), author: replyOpen.getAttribute("data-reply-author") };
+        openCommentPost = replyPost;
+        replyForm.hidden = false;
+        showReplyChip(replyCard, replyPost);
+        replyForm.querySelector(".rich-text").focus();
+        return;
+    }
     var commentOpen = event.target.closest("[data-comment-post]");
     if (commentOpen) {
         var commentPostId = commentOpen.getAttribute("data-comment-post");

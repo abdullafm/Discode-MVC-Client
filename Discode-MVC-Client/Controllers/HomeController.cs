@@ -241,6 +241,32 @@ namespace Discode_MVC_Client.Controllers
             => GetPosts("api/post/friends");
 
         [HttpGet]
+        public async Task<IActionResult> UserFriends(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return BadRequest(new { errors = new[] { "Choose a user." } });
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await client.GetAsync("api/friend/user/" + Uri.EscapeDataString(name.Trim()));
+                if (!response.IsSuccessStatusCode)
+                    return StatusCode((int)response.StatusCode, new { errors = new[] { response.StatusCode == System.Net.HttpStatusCode.BadRequest ? "This profile is private." : "Friends are not available." } });
+
+                var friends = await response.Content.ReadFromJsonAsync<List<FriendRequestVM>>();
+                return Ok((friends ?? new List<FriendRequestVM>()).Select(f => new { userName = f.UserName, name = f.Name, avatarUrl = f.AvatarUrl, status = f.Status }));
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(503, new { errors = new[] { "Friends are not available." } });
+            }
+            catch (JsonException)
+            {
+                return Ok(Array.Empty<object>());
+            }
+        }
+
+        [HttpGet]
         public Task<IActionResult> UserPosts(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -259,7 +285,8 @@ namespace Discode_MVC_Client.Controllers
             return ForwardToApi(client => client.PostAsJsonAsync("api/post", new
             {
                 text = model.Text ?? string.Empty,
-                imageUrl = model.ImageUrl ?? string.Empty
+                imageUrl = model.ImageUrl ?? string.Empty,
+                visibility = string.IsNullOrWhiteSpace(model.Visibility) ? "public" : model.Visibility
             }));
         }
 
@@ -290,7 +317,7 @@ namespace Discode_MVC_Client.Controllers
             if (model is null || model.PostId <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
 
-            return ForwardToApi(client => client.PostAsJsonAsync($"api/post/{model.PostId}/comments", new { text = model.Text ?? string.Empty }));
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/post/{model.PostId}/comments", new { text = model.Text ?? string.Empty, parentCommentId = model.ParentCommentId }));
         }
 
         [HttpPost]

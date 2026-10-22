@@ -4,6 +4,7 @@ namespace Discode_MVC_Client.ViewModels.Social
     {
         public int Id { get; set; }
         public int PostId { get; set; }
+        public int? ParentCommentId { get; set; }
         public string AuthorUserName { get; set; } = string.Empty;
         public string AuthorDisplayName { get; set; } = string.Empty;
         public string AuthorAvatarUrl { get; set; } = string.Empty;
