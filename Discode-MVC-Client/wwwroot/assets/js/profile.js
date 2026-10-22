@@ -677,7 +677,11 @@
     });
 
     document.addEventListener("discode-friends-changed", function () {
-        if (profile.classList.contains("d-none") || !profile.classList.contains("visitor-view")) return;
+        if (profile.classList.contains("d-none")) return;
+        if (!profile.classList.contains("visitor-view")) {
+            if (friendsPanelOpen()) renderFriends();
+            return;
+        }
         loadVisitor(viewing);
     });
 
@@ -698,6 +702,19 @@
             note.textContent = on ? name + "'s profile is private, so some info is hidden. Add them as a friend to see more." : "";
         }
         if (board) board.hidden = !on;
+        var friendsTab = profile.querySelector(".me-tabs button[data-tab='friends']");
+        if (friendsTab) {
+            friendsTab.hidden = on;
+            if (on && friendsTab.classList.contains("on")) {
+                var boardTab = profile.querySelector(".me-tabs button[data-tab='board']");
+                if (boardTab) boardTab.click();
+            }
+        }
+    }
+
+    function friendsPanelOpen() {
+        var panel = document.getElementById("me-friends");
+        return !!panel && !panel.classList.contains("d-none");
     }
 
     function setRequestCard(on, requestId, name) {
@@ -751,6 +768,7 @@
         if (since && joined) since.textContent = joined;
         paintPerson({ pronouns: data.pronouns || "", bio: data.bio || "", status: data.customStatus || "", emoji: "" });
         setPrivateView(!!data.isPrivate, displayName);
+        if (!data.isPrivate && friendsPanelOpen()) renderFriends();
         var requestId = data.relation === "pending-received" ? (data.requestId || pendingRequestId(data.userName)) : 0;
         var incoming = !!requestId;
         setRequestCard(incoming, requestId, displayName);

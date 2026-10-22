@@ -7709,3 +7709,7 @@ a.notify-content {
     opacity: 0.45;
     cursor: not-allowed;
 }
+
+.me-tabs button[hidden] {
+    display: none;
+}
