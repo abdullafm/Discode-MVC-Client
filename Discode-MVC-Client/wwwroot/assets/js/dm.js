@@ -616,9 +616,38 @@ function bindDmAttach() {
     tray.className = "dm-attach-tray";
     tray.hidden = true;
     compose.parentNode.insertBefore(tray, compose);
-    button.addEventListener("click", function () {
-        picker.click();
+    var menu = document.getElementById("dm-attach-menu");
+    var closeMenu = function () {
+        if (menu) menu.hidden = true;
+        button.setAttribute("aria-expanded", "false");
+    };
+    button.setAttribute("aria-haspopup", "menu");
+    button.setAttribute("aria-expanded", "false");
+    button.addEventListener("click", function (event) {
+        event.stopPropagation();
+        if (!menu) {
+            picker.click();
+            return;
+        }
+        var open = menu.hidden;
+        menu.hidden = !open;
+        button.setAttribute("aria-expanded", open ? "true" : "false");
     });
+    if (menu) {
+        menu.addEventListener("click", function (event) {
+            var item = event.target.closest("button[data-act]");
+            if (!item) return;
+            closeMenu();
+            if (item.getAttribute("data-act") === "upload") picker.click();
+            else document.dispatchEvent(new CustomEvent("discode-dm-poll"));
+        });
+        document.addEventListener("click", function (event) {
+            if (!menu.hidden && !event.target.closest("#dm-attach-menu")) closeMenu();
+        });
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !menu.hidden) closeMenu();
+        });
+    }
     picker.addEventListener("change", function () {
         dmAddFiles(picker.files);
         picker.value = "";

@@ -240,6 +240,10 @@
             <form class="dm-compose" id="dm-compose" hidden="@(chat is null)">
                 <button type="button" id="dm-attach" aria-label="Add"><i class="fa-solid fa-plus"></i></button>
                 <input type="file" id="dm-file" multiple hidden>
+                <div class="dm-attach-menu" id="dm-attach-menu" role="menu" hidden>
+                    <button type="button" role="menuitem" data-act="upload"><i class="fa-solid fa-file-arrow-up"></i><span>Upload a File</span></button>
+                    <button type="button" role="menuitem" data-act="poll"><i class="fa-solid fa-square-poll-horizontal"></i><span>Create Poll</span></button>
+                </div>
                 <div class="dm-input-wrap">
                     <span class="dm-placeholder" id="dm-placeholder" aria-hidden="true">Message @@@shownName</span>
                     <div class="rich-text" id="dm-input" contenteditable="true" role="textbox" aria-label="Message" data-placeholder="Message @@@shownName" data-empty="1"></div>
