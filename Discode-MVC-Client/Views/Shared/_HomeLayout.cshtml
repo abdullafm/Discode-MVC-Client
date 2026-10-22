@@ -560,21 +560,23 @@
         </div>
         <div class="friend-context" id="friend-context" role="menu" hidden>
             <button type="button" role="menuitem" data-action="profile">Profile</button>
-            <button type="button" role="menuitem" data-action="message">Message</button>
-            <button type="button" role="menuitem" data-action="voice">Start a Call</button>
+            <button type="button" role="menuitem" data-action="message" data-for="friends received sent">Message</button>
+            <button type="button" role="menuitem" data-action="voice" data-for="friends received sent">Start a Call</button>
             <button type="button" role="menuitem" data-action="note">
                 <span>Add Note</span>
                 <small>Only visible to you</small>
             </button>
-            <button type="button" role="menuitem" data-action="nickname">Add Friend Nickname</button>
-            <hr>
-            <button type="button" role="menuitem" data-action="invite" class="has-arrow">
+            <button type="button" role="menuitem" data-action="nickname" data-for="friends">Add Friend Nickname</button>
+            <hr data-for="friends received sent">
+            <button type="button" role="menuitem" data-action="invite" class="has-arrow" data-for="friends received sent">
                 <span>Invite to Server</span>
                 <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
             </button>
-            <button type="button" role="menuitem" data-action="remove">Remove Friend</button>
-            <button type="button" role="menuitem" data-action="ignore">Ignore</button>
-            <button type="button" role="menuitem" data-action="block" class="is-danger">Block</button>
+            <button type="button" role="menuitem" data-action="addfriend" data-for="received sent">Add Friend</button>
+            <button type="button" role="menuitem" data-action="remove" data-for="friends">Remove Friend</button>
+            <button type="button" role="menuitem" data-action="ignore" data-for="friends received sent">Ignore</button>
+            <button type="button" role="menuitem" data-action="block" class="is-danger" data-for="friends received sent">Block</button>
+            <button type="button" role="menuitem" data-action="unblock" data-for="blocked">Unblock</button>
         </div>
         @Html.AntiForgeryToken()
         <form id="logout-form" asp-controller="Account" asp-action="Logout" method="post" hidden></form>

@@ -436,12 +436,8 @@ function openToggle() {
 
 (function () {
     var menu = document.getElementById("friend-context");
-    var listIds = ["friends-all-list", "friends-pending-list", "friends-sent-list"];
-    var lists = listIds
-        .map(function (id) { return document.getElementById(id); })
-        .filter(function (list) { return list; });
-    var removeButton = menu ? menu.querySelector("[data-action='remove']") : null;
-    if (!menu || lists.length === 0) return;
+    var listIds = ["friends-all-list", "friends-pending-list", "friends-sent-list", "friends-blocked-list"];
+    if (!menu) return;
     var row = null;
 
     function closeMenu() {
@@ -449,9 +445,24 @@ function openToggle() {
         row = null;
     }
 
+    function kindOf(target) {
+        if (target.closest("#friends-all-list")) return "friends";
+        if (target.closest("#friends-pending-list")) return "received";
+        if (target.closest("#friends-sent-list")) return "sent";
+        return "blocked";
+    }
+
     function openMenu(target, x, y) {
         row = target;
-        if (removeButton) removeButton.hidden = !target.closest("#friends-all-list");
+        var kind = kindOf(target);
+        [].forEach.call(menu.querySelectorAll("[data-for]"), function (item) {
+            item.hidden = item.getAttribute("data-for").split(" ").indexOf(kind) === -1;
+        });
+        var add = menu.querySelector("[data-action='addfriend']");
+        if (add) {
+            add.classList.toggle("is-disabled", kind === "sent");
+            add.title = kind === "sent" ? "Friend request already sent" : "";
+        }
         menu.hidden = false;
         var width = menu.offsetWidth;
         var height = menu.offsetHeight;
@@ -461,22 +472,19 @@ function openToggle() {
         menu.style.top = top + "px";
     }
 
-    lists.forEach(function (list) {
-        list.addEventListener("contextmenu", function (event) {
-            var target = event.target.closest && event.target.closest(".online-row");
-            if (!target) return;
-            event.preventDefault();
-            openMenu(target, event.clientX, event.clientY);
-        });
-    });
-
     document.addEventListener("click", function (event) {
         if (!event.target.closest || !event.target.closest("#friend-context")) closeMenu();
     });
 
     document.addEventListener("contextmenu", function (event) {
-        var inside = event.target.closest && event.target.closest(".online-row");
-        if (!inside || !lists.some(function (list) { return list.contains(inside); })) closeMenu();
+        var target = event.target.closest && event.target.closest(".online-row");
+        var list = target && target.closest(".friends-online-list");
+        if (!target || !list || listIds.indexOf(list.id) === -1) {
+            closeMenu();
+            return;
+        }
+        event.preventDefault();
+        openMenu(target, event.clientX, event.clientY);
     });
 
     document.addEventListener("keydown", function (event) {
@@ -492,6 +500,7 @@ function openToggle() {
         var action = button.getAttribute("data-action");
         var link = row.querySelector(".online-main");
         var href = link ? link.getAttribute("href") : "";
+        if (!href && row.getAttribute("data-user")) href = "/Dm/Index?name=" + encodeURIComponent(row.getAttribute("data-user"));
         if ((action === "message" || action === "voice") && href) {
             if (action === "voice") href += (href.indexOf("?") === -1 ? "?" : "&") + "call=voice";
             if (window.discodeGo) window.discodeGo(href);
@@ -500,6 +509,15 @@ function openToggle() {
         if (action === "profile" && window.openUserProfile) {
             var face = row.querySelector("img");
             window.openUserProfile(row.getAttribute("data-user") || "", face ? face.getAttribute("src") : "");
+        }
+        if (action === "addfriend") {
+            var accept = row.querySelector(".request-accept");
+            if (!accept) return;
+            accept.click();
+        }
+        if (action === "unblock") {
+            var unblock = row.querySelector(".blocked-unblock");
+            if (unblock) unblock.click();
         }
         if (action === "block" && window.discodeFriends) window.discodeFriends.blockRow(row);
         if (action === "remove" && window.discodeFriends) window.discodeFriends.removeRow(row);

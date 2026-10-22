@@ -7700,3 +7700,12 @@ a.notify-content {
 .me-friends-empty[hidden] {
     display: none;
 }
+
+.friend-context [hidden] {
+    display: none !important;
+}
+
+.friend-context button.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
