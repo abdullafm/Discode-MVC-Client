@@ -570,21 +570,6 @@ function uploadPostImage() {
     });
 }
 
-function postScope() {
-    var on = document.querySelector("#post-scope button.on");
-    return on ? on.getAttribute("data-scope") : "public";
-}
-
-document.getElementById("post-scope").addEventListener("click", function (event) {
-    var button = event.target.closest("button[data-scope]");
-    if (!button) return;
-    [].forEach.call(this.querySelectorAll("button"), function (item) {
-        var active = item === button;
-        item.classList.toggle("on", active);
-        item.setAttribute("aria-pressed", active ? "true" : "false");
-    });
-});
-
 document.getElementById("post-composer").addEventListener("submit", function (event) {
     event.preventDefault();
     var textBox = document.getElementById("post-text");
@@ -596,7 +581,7 @@ document.getElementById("post-composer").addEventListener("submit", function (ev
     showPostError("");
 
     uploadPostImage().then(function (imageUrl) {
-        return requestJson("/Home/CreatePost", "POST", { text: text, imageUrl: imageUrl, visibility: postScope() });
+        return requestJson("/Home/CreatePost", "POST", { text: text, imageUrl: imageUrl });
     }).then(function () {
         while (textBox.firstChild) textBox.removeChild(textBox.firstChild);
         textBox.setAttribute("data-empty", "1");

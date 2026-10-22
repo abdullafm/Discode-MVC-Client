@@ -285,8 +285,7 @@ namespace Discode_MVC_Client.Controllers
             return ForwardToApi(client => client.PostAsJsonAsync("api/post", new
             {
                 text = model.Text ?? string.Empty,
-                imageUrl = model.ImageUrl ?? string.Empty,
-                visibility = string.IsNullOrWhiteSpace(model.Visibility) ? "public" : model.Visibility
+                imageUrl = model.ImageUrl ?? string.Empty
             }));
         }
 
