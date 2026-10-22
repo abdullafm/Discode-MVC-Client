@@ -24,6 +24,8 @@
     var audioState = { muted: false, deafened: false };
     var focused = "";
     var ringTimer = 0;
+    var ringUntil = 0;
+    var ghostTimer = 0;
     var aloneTimer = 0;
     var aloneCallId = 0;
     var localMeter = null;
@@ -608,13 +610,23 @@
                 var screenTile = tileFor("s-" + key, "is-screen");
                 wanted["gcall-s-" + key] = true;
                 var quality = isMe ? screenInfo() : peer.state.screen;
-                fillTile(screenTile, { key: "screen-" + key, name: info.name, stream: isMe ? screenStream : peer.screenStream, on: true, isScreen: true, isSelf: isMe, quality: quality ? quality.h + "P " + quality.fps + "FPS" : "" });
+                fillTile(screenTile, { key: "screen-" + key, name: info.name, stream: isMe ? screenStream : peer.screenStream, on: true, isScreen: true, quality: quality ? quality.h + "P " + quality.fps + "FPS" : "" });
                 if (screenTile.parentNode === faces && screenTile !== faces.firstChild && !screenTile.hasAttribute("data-placed")) {
                     faces.insertBefore(screenTile, faces.firstChild);
                     screenTile.setAttribute("data-placed", "1");
                 }
             }
         });
+        if (call.participants.length <= 1 && Date.now() < ringUntil && window.discodeGroupInfo && window.discodeGroupInfo.members) {
+            window.discodeGroupInfo.members.forEach(function (member) {
+                if (member.userName === me) return;
+                var ghostKey = "g-" + member.userName;
+                var ghost = tileFor("t-" + ghostKey, "is-peer");
+                wanted["gcall-t-" + ghostKey] = true;
+                ghost.classList.add("is-waiting");
+                fillTile(ghost, { key: ghostKey, name: member.displayName || member.userName, avatar: member.avatarUrl || DEFAULT_AVATAR, muted: false, deafened: false });
+            });
+        }
         [].slice.call(faces.children).forEach(function (child) {
             if (!wanted[child.id]) {
                 var video = child.querySelector("video");
@@ -775,6 +787,11 @@
         return promise.then(function (dto) {
             stopRing();
             ringing = null;
+            if (dto.participants.length <= 1) {
+                ringUntil = Date.now() + RING_MS;
+                clearTimeout(ghostTimer);
+                ghostTimer = setTimeout(render, RING_MS + 100);
+            }
             adopt(dto, true);
             if (video) setCamera(true);
             return dto;

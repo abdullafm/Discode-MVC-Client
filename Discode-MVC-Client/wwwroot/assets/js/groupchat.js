@@ -80,6 +80,7 @@
     }
 
     function paintGroup() {
+        window.discodeGroupInfo = group;
         document.title = "Discord | " + group.name;
         document.getElementById("group-title").textContent = group.name;
         document.getElementById("group-name").textContent = group.name;
