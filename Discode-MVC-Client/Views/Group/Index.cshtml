@@ -32,12 +32,32 @@
                 </div>
                 <div class="group-bar-tools">
                     <button type="button" id="group-members-toggle" class="on" aria-label="Members"><i class="fa-solid fa-user-group"></i></button>
+                    <button type="button" id="group-call-voice" aria-label="Start voice call"><i class="fa-solid fa-phone"></i></button>
+                    <button type="button" id="group-call-video" aria-label="Start video call"><i class="fa-solid fa-video"></i></button>
                     <button type="button" id="group-add" aria-label="Invite"><i class="fa-solid fa-user-plus"></i></button>
                     <label class="group-search">
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="search" id="group-search" placeholder="Search" aria-label="Search">
                     </label>
                 </div>
+            </div>
+            <div class="call-stage gcall-stage" id="group-call-stage" hidden>
+                <div class="gcall-faces" id="gcall-faces"></div>
+                <div class="call-bar">
+                    <div class="call-pill">
+                        <button type="button" class="call-btn" id="gcall-mic" aria-label="Mute" aria-pressed="false"><i class="fa-solid fa-microphone"></i></button>
+                        <button type="button" class="call-btn" id="gcall-deafen" aria-label="Deafen" aria-pressed="false"><i class="fa-solid fa-headphones"></i></button>
+                        <button type="button" class="call-btn is-off" id="gcall-cam" aria-label="Turn on camera" aria-pressed="true"><i class="fa-solid fa-video-slash"></i></button>
+                        <span class="call-line"></span>
+                        <button type="button" class="call-btn" id="gcall-screen" aria-label="Share your screen" aria-pressed="false"><i class="fa-solid fa-display"></i></button>
+                    </div>
+                    <button type="button" class="call-hangup" id="gcall-hangup" aria-label="Disconnect"><i class="fa-solid fa-phone"></i></button>
+                </div>
+            </div>
+            <div class="gcall-banner" id="group-call-banner" hidden>
+                <i class="fa-solid fa-phone"></i>
+                <span id="group-call-banner-text"></span>
+                <button type="button" id="group-call-banner-join">Join Call</button>
             </div>
             <div class="group-scroll" id="group-scroll">
                 <div class="group-intro">

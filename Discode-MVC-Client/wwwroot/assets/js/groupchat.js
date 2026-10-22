@@ -14,6 +14,7 @@
     }
     if (!group) return;
 
+    window.discodeOpenGroup = groupId;
     var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
     var box = document.getElementById("group-messages");
     var scroller = document.getElementById("group-scroll");
@@ -125,6 +126,81 @@
         });
     }
 
+    function callUnit(value, unit) {
+        return value + " " + unit + (value === 1 ? "" : "s");
+    }
+
+    function callLength(seconds) {
+        var total = Math.max(1, Math.round(seconds));
+        var hours = Math.floor(total / 3600);
+        var minutes = Math.floor((total % 3600) / 60);
+        var rest = total % 60;
+        var parts = [];
+        if (hours) parts.push(callUnit(hours, "hour"));
+        if (minutes) parts.push(callUnit(minutes, "minute"));
+        if (rest && !hours) parts.push(callUnit(rest, "second"));
+        return parts.join(" ");
+    }
+
+    function fillCallRow(row, message) {
+        var info = message.call || { active: false };
+        row.setAttribute("data-call", String(info.id || 0));
+        row.classList.toggle("is-live", !!info.active);
+        var text = row.querySelector(".dm-call-text");
+        text.textContent = "";
+        var who = document.createElement("strong");
+        who.textContent = message.senderDisplayName || message.senderUserName;
+        text.appendChild(who);
+        if (info.active) {
+            text.appendChild(document.createTextNode(" started a call."));
+            var wrap = document.createElement("span");
+            wrap.className = "dm-call-join-wrap";
+            wrap.appendChild(document.createTextNode(" \u2014 "));
+            var link = document.createElement("a");
+            link.className = "dm-call-join";
+            link.setAttribute("href", "#");
+            link.textContent = "Join call";
+            wrap.appendChild(link);
+            text.appendChild(wrap);
+        } else {
+            var seconds = info.endedAt ? (stamp(info.endedAt) - stamp(message.createdAt)) / 1000 : 0;
+            text.appendChild(document.createTextNode(seconds > 0 ? " started a call that lasted " + callLength(seconds) + "." : " started a call."));
+        }
+        refreshJoinLinks();
+    }
+
+    function refreshJoinLinks() {
+        var calls = window.discodeGroupCalls;
+        var current = calls && calls.current();
+        [].forEach.call(box.querySelectorAll(".group-call-row"), function (row) {
+            var wrap = row.querySelector(".dm-call-join-wrap");
+            if (wrap) wrap.hidden = !!current && String(current.callId) === row.getAttribute("data-call");
+        });
+    }
+
+    function updateBanner() {
+        var calls = window.discodeGroupCalls;
+        var banner = document.getElementById("group-call-banner");
+        if (!calls || !banner) return;
+        var info = calls.activeFor(groupId);
+        var current = calls.current();
+        var show = !!info && info.active && !(current && current.callId === info.callId);
+        banner.hidden = !show;
+        refreshJoinLinks();
+        if (!show) return;
+        var names = info.participants.map(function (p) { return p.displayName; });
+        var sharing = info.participants.filter(function (p) { return p.screen; });
+        var text = sharing.length ? sharing[0].displayName + " is sharing their screen" : (names.length ? names.join(", ") + (names.length === 1 ? " is" : " are") + " in the call" : "A call is in progress");
+        document.getElementById("group-call-banner-text").textContent = text;
+    }
+
+    function joinCall(video, callId) {
+        var calls = window.discodeGroupCalls;
+        if (!calls) return;
+        var promise = callId ? calls.join(callId, video) : calls.start(groupId, video);
+        promise.catch(function (error) { showError(error.message); });
+    }
+
     function lastRow() {
         var last = box.lastElementChild;
         while (last && !last.hasAttribute("data-id")) last = last.previousElementSibling;
@@ -146,14 +222,21 @@
             box.appendChild(divider);
         }
         var row;
-        if (message.isSystem) {
+        if (message.isCall) {
+            row = document.createElement("div");
+            row.className = "dm-msg dm-call-msg group-call-row";
+            row.innerHTML = '<i class="fa-solid fa-phone"></i><span class="dm-call-text"></span><time></time>';
+            row.querySelector("time").textContent = clock(message.createdAt);
+            row.setAttribute("data-sender", message.senderUserName);
+            fillCallRow(row, message);
+        } else if (message.isSystem) {
             row = document.createElement("div");
             row.className = "dm-msg dm-call-msg group-sys";
             row.innerHTML = '<i class="fa-solid fa-arrow-right-arrow-left"></i><span class="dm-call-text"></span><time></time>';
             row.querySelector(".dm-call-text").textContent = message.text;
             row.querySelector("time").textContent = clock(message.createdAt);
         } else {
-            var compact = !newDay && !message.replyTo && last && !last.classList.contains("group-sys") && last.getAttribute("data-sender") === message.senderUserName && when - Number(last.getAttribute("data-time")) < 5 * 60 * 1000 && box.lastElementChild === last;
+            var compact = !newDay && !message.replyTo && last && !last.classList.contains("dm-call-msg") && last.getAttribute("data-sender") === message.senderUserName && when - Number(last.getAttribute("data-time")) < 5 * 60 * 1000 && box.lastElementChild === last;
             row = document.createElement("div");
             row.className = "dm-msg" + (compact ? " compact" : "");
             row.setAttribute("data-sender", message.senderUserName);
@@ -262,6 +345,37 @@
     document.getElementById("group-members-toggle").addEventListener("click", function () {
         setMembers(document.getElementById("group-members").classList.contains("is-collapsed"));
     });
+    document.getElementById("group-call-voice").addEventListener("click", function () { joinCall(false); });
+    document.getElementById("group-call-video").addEventListener("click", function () { joinCall(true); });
+    document.getElementById("group-call-banner-join").addEventListener("click", function () {
+        var info = window.discodeGroupCalls && window.discodeGroupCalls.activeFor(groupId);
+        joinCall(false, info ? info.callId : 0);
+    });
+    box.addEventListener("click", function (event) {
+        var link = event.target.closest(".dm-call-join");
+        if (!link) return;
+        event.preventDefault();
+        joinCall(false, Number(link.closest(".group-call-row").getAttribute("data-call")));
+    });
+    document.addEventListener("discode-gcall-state", updateBanner);
+    document.addEventListener("discode-gcall-idle", function (event) {
+        if (event.detail && event.detail.groupId === groupId) showIdleNote();
+    });
+
+    function showIdleNote() {
+        try {
+            sessionStorage.removeItem("discode-group-idle-note");
+        } catch (e) {}
+        var note = document.createElement("div");
+        note.className = "dm-system-note";
+        note.textContent = "It appears you've been by yourself in this call for more than 3 minutes. The bandwidth patrol has asked me to disconnect you to save bandwidth. That stuff doesn't grow on trees!";
+        box.appendChild(note);
+        scroller.scrollTop = scroller.scrollHeight;
+        setTimeout(function () {
+            if (note.parentNode) note.parentNode.removeChild(note);
+        }, 10000);
+    }
+
     document.getElementById("group-invite").addEventListener("click", invite);
     document.getElementById("group-invite-side").addEventListener("click", invite);
     document.getElementById("group-add").addEventListener("click", invite);
@@ -418,6 +532,11 @@
     document.addEventListener("discode-group-message-updated", function (event) {
         var data = event.detail;
         if (!data || data.groupId !== groupId || !data.message) return;
+        if (data.message.isCall) {
+            var callRow = box.querySelector('.dm-msg[data-id="' + data.message.id + '"]');
+            if (callRow) fillCallRow(callRow, data.message);
+            return;
+        }
         window.GroupParts.update(data.message);
     });
 
@@ -459,5 +578,12 @@
 
     if (window.matchMedia("(max-width: 1100px)").matches) setMembers(false);
     paintGroup();
-    loadMessages();
+    loadMessages().then(function () {
+        var pending = "";
+        try {
+            pending = sessionStorage.getItem("discode-group-idle-note") || "";
+        } catch (e) {}
+        if (pending === String(groupId)) showIdleNote();
+        updateBanner();
+    });
 })();

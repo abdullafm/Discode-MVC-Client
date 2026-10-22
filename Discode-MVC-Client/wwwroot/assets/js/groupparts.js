@@ -899,7 +899,7 @@ function bindMessages() {
     });
     ctx.box.addEventListener("contextmenu", function (event) {
         var row = event.target.closest(".dm-msg");
-        if (!row || row.classList.contains("group-sys") || event.target.closest("a, .dm-msg-tools")) return;
+        if (!row || row.classList.contains("dm-call-msg") || event.target.closest("a, .dm-msg-tools")) return;
         event.preventDefault();
         openMenuAt(row, event.clientX, event.clientY);
     });
@@ -975,9 +975,9 @@ function startReply(row) {
 }
 
 function regroup(row) {
-    if (!row || !row.classList.contains("dm-msg") || row.classList.contains("group-sys")) return;
+    if (!row || !row.classList.contains("dm-msg") || row.classList.contains("dm-call-msg")) return;
     var before = row.previousElementSibling;
-    var grouped = !!before && before.classList.contains("dm-msg") && !before.classList.contains("group-sys") && !row.classList.contains("has-reply") &&
+    var grouped = !!before && before.classList.contains("dm-msg") && !before.classList.contains("dm-call-msg") && !row.classList.contains("has-reply") &&
         before.getAttribute("data-sender") === row.getAttribute("data-sender") &&
         Number(row.getAttribute("data-time")) - Number(before.getAttribute("data-time")) < 5 * 60 * 1000;
     row.classList.toggle("compact", grouped);
