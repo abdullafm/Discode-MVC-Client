@@ -533,6 +533,7 @@
             tile.className = "call-face is-screen";
             tile.innerHTML = '<video class="call-screen-tile-video" autoplay playsinline muted></video>' +
                 '<div class="call-screen-badge"><span class="call-screen-quality"></span><b>LIVE</b></div>' +
+                '<div class="gcall-self-note"><i class="fa-solid fa-display"></i><span>You are sharing your screen</span></div>' +
                 '<div class="call-tile-name"><i class="fa-solid fa-display"></i><span></span></div>';
         } else {
             tile.className = "call-face" + (className === "is-peer" ? " is-peer" : "");
@@ -549,8 +550,9 @@
 
     function fillTile(tile, info) {
         var video = tile.querySelector("video");
-        var showVideo = !!info.stream && info.on;
+        var showVideo = !!info.stream && info.on && !info.isSelf;
         tile.classList.toggle("has-video", showVideo && !info.isScreen);
+        tile.classList.toggle("is-self", !!info.isSelf);
         tile.setAttribute("data-user", info.key);
         var face = tile.querySelector(":scope > img");
         if (face && info.avatar && face.getAttribute("src") !== info.avatar) face.setAttribute("src", info.avatar);
@@ -606,7 +608,7 @@
                 var screenTile = tileFor("s-" + key, "is-screen");
                 wanted["gcall-s-" + key] = true;
                 var quality = isMe ? screenInfo() : peer.state.screen;
-                fillTile(screenTile, { key: "screen-" + key, name: info.name, stream: isMe ? screenStream : peer.screenStream, on: true, isScreen: true, quality: quality ? quality.h + "P " + quality.fps + "FPS" : "" });
+                fillTile(screenTile, { key: "screen-" + key, name: info.name, stream: isMe ? screenStream : peer.screenStream, on: true, isScreen: true, isSelf: isMe, quality: quality ? quality.h + "P " + quality.fps + "FPS" : "" });
                 if (screenTile.parentNode === faces && screenTile !== faces.firstChild && !screenTile.hasAttribute("data-placed")) {
                     faces.insertBefore(screenTile, faces.firstChild);
                     screenTile.setAttribute("data-placed", "1");

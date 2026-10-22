@@ -960,3 +960,31 @@ section#group-members.no-motion .group-members {
 #incoming-group-call {
     top: 96px;
 }
+
+.gcall-self-note {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #1b1c1f;
+    color: #dbdee1;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.gcall-self-note i {
+    font-size: 28px;
+    color: #23a559;
+}
+
+.call-face.is-screen.is-self .gcall-self-note {
+    display: flex;
+}
+
+.call-face.is-screen.is-self .call-screen-tile-video {
+    display: none;
+}
