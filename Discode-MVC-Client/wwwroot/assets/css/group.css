@@ -983,3 +983,19 @@ section#group-members.no-motion .group-members {
 .call-face.is-screen.is-self .call-screen-tile-video {
     display: none;
 }
+
+.call-stage.gcall-stage .call-person {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.call-stage.gcall-stage .call-faces {
+    justify-content: safe center;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.call-stage.gcall-stage.is-video .call-face {
+    min-width: 0;
+    overflow: hidden;
+}
