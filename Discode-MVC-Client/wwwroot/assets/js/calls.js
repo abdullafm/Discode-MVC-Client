@@ -901,6 +901,10 @@
     var pendingEnd = Promise.resolve();
 
     function start(userName, video) {
+        if (state && state.joined !== false && state.other.userName !== userName) {
+            stopRing();
+            teardownMedia();
+        }
         return pendingEnd.then(function () {
             return invoke("StartCall", userName, !!video);
         }).then(function (call) {
