@@ -88,6 +88,21 @@
         </form>
     </div>
 }
+@if (group is not null)
+{
+    <div class="dm-modal" id="group-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="group-confirm-title" hidden>
+        <div class="dm-modal-backdrop" data-close></div>
+        <div class="dm-modal-card">
+            <button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>
+            <h2 id="group-confirm-title"></h2>
+            <p class="dm-modal-text" id="group-confirm-text"></p>
+            <div class="dm-modal-actions">
+                <button type="button" class="dm-modal-cancel" data-close>Cancel</button>
+                <button type="button" class="dm-modal-confirm is-danger" id="group-confirm-ok"></button>
+            </div>
+        </div>
+    </div>
+}
 @section Scripts {
     <script src="~/assets/js/groupchat.js" asp-append-version="true"></script>
 }

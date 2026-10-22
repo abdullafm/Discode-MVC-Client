@@ -260,22 +260,53 @@
     document.getElementById("group-invite-side").addEventListener("click", invite);
     document.getElementById("group-add").addEventListener("click", invite);
 
+    var confirmModal = document.getElementById("group-confirm-modal");
+    var confirmAction = null;
+
+    function askConfirm(title, text, label, action) {
+        document.getElementById("group-confirm-title").textContent = title;
+        document.getElementById("group-confirm-text").textContent = text;
+        document.getElementById("group-confirm-ok").textContent = label;
+        confirmAction = action;
+        confirmModal.hidden = false;
+        document.getElementById("group-confirm-ok").focus();
+    }
+
+    function closeConfirm() {
+        confirmModal.hidden = true;
+        confirmAction = null;
+    }
+
+    confirmModal.addEventListener("click", function (event) {
+        if (event.target.closest("[data-close]")) closeConfirm();
+    });
+    document.getElementById("group-confirm-ok").addEventListener("click", function () {
+        var run = confirmAction;
+        closeConfirm();
+        if (run) run();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !confirmModal.hidden) closeConfirm();
+    });
+
     document.getElementById("group-member-list").addEventListener("click", function (event) {
         var kick = event.target.closest("[data-kick]");
         if (!kick) return;
         var name = kick.getAttribute("data-kick");
-        if (!window.confirm("Remove " + name + " from the group?")) return;
-        request("/Group/RemoveMember", "POST", { id: groupId, userName: name }).catch(function (error) {
-            showError(error.message);
+        askConfirm("Remove " + name, "Are you sure you want to remove " + name + " from the group?", "Remove", function () {
+            request("/Group/RemoveMember", "POST", { id: groupId, userName: name }).catch(function (error) {
+                showError(error.message);
+            });
         });
     });
 
     document.getElementById("group-leave").addEventListener("click", function () {
-        if (!window.confirm("Leave " + group.name + "?")) return;
-        request("/Group/Leave", "POST", { id: groupId }).then(function () {
-            window.discodeGo("/Home/Index");
-        }).catch(function (error) {
-            showError(error.message);
+        askConfirm("Leave Group", "Are you sure you want to leave " + group.name + "? You will not be able to rejoin unless a member invites you again.", "Leave Group", function () {
+            request("/Group/Leave", "POST", { id: groupId }).then(function () {
+                window.discodeGo("/Home/Index");
+            }).catch(function (error) {
+                showError(error.message);
+            });
         });
     });
 

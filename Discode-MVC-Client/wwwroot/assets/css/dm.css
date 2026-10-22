@@ -3734,3 +3734,11 @@ html.theme-dark .dm-poll-emojis {
 .new-msg-error[hidden] {
     display: none;
 }
+
+.dm-modal-confirm.is-danger {
+    background: #da373c;
+}
+
+.dm-modal-confirm.is-danger:hover {
+    background: #a12828;
+}
