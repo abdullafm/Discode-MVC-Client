@@ -80,8 +80,29 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.PostAsJsonAsync($"api/group/{model.Id}/messages", new
             {
                 text = model.Text ?? string.Empty,
+                replyToMessageId = model.ReplyToMessageId,
                 attachments = (model.Attachments ?? new List<MessageAttachmentVM>()).Select(a => new { url = a.Url, fileName = a.FileName, contentType = a.ContentType, size = a.Size })
             }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> DeleteMessage([FromBody] GroupMessageRefVM model)
+        {
+            if (model is null || model.Id <= 0 || model.MessageId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return Forward(client => client.DeleteAsync($"api/group/{model.Id}/messages/{model.MessageId}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> ForwardMessage([FromBody] ForwardGroupMessageVM model)
+        {
+            if (model is null || model.Id <= 0 || model.MessageId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/group/{model.Id}/messages/{model.MessageId}/forward", new { userNames = model.UserNames ?? new List<string>(), note = model.Note ?? string.Empty }));
         }
 
         [HttpPost]

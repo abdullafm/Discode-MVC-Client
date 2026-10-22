@@ -6,7 +6,22 @@ namespace Discode_MVC_Client.ViewModels.Groups
     {
         public int Id { get; set; }
         public string? Text { get; set; }
+        public int? ReplyToMessageId { get; set; }
         public List<MessageAttachmentVM>? Attachments { get; set; }
+    }
+
+    public class GroupMessageRefVM
+    {
+        public int Id { get; set; }
+        public int MessageId { get; set; }
+    }
+
+    public class ForwardGroupMessageVM
+    {
+        public int Id { get; set; }
+        public int MessageId { get; set; }
+        public List<string> UserNames { get; set; } = new();
+        public string Note { get; set; } = string.Empty;
     }
 
     public class CreateGroupPollVM
