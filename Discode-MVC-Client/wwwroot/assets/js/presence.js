@@ -161,6 +161,10 @@
                     document.dispatchEvent(new CustomEvent("discode-group-message", { detail: data }));
                 });
 
+                connection.on("GroupMessageUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-group-message-updated", { detail: data }));
+                });
+
                 connection.on("GroupUpdated", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-group-updated", { detail: data }));
                 });

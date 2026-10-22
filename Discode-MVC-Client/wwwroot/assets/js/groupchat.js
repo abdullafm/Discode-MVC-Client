@@ -85,6 +85,7 @@
         document.getElementById("group-welcome").textContent = "Welcome to the beginning of the " + group.name + " group.";
         document.getElementById("group-search").placeholder = "Search " + group.name;
         input.setAttribute("data-placeholder", "Message " + group.name);
+        document.getElementById("group-placeholder").textContent = "Message " + group.name;
         document.getElementById("group-count").textContent = String(group.memberCount);
         paintIcon(group.iconUrl);
 
@@ -170,13 +171,16 @@
             time.textContent = clock(message.createdAt);
             head.appendChild(who);
             head.appendChild(time);
-            var text = document.createElement("div");
-            text.className = "dm-msg-text";
-            text.textContent = message.text;
             body.appendChild(head);
-            body.appendChild(text);
+            if (message.text) {
+                var text = document.createElement("div");
+                text.className = "dm-msg-text";
+                window.GroupParts.textNodes(message.text).forEach(function (node) { text.appendChild(node); });
+                body.appendChild(text);
+            }
             row.appendChild(face);
             row.appendChild(body);
+            window.GroupParts.decorate(row, body, message);
         }
         row.setAttribute("data-id", String(message.id));
         row.setAttribute("data-time", String(when));
@@ -209,39 +213,38 @@
     }
 
     function send() {
-        var text = (input.innerText || "").replace(/\u200b/g, "").trim();
-        if (!text) return;
-        input.textContent = "";
-        input.setAttribute("data-empty", "1");
-        request("/Group/Send", "POST", { id: groupId, text: text }).then(function (message) {
+        var text = window.GroupParts.text();
+        var ready = window.GroupParts.takeFiles();
+        if (ready === null) {
+            showError("Wait for the upload to finish.");
+            return;
+        }
+        if (!text && !ready.length) return;
+        window.GroupParts.clear();
+        request("/Group/Send", "POST", { id: groupId, text: text, attachments: ready.map(function (item) { return item.data; }) }).then(function (message) {
+            ready.forEach(function (item) { if (item.previewUrl) URL.revokeObjectURL(item.previewUrl); });
             append(message, true);
         }).catch(function (error) {
             showError(error.message);
-            input.textContent = text;
-            input.setAttribute("data-empty", "0");
+            window.GroupParts.restore(text);
+            window.GroupParts.giveBack(ready);
         });
     }
+
+    window.GroupParts.init({ groupId: groupId, box: box, input: input, compose: document.getElementById("group-compose"), request: request, showError: showError, append: append });
 
     document.getElementById("group-compose").addEventListener("submit", function (event) {
         event.preventDefault();
         send();
     });
     input.addEventListener("keydown", function (event) {
-        if (event.key === "Enter" && !event.shiftKey) {
+        if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
             event.preventDefault();
             send();
         }
     });
-    input.addEventListener("focus", function () { this.setAttribute("data-empty", "0"); });
-    input.addEventListener("input", function () { this.setAttribute("data-empty", (this.textContent || "").trim() ? "0" : "1"); });
-    input.addEventListener("blur", function () { this.setAttribute("data-empty", (this.textContent || "").trim() ? "0" : "1"); });
-    input.addEventListener("paste", function (event) {
-        event.preventDefault();
-        var pasted = (event.clipboardData || window.clipboardData).getData("text") || "";
-        document.execCommand("insertText", false, pasted);
-    });
     document.getElementById("group-compose").addEventListener("mousedown", function (event) {
-        if (event.target.closest("button") || document.activeElement === input) return;
+        if (event.target.closest("button") || event.target.closest("#emoji-panel") || document.activeElement === input) return;
         event.preventDefault();
         input.focus();
     });
@@ -401,6 +404,12 @@
         var data = event.detail;
         if (!data || data.groupId !== groupId || !data.message) return;
         append(data.message, false);
+    });
+
+    document.addEventListener("discode-group-message-updated", function (event) {
+        var data = event.detail;
+        if (!data || data.groupId !== groupId || !data.message) return;
+        window.GroupParts.update(data.message);
     });
 
     document.addEventListener("discode-group-updated", function (event) {

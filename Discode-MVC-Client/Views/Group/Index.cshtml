@@ -52,9 +52,21 @@
                 <div class="dm-messages group-messages" id="group-messages"></div>
             </div>
             <p class="group-error" id="group-error" hidden></p>
-            <form class="group-compose" id="group-compose">
-                <div class="rich-text" id="group-input" contenteditable="true" role="textbox" aria-label="Message" data-placeholder="Message @group.Name" data-empty="1"></div>
-                <button type="submit" class="group-send" aria-label="Send"><i class="fa-solid fa-paper-plane"></i></button>
+            <form class="dm-compose" id="group-compose">
+                <button type="button" id="group-attach" aria-label="Add"><i class="fa-solid fa-plus"></i></button>
+                <input type="file" id="group-file" multiple hidden>
+                <div class="dm-attach-menu" id="group-attach-menu" role="menu" hidden>
+                    <button type="button" role="menuitem" data-act="upload"><i class="fa-solid fa-file-arrow-up"></i><span>Upload a File</span></button>
+                    <button type="button" role="menuitem" data-act="poll"><i class="fa-solid fa-square-poll-horizontal"></i><span>Create Poll</span></button>
+                </div>
+                <div class="dm-input-wrap">
+                    <span class="dm-placeholder" id="group-placeholder" aria-hidden="true">Message @group.Name</span>
+                    <div class="rich-text" id="group-input" contenteditable="true" role="textbox" aria-label="Message" data-placeholder="Message @group.Name" data-empty="1"></div>
+                </div>
+                <div class="dm-compose-tools">
+                    <button type="button" id="group-emoji" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>
+                </div>
+                <div class="emoji-panel" id="emoji-panel" hidden></div>
             </form>
         </div></section>
         <section id="group-members"><div class="group-members">
@@ -103,6 +115,39 @@
         </div>
     </div>
 }
+@if (group is not null)
+{
+    <div class="dm-modal" id="group-poll-modal" role="dialog" aria-modal="true" aria-labelledby="group-poll-title" hidden>
+        <div class="dm-modal-backdrop" data-close></div>
+        <div class="dm-modal-card dm-poll-card">
+            <button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>
+            <h2 id="group-poll-title">Create a Poll</h2>
+            <label class="dm-poll-label" for="group-poll-question">Question</label>
+            <input type="text" id="group-poll-question" class="dm-poll-input" maxlength="300" placeholder="What question do you want to ask?" autocomplete="off">
+            <div class="dm-poll-count"><span id="group-poll-count">0</span> / 300</div>
+            <div class="dm-poll-label">Answers</div>
+            <div class="dm-poll-answers" id="group-poll-answers"></div>
+            <button type="button" class="dm-poll-add" id="group-poll-add"><i class="fa-solid fa-plus"></i> Add another answer</button>
+            <label class="dm-poll-label" for="group-poll-duration">Duration</label>
+            <select id="group-poll-duration" class="dm-poll-input dm-poll-select">
+                <option value="1">1 hour</option>
+                <option value="4">4 hours</option>
+                <option value="8">8 hours</option>
+                <option value="24" selected>24 hours</option>
+                <option value="72">3 days</option>
+                <option value="168">1 week</option>
+                <option value="336">2 weeks</option>
+            </select>
+            <p class="dm-poll-error" id="group-poll-error" hidden></p>
+            <div class="dm-poll-foot">
+                <label class="dm-poll-multi"><input type="checkbox" id="group-poll-multiple"><span>Allow Multiple Answers</span></label>
+                <button type="button" class="dm-poll-post" id="group-poll-post">Post</button>
+            </div>
+            <div class="dm-poll-emojis" id="group-poll-emojis" hidden></div>
+        </div>
+    </div>
+}
 @section Scripts {
+    <script src="~/assets/js/groupparts.js" asp-append-version="true"></script>
     <script src="~/assets/js/groupchat.js" asp-append-version="true"></script>
 }
