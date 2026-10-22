@@ -906,6 +906,15 @@ function bindMessages() {
     document.addEventListener("contextmenu", function (event) {
         if (!event.target.closest("#group-msg-menu, #group-messages")) closeMenu();
     });
+    var syncShift = function (event) {
+        document.body.classList.toggle("dm-shift", !!event.shiftKey);
+    };
+    document.addEventListener("keydown", syncShift);
+    document.addEventListener("keyup", syncShift);
+    document.addEventListener("mousemove", syncShift);
+    window.addEventListener("blur", function () {
+        document.body.classList.remove("dm-shift");
+    });
     document.getElementById("group-reply-cancel").addEventListener("click", cancelReply);
     bindMenu();
     bindForward();

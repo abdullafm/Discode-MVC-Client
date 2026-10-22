@@ -230,6 +230,9 @@ namespace Discode_MVC_Client.Controllers
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
                 var response = await send(client);
+                if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                    return new StatusCodeResult(StatusCodes.Status204NoContent);
+
                 var payload = await response.Content.ReadAsStringAsync();
                 return new ContentResult
                 {
