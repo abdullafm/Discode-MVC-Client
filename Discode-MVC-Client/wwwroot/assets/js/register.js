@@ -102,11 +102,39 @@
                 resetPhoto("Choose an image that is at most 5 MB.");
                 return;
             }
-            photoPreview.src = URL.createObjectURL(file);
-            photoPreview.hidden = false;
-            photoIcon.hidden = true;
-            photoClear.hidden = false;
-            photoHint.textContent = file.name;
+            var shown = function (chosen, name) {
+                photoPreview.src = URL.createObjectURL(chosen);
+                photoPreview.hidden = false;
+                photoIcon.hidden = true;
+                photoClear.hidden = false;
+                photoHint.textContent = name;
+            };
+            var original = new Image();
+            original.onload = function () {
+                var size = 256;
+                var canvas = document.createElement("canvas");
+                canvas.width = size;
+                canvas.height = size;
+                var scale = Math.max(size / original.width, size / original.height);
+                var width = original.width * scale;
+                var height = original.height * scale;
+                canvas.getContext("2d").drawImage(original, (size - width) / 2, (size - height) / 2, width, height);
+                canvas.toBlob(function (blob) {
+                    if (!blob || typeof DataTransfer === "undefined") {
+                        shown(file, file.name);
+                        return;
+                    }
+                    var cropped = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+                    var transfer = new DataTransfer();
+                    transfer.items.add(cropped);
+                    photoInput.files = transfer.files;
+                    shown(cropped, file.name);
+                }, "image/jpeg", 0.85);
+            };
+            original.onerror = function () {
+                shown(file, file.name);
+            };
+            original.src = URL.createObjectURL(file);
         });
         if (photoClear) photoClear.addEventListener("click", function () { resetPhoto(); });
     }
