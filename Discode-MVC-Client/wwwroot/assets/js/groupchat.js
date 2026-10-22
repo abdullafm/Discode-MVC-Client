@@ -414,6 +414,35 @@
         paintGroup();
     });
 
+    function sync() {
+        if (document.hidden) return;
+        var current = document.getElementById("group-chat");
+        if (!current || Number(current.getAttribute("data-group-id")) !== groupId) {
+            clearInterval(syncTimer);
+            return;
+        }
+        if (typeof renderGroupList === "function") renderGroupList();
+        request("/Group/Details?id=" + groupId).then(function (fresh) {
+            if (!fresh.members || !fresh.members.some(function (member) { return member.userName === meName; })) {
+                window.discodeGo("/Home/Index");
+                return;
+            }
+            group = fresh;
+            paintGroup();
+        }).catch(function (error) {
+            if (/not found|available/i.test(error.message)) window.discodeGo("/Home/Index");
+        });
+        request("/Group/Messages?id=" + groupId).then(function (list) {
+            (Array.isArray(list) ? list : []).forEach(function (message) { append(message, false); });
+        }).catch(function () {});
+    }
+
+    var syncTimer = setInterval(sync, 15000);
+    document.addEventListener("discode-hub-connected", sync);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) sync();
+    });
+
     if (window.matchMedia("(max-width: 1100px)").matches) setMembers(false);
     paintGroup();
     loadMessages();

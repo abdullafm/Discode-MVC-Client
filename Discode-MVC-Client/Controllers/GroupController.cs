@@ -58,6 +58,12 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        public Task<IActionResult> Details(int id)
+        {
+            return Forward(client => client.GetAsync($"api/group/{id}"));
+        }
+
+        [HttpGet]
         public Task<IActionResult> Messages(int id)
         {
             return Forward(client => client.GetAsync($"api/group/{id}/messages"));

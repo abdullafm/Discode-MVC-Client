@@ -287,6 +287,10 @@ document.addEventListener("keydown", function (event) {
 
 renderGroupList();
 document.addEventListener("discode-groups-changed", renderGroupList);
+document.addEventListener("discode-hub-connected", renderGroupList);
+document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) renderGroupList();
+});
 
 (function () {
     var menu = document.getElementById("row-menu");
