@@ -190,12 +190,20 @@ function messageNodes(text) {
     return holder;
 }
 
+function dmCallUnit(value, unit) {
+    return value + " " + unit + (value === 1 ? "" : "s");
+}
+
 function dmCallDuration(seconds) {
-    if (seconds < 60) return "a few seconds";
-    if (seconds < 120) return "a minute";
-    if (seconds < 3600) return Math.floor(seconds / 60) + " minutes";
-    if (seconds < 7200) return "an hour";
-    return Math.floor(seconds / 3600) + " hours";
+    var total = Math.max(1, Math.round(seconds));
+    var hours = Math.floor(total / 3600);
+    var minutes = Math.floor((total % 3600) / 60);
+    var rest = total % 60;
+    var parts = [];
+    if (hours) parts.push(dmCallUnit(hours, "hour"));
+    if (minutes) parts.push(dmCallUnit(minutes, "minute"));
+    if (rest && !hours) parts.push(dmCallUnit(rest, "second"));
+    return parts.join(" ");
 }
 
 var dmOngoingCall = 0;
