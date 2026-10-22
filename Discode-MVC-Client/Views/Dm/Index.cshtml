@@ -166,6 +166,30 @@
                                         <div class="dm-msg-forwarded"><i class="fa-solid fa-share"></i> Forwarded</div>
                                     }
                                     <div class="dm-msg-text">@message.Text@if (message.EditedAt is not null){<span class="dm-msg-edited">(edited)</span>}</div>
+                                    @if (message.Attachments.Count > 0)
+                                    {
+                                        <div class="dm-attachments">
+                                            @foreach (var attachment in message.Attachments)
+                                            {
+                                                if (attachment.IsImage)
+                                                {
+                                                    <a class="dm-att-media" href="@attachment.Url" target="_blank" rel="noopener" data-att="image"><img src="@attachment.Url" alt="@attachment.FileName" loading="lazy"></a>
+                                                }
+                                                else if (attachment.IsVideo)
+                                                {
+                                                    <video class="dm-att-video" src="@attachment.Url" controls preload="metadata"></video>
+                                                }
+                                                else if (attachment.IsAudio)
+                                                {
+                                                    <div class="dm-att-audio"><span>@attachment.FileName</span><audio src="@attachment.Url" controls preload="metadata"></audio></div>
+                                                }
+                                                else
+                                                {
+                                                    <a class="dm-att-file" href="@attachment.Url" download="@attachment.FileName" target="_blank" rel="noopener"><i class="fa-solid fa-file-lines"></i><span class="dm-att-info"><strong>@attachment.FileName</strong><small>@attachment.SizeText</small></span><i class="fa-solid fa-download"></i></a>
+                                                }
+                                            }
+                                        </div>
+                                    }
                                     @if (message.Undelivered)
                                     {
                                         <div class="dm-msg-undelivered"><i class="fa-solid fa-circle-exclamation"></i> Your message could not be delivered.</div>
@@ -214,7 +238,8 @@
                 <button type="button" id="dm-reply-cancel" aria-label="Cancel reply"><i class="fa-solid fa-circle-xmark"></i></button>
             </div>
             <form class="dm-compose" id="dm-compose" hidden="@(chat is null)">
-                <button type="button" aria-label="Add"><i class="fa-solid fa-plus"></i></button>
+                <button type="button" id="dm-attach" aria-label="Add"><i class="fa-solid fa-plus"></i></button>
+                <input type="file" id="dm-file" multiple hidden>
                 <div class="dm-input-wrap">
                     <span class="dm-placeholder" id="dm-placeholder" aria-hidden="true">Message @@@shownName</span>
                     <div class="rich-text" id="dm-input" contenteditable="true" role="textbox" aria-label="Message" data-placeholder="Message @@@shownName" data-empty="1"></div>

@@ -12,11 +12,19 @@ namespace Discode_MVC_Client.Controllers
     [Authorize]
     public class DmController : ApiControllerBase
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private const long MaxAttachmentBytes = 25L * 1024 * 1024;
+        private static readonly HashSet<string> BlockedExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ".html", ".htm", ".xhtml", ".svg", ".js", ".mjs", ".exe", ".bat", ".cmd", ".com", ".msi", ".dll", ".scr", ".ps1", ".vbs", ".jar"
+        };
 
-        public DmController(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IWebHostEnvironment _environment;
+
+        public DmController(IHttpClientFactory httpClientFactory, IWebHostEnvironment environment) : base(httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
+            _environment = environment;
         }
 
         public async Task<IActionResult> Index(string? name)
@@ -70,7 +78,48 @@ namespace Discode_MVC_Client.Controllers
             if (model is null || string.IsNullOrWhiteSpace(model.UserName))
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a friend." } }));
 
-            return ForwardToApi(client => client.PostAsJsonAsync("api/dm/" + Uri.EscapeDataString(model.UserName.Trim()), new { text = model.Text ?? string.Empty, replyToMessageId = model.ReplyToMessageId }));
+            return ForwardToApi(client => client.PostAsJsonAsync("api/dm/" + Uri.EscapeDataString(model.UserName.Trim()), new { text = model.Text ?? string.Empty, replyToMessageId = model.ReplyToMessageId, attachments = model.Attachments ?? new List<MessageAttachmentVM>() }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(27_000_000)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 27_000_000)]
+        public IActionResult UploadAttachment(IFormFile file)
+        {
+            if (file is null || file.Length == 0)
+                return BadRequest(new { errors = new[] { "Choose a file." } });
+
+            if (file.Length > MaxAttachmentBytes)
+                return BadRequest(new { errors = new[] { "A file can be at most 25 MB." } });
+
+            var original = Path.GetFileName(file.FileName ?? string.Empty).Trim();
+            if (original.Length == 0)
+                original = "file";
+            if (original.Length > 150)
+                original = original.Substring(original.Length - 150);
+
+            var extension = Path.GetExtension(original).ToLowerInvariant();
+            if (BlockedExtensions.Contains(extension))
+                return BadRequest(new { errors = new[] { "This type of file cannot be sent." } });
+
+            var provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+            string? contentType = null;
+            var known = extension.Length > 1 && extension.Length <= 10 && extension.Skip(1).All(char.IsLetterOrDigit) && provider.TryGetContentType("x" + extension, out contentType);
+            if (!known)
+            {
+                extension = ".bin";
+                contentType = "application/octet-stream";
+            }
+
+            var folder = Path.Combine(_environment.WebRootPath, "uploads", "dm");
+            Directory.CreateDirectory(folder);
+
+            var storedName = Guid.NewGuid().ToString("N") + extension;
+            using (var stream = System.IO.File.Create(Path.Combine(folder, storedName)))
+                file.CopyTo(stream);
+
+            return Ok(new { url = "/uploads/dm/" + storedName, fileName = original, contentType = contentType ?? "application/octet-stream", size = file.Length });
         }
 
         [HttpPost]

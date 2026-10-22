@@ -19,6 +19,7 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public bool IsCall { get; set; }
         public int? CallSeconds { get; set; }
         public bool CallMissed { get; set; }
+        public List<MessageAttachmentVM> Attachments { get; set; } = new();
 
         public string CallName => string.IsNullOrWhiteSpace(SenderDisplayName) ? SenderUserName : SenderDisplayName;
         public bool CallMissedForMe => CallMissed && !Mine;
@@ -26,11 +27,15 @@ namespace Discode_MVC_Client.ViewModels.Dm
 
         private static string CallDuration(int seconds)
         {
-            if (seconds < 60) return "a few seconds";
-            if (seconds < 120) return "a minute";
-            if (seconds < 3600) return (seconds / 60) + " minutes";
-            if (seconds < 7200) return "an hour";
-            return (seconds / 3600) + " hours";
+            var total = Math.Max(1, seconds);
+            var hours = total / 3600;
+            var minutes = total % 3600 / 60;
+            var rest = total % 60;
+            var parts = new List<string>();
+            if (hours > 0) parts.Add(hours + (hours == 1 ? " hour" : " hours"));
+            if (minutes > 0) parts.Add(minutes + (minutes == 1 ? " minute" : " minutes"));
+            if (rest > 0 && hours == 0) parts.Add(rest + (rest == 1 ? " second" : " seconds"));
+            return string.Join(" ", parts);
         }
     }
 }
