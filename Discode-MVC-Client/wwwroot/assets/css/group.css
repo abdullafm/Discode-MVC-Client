@@ -999,3 +999,8 @@ section#group-members.no-motion .group-members {
     min-width: 0;
     overflow: hidden;
 }
+
+.call-stage.gcall-stage .call-face .call-tile-video,
+.call-stage.gcall-stage .call-face .call-screen-tile-video {
+    border-radius: inherit;
+}
