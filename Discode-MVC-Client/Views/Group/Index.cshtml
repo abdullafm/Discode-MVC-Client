@@ -2,40 +2,92 @@
 @{
     Layout = "_HomeLayout";
     var group = Model.Group;
+    var groupJson = group is null ? "" : System.Text.Json.JsonSerializer.Serialize(group, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
 }
-<main class="friends-view group-page show-main">
-    <section class="group-page-card">
-        @if (group is null)
-        {
-            <div class="group-page-empty">
-                <i class="fa-solid fa-user-group"></i>
-                <p>@Model.Error</p>
-                <a class="group-page-back" href="/Home/Index">Back to Friends</a>
-            </div>
-        }
-        else
-        {
-            <div class="group-page-head">
-                <span class="group-page-icon"><i class="fa-solid fa-user-group"></i></span>
-                <div>
-                    <h1 id="group-title">@group.Name</h1>
-                    <p class="group-page-count"><span id="group-count">@group.MemberCount</span> of @group.MaxMembers members</p>
+<main class="friends-view group-view show-main">
+    @if (group is null)
+    {
+        <section id="group-chat">
+            <div class="group-chat">
+                <div class="group-scroll">
+                    <div class="group-intro">
+                        <span class="group-badge"><i class="fa-solid fa-user-group"></i></span>
+                        <h2>Group not found</h2>
+                        <p>@Model.Error</p>
+                        <div class="group-actions">
+                            <button type="button" onclick="window.discodeGo('/Home/Index')"><i class="fa-solid fa-arrow-left"></i> Back to Friends</button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <h2 class="group-page-subtitle">Members</h2>
-            <ul class="group-page-members" id="group-member-list">
-                @foreach (var member in group.Members)
-                {
-                    <li class="group-page-member" data-user="@member.UserName">
-                        <img alt="" src="@(string.IsNullOrWhiteSpace(member.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : member.AvatarUrl)">
-                        <span class="group-page-name"><strong>@member.Name</strong><small>@member.UserName</small></span>
-                        @if (member.IsOwner)
-                        {
-                            <span class="group-page-owner" title="Group owner"><i class="fa-solid fa-crown"></i> Owner</span>
-                        }
-                    </li>
-                }
-            </ul>
-        }
-    </section>
+        </section>
+    }
+    else
+    {
+        <section id="group-chat" data-group-id="@group.Id" data-me="@Model.Profile.UserName" data-group="@groupJson"><div class="group-chat">
+            <div class="group-bar">
+                <div class="group-bar-name">
+                    <span class="group-mark" id="group-mark"><i class="fa-solid fa-user-group"></i><img alt="" hidden></span>
+                    <h1 id="group-title">@group.Name</h1>
+                </div>
+                <div class="group-bar-tools">
+                    <button type="button" id="group-members-toggle" class="on" aria-label="Members"><i class="fa-solid fa-user-group"></i></button>
+                    <button type="button" id="group-add" aria-label="Invite"><i class="fa-solid fa-user-plus"></i></button>
+                    <label class="group-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="search" id="group-search" placeholder="Search" aria-label="Search">
+                    </label>
+                </div>
+            </div>
+            <div class="group-scroll" id="group-scroll">
+                <div class="group-intro">
+                    <span class="group-badge" id="group-badge"><i class="fa-solid fa-user-group"></i><img alt="" hidden></span>
+                    <h2 id="group-name">@group.Name</h2>
+                    <p id="group-welcome">Welcome to the beginning of the @group.Name group.</p>
+                    <div class="group-actions" id="group-actions">
+                        <button type="button" id="group-invite"><i class="fa-solid fa-user-plus"></i> Invite to Group DM</button>
+                        <button type="button" id="group-edit"><i class="fa-solid fa-pen"></i> Edit Group</button>
+                    </div>
+                </div>
+                <div class="dm-messages group-messages" id="group-messages"></div>
+            </div>
+            <p class="group-error" id="group-error" hidden></p>
+            <form class="group-compose" id="group-compose">
+                <div class="rich-text" id="group-input" contenteditable="true" role="textbox" aria-label="Message" data-placeholder="Message @group.Name" data-empty="1"></div>
+                <button type="submit" class="group-send" aria-label="Send"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+        </div></section>
+        <section id="group-members"><div class="group-members">
+            <h2>Members — <span id="group-count">@group.MemberCount</span></h2>
+            <div id="group-member-list"></div>
+            <button type="button" id="group-invite-side"><i class="fa-solid fa-user-plus"></i> Invite to Group DM</button>
+            <button type="button" id="group-leave" class="group-leave"><i class="fa-solid fa-right-from-bracket"></i> Leave Group</button>
+        </div></section>
+    }
 </main>
+@if (group is not null)
+{
+    <div class="group-edit-modal" id="group-edit-modal" hidden>
+        <form class="group-edit-card" id="group-rename">
+            <div class="group-edit-head">
+                <h2>Edit Group</h2>
+                <button type="button" id="group-rename-cancel" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <label class="group-edit-icon" id="group-edit-icon">
+                <i class="fa-solid fa-user-group"></i>
+                <img alt="" hidden>
+                <span><i class="fa-solid fa-pen"></i></span>
+                <input type="file" id="group-icon-file" accept="image/*">
+            </label>
+            <input type="text" id="group-name-input" maxlength="80">
+            <p class="group-edit-error" id="group-edit-error" hidden></p>
+            <div class="group-edit-actions">
+                <button type="button" id="group-edit-cancel">Cancel</button>
+                <button type="submit">Save</button>
+            </div>
+        </form>
+    </div>
+}
+@section Scripts {
+    <script src="~/assets/js/groupchat.js" asp-append-version="true"></script>
+}
