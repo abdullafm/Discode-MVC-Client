@@ -18,10 +18,12 @@ namespace Discode_MVC_Client.Controllers
         };
 
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IWebHostEnvironment _environment;
 
-        public AccountController(IHttpClientFactory httpClientFactory)
+        public AccountController(IHttpClientFactory httpClientFactory, IWebHostEnvironment environment)
         {
             _httpClientFactory = httpClientFactory;
+            _environment = environment;
         }
 
         [HttpGet]
@@ -54,6 +56,25 @@ namespace Discode_MVC_Client.Controllers
                 return View(model);
             }
 
+            var avatarUrl = string.Empty;
+            string? savedPhoto = null;
+            if (model.Photo is { Length: > 0 })
+            {
+                if (!model.Photo.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase) || model.Photo.Length > 5_000_000)
+                {
+                    ModelState.AddModelError(string.Empty, "Choose an image that is at most 5 MB.");
+                    return View(model);
+                }
+
+                var folder = Path.Combine(_environment.WebRootPath, "uploads", "avatars");
+                Directory.CreateDirectory(folder);
+                var fileName = Guid.NewGuid().ToString("N") + ".jpg";
+                savedPhoto = Path.Combine(folder, fileName);
+                using (var stream = System.IO.File.Create(savedPhoto))
+                    await model.Photo.CopyToAsync(stream);
+                avatarUrl = "/uploads/avatars/" + fileName;
+            }
+
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
@@ -63,7 +84,9 @@ namespace Discode_MVC_Client.Controllers
                     model.DisplayName,
                     model.UserName,
                     birthDay,
-                    model.Password
+                    model.Password,
+                    Bio = model.Bio?.Trim() ?? string.Empty,
+                    AvatarUrl = avatarUrl
                 });
 
                 if (response.IsSuccessStatusCode)
@@ -77,6 +100,8 @@ namespace Discode_MVC_Client.Controllers
             }
             catch (HttpRequestException)
             {
+                if (savedPhoto is not null && System.IO.File.Exists(savedPhoto))
+                    System.IO.File.Delete(savedPhoto);
                 ModelState.AddModelError(string.Empty, "The service is unavailable right now. Please try again later.");
             }
 

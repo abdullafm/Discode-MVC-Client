@@ -74,6 +74,43 @@
         });
     }
 
+    var photoInput = document.getElementById("register-photo");
+    var photoPreview = document.getElementById("register-photo-preview");
+    var photoIcon = document.getElementById("register-photo-icon");
+    var photoClear = document.getElementById("register-photo-clear");
+    var photoHint = document.getElementById("register-photo-hint");
+
+    function resetPhoto(message) {
+        if (photoInput) photoInput.value = "";
+        if (photoPreview) {
+            photoPreview.hidden = true;
+            photoPreview.removeAttribute("src");
+        }
+        if (photoIcon) photoIcon.hidden = false;
+        if (photoClear) photoClear.hidden = true;
+        if (photoHint) photoHint.textContent = message || "Optional. PNG or JPG up to 5 MB.";
+    }
+
+    if (photoInput) {
+        photoInput.addEventListener("change", function () {
+            var file = photoInput.files && photoInput.files[0];
+            if (!file) {
+                resetPhoto();
+                return;
+            }
+            if (file.type.indexOf("image/") !== 0 || file.size > 5000000) {
+                resetPhoto("Choose an image that is at most 5 MB.");
+                return;
+            }
+            photoPreview.src = URL.createObjectURL(file);
+            photoPreview.hidden = false;
+            photoIcon.hidden = true;
+            photoClear.hidden = false;
+            photoHint.textContent = file.name;
+        });
+        if (photoClear) photoClear.addEventListener("click", function () { resetPhoto(); });
+    }
+
     var togglePasswordBtns = document.querySelectorAll(".toggle-password");
     for (var i = 0; i < togglePasswordBtns.length; i++) {
         togglePasswordBtns[i].addEventListener("click", function (event) {

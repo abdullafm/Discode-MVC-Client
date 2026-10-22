@@ -5,14 +5,27 @@
 <main class="x-container">
     <div class="x-content">
         <h2>Create an account</h2>
-        <form class="login-card register-card" id="register-form" asp-controller="Account" asp-action="Register" method="post">
+        <form class="login-card register-card" id="register-form" asp-controller="Account" asp-action="Register" method="post" enctype="multipart/form-data">
             @if (!ViewData.ModelState.IsValid)
             {
                 <div class="auth-errors" asp-validation-summary="All"></div>
             }
+            <div class="register-photo">
+                <label class="register-photo-pick" for="register-photo" aria-label="Add a profile photo">
+                    <img id="register-photo-preview" alt="" hidden>
+                    <i class="fa-solid fa-camera" id="register-photo-icon"></i>
+                </label>
+                <div class="register-photo-text">
+                    <strong>Profile photo</strong>
+                    <small id="register-photo-hint">Optional. PNG or JPG up to 5 MB.</small>
+                    <button type="button" id="register-photo-clear" hidden>Remove</button>
+                </div>
+                <input asp-for="Photo" id="register-photo" type="file" accept="image/*" hidden>
+            </div>
             <input asp-for="Email" id="register-email" type="email" autocomplete="email" required pattern=".*\S.*" placeholder="Email">
             <input asp-for="DisplayName" id="register-display" type="text" autocomplete="nickname" required maxlength="32" pattern=".*\S.*" placeholder="Display Name">
             <input asp-for="UserName" id="register-user" type="text" autocomplete="username" required maxlength="32" pattern="[A-Za-z0-9._]+" placeholder="Username">
+            <textarea asp-for="Bio" id="register-bio" rows="3" maxlength="190" placeholder="Bio (optional)"></textarea>
             <div class="password-wrapper">
                 <input asp-for="Password" id="register-pass" type="password" autocomplete="new-password" required pattern=".*\S.*" placeholder="Password">
                 <button type="button" class="toggle-password" aria-label="Toggle password visibility">

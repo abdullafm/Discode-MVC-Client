@@ -12,6 +12,8 @@ namespace Discode_MVC_Client.ViewModels.Account
         public string DisplayName { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+        public string? Bio { get; set; }
+        public Microsoft.AspNetCore.Http.IFormFile? Photo { get; set; }
         public string? Day { get; set; }
         public string? Month { get; set; }
         public string? Year { get; set; }
