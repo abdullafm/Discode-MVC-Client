@@ -4,7 +4,7 @@
     var origAdd = EventTarget.prototype.addEventListener;
     var origRemove = EventTarget.prototype.removeEventListener;
 
-    var keepers = /\/(calls|presence|i18n|theme|timezone|nav)\.js|signalr/i;
+    var keepers = /\/(calls|groupcalls|presence|i18n|theme|timezone|nav)\.js|signalr/i;
     var swapping = false;
     var lateReady = [];
 
@@ -152,6 +152,7 @@
             dropPageListeners();
             window.onload = null;
             window.discodeOpenDm = "";
+            window.discodeOpenGroup = 0;
             swapping = true;
             var scripts = [].slice.call(doc.body.querySelectorAll("script"));
             scripts.forEach(function (script) {

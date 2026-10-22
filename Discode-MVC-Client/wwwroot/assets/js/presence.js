@@ -161,6 +161,18 @@
                     document.dispatchEvent(new CustomEvent("discode-group-message", { detail: data }));
                 });
 
+                connection.on("GroupCallIncoming", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-gcall-incoming", { detail: data }));
+                });
+
+                connection.on("GroupCallUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-gcall-updated", { detail: data }));
+                });
+
+                connection.on("GroupCallSignal", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-gcall-signal", { detail: data }));
+                });
+
                 connection.on("GroupMessageDeleted", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-group-message-deleted", { detail: data }));
                 });

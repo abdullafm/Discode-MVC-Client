@@ -901,6 +901,7 @@
     var pendingEnd = Promise.resolve();
 
     function start(userName, video) {
+        if (window.discodeGroupCalls) window.discodeGroupCalls.leave();
         if (state && state.joined !== false && state.other.userName !== userName) {
             stopRing();
             teardownMedia();
@@ -929,6 +930,7 @@
 
     function accept() {
         if (!state || state.role !== "callee") return;
+        if (window.discodeGroupCalls) window.discodeGroupCalls.leave();
         var call = state;
         stopRing();
         invoke("AcceptCall", call.callId).then(function () {
