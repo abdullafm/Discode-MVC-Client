@@ -12,10 +12,12 @@ namespace Discode_MVC_Client.Controllers
     public class GroupController : ApiControllerBase
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IWebHostEnvironment _environment;
 
-        public GroupController(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
+        public GroupController(IHttpClientFactory httpClientFactory, IWebHostEnvironment environment) : base(httpClientFactory)
         {
             _httpClientFactory = httpClientFactory;
+            _environment = environment;
         }
 
         public async Task<IActionResult> Index(int id)
@@ -55,6 +57,80 @@ namespace Discode_MVC_Client.Controllers
             }
         }
 
+        [HttpGet]
+        public Task<IActionResult> Messages(int id)
+        {
+            return Forward(client => client.GetAsync($"api/group/{id}/messages"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Send([FromBody] SendGroupMessageVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Group not found." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/group/{model.Id}/messages", new { text = model.Text ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Update([FromBody] UpdateGroupVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Group not found." } }));
+
+            return Forward(client => client.PutAsJsonAsync($"api/group/{model.Id}", new { name = model.Name ?? string.Empty, iconUrl = model.IconUrl ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> AddMembers([FromBody] AddGroupMembersVM model)
+        {
+            if (model is null || model.Id <= 0 || model.UserNames is null || model.UserNames.Count == 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Pick at least one friend." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/group/{model.Id}/members", new { userNames = model.UserNames }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> RemoveMember([FromBody] RemoveGroupMemberVM model)
+        {
+            if (model is null || model.Id <= 0 || string.IsNullOrWhiteSpace(model.UserName))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a member." } }));
+
+            return Forward(client => client.DeleteAsync($"api/group/{model.Id}/members/{Uri.EscapeDataString(model.UserName.Trim())}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Leave([FromBody] GroupIdVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Group not found." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/group/{model.Id}/leave", new { }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(5_000_000)]
+        public IActionResult UploadIcon(IFormFile file)
+        {
+            if (file is null || file.Length == 0 || !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { errors = new[] { "Choose an image file." } });
+
+            var folder = Path.Combine(_environment.WebRootPath, "uploads", "groups");
+            Directory.CreateDirectory(folder);
+
+            var fileName = Guid.NewGuid().ToString("N") + ".jpg";
+            using (var stream = System.IO.File.Create(Path.Combine(folder, fileName)))
+                file.CopyTo(stream);
+
+            return Ok(new { iconUrl = "/uploads/groups/" + fileName });
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([FromBody] CreateGroupVM model)
@@ -66,6 +142,26 @@ namespace Discode_MVC_Client.Controllers
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
                 var response = await client.PostAsJsonAsync("api/group", new { name = model.Name ?? string.Empty, userNames = model.UserNames });
+                var payload = await response.Content.ReadAsStringAsync();
+                return new ContentResult
+                {
+                    StatusCode = (int)response.StatusCode,
+                    Content = string.IsNullOrWhiteSpace(payload) ? "{}" : payload,
+                    ContentType = "application/json"
+                };
+            }
+            catch (HttpRequestException)
+            {
+                return StatusCode(503, new { errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+            }
+        }
+
+        private async Task<IActionResult> Forward(Func<HttpClient, Task<HttpResponseMessage>> send)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await send(client);
                 var payload = await response.Content.ReadAsStringAsync();
                 return new ContentResult
                 {
