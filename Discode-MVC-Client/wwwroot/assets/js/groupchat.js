@@ -417,10 +417,7 @@
     function sync() {
         if (document.hidden) return;
         var current = document.getElementById("group-chat");
-        if (!current || Number(current.getAttribute("data-group-id")) !== groupId) {
-            clearInterval(syncTimer);
-            return;
-        }
+        if (!current || Number(current.getAttribute("data-group-id")) !== groupId) return;
         if (typeof renderGroupList === "function") renderGroupList();
         request("/Group/Details?id=" + groupId).then(function (fresh) {
             if (!fresh.members || !fresh.members.some(function (member) { return member.userName === meName; })) {
@@ -437,7 +434,6 @@
         }).catch(function () {});
     }
 
-    var syncTimer = setInterval(sync, 15000);
     document.addEventListener("discode-hub-connected", sync);
     document.addEventListener("visibilitychange", function () {
         if (!document.hidden) sync();
