@@ -20,6 +20,8 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public int? CallSeconds { get; set; }
         public bool CallMissed { get; set; }
         public List<MessageAttachmentVM> Attachments { get; set; } = new();
+        public bool IsPoll { get; set; }
+        public PollVM? Poll { get; set; }
 
         public string CallName => string.IsNullOrWhiteSpace(SenderDisplayName) ? SenderUserName : SenderDisplayName;
         public bool CallMissedForMe => CallMissed && !Mine;

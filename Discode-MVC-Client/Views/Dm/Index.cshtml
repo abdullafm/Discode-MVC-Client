@@ -9,6 +9,7 @@
     DateTime Local(DateTime utc) => DateTime.SpecifyKind(utc, DateTimeKind.Utc).AddMinutes(Model.UtcOffsetMinutes);
     long Millis(DateTime utc) => new DateTimeOffset(DateTime.SpecifyKind(utc, DateTimeKind.Utc)).ToUnixTimeMilliseconds();
     var status = chat is not null && chat.Status != "online" ? " " + chat.Status : "";
+    var pollJson = new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase };
 }
 <main class="friends-view dm-view show-main">
     <section id="dm-chat" data-user-name="@chat?.UserName" data-user-id="@chat?.UserId" data-ongoing-call="@chat?.OngoingCallMessageId">
@@ -146,7 +147,7 @@
                                 previous = message;
                                 continue;
                             }
-                            <div class="dm-msg@(compact ? " compact" : "")@(message.ReplyTo is null ? "" : " has-reply")@(message.Undelivered ? " is-undelivered" : "")" data-id="@message.Id" data-sender="@message.SenderUserName" data-time="@Millis(message.CreatedAt)" data-mine="@(message.Mine ? "1" : "0")" data-pinned="@(message.PinnedAt is null ? "0" : "1")">
+                            <div class="dm-msg@(compact ? " compact" : "")@(message.ReplyTo is null ? "" : " has-reply")@(message.Undelivered ? " is-undelivered" : "")@(message.IsPoll ? " is-poll" : "")" data-id="@message.Id" data-sender="@message.SenderUserName" data-time="@Millis(message.CreatedAt)" data-mine="@(message.Mine ? "1" : "0")" data-pinned="@(message.PinnedAt is null ? "0" : "1")">
                                 @if (message.ReplyTo is not null)
                                 {
                                     <div class="dm-msg-reply" data-reply-id="@message.ReplyTo.MessageId" role="button" tabindex="0">
@@ -166,6 +167,10 @@
                                         <div class="dm-msg-forwarded"><i class="fa-solid fa-share"></i> Forwarded</div>
                                     }
                                     <div class="dm-msg-text">@message.Text@if (message.EditedAt is not null){<span class="dm-msg-edited">(edited)</span>}</div>
+                                    @if (message.IsPoll && message.Poll is not null)
+                                    {
+                                        <div class="dm-poll" data-poll="@System.Text.Json.JsonSerializer.Serialize(message.Poll, pollJson)"></div>
+                                    }
                                     @if (message.Attachments.Count > 0)
                                     {
                                         <div class="dm-attachments">
@@ -316,6 +321,35 @@
                 <button type="button" class="dm-modal-cancel" data-close>Cancel</button>
                 <button type="button" class="dm-modal-confirm" id="dm-pin-confirm">Oh yeah. Pin it</button>
             </div>
+        </div>
+    </div>
+    <div class="dm-modal" id="dm-poll-modal" role="dialog" aria-modal="true" aria-labelledby="dm-poll-title" hidden>
+        <div class="dm-modal-backdrop" data-close></div>
+        <div class="dm-modal-card dm-poll-card">
+            <button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>
+            <h2 id="dm-poll-title">Create a Poll</h2>
+            <label class="dm-poll-label" for="dm-poll-question">Question</label>
+            <input type="text" id="dm-poll-question" class="dm-poll-input" maxlength="300" placeholder="What question do you want to ask?" autocomplete="off">
+            <div class="dm-poll-count"><span id="dm-poll-count">0</span> / 300</div>
+            <div class="dm-poll-label">Answers</div>
+            <div class="dm-poll-answers" id="dm-poll-answers"></div>
+            <button type="button" class="dm-poll-add" id="dm-poll-add"><i class="fa-solid fa-plus"></i> Add another answer</button>
+            <label class="dm-poll-label" for="dm-poll-duration">Duration</label>
+            <select id="dm-poll-duration" class="dm-poll-input dm-poll-select">
+                <option value="1">1 hour</option>
+                <option value="4">4 hours</option>
+                <option value="8">8 hours</option>
+                <option value="24" selected>24 hours</option>
+                <option value="72">3 days</option>
+                <option value="168">1 week</option>
+                <option value="336">2 weeks</option>
+            </select>
+            <p class="dm-poll-error" id="dm-poll-error" hidden></p>
+            <div class="dm-poll-foot">
+                <label class="dm-poll-multi"><input type="checkbox" id="dm-poll-multiple"><span>Allow Multiple Answers</span></label>
+                <button type="button" class="dm-poll-post" id="dm-poll-post">Post</button>
+            </div>
+            <div class="dm-poll-emojis" id="dm-poll-emojis" hidden></div>
         </div>
     </div>
 </main>

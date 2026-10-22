@@ -83,6 +83,32 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> CreatePoll([FromBody] CreatePollVM model)
+        {
+            if (model is null || string.IsNullOrWhiteSpace(model.UserName))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a friend." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync("api/dm/" + Uri.EscapeDataString(model.UserName.Trim()) + "/polls", new
+            {
+                question = model.Question ?? string.Empty,
+                allowMultiple = model.AllowMultiple,
+                durationHours = model.DurationHours,
+                options = (model.Options ?? new List<CreatePollOptionVM>()).Select(o => new { text = o.Text ?? string.Empty, emoji = o.Emoji ?? string.Empty })
+            }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> VotePoll([FromBody] VotePollVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Poll not found." } }));
+
+            return ForwardToApi(client => client.PutAsJsonAsync($"api/dm/messages/{model.Id}/poll-votes", new { optionIds = model.OptionIds ?? new List<int>() }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         [RequestSizeLimit(27_000_000)]
         [RequestFormLimits(MultipartBodyLengthLimit = 27_000_000)]
         public IActionResult UploadAttachment(IFormFile file)
