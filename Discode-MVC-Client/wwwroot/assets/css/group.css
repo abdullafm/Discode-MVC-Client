@@ -816,7 +816,7 @@ section#group-members.no-motion .group-members {
     height: 300px;
 }
 
-.call-stage.gcall-stage .call-faces {
+.call-stage.gcall-stage:not(.is-video) .call-faces {
     flex-wrap: wrap;
     row-gap: 34px;
 }
@@ -849,21 +849,16 @@ section#group-members.no-motion .group-members {
     height: 440px;
 }
 
-.call-stage.gcall-stage.is-video .call-faces {
+.call-stage.gcall-stage.is-video .call-faces.is-many {
     flex-wrap: wrap;
     row-gap: 12px;
     overflow-y: auto;
     align-content: center;
 }
 
-.call-stage.gcall-stage.is-video .call-face {
-    flex: 1 1 220px;
-    max-width: 420px;
-}
-
-.call-stage.gcall-stage.is-video .call-face.is-screen {
-    flex: 2 1 320px;
-    max-width: 560px;
+.call-stage.gcall-stage.is-video .call-faces.is-many .call-face {
+    flex: 1 1 200px;
+    max-width: 320px;
 }
 
 #gcall-mic.is-off,

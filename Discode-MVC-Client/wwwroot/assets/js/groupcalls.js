@@ -638,6 +638,7 @@
         var tiles = [].slice.call(faces.children);
         var anyVideo = tiles.some(function (tile) { return tile.classList.contains("has-video") || tile.classList.contains("is-screen") || tile.classList.contains("is-loading"); });
         stage.classList.toggle("is-video", anyVideo);
+        faces.classList.toggle("is-many", tiles.length > 5);
         stage.classList.toggle("has-screen-tile", tiles.some(function (tile) { return tile.classList.contains("is-screen"); }));
         var focusedTile = focused ? document.getElementById(focused) : null;
         stage.classList.toggle("has-focus", !!focusedTile);
