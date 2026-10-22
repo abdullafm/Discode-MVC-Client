@@ -105,6 +105,13 @@ function renderGroupList() {
             var link = tpl.content.firstElementChild.cloneNode(true);
             link.href = "/Group/Index?id=" + encodeURIComponent(group.id);
             link.setAttribute("data-group", String(group.id));
+            var photo = link.querySelector(".group-avatar img");
+            var mark = link.querySelector(".group-avatar i");
+            if (group.iconUrl && photo) {
+                photo.hidden = false;
+                photo.src = group.iconUrl;
+                if (mark) mark.hidden = true;
+            }
             var label = link.querySelector("p");
             var meta = link.querySelector(".group-row-text span");
             if (label) label.textContent = group.name;
@@ -197,55 +204,35 @@ function toggleFriend(name) {
 
 function createMessage() {
     if (!picked.length) return;
-    var params = new URLSearchParams(window.location.search);
-    var here = params.get("group");
-    if (document.querySelector(".group-view")) {
-        var current = loadGroups();
-        if (!here) {
-            var me = document.querySelector(".me-display");
-            var meName = me ? me.textContent.trim() : "";
-            var currentNames = [];
-            var labels = document.querySelectorAll("#group-member-list .group-member p");
-            for (var l = 0; l < labels.length; l++) {
-                var label = labels[l].textContent.trim();
-                if (label && label !== meName && currentNames.indexOf(label) === -1) currentNames.push(label);
-            }
-            here = "g" + Date.now().toString(36);
-            current.unshift({
-                id: here,
-                name: (document.getElementById("group-title") || {}).textContent || currentNames.join(", "),
-                members: currentNames
-            });
-            saveGroups(current);
-        }
-        for (var c = 0; c < current.length; c++) {
-            if (current[c].id !== here) continue;
-            var auto = current[c].members.join(", ");
-            var next = current[c].members.slice();
-            picked.forEach(function (name) {
-                if (next.indexOf(name) === -1) next.push(name);
-            });
-            current[c].members = next;
-            if (!current[c].name || current[c].name === auto) current[c].name = next.join(", ");
-            saveGroups(current);
-            if (window.discodeGo) window.discodeGo("./group.html?group=" + encodeURIComponent(here));
-            else window.location.href = "./group.html?group=" + encodeURIComponent(here);
-            return;
-        }
-    }
+    var chat = document.getElementById("group-chat");
+    var groupId = chat ? chat.getAttribute("data-group-id") : "";
     var members = already.concat(picked).filter(function (name, index, list) {
         return !!name && list.indexOf(name) === index;
     }).sort();
+    if (groupId) {
+        sendGroupRequest("/Group/AddMembers", { id: Number(groupId), userNames: picked.slice() }, function () {
+            closeNewMessage();
+        });
+        return;
+    }
     if (members.length === 1) {
         window.discodeGo("/Dm/Index?name=" + encodeURIComponent(members[0]));
         return;
     }
+    sendGroupRequest("/Group/Create", { userNames: members }, function (group) {
+        closeNewMessage();
+        renderGroupList();
+        window.discodeGo("/Group/Index?id=" + encodeURIComponent(group.id));
+    });
+}
+
+function sendGroupRequest(url, body, done) {
     var failure = document.getElementById("new-msg-error");
     var create = document.getElementById("new-msg-create");
     if (failure) failure.hidden = true;
     if (create) create.disabled = true;
     var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
-    fetch("/Group/Create", {
+    fetch(url, {
         method: "POST",
         credentials: "same-origin",
         headers: {
@@ -253,17 +240,13 @@ function createMessage() {
             "RequestVerificationToken": tokenInput ? tokenInput.value : "",
             "X-Requested-With": "XMLHttpRequest"
         },
-        body: JSON.stringify({ userNames: members })
+        body: JSON.stringify(body)
     }).then(function (response) {
         return response.json().catch(function () { return {}; }).then(function (data) {
-            if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Could not create the group.");
+            if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Something went wrong.");
             return data;
         });
-    }).then(function (group) {
-        closeNewMessage();
-        renderGroupList();
-        window.discodeGo("/Group/Index?id=" + encodeURIComponent(group.id));
-    }).catch(function (error) {
+    }).then(done).catch(function (error) {
         if (failure) {
             failure.textContent = error.message;
             failure.hidden = false;

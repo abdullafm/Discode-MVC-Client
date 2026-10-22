@@ -157,6 +157,14 @@
                     document.dispatchEvent(new CustomEvent("discode-dm-pinned", { detail: data }));
                 });
 
+                connection.on("GroupMessage", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-group-message", { detail: data }));
+                });
+
+                connection.on("GroupUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-group-updated", { detail: data }));
+                });
+
                 connection.on("GroupsChanged", function () {
                     document.dispatchEvent(new CustomEvent("discode-groups-changed"));
                 });
