@@ -23,6 +23,7 @@
     var screenToken = 0;
     var audioState = { muted: false, deafened: false };
     var focused = "";
+    var dismissed = {};
     var ringTimer = 0;
     var ringUntil = 0;
     var ghostTimer = 0;
@@ -210,7 +211,7 @@
 
     function markSpeaking(who, on) {
         speaking[who] = !!on;
-        var tile = document.querySelector('#gcall-faces [data-user="' + who + '"]');
+        var tile = document.querySelector('#call-faces [data-user="' + who + '"]');
         if (tile) tile.classList.toggle("is-speaking", !!on);
     }
 
@@ -427,30 +428,11 @@
     }
 
     function paintButtons() {
-        var cam = document.getElementById("gcall-cam");
-        var screen = document.getElementById("gcall-screen");
-        var mic = document.getElementById("gcall-mic");
-        var deaf = document.getElementById("gcall-deafen");
-        if (mic) {
-            mic.classList.toggle("is-off", audioState.muted);
-            mic.setAttribute("aria-pressed", audioState.muted ? "true" : "false");
-            mic.innerHTML = audioState.muted ? '<i class="fa-solid fa-microphone-slash"></i>' : '<i class="fa-solid fa-microphone"></i>';
-        }
-        if (deaf) {
-            deaf.classList.toggle("is-off", audioState.deafened);
-            deaf.setAttribute("aria-pressed", audioState.deafened ? "true" : "false");
-        }
-        if (cam) {
-            var on = cameraState === "on" || cameraState === "starting";
-            cam.classList.toggle("is-off", !on);
-            cam.setAttribute("aria-pressed", on ? "false" : "true");
-            cam.innerHTML = on ? '<i class="fa-solid fa-video"></i>' : '<i class="fa-solid fa-video-slash"></i>';
-        }
-        if (screen) {
-            var sharing = screenState === "on" || screenState === "starting";
-            screen.classList.toggle("is-on", sharing);
-            screen.setAttribute("aria-pressed", sharing ? "true" : "false");
-        }
+        var controls = window.discodeCallControls;
+        if (!controls) return;
+        controls.set(audioState.muted, audioState.deafened);
+        controls.setCameraButton(cameraState === "on" || cameraState === "starting");
+        controls.setScreenButton(screenState === "on" || screenState === "starting");
     }
 
     function setCamera(on) {
@@ -526,7 +508,7 @@
     }
 
     function tileFor(id, className) {
-        var faces = document.getElementById("gcall-faces");
+        var faces = document.getElementById("call-faces");
         var tile = document.getElementById("gcall-" + id);
         if (tile) return tile;
         tile = document.createElement("div");
@@ -535,7 +517,7 @@
             tile.className = "call-face is-screen";
             tile.innerHTML = '<video class="call-screen-tile-video" autoplay playsinline muted></video>' +
                 '<div class="call-screen-badge"><span class="call-screen-quality"></span><b>LIVE</b></div>' +
-                '<div class="gcall-self-note"><i class="fa-solid fa-display"></i><span>You are sharing your screen</span></div>' +
+                '<button type="button" class="call-screen-watch">Watch Stream</button>' +
                 '<div class="call-tile-name"><i class="fa-solid fa-display"></i><span></span></div>';
         } else {
             tile.className = "call-face" + (className === "is-peer" ? " is-peer" : "");
@@ -583,11 +565,25 @@
         tile.classList.toggle("is-speaking", !!speaking[info.key]);
     }
 
+    function joinable() {
+        var group = Number(window.discodeOpenGroup);
+        var info = group ? active[group] : null;
+        return !call && !!info && info.active && !dismissed[info.callId] ? info : null;
+    }
+
     function renderStage() {
-        var stage = document.getElementById("group-call-stage");
-        var faces = document.getElementById("gcall-faces");
+        var stage = document.getElementById("call-stage");
+        var faces = document.getElementById("call-faces");
         if (!stage || !faces) return;
+        var ghost = joinable();
         var here = !!call && onGroupPage(call.groupId);
+        var answerBar = document.getElementById("gcall-answer-bar");
+        if (answerBar) answerBar.hidden = !ghost;
+        stage.classList.toggle("is-joinable", !!ghost);
+        if (ghost) {
+            renderJoinable(stage, faces, ghost);
+            return;
+        }
         stage.hidden = !here;
         if (!here) return;
         var wanted = {};
@@ -655,9 +651,75 @@
         paintButtons();
     }
 
+    function renderJoinable(stage, faces, info) {
+        stage.hidden = false;
+        var wanted = {};
+        var label = document.getElementById("gcall-label");
+        if (label) label.textContent = info.groupName;
+        info.participants.forEach(function (person) {
+            var tile = tileFor("t-" + person.userId, "is-peer");
+            wanted["gcall-t-" + person.userId] = true;
+            fillTile(tile, { key: person.userId, name: person.displayName, avatar: person.avatarUrl || DEFAULT_AVATAR, muted: false, deafened: false });
+            if (person.screen) {
+                var screenTile = tileFor("s-" + person.userId, "is-screen");
+                wanted["gcall-s-" + person.userId] = true;
+                screenTile.classList.add("is-unwatched");
+                fillTile(screenTile, { key: "screen-" + person.userId, name: person.displayName, stream: null, on: false, isScreen: true });
+                if (!screenTile.hasAttribute("data-placed")) {
+                    faces.insertBefore(screenTile, faces.firstChild);
+                    screenTile.setAttribute("data-placed", "1");
+                }
+            }
+        });
+        [].slice.call(faces.children).forEach(function (child) {
+            if (!wanted[child.id]) faces.removeChild(child);
+        });
+        var tiles = [].slice.call(faces.children);
+        var hasScreen = tiles.some(function (tile) { return tile.classList.contains("is-screen"); });
+        stage.classList.toggle("is-video", hasScreen);
+        stage.classList.toggle("has-screen-tile", hasScreen);
+        stage.classList.remove("has-focus");
+    }
+
+    function renderSidebar() {
+        var widget = document.getElementById("sidebar-call");
+        var panel = document.getElementById("user-panel");
+        var dm = window.discodeCalls && window.discodeCalls.current && window.discodeCalls.current();
+        var dmIn = !!dm && dm.joined !== false;
+        if (call) {
+            if (widget) {
+                widget.hidden = false;
+                var connected = call.participants.length <= 1 || Object.keys(peers).some(function (id) { return peers[id].connected; });
+                widget.classList.toggle("is-connected", connected);
+                document.getElementById("sidebar-call-status").textContent = connected ? "Connected" : "Connecting";
+                var link = document.getElementById("sidebar-call-name");
+                link.textContent = call.groupName;
+                link.setAttribute("href", "/Group/Index?id=" + call.groupId);
+                var side = widget.closest(".conversation-sidebar");
+                if (side) side.classList.add("has-call");
+            }
+            if (panel) {
+                panel.classList.add("in-call");
+                var tag = panel.querySelector(".in-call-label");
+                if (tag) tag.hidden = false;
+            }
+        } else if (!dmIn) {
+            if (widget) {
+                widget.hidden = true;
+                var host = widget.closest(".conversation-sidebar");
+                if (host) host.classList.remove("has-call");
+            }
+            if (panel) {
+                panel.classList.remove("in-call");
+                var label = panel.querySelector(".in-call-label");
+                if (label) label.hidden = true;
+            }
+        }
+    }
+
     function renderPill() {
         var pill = document.getElementById("gcall-pill");
-        var show = !!call && !onGroupPage(call.groupId);
+        var show = false;
         if (!show) {
             if (pill) pill.hidden = true;
             return;
@@ -691,6 +753,7 @@
 
     function render() {
         renderStage();
+        renderSidebar();
         renderPill();
         renderInvite();
         watchAlone();
@@ -855,7 +918,10 @@
     document.addEventListener("discode-gcall-updated", function (event) {
         var dto = event.detail;
         if (!dto) return;
-        if (!dto.active) delete active[dto.groupId];
+        if (!dto.active) {
+            delete active[dto.groupId];
+            delete dismissed[dto.callId];
+        }
         else active[dto.groupId] = dto;
         if (ringing && ringing.callId === dto.callId && (!dto.active || dto.participants.length === 0)) {
             ringing = null;
@@ -915,31 +981,55 @@
         if (accept1) accept1.addEventListener("click", accept);
         var decline1 = document.getElementById("incoming-group-call-decline");
         if (decline1) decline1.addEventListener("click", decline);
-        var mic = document.getElementById("gcall-mic");
-        if (!mic) return;
-        mic.addEventListener("click", function () {
-            setAudio({ muted: !audioState.muted, deafened: audioState.deafened && audioState.muted ? false : audioState.deafened }, "stage");
+        var sideHang = document.getElementById("sidebar-call-hangup");
+        if (sideHang) sideHang.addEventListener("click", function () { if (call) leave(); });
+        var hangup = document.getElementById("call-hangup");
+        if (!hangup) return;
+        hangup.addEventListener("click", leave);
+        document.getElementById("gcall-answer-video").addEventListener("click", function () { joinFromStage(true); });
+        document.getElementById("gcall-answer-voice").addEventListener("click", function () { joinFromStage(false); });
+        document.getElementById("gcall-answer-decline").addEventListener("click", function () {
+            var info = joinable();
+            if (info) dismissed[info.callId] = true;
+            render();
         });
-        document.getElementById("gcall-deafen").addEventListener("click", function () {
-            var next = !audioState.deafened;
-            setAudio({ muted: next ? true : false, deafened: next }, "stage");
-        });
-        document.getElementById("gcall-cam").addEventListener("click", function () {
-            setCamera(!(cameraState === "on" || cameraState === "starting"));
-        });
-        document.getElementById("gcall-screen").addEventListener("click", function () {
-            setScreen(!(screenState === "on" || screenState === "starting"));
-        });
-        document.getElementById("gcall-hangup").addEventListener("click", leave);
-        document.getElementById("gcall-faces").addEventListener("click", function (event) {
+        document.getElementById("call-faces").addEventListener("click", function (event) {
+            if (event.target.closest(".call-screen-watch")) {
+                joinFromStage(false);
+                return;
+            }
             var tile = event.target.closest(".call-face");
-            if (!tile) return;
+            if (!tile || !call) return;
             var canFocus = tile.classList.contains("has-video") || tile.classList.contains("is-screen") || !!focused;
             if (!canFocus) return;
             focused = focused === tile.id ? "" : tile.id;
             renderStage();
         });
     }
+
+    function joinFromStage(video) {
+        var info = joinable();
+        if (!info) return;
+        join(info.callId, video).catch(function () {});
+    }
+
+    document.addEventListener("discode-call-mic", function (event) {
+        if (!call) return;
+        setAudio({ muted: !!event.detail.muted, deafened: audioState.deafened && !!event.detail.muted }, "stage");
+    });
+
+    document.addEventListener("discode-call-deafen", function (event) {
+        if (!call) return;
+        setAudio({ muted: audioState.muted, deafened: !!event.detail.deafened }, "stage");
+    });
+
+    document.addEventListener("discode-call-camera", function (event) {
+        if (call) setCamera(!!event.detail.on);
+    });
+
+    document.addEventListener("discode-call-screen", function (event) {
+        if (call) setScreen(!!event.detail.on);
+    });
 
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape" && focused) {

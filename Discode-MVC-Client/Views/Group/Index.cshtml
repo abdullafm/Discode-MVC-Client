@@ -41,27 +41,31 @@
                     </label>
                 </div>
             </div>
-            <div class="call-stage gcall-stage" id="group-call-stage" hidden>
+            <div class="call-stage gcall-stage" id="call-stage" hidden>
+                <video id="call-screen-video" class="call-screen-video" autoplay playsinline muted hidden></video>
+                <video id="call-cam-video" class="call-cam-video" autoplay playsinline muted hidden></video>
+                <span class="call-mute is-gone" id="call-mute" hidden><i class="fa-solid fa-microphone-slash"></i><i class="fa-solid fa-headphones deaf-icon"></i></span>
                 <div class="call-person">
-                    <div class="call-faces" id="gcall-faces"></div>
+                    <div class="call-faces" id="call-faces"></div>
                     <p class="call-phone-label" id="gcall-label"></p>
+                </div>
+                <div class="call-answer-bar" id="gcall-answer-bar" hidden>
+                    <button type="button" class="call-answer-btn is-accept" id="gcall-answer-video" aria-label="Join with video"><i class="fa-solid fa-video"></i></button>
+                    <button type="button" class="call-answer-btn is-accept" id="gcall-answer-voice" aria-label="Join with voice"><i class="fa-solid fa-phone"></i></button>
+                    <button type="button" class="call-answer-btn is-decline" id="gcall-answer-decline" aria-label="Dismiss"><i class="fa-solid fa-xmark"></i></button>
                 </div>
                 <div class="call-bar">
                     <div class="call-pill">
-                        <button type="button" class="call-btn" id="gcall-mic" aria-label="Mute" aria-pressed="false"><i class="fa-solid fa-microphone"></i></button>
-                        <button type="button" class="call-btn" id="gcall-deafen" aria-label="Deafen" aria-pressed="false"><i class="fa-solid fa-headphones"></i></button>
-                        <button type="button" class="call-btn is-off" id="gcall-cam" aria-label="Turn on camera" aria-pressed="true"><i class="fa-solid fa-video-slash"></i></button>
+                        <button type="button" class="call-btn is-off" id="call-mic" aria-label="Mute" aria-pressed="true"><i class="fa-solid fa-microphone-slash"></i></button>
+                        <button type="button" class="call-btn" id="call-deafen" aria-label="Deafen" aria-pressed="false"><i class="fa-solid fa-headphones"></i></button>
+                        <button type="button" class="call-btn is-off" id="call-cam" aria-label="Turn off camera" aria-pressed="true"><i class="fa-solid fa-video-slash"></i></button>
                         <span class="call-line"></span>
-                        <button type="button" class="call-btn" id="gcall-screen" aria-label="Share your screen" aria-pressed="false"><i class="fa-solid fa-display"></i></button>
+                        <button type="button" class="call-btn" id="call-screen" aria-label="Share your screen" aria-pressed="false"><i class="fa-solid fa-display"></i></button>
                     </div>
-                    <button type="button" class="call-hangup" id="gcall-hangup" aria-label="Disconnect"><i class="fa-solid fa-phone"></i></button>
+                    <button type="button" class="call-hangup" id="call-hangup" aria-label="Disconnect"><i class="fa-solid fa-phone"></i></button>
                 </div>
             </div>
-            <div class="gcall-banner" id="group-call-banner" hidden>
-                <i class="fa-solid fa-phone"></i>
-                <span id="group-call-banner-text"></span>
-                <button type="button" id="group-call-banner-join">Join Call</button>
-            </div>
+            <div class="call-resize" id="call-resize" role="separator" aria-orientation="horizontal" aria-label="Resize call" tabindex="0"></div>
             <div class="group-scroll" id="group-scroll">
                 <div class="group-intro">
                     <span class="group-badge" id="group-badge"><i class="fa-solid fa-user-group"></i><img alt="" hidden></span>

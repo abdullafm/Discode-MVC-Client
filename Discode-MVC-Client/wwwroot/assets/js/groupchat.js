@@ -180,19 +180,7 @@
     }
 
     function updateBanner() {
-        var calls = window.discodeGroupCalls;
-        var banner = document.getElementById("group-call-banner");
-        if (!calls || !banner) return;
-        var info = calls.activeFor(groupId);
-        var current = calls.current();
-        var show = !!info && info.active && !(current && current.callId === info.callId);
-        banner.hidden = !show;
         refreshJoinLinks();
-        if (!show) return;
-        var names = info.participants.map(function (p) { return p.displayName; });
-        var sharing = info.participants.filter(function (p) { return p.screen; });
-        var text = sharing.length ? sharing[0].displayName + " is sharing their screen" : (names.length ? names.join(", ") + (names.length === 1 ? " is" : " are") + " in the call" : "A call is in progress");
-        document.getElementById("group-call-banner-text").textContent = text;
     }
 
     function joinCall(video, callId) {
@@ -348,10 +336,6 @@
     });
     document.getElementById("group-call-voice").addEventListener("click", function () { joinCall(false); });
     document.getElementById("group-call-video").addEventListener("click", function () { joinCall(true); });
-    document.getElementById("group-call-banner-join").addEventListener("click", function () {
-        var info = window.discodeGroupCalls && window.discodeGroupCalls.activeFor(groupId);
-        joinCall(false, info ? info.callId : 0);
-    });
     box.addEventListener("click", function (event) {
         var link = event.target.closest(".dm-call-join");
         if (!link) return;

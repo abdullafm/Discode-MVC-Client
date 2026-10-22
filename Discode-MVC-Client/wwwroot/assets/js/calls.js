@@ -404,6 +404,7 @@
     });
 
     document.addEventListener("discode-call-screen", function (event) {
+        if (window.discodeGroupCalls && window.discodeGroupCalls.current()) return;
         setScreen(!!event.detail.on);
     });
 
@@ -454,6 +455,7 @@
     }
 
     document.addEventListener("discode-call-camera", function (event) {
+        if (window.discodeGroupCalls && window.discodeGroupCalls.current()) return;
         setCamera(!!event.detail.on);
     });
 
@@ -891,10 +893,12 @@
     });
 
     document.addEventListener("discode-call-mic", function (event) {
+        if (window.discodeGroupCalls && window.discodeGroupCalls.current()) return;
         setAudio({ muted: !!event.detail.muted, deafened: audioState.deafened && !!event.detail.muted }, "stage");
     });
 
     document.addEventListener("discode-call-deafen", function (event) {
+        if (window.discodeGroupCalls && window.discodeGroupCalls.current()) return;
         setAudio({ muted: audioState.muted, deafened: !!event.detail.deafened }, "stage");
     });
 
