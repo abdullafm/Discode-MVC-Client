@@ -147,9 +147,9 @@
         var row;
         if (message.isSystem) {
             row = document.createElement("div");
-            row.className = "group-sys";
-            row.innerHTML = '<i class="fa-solid fa-arrow-right-arrow-left"></i><span></span><time></time>';
-            row.querySelector("span").textContent = message.text;
+            row.className = "dm-msg dm-call-msg group-sys";
+            row.innerHTML = '<i class="fa-solid fa-arrow-right-arrow-left"></i><span class="dm-call-text"></span><time></time>';
+            row.querySelector(".dm-call-text").textContent = message.text;
             row.querySelector("time").textContent = clock(message.createdAt);
         } else {
             var compact = !newDay && last && !last.classList.contains("group-sys") && last.getAttribute("data-sender") === message.senderUserName && when - Number(last.getAttribute("data-time")) < 5 * 60 * 1000 && box.lastElementChild === last;

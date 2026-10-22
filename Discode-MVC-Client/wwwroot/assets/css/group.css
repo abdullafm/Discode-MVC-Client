@@ -734,34 +734,6 @@ section#group-members.no-motion .group-members {
     padding: 0 0 12px;
 }
 
-.group-messages .dm-msg {
-    padding-left: 72px;
-}
-
-.group-sys {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin: 6px 16px 6px 22px;
-    color: #5c5e66;
-    font-size: 14px;
-}
-
-.group-sys > i {
-    width: 36px;
-    text-align: center;
-    color: #23a559;
-}
-
-.group-sys time {
-    font-size: 12px;
-    opacity: 0.75;
-}
-
-.group-sys strong {
-    color: inherit;
-}
-
 .group-error {
     margin: 0 16px 6px;
     color: #f23f43;
