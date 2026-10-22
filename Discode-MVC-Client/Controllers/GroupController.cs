@@ -1,4 +1,5 @@
 using Discode_MVC_Client.ViewModels.Account;
+using Discode_MVC_Client.ViewModels.Dm;
 using Discode_MVC_Client.ViewModels.Groups;
 using Discode_MVC_Client.ViewModels.Home;
 using Microsoft.AspNetCore.Authorization;
@@ -76,7 +77,47 @@ namespace Discode_MVC_Client.Controllers
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Group not found." } }));
 
-            return Forward(client => client.PostAsJsonAsync($"api/group/{model.Id}/messages", new { text = model.Text ?? string.Empty }));
+            return Forward(client => client.PostAsJsonAsync($"api/group/{model.Id}/messages", new
+            {
+                text = model.Text ?? string.Empty,
+                attachments = (model.Attachments ?? new List<MessageAttachmentVM>()).Select(a => new { url = a.Url, fileName = a.FileName, contentType = a.ContentType, size = a.Size })
+            }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> CreatePoll([FromBody] CreateGroupPollVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Group not found." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/group/{model.Id}/polls", new
+            {
+                question = model.Question ?? string.Empty,
+                allowMultiple = model.AllowMultiple,
+                durationHours = model.DurationHours,
+                options = (model.Options ?? new List<CreatePollOptionVM>()).Select(o => new { text = o.Text ?? string.Empty, emoji = o.Emoji ?? string.Empty })
+            }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> React([FromBody] ReactGroupMessageVM model)
+        {
+            if (model is null || model.Id <= 0 || model.MessageId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return Forward(client => client.PutAsJsonAsync($"api/group/{model.Id}/messages/{model.MessageId}/reactions", new { emoji = model.Emoji ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> VotePoll([FromBody] VoteGroupPollVM model)
+        {
+            if (model is null || model.Id <= 0 || model.MessageId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Poll not found." } }));
+
+            return Forward(client => client.PutAsJsonAsync($"api/group/{model.Id}/messages/{model.MessageId}/poll-votes", new { optionIds = model.OptionIds ?? new List<int>() }));
         }
 
         [HttpPost]
