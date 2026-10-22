@@ -170,6 +170,7 @@
                 <div class="me-board">
                     <div class="me-tabs">
                         <button type="button" class="on" data-tab="board">Board</button>
+                        <button type="button" data-tab="friends">Friends</button>
                     </div>
                     <div class="me-panel" id="me-board">
                         <template id="me-post">
@@ -181,6 +182,11 @@
                         <p class="me-posts-empty" id="me-posts-empty">No posts yet.</p>
                         <p class="me-private-board" id="me-private-board" hidden>This profile is private. Add them as a friend to see their posts.</p>
                         <a class="me-posts-go" href="./socialmedia.html">Social Media</a>
+                    </div>
+                    <div class="me-panel d-none" id="me-friends">
+                        <div class="me-friends-list" id="me-friends-list"></div>
+                        <p class="me-friends-empty" id="me-friends-empty" hidden>No friends yet.</p>
+                        <p class="me-friends-empty" id="me-friends-private" hidden>This profile is private. Add them as a friend to see their friends.</p>
                     </div>
                     <div class="me-panel d-none" id="me-activity">
                         <p>Nothing here yet.</p>

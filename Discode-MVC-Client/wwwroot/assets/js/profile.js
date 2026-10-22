@@ -204,8 +204,55 @@
                 panel.classList.toggle("d-none", panel.id !== "me-" + tab);
             });
             if (tab === "board") renderMyPosts();
+            if (tab === "friends") renderFriends();
         });
     });
+
+    function renderFriends() {
+        var list = document.getElementById("me-friends-list");
+        var empty = document.getElementById("me-friends-empty");
+        var privateNote = document.getElementById("me-friends-private");
+        if (!list) return;
+        var name = viewing;
+        var target = isMe(viewing) ? meHandle() : viewing;
+        list.textContent = "";
+        if (empty) empty.hidden = true;
+        if (privateNote) privateNote.hidden = true;
+        fetch("/Home/UserFriends?name=" + encodeURIComponent(target), {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        }).then(function (response) {
+            if (!response.ok) {
+                if (privateNote && viewing === name) privateNote.hidden = false;
+                return null;
+            }
+            return response.json();
+        }).then(function (friends) {
+            if (!friends || viewing !== name) return;
+            if (empty) empty.hidden = friends.length > 0;
+            friends.forEach(function (friend) {
+                var row = document.createElement("button");
+                row.type = "button";
+                row.className = "me-friend";
+                var face = document.createElement("img");
+                face.alt = "";
+                face.src = friend.avatarUrl || DEFAULT_AVATAR;
+                var text = document.createElement("span");
+                var title = document.createElement("strong");
+                title.textContent = friend.name;
+                var handle = document.createElement("small");
+                handle.textContent = friend.userName;
+                text.appendChild(title);
+                text.appendChild(handle);
+                row.appendChild(face);
+                row.appendChild(text);
+                row.addEventListener("click", function () {
+                    window.openUserProfile(friend.userName, friend.avatarUrl || "");
+                });
+                list.appendChild(row);
+            });
+        }).catch(function () {});
+    }
 
     function closeProfile() {
         if (profile.classList.contains("d-none")) return;
@@ -976,6 +1023,12 @@
         var since = document.getElementById("me-since");
         if (since && !self) showJoined(viewing);
         renderMyPosts();
+        profile.querySelectorAll(".me-tabs button").forEach(function (item) {
+            item.classList.toggle("on", item.getAttribute("data-tab") === "board");
+        });
+        profile.querySelectorAll(".me-panel").forEach(function (panel) {
+            panel.classList.toggle("d-none", panel.id !== "me-board");
+        });
         profile.classList.remove("d-none");
     };
 
