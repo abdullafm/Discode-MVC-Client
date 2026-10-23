@@ -23,7 +23,7 @@
     var screenToken = 0;
     var audioState = { muted: false, deafened: false };
     var focused = "";
-    var dismissed = {};
+    var silenced = {};
     var ringTimer = 0;
     var ringUntil = 0;
     var ghostTimer = 0;
@@ -573,7 +573,7 @@
     function joinable() {
         var group = Number(window.discodeOpenGroup);
         var info = group ? active[group] : null;
-        return !call && !!info && info.active && !dismissed[info.callId] ? info : null;
+        return !call && !!info && info.active ? info : null;
     }
 
     function renderStage() {
@@ -584,6 +584,8 @@
         var here = !!call && onGroupPage(call.groupId);
         var answerBar = document.getElementById("gcall-answer-bar");
         if (answerBar) answerBar.hidden = !ghost;
+        var declineButton = document.getElementById("gcall-answer-decline");
+        if (declineButton) declineButton.hidden = !!ghost && !!silenced[ghost.callId];
         stage.classList.toggle("is-joinable", !!ghost);
         if (ghost) {
             renderJoinable(stage, faces, ghost);
@@ -928,6 +930,7 @@
 
     function decline() {
         stopRing();
+        if (ringing) silenced[ringing.callId] = true;
         ringing = null;
         render();
     }
@@ -949,7 +952,7 @@
         if (!dto) return;
         if (!dto.active) {
             delete active[dto.groupId];
-            delete dismissed[dto.callId];
+            delete silenced[dto.callId];
         }
         else active[dto.groupId] = dto;
         if (ringing && ringing.callId === dto.callId && (!dto.active || dto.participants.length === 0)) {
@@ -1038,7 +1041,9 @@
         document.getElementById("gcall-answer-voice").addEventListener("click", function () { joinFromStage(false); });
         document.getElementById("gcall-answer-decline").addEventListener("click", function () {
             var info = joinable();
-            if (info) dismissed[info.callId] = true;
+            if (info) silenced[info.callId] = true;
+            stopRing();
+            ringing = null;
             render();
         });
         document.getElementById("call-faces").addEventListener("click", function (event) {
