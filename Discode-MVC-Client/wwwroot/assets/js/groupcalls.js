@@ -1,7 +1,7 @@
 (function () {
     "use strict";
 
-    var RING_MS = window.discodeCallRingMs || 30000;
+    var RING_MS = window.discodeGroupRingMs || 210000;
     var ALONE_MS = window.discodeCallAloneMs || 180000;
     var ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
     var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
@@ -565,6 +565,11 @@
         tile.classList.toggle("is-speaking", !!speaking[info.key]);
     }
 
+    function startedMs(dto) {
+        var text = String(dto.startedAt);
+        return Date.parse(/Z$|[+-]\d\d:\d\d$/.test(text) ? text : text + "Z");
+    }
+
     function joinable() {
         var group = Number(window.discodeOpenGroup);
         var info = group ? active[group] : null;
@@ -613,9 +618,13 @@
                 }
             }
         });
-        if (call.participants.length <= 1 && Date.now() < ringUntil && window.discodeGroupInfo && window.discodeGroupInfo.members) {
+        var ringLeft = RING_MS - (Date.now() - startedMs(call));
+        if (ringLeft > 0 && window.discodeGroupInfo && window.discodeGroupInfo.members) {
+            clearTimeout(ghostTimer);
+            ghostTimer = setTimeout(render, ringLeft + 100);
             window.discodeGroupInfo.members.forEach(function (member) {
                 if (member.userName === me) return;
+                if (call.participants.some(function (p) { return p.userName === member.userName; })) return;
                 var ghostKey = "g-" + member.userName;
                 var ghost = tileFor("t-" + ghostKey, "is-peer");
                 wanted["gcall-t-" + ghostKey] = true;
@@ -671,8 +680,7 @@
                 }
             }
         });
-        var started = Date.parse(/Z$|[+-]\d\d:\d\d$/.test(String(info.startedAt)) ? info.startedAt : info.startedAt + "Z");
-        var left = RING_MS - (Date.now() - started);
+        var left = RING_MS - (Date.now() - startedMs(info));
         if (left > 0 && window.discodeGroupInfo && window.discodeGroupInfo.members) {
             window.discodeGroupInfo.members.forEach(function (member) {
                 if (info.participants.some(function (p) { return p.userName === member.userName; })) return;
