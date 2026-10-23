@@ -591,6 +591,7 @@
             renderJoinable(stage, faces, ghost);
             return;
         }
+        faces.classList.remove("is-me-away");
         stage.hidden = !here;
         if (!here) return;
         var wanted = {};
@@ -686,9 +687,8 @@
         if (left > 0 && window.discodeGroupInfo && window.discodeGroupInfo.members) {
             window.discodeGroupInfo.members.forEach(function (member) {
                 if (info.participants.some(function (p) { return p.userName === member.userName; })) return;
-                if (silenced[info.callId] && member.userName === meName()) return;
                 var ghostKey = "g-" + member.userName;
-                var ghost = tileFor("t-" + ghostKey, "is-peer");
+                var ghost = tileFor("t-" + ghostKey, member.userName === meName() ? "" : "is-peer");
                 wanted["gcall-t-" + ghostKey] = true;
                 ghost.classList.add("is-waiting");
                 fillTile(ghost, { key: ghostKey, name: member.displayName || member.userName, avatar: member.avatarUrl || DEFAULT_AVATAR, muted: false, deafened: false });
@@ -699,6 +699,7 @@
         [].slice.call(faces.children).forEach(function (child) {
             if (!wanted[child.id]) faces.removeChild(child);
         });
+        faces.classList.toggle("is-me-away", !!silenced[info.callId]);
         var tiles = [].slice.call(faces.children);
         var hasScreen = tiles.some(function (tile) { return tile.classList.contains("is-screen"); });
         stage.classList.toggle("is-video", hasScreen);

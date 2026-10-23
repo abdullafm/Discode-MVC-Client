@@ -1004,3 +1004,7 @@ section#group-members.no-motion .group-members {
 .call-stage.gcall-stage .call-face .call-screen-tile-video {
     border-radius: inherit;
 }
+
+.call-answer-btn[hidden] {
+    display: none;
+}
