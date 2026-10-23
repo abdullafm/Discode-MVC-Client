@@ -1008,3 +1008,7 @@ section#group-members.no-motion .group-members {
 .call-answer-btn[hidden] {
     display: none;
 }
+
+#call-mute {
+    display: none !important;
+}
