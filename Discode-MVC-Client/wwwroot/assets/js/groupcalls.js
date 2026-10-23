@@ -671,6 +671,20 @@
                 }
             }
         });
+        var started = Date.parse(/Z$|[+-]\d\d:\d\d$/.test(String(info.startedAt)) ? info.startedAt : info.startedAt + "Z");
+        var left = RING_MS - (Date.now() - started);
+        if (left > 0 && window.discodeGroupInfo && window.discodeGroupInfo.members) {
+            window.discodeGroupInfo.members.forEach(function (member) {
+                if (info.participants.some(function (p) { return p.userName === member.userName; })) return;
+                var ghostKey = "g-" + member.userName;
+                var ghost = tileFor("t-" + ghostKey, "is-peer");
+                wanted["gcall-t-" + ghostKey] = true;
+                ghost.classList.add("is-waiting");
+                fillTile(ghost, { key: ghostKey, name: member.displayName || member.userName, avatar: member.avatarUrl || DEFAULT_AVATAR, muted: false, deafened: false });
+            });
+            clearTimeout(ghostTimer);
+            ghostTimer = setTimeout(render, left + 100);
+        }
         [].slice.call(faces.children).forEach(function (child) {
             if (!wanted[child.id]) faces.removeChild(child);
         });
