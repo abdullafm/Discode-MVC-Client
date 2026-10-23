@@ -857,6 +857,12 @@
                 ghostTimer = setTimeout(render, RING_MS + 100);
             }
             adopt(dto, true);
+            if (dto.participants.length <= 1) {
+                ringtone.volume = 0.5;
+                play(ringtone);
+                clearTimeout(ringTimer);
+                ringTimer = setTimeout(stopRing, RING_MS);
+            }
             if (video) setCamera(true);
             return dto;
         }).catch(function (error) {
@@ -879,6 +885,7 @@
     function leave() {
         if (!call) return;
         var leaving = call;
+        stopRing();
         play(leaveSound);
         teardown();
         call = null;
@@ -931,6 +938,7 @@
             var me = meName();
             var still = dto.active && dto.participants.some(function (p) { return p.userName === me; });
             if (!still) {
+                stopRing();
                 teardown();
                 call = null;
                 play(leaveSound);
@@ -944,6 +952,7 @@
                 });
                 after.filter(function (id) { return before.indexOf(id) === -1 && id !== (mine && mine.userId); }).forEach(function () { play(joinSound); });
                 call = dto;
+                if (dto.participants.length > 1) stopRing();
             }
         }
         render();
