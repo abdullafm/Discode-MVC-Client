@@ -686,6 +686,7 @@
         if (left > 0 && window.discodeGroupInfo && window.discodeGroupInfo.members) {
             window.discodeGroupInfo.members.forEach(function (member) {
                 if (info.participants.some(function (p) { return p.userName === member.userName; })) return;
+                if (silenced[info.callId] && member.userName === meName()) return;
                 var ghostKey = "g-" + member.userName;
                 var ghost = tileFor("t-" + ghostKey, "is-peer");
                 wanted["gcall-t-" + ghostKey] = true;
