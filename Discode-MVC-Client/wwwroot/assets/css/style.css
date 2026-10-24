@@ -7734,3 +7734,70 @@ a.notify-content {
 .me-tabs button[hidden] {
     display: none;
 }
+
+.live-dock {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 900;
+    width: 260px;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+    border: 2px solid #5865f2;
+}
+
+.live-dock video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.live-dock-top {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    background: linear-gradient(rgba(0, 0, 0, 0.7), transparent);
+    color: #fff;
+    font-size: 12px;
+}
+
+.live-dock-top em {
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #f23f43;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 700;
+}
+
+.live-dock-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.live-dock-top button {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    cursor: pointer;
+}
+
+#live-minimize-btn[hidden] {
+    display: none;
+}

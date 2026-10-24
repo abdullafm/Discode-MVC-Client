@@ -4,7 +4,7 @@
     var origAdd = EventTarget.prototype.addEventListener;
     var origRemove = EventTarget.prototype.removeEventListener;
 
-    var keepers = /\/(calls|groupcalls|presence|i18n|theme|timezone|nav)\.js|signalr/i;
+    var keepers = /\/(calls|groupcalls|presence|livedock|i18n|theme|timezone|nav)\.js|signalr/i;
     var swapping = false;
     var lateReady = [];
 
@@ -88,7 +88,7 @@
             }
             var old = list[i++];
             var src = old.getAttribute("src") || "";
-            if (/theme\.js|nav\.js|calls\.js|presence\.js|signalr/i.test(src)) {
+            if (/theme\.js|nav\.js|calls\.js|presence\.js|livedock\.js|signalr/i.test(src)) {
                 next();
                 return;
             }
