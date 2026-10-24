@@ -276,6 +276,22 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        public Task<IActionResult> IgnoredUsers()
+        {
+            return ForwardToApi(client => client.GetAsync("api/ignore"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> IgnoreUser([FromBody] IgnoreUserVM model)
+        {
+            if (model is null || string.IsNullOrWhiteSpace(model.UserName))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a user." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync("api/ignore", new { userName = model.UserName.Trim() }));
+        }
+
+        [HttpGet]
         public Task<IActionResult> UserReposts(string name)
         {
             if (string.IsNullOrWhiteSpace(name))

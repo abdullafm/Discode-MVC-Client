@@ -167,6 +167,21 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> RelationInfo(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return BadRequest(new { errors = new[] { "Choose a user." } });
+
+            var (relation, status) = await GetAsync<DmRelationVM>("api/dm/" + Uri.EscapeDataString(name.Trim()) + "/relation");
+            if (status == System.Net.HttpStatusCode.Unauthorized)
+                return Unauthorized();
+            if (relation is null)
+                return NotFound();
+
+            return Ok(new { relation = relation.Relation, friendRequestId = relation.FriendRequestId, blockId = relation.BlockId });
+        }
+
+        [HttpGet]
         public async Task<IActionResult> Relation(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
