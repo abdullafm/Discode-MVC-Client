@@ -370,13 +370,6 @@
         input.focus();
     });
 
-    document.getElementById("group-search").addEventListener("input", function () {
-        var query = this.value.trim().toLowerCase();
-        [].forEach.call(box.querySelectorAll(".dm-msg, .group-sys"), function (row) {
-            row.hidden = !!query && row.textContent.toLowerCase().indexOf(query) === -1;
-        });
-    });
-
     document.getElementById("group-members-toggle").addEventListener("click", function () {
         setMembers(document.getElementById("group-members").classList.contains("is-collapsed"));
     });
