@@ -59,7 +59,7 @@
             {
                 var conversation = Model.Conversations[index];
                 var presence = conversation.Status is "online" or "idle" or "dnd" ? conversation.Status : "offline";
-                <a class="friend-item@(conversation.UnreadCount > 0 ? " has-unread" : "")@(conversation.UserName == Model.ActiveDm ? " active" : "")" href="@Url.Action("Index", "Dm", new { name = conversation.UserName })" data-dm="@conversation.UserName" data-user-id="@conversation.UserId" data-presence="@presence" data-order="@index">
+                <a class="friend-item@(conversation.UnreadCount > 0 ? " has-unread" : "")@(conversation.UserName == Model.ActiveDm ? " active" : "")" href="@Url.Action("Index", "Dm", new { name = conversation.UserName })" data-dm="@conversation.UserName" data-user-id="@conversation.UserId" data-presence="@presence" data-order="@index" data-last="@(new DateTimeOffset(DateTime.SpecifyKind(conversation.LastMessageAt, DateTimeKind.Utc)).ToUnixTimeMilliseconds())">
                     <div class="avatar"><img src="@(string.IsNullOrWhiteSpace(conversation.AvatarUrl) ? "/assets/img/img-icon-profile.jpeg" : conversation.AvatarUrl)" alt=""></div>
                     <p>@(string.IsNullOrWhiteSpace(conversation.DisplayName) ? conversation.UserName : conversation.DisplayName)</p>
                     <span class="dm-unread" hidden="@(conversation.UnreadCount <= 0)">@(conversation.UnreadCount > 99 ? "99+" : conversation.UnreadCount.ToString())</span>

@@ -73,7 +73,13 @@ function applyPins() {
     pinned.sort(function (a, b) {
         return pins.indexOf(rowName(a)) - pins.indexOf(rowName(b));
     });
-    pinned.concat(groups, rest).forEach(function (row) {
+    var recent = groups.concat(rest);
+    recent.sort(function (a, b) {
+        var diff = Number(b.getAttribute("data-last") || 0) - Number(a.getAttribute("data-last") || 0);
+        if (diff !== 0) return diff;
+        return Number(a.getAttribute("data-order") || 0) - Number(b.getAttribute("data-order") || 0);
+    });
+    pinned.concat(recent).forEach(function (row) {
         list.appendChild(row);
     });
 }
@@ -123,6 +129,7 @@ function paintGroupRows(groups) {
         var count = group.memberCount + " Members";
         if (meta && meta.textContent !== count) meta.textContent = count;
         link.classList.toggle("active", id === openId);
+        link.setAttribute("data-last", String(Date.parse(/Z$|[+-]\d\d:\d\d$/.test(String(group.lastMessageAt)) ? group.lastMessageAt : group.lastMessageAt + "Z") || 0));
     });
     applyPins();
 }
@@ -306,6 +313,14 @@ document.addEventListener("keydown", function (event) {
 
 renderGroupList();
 document.addEventListener("discode-groups-changed", renderGroupList);
+document.addEventListener("discode-group-message", function (event) {
+    var data = event.detail;
+    if (!data || !data.message || !Array.isArray(window.discodeGroupCache)) return;
+    window.discodeGroupCache.forEach(function (group) {
+        if (group.id === data.groupId) group.lastMessageAt = data.message.createdAt;
+    });
+    paintGroupRows(window.discodeGroupCache);
+});
 document.addEventListener("discode-hub-connected", function (event) {
     if (event.detail && event.detail.pageSwap) return;
     renderGroupList();

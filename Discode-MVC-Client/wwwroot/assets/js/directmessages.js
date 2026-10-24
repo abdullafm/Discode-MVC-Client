@@ -38,6 +38,7 @@
         row.className = "friend-item" + (conversation.unreadCount > 0 ? " has-unread" : "");
         row.href = "/Dm/Index?name=" + encodeURIComponent(conversation.userName);
         row.setAttribute("data-dm", conversation.userName);
+        row.setAttribute("data-last", String(Date.parse(/Z$|[+-]\d\d:\d\d$/.test(String(conversation.lastMessageAt)) ? conversation.lastMessageAt : conversation.lastMessageAt + "Z") || 0));
         row.setAttribute("data-user-id", conversation.userId);
         row.setAttribute("data-presence", conversation.status || "offline");
         row.setAttribute("data-order", String(index));
