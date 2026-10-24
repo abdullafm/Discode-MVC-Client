@@ -14,15 +14,4 @@ namespace Discode_MVC_Client.ViewModels.Groups
         public int UnreadCount { get; set; }
         public List<GroupMemberVM> Members { get; set; } = new();
     }
-
-    public class GroupMemberVM
-    {
-        public string UserId { get; set; } = string.Empty;
-        public string UserName { get; set; } = string.Empty;
-        public string DisplayName { get; set; } = string.Empty;
-        public string AvatarUrl { get; set; } = string.Empty;
-        public bool IsOwner { get; set; }
-
-        public string Name => string.IsNullOrWhiteSpace(DisplayName) ? UserName : DisplayName;
-    }
 }
