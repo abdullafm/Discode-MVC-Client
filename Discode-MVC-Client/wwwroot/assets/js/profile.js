@@ -205,8 +205,44 @@
             });
             if (tab === "board") renderMyPosts();
             if (tab === "friends") renderFriends();
+            if (tab === "reposts") renderReposts();
         });
     });
+
+    function renderReposts() {
+        var box = document.getElementById("me-reposts-list");
+        var empty = document.getElementById("me-reposts-empty");
+        if (!box) return;
+        var name = viewing;
+        var target = isMe(viewing) ? meHandle() : viewing;
+        while (box.firstChild) box.removeChild(box.firstChild);
+        if (empty) empty.hidden = true;
+        fetch("/Home/UserReposts?name=" + encodeURIComponent(target), {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        }).then(function (response) {
+            return response.ok ? response.json() : [];
+        }).then(function (posts) {
+            if (viewing !== name) return;
+            posts = Array.isArray(posts) ? posts : [];
+            if (empty) empty.hidden = posts.length > 0;
+            var tpl = document.getElementById("me-post");
+            posts.forEach(function (post) {
+                if (!tpl) return;
+                var card = tpl.content.firstElementChild.cloneNode(true);
+                var image = card.querySelector("img");
+                var text = card.querySelector("p");
+                var when = card.querySelector("time");
+                if (image) {
+                    image.hidden = !post.imageUrl;
+                    if (post.imageUrl) image.src = post.imageUrl;
+                }
+                if (text) text.textContent = (post.authorDisplayName || post.authorUserName) + ": " + (post.text || "");
+                if (when) when.textContent = formatJoined(postTime(post.createdAt));
+                box.appendChild(card);
+            });
+        }).catch(function () {});
+    }
 
     function renderFriends() {
         var list = document.getElementById("me-friends-list");
@@ -702,10 +738,12 @@
             note.textContent = on ? name + "'s profile is private, so some info is hidden. Add them as a friend to see more." : "";
         }
         if (board) board.hidden = !on;
+        var repostsTab = profile.querySelector(".me-tabs button[data-tab='reposts']");
+        if (repostsTab) repostsTab.hidden = on;
         var friendsTab = profile.querySelector(".me-tabs button[data-tab='friends']");
         if (friendsTab) {
             friendsTab.hidden = on;
-            if (on && friendsTab.classList.contains("on")) {
+            if (on && (friendsTab.classList.contains("on") || (repostsTab && repostsTab.classList.contains("on")))) {
                 var boardTab = profile.querySelector(".me-tabs button[data-tab='board']");
                 if (boardTab) boardTab.click();
             }

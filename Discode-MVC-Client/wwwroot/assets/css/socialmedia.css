@@ -242,6 +242,19 @@ body .social-view {
     line-height: 1;
 }
 
+.post-repost {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.post-repost.reposted,
+html.theme-dark .post-repost.reposted,
+html.theme-dark .post-repost.reposted i {
+    color: #23a559 !important;
+}
+
 .comment-form[hidden] {
     display: none;
 }

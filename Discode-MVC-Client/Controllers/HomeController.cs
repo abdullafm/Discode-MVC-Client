@@ -275,6 +275,25 @@ namespace Discode_MVC_Client.Controllers
             return GetPosts("api/post/user/" + Uri.EscapeDataString(name.Trim()));
         }
 
+        [HttpGet]
+        public Task<IActionResult> UserReposts(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a user." } }));
+
+            return GetPosts("api/post/reposts/" + Uri.EscapeDataString(name.Trim()));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> TogglePostRepost([FromBody] PostIdVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/post/{model.Id}/repost", new { }));
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public Task<IActionResult> CreatePost([FromBody] CreatePostVM model)

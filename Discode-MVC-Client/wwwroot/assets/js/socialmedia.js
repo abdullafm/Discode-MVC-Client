@@ -296,6 +296,8 @@ function mapPosts(list) {
             edited: !!dto.editedAt,
             likes: dto.likeCount || 0,
             liked: !!dto.likedByMe,
+            reposts: dto.repostCount || 0,
+            reposted: !!dto.repostedByMe,
             comments: (dto.comments || []).map(mapComment)
         };
     });
@@ -406,6 +408,12 @@ function setPersonFace(img, letter, name, avatarUrl) {
         letter.hidden = false;
         letter.textContent = initial(name);
     }
+}
+
+function setRepost(button, reposted, count) {
+    button.classList.toggle("reposted", !!reposted);
+    var total = button.querySelector("span");
+    if (total) total.textContent = String(count || 0);
 }
 
 function setLike(button, liked, count) {
@@ -534,6 +542,11 @@ function renderFeed() {
         }
         var commentOpen = card.querySelector("[data-comment-post]");
         if (commentOpen) commentOpen.setAttribute("data-comment-post", post.id);
+        var repost = card.querySelector("[data-repost-post]");
+        if (repost) {
+            repost.setAttribute("data-repost-post", post.id);
+            setRepost(repost, post.reposted, post.reposts || 0);
+        }
         var comments = card.querySelector(".comment-list");
         threadComments(post.comments || []).forEach(function (entry) {
             var comment = entry.comment;
@@ -2214,6 +2227,14 @@ document.querySelector(".social-view").addEventListener("click", function (event
         openCommentPost = opening ? commentPostId : null;
         commentForm.hidden = !opening;
         if (opening) commentForm.querySelector(".rich-text").focus();
+        return;
+    }
+
+    var postRepost = event.target.closest("[data-repost-post]");
+    if (postRepost) {
+        requestJson("/Home/TogglePostRepost", "POST", { id: Number(postRepost.getAttribute("data-repost-post")) }).then(function (result) {
+            setRepost(postRepost, result.reposted, result.count);
+        }).catch(function () {});
         return;
     }
 

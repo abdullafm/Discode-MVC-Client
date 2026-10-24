@@ -13,6 +13,8 @@ namespace Discode_MVC_Client.ViewModels.Social
         public DateTime? EditedAt { get; set; }
         public int LikeCount { get; set; }
         public bool LikedByMe { get; set; }
+        public int RepostCount { get; set; }
+        public bool RepostedByMe { get; set; }
         public List<CommentVM> Comments { get; set; } = new List<CommentVM>();
     }
 }
