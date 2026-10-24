@@ -291,6 +291,26 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> UpdatePost([FromBody] UpdateTextVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
+
+            return ForwardToApi(client => client.PutAsJsonAsync($"api/post/{model.Id}", new { text = model.Text ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> UpdateComment([FromBody] UpdateTextVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Comment not found." } }));
+
+            return ForwardToApi(client => client.PutAsJsonAsync($"api/post/comments/{model.Id}", new { text = model.Text ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> DeletePost([FromBody] PostIdVM model)
         {
             if (model is null || model.Id <= 0)

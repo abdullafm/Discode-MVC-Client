@@ -4454,3 +4454,68 @@ html.theme-dark body .story-edit-top .story-draw-done {
     font-size: 14px;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
 }
+
+.edited-tag {
+    color: #80848e;
+    font-size: 12px;
+}
+
+.edit-box {
+    margin: 6px 0;
+}
+
+.edit-field {
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid #5865f2;
+    border-radius: 8px;
+    outline: none;
+    background: transparent;
+    color: inherit;
+    overflow-wrap: anywhere;
+}
+
+.edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.edit-actions button {
+    height: 30px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 6px;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.edit-save {
+    background: #5865f2;
+    color: #fff;
+}
+
+.edit-save:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.edit-cancel {
+    background: rgba(128, 133, 144, 0.2);
+    color: inherit;
+}
+
+.edit-error {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #f23f43;
+}
+
+.delete-pop [data-edit-post],
+.delete-pop [data-edit-comment] {
+    display: block;
+    width: 100%;
+}

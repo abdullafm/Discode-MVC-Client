@@ -280,6 +280,7 @@ function mapComment(dto) {
         avatar: dto.authorAvatarUrl || "",
         text: dto.text || "",
         createdAt: utcMillis(dto.createdAt),
+        edited: !!dto.editedAt,
         likes: dto.likeCount || 0,
         liked: !!dto.likedByMe
     };
@@ -295,6 +296,7 @@ function mapPosts(list) {
             image: dto.imageUrl || "",
             visibility: dto.visibility === "friends" ? "friends" : "public",
             createdAt: utcMillis(dto.createdAt),
+            edited: !!dto.editedAt,
             likes: dto.likeCount || 0,
             liked: !!dto.likedByMe,
             comments: (dto.comments || []).map(mapComment)
@@ -512,11 +514,15 @@ function renderFeed() {
             menu.hidden = !mine;
             var remove = menu.querySelector("[data-delete-post]");
             if (remove) remove.setAttribute("data-delete-post", post.id);
+            var editPost = menu.querySelector("[data-edit-post]");
+            if (editPost) editPost.setAttribute("data-edit-post", post.id);
         }
         var body = card.querySelector(".post-text");
         if (body) {
             body.hidden = !post.text;
+            body.setAttribute("data-raw", post.text || "");
             if (post.text) fillText(body, post.text);
+            if (post.text && post.edited) appendEditedTag(body);
         }
         var photo = card.querySelector(".post-photo");
         if (photo) {
@@ -550,7 +556,11 @@ function renderFeed() {
             var said = item.querySelector("p");
             var at = item.querySelector("time");
             if (who) who.textContent = comment.author;
-            if (said) fillText(said, comment.text);
+            if (said) {
+                fillText(said, comment.text);
+                said.setAttribute("data-raw", comment.text || "");
+                if (comment.edited) appendEditedTag(said);
+            }
             if (at) at.textContent = timeAgo(comment.createdAt);
             var heart = item.querySelector("[data-like]");
             if (heart) {
@@ -567,6 +577,11 @@ function renderFeed() {
                     drop.setAttribute("data-delete-comment", comment.id);
                     drop.setAttribute("data-post", post.id);
                 }
+                var editComment = commentMenu.querySelector("[data-edit-comment]");
+                if (editComment) {
+                    editComment.setAttribute("data-edit-comment", comment.id);
+                    editComment.hidden = comment.author !== ME;
+                }
             }
             comments.appendChild(item);
         });
@@ -579,6 +594,85 @@ function renderFeed() {
         list.appendChild(card);
     });
     restoreDraft(list, draft);
+}
+
+function appendEditedTag(element) {
+    var tag = document.createElement("span");
+    tag.className = "edited-tag";
+    tag.textContent = " (edited)";
+    element.appendChild(tag);
+}
+
+function startTextEdit(textElement, raw, maxLength, save) {
+    if (!textElement.parentNode || textElement.parentNode.querySelector(".edit-box")) return;
+    var box = document.createElement("div");
+    box.className = "edit-box";
+    var field = document.createElement("div");
+    field.className = "rich-text edit-field";
+    field.setAttribute("contenteditable", "true");
+    field.setAttribute("role", "textbox");
+    field.setAttribute("data-maxlength", String(maxLength));
+    field.setAttribute("data-empty", "0");
+    nodesForText(raw).forEach(function (node) { field.appendChild(node); });
+    var error = document.createElement("p");
+    error.className = "edit-error";
+    error.hidden = true;
+    var actions = document.createElement("div");
+    actions.className = "edit-actions";
+    var cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "edit-cancel";
+    cancel.textContent = "Cancel";
+    var saveButton = document.createElement("button");
+    saveButton.type = "button";
+    saveButton.className = "edit-save";
+    saveButton.textContent = "Save";
+    actions.appendChild(cancel);
+    actions.appendChild(saveButton);
+    box.appendChild(field);
+    box.appendChild(error);
+    box.appendChild(actions);
+    var wasHidden = textElement.hidden;
+    textElement.hidden = true;
+    textElement.parentNode.insertBefore(box, textElement.nextSibling);
+    if (window.discodeMentions && window.discodeMentions.attach) window.discodeMentions.attach(field, window.discodeMentions.friends);
+    field.focus();
+    var range = document.createRange();
+    range.selectNodeContents(field);
+    range.collapse(false);
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    function close() {
+        if (box.parentNode) box.parentNode.removeChild(box);
+        textElement.hidden = wasHidden;
+    }
+
+    function commit() {
+        var text = fieldValue(field).trim();
+        saveButton.disabled = true;
+        error.hidden = true;
+        save(text).then(function () {
+            return loadFeed(currentView);
+        }).catch(function (problem) {
+            error.textContent = (problem && problem.message) || "Could not save the change.";
+            error.hidden = false;
+            saveButton.disabled = false;
+        });
+    }
+
+    cancel.addEventListener("click", close);
+    saveButton.addEventListener("click", commit);
+    field.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            event.preventDefault();
+            close();
+        } else if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+            event.preventDefault();
+            commit();
+        }
+    });
 }
 
 function showPostError(message) {
@@ -2045,6 +2139,29 @@ document.querySelector(".social-view").addEventListener("click", function (event
         var opening = pop.hidden;
         closeDeleteMenus();
         pop.hidden = !opening;
+        return;
+    }
+
+    var editPostButton = event.target.closest("[data-edit-post]");
+    if (editPostButton) {
+        closeDeleteMenus();
+        var editCard = editPostButton.closest(".post");
+        var editBody = editCard.querySelector(".post-text");
+        var editId = Number(editPostButton.getAttribute("data-edit-post"));
+        startTextEdit(editBody, editBody.getAttribute("data-raw") || "", 500, function (text) {
+            return requestJson("/Home/UpdatePost", "POST", { id: editId, text: text });
+        });
+        return;
+    }
+
+    var editCommentButton = event.target.closest("[data-edit-comment]");
+    if (editCommentButton) {
+        closeDeleteMenus();
+        var commentText = editCommentButton.closest(".comment").querySelector(".comment-body p");
+        var commentId = Number(editCommentButton.getAttribute("data-edit-comment"));
+        startTextEdit(commentText, commentText.getAttribute("data-raw") || "", 280, function (text) {
+            return requestJson("/Home/UpdateComment", "POST", { id: commentId, text: text });
+        });
         return;
     }
 

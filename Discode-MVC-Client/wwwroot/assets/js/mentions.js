@@ -330,7 +330,7 @@
         }
     }
 
-    window.discodeMentions = { init: init };
+    window.discodeMentions = { init: init, attach: attach, friends: friendPeople };
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
     else init();
