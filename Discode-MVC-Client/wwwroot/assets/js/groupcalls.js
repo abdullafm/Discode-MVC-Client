@@ -748,6 +748,102 @@
         }
     }
 
+    function dockItems() {
+        var items = [];
+        var dm = window.discodeCalls && window.discodeCalls.current && window.discodeCalls.current();
+        if (dm && dm.joined === false && dm.other && window.discodeOpenDm !== dm.other.userName) {
+            items.push({
+                key: "dm-" + dm.callId,
+                title: dm.other.displayName || dm.other.userName,
+                sub: dm.peerScreen ? "is sharing their screen" : "is in a call",
+                avatars: [dm.other.avatarUrl || DEFAULT_AVATAR],
+                join: function (video) {
+                    return window.discodeCalls.answer(video).then(function () {
+                        if (window.discodeOpenDm !== dm.other.userName && window.discodeGo) window.discodeGo("/Dm/Index?name=" + encodeURIComponent(dm.other.userName));
+                    });
+                }
+            });
+        }
+        if (!call) {
+            Object.keys(active).forEach(function (groupId) {
+                var info = active[groupId];
+                if (!info || !info.active || onGroupPage(info.groupId)) return;
+                var sharing = info.participants.filter(function (p) { return p.screen; })[0];
+                items.push({
+                    key: "group-" + info.callId,
+                    title: info.groupName,
+                    sub: sharing ? sharing.displayName + " is sharing their screen" : info.participants.length + (info.participants.length === 1 ? " person is" : " people are") + " in the call",
+                    avatars: info.participants.slice(0, 4).map(function (p) { return p.avatarUrl || DEFAULT_AVATAR; }),
+                    join: function (video) {
+                        return join(info.callId, video).then(function () {
+                            if (!onGroupPage(info.groupId) && window.discodeGo) window.discodeGo("/Group/Index?id=" + info.groupId);
+                        });
+                    }
+                });
+            });
+        }
+        return items;
+    }
+
+    function renderDock() {
+        var dock = document.getElementById("call-dock");
+        var items = dockItems();
+        if (!items.length) {
+            if (dock) dock.hidden = true;
+            return;
+        }
+        if (!dock) {
+            dock = document.createElement("div");
+            dock.id = "call-dock";
+            dock.className = "call-dock";
+            document.body.appendChild(dock);
+        }
+        dock.hidden = false;
+        var signature = items.map(function (item) { return item.key + "|" + item.sub + "|" + item.avatars.join(","); }).join(";");
+        if (dock.getAttribute("data-sig") === signature) return;
+        dock.setAttribute("data-sig", signature);
+        dock.textContent = "";
+        items.forEach(function (item) {
+            var card = document.createElement("div");
+            card.className = "call-dock-card";
+            var faces = document.createElement("div");
+            faces.className = "call-dock-faces";
+            item.avatars.forEach(function (src) {
+                var face = document.createElement("img");
+                face.alt = "";
+                face.src = src;
+                faces.appendChild(face);
+            });
+            var text = document.createElement("div");
+            text.className = "call-dock-text";
+            var title = document.createElement("strong");
+            title.textContent = item.title;
+            var sub = document.createElement("span");
+            sub.textContent = item.sub;
+            text.appendChild(title);
+            text.appendChild(sub);
+            var video = document.createElement("button");
+            video.type = "button";
+            video.className = "call-dock-btn";
+            video.setAttribute("aria-label", "Join with video");
+            video.innerHTML = '<i class="fa-solid fa-video"></i>';
+            var voice = document.createElement("button");
+            voice.type = "button";
+            voice.className = "call-dock-btn";
+            voice.setAttribute("aria-label", "Join with voice");
+            voice.innerHTML = '<i class="fa-solid fa-phone"></i>';
+            video.addEventListener("click", function () { item.join(true).catch(function () {}); });
+            voice.addEventListener("click", function () { item.join(false).catch(function () {}); });
+            card.appendChild(faces);
+            card.appendChild(text);
+            card.appendChild(video);
+            card.appendChild(voice);
+            dock.appendChild(card);
+        });
+    }
+
+    document.addEventListener("discode-call-state", function () { renderDock(); });
+
     function renderPill() {
         var pill = document.getElementById("gcall-pill");
         var show = false;
@@ -786,6 +882,7 @@
         renderStage();
         renderSidebar();
         renderPill();
+        renderDock();
         renderInvite();
         watchAlone();
         document.dispatchEvent(new CustomEvent("discode-gcall-state", { detail: { call: call, active: active } }));
