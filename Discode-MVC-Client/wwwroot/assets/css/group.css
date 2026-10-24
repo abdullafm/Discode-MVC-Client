@@ -1277,3 +1277,150 @@ html.theme-dark .mention-item.is-active,
 html.theme-dark .mention-item:hover {
     background: rgba(78, 80, 88, 0.6);
 }
+
+.dm-msg-avatar,
+.dm-msg-head strong,
+.dm-call-text strong,
+.mention,
+#group-member-list .group-member {
+    cursor: pointer;
+}
+
+.dm-msg-head strong:hover,
+.dm-call-text strong:hover {
+    text-decoration: underline;
+}
+
+.mini-profile {
+    position: fixed;
+    z-index: 700;
+    width: 300px;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #060607;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3);
+}
+
+html.theme-dark .mini-profile {
+    background: #111214;
+    color: #f2f3f5;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.mini-profile .mini-banner {
+    height: 62px;
+    border-radius: 10px 10px 0 0;
+    background: linear-gradient(160deg, #5865f2 0%, #8ea1ff 100%);
+}
+
+.mini-profile .mini-body {
+    padding-bottom: 6px;
+}
+
+.mini-profile .mini-loading {
+    padding: 18px 16px;
+    font-size: 14px;
+    color: #80848e;
+}
+
+.mini-profile .dm-profile-photo {
+    width: 76px;
+    height: 76px;
+    margin: -38px 0 0 14px;
+}
+
+.mini-profile .dm-profile-avatar {
+    width: 76px;
+    height: 76px;
+    border: 5px solid #ffffff;
+    background: #ffffff;
+}
+
+html.theme-dark .mini-profile .dm-profile-avatar {
+    border-color: #111214;
+    background: #111214;
+}
+
+.mini-profile .dm-status {
+    border-color: #ffffff;
+}
+
+html.theme-dark .mini-profile .dm-status {
+    border-color: #111214;
+}
+
+.mini-profile .dm-profile-bubble {
+    left: 86px;
+    bottom: 2px;
+}
+
+html.theme-dark .mini-profile .dm-profile-bubble {
+    background: #1e1f22;
+    color: #dbdee1;
+}
+
+html.theme-dark .mini-profile .dm-profile-bubble::before,
+html.theme-dark .mini-profile .dm-profile-bubble::after {
+    background: #1e1f22;
+}
+
+.mini-profile .dm-private-head,
+.mini-profile .dm-private-note {
+    margin: 8px 14px 0;
+    font-size: 12px;
+}
+
+.mini-profile .dm-profile-card {
+    margin: 10px 14px 0;
+    padding: 0;
+}
+
+.mini-profile .dm-profile-card h2 {
+    font-size: 19px;
+    color: inherit;
+}
+
+.mini-profile .dm-profile-card p {
+    color: #5c5e66;
+}
+
+html.theme-dark .mini-profile .dm-profile-card p {
+    color: #b5bac1;
+}
+
+.mini-profile .dm-profile-body {
+    padding: 8px 14px 4px;
+}
+
+.mini-profile .dm-since-label {
+    color: inherit;
+}
+
+.mini-profile .dm-profile-text {
+    margin: 4px 0 8px;
+    color: inherit;
+}
+
+.mini-actions {
+    padding: 8px 14px 14px;
+}
+
+.mini-actions button {
+    width: 100%;
+    height: 32px;
+    border: 0;
+    border-radius: 4px;
+    background: #5865f2;
+    color: #ffffff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.mini-actions button:hover {
+    background: #4752c4;
+}
