@@ -198,6 +198,7 @@
 
     function append(message, force) {
         if (box.querySelector('[data-id="' + message.id + '"]')) return;
+        if (!loaded.some(function (item) { return item.id === message.id; })) loaded.push(message);
         var atBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 140;
         var last = lastRow();
         var when = stamp(message.createdAt);
@@ -272,15 +273,49 @@
         }
     }
 
+    var loaded = [];
+    var hasMore = true;
+    var loadingOlder = false;
+    var PAGE_SIZE = 100;
+
+    function renderAll() {
+        var list = loaded.slice();
+        box.textContent = "";
+        list.forEach(function (message) { append(message, false); });
+    }
+
     function loadMessages() {
         return request("/Group/Messages?id=" + groupId).then(function (list) {
-            box.textContent = "";
-            (Array.isArray(list) ? list : []).forEach(function (message) { append(message, true); });
+            loaded = Array.isArray(list) ? list.slice() : [];
+            hasMore = loaded.length >= PAGE_SIZE;
+            renderAll();
             scroller.scrollTop = scroller.scrollHeight;
         }).catch(function (error) {
             showError(error.message);
         });
     }
+
+    function loadOlder() {
+        if (loadingOlder || !hasMore || !loaded.length) return;
+        var first = loaded.reduce(function (lowest, message) { return message.id < lowest ? message.id : lowest; }, loaded[0].id);
+        loadingOlder = true;
+        request("/Group/Messages?id=" + groupId + "&before=" + first).then(function (list) {
+            list = Array.isArray(list) ? list : [];
+            hasMore = list.length >= PAGE_SIZE;
+            if (!list.length) return;
+            var before = scroller.scrollHeight;
+            var top = scroller.scrollTop;
+            loaded = list.concat(loaded);
+            renderAll();
+            scroller.scrollTop = scroller.scrollHeight - before + top;
+        }).catch(function () {}).then(function () {
+            loadingOlder = false;
+        });
+    }
+
+    scroller.addEventListener("scroll", function () {
+        if (scroller.scrollTop < 80) loadOlder();
+    });
 
     function otherMembers() {
         return group.members.map(function (member) { return member.userName; }).filter(function (name) { return name !== meName; });
@@ -523,12 +558,14 @@
     document.addEventListener("discode-group-message-deleted", function (event) {
         var data = event.detail;
         if (!data || data.groupId !== groupId) return;
+        loaded = loaded.filter(function (item) { return item.id !== data.messageId; });
         window.GroupParts.remove(data.messageId);
     });
 
     document.addEventListener("discode-group-message-updated", function (event) {
         var data = event.detail;
         if (!data || data.groupId !== groupId || !data.message) return;
+        loaded = loaded.map(function (item) { return item.id === data.message.id ? data.message : item; });
         if (data.message.isCall) {
             var callRow = box.querySelector('.dm-msg[data-id="' + data.message.id + '"]');
             if (callRow) fillCallRow(callRow, data.message);

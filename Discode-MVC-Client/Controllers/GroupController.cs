@@ -75,9 +75,9 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
-        public Task<IActionResult> Messages(int id)
+        public Task<IActionResult> Messages(int id, int? before = null)
         {
-            return Forward(client => client.GetAsync($"api/group/{id}/messages"));
+            return Forward(client => client.GetAsync($"api/group/{id}/messages" + (before.HasValue ? "?before=" + before.Value : string.Empty)));
         }
 
         [HttpPost]

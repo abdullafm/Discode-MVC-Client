@@ -127,7 +127,10 @@ body .friends-view.group-view {
     padding: 16px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+}
+
+.group-scroll > :first-child {
+    margin-top: auto;
 }
 
 .group-badge {
