@@ -851,14 +851,21 @@ section#group-members.no-motion .group-members {
 
 .call-stage.gcall-stage.is-video .call-faces.is-many {
     flex-wrap: wrap;
-    row-gap: 12px;
+    row-gap: 10px;
+    column-gap: 10px;
     overflow-y: auto;
-    align-content: center;
+    align-content: safe center;
+    align-items: flex-start;
+    height: 100%;
+    padding-top: 8px;
+    padding-bottom: 8px;
 }
 
 .call-stage.gcall-stage.is-video .call-faces.is-many .call-face {
-    flex: 1 1 200px;
-    max-width: 320px;
+    flex: 1 1 150px;
+    max-width: 240px;
+    max-height: none;
+    height: auto;
 }
 
 #gcall-mic.is-off,
