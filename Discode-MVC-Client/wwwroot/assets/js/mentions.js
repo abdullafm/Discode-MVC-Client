@@ -381,7 +381,14 @@
         decorateElement(element, {}, meInfo().userName, true);
     }
 
-    window.discodeMentions = { init: init, attach: attach, friends: friendPeople, decorate: decorate };
+    function mentionsMe(element) {
+        var me = "@" + meInfo().userName.toLowerCase();
+        return [].some.call(element.querySelectorAll(".mention"), function (chip) {
+            return chip.textContent.toLowerCase() === me;
+        });
+    }
+
+    window.discodeMentions = { init: init, attach: attach, friends: friendPeople, decorate: decorate, mentionsMe: mentionsMe };
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
     else init();

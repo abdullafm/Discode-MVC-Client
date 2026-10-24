@@ -4722,3 +4722,24 @@ button.watch-viewers {
     background: rgba(88, 101, 242, 0.35);
     color: #dee0fc;
 }
+
+.watch-msg.is-mentioned {
+    background: rgba(250, 166, 26, 0.14);
+    border-radius: 0 6px 6px 0;
+    padding-left: 9px;
+    box-shadow: inset 3px 0 0 #f0b232;
+}
+
+.watch-msg-ping {
+    margin-left: 6px !important;
+    display: inline-block;
+    margin: 2px 0;
+    padding: 0 6px;
+    border-radius: 4px;
+    background: #f0b232;
+    color: #1e1f22;
+    font-size: 10px;
+    font-style: normal;
+    font-weight: 700;
+    text-transform: uppercase;
+}

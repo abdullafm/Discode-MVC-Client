@@ -346,6 +346,11 @@
         var said = element("p", "", text);
         if (window.discodeMentions && window.discodeMentions.decorate) window.discodeMentions.decorate(said);
         body.appendChild(said);
+        if (window.discodeMentions && window.discodeMentions.mentionsMe && window.discodeMentions.mentionsMe(said)) {
+            line.classList.add("is-mentioned");
+            var ping = element("em", "watch-msg-ping", "mentioned you");
+            body.insertBefore(ping, said);
+        }
         var more = element("button", "watch-msg-more");
         more.type = "button";
         more.setAttribute("aria-label", "More");
