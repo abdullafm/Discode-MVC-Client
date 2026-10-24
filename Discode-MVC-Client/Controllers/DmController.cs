@@ -1,3 +1,4 @@
+using Discode_MVC_Client.Mappers;
 using Discode_MVC_Client.ViewModels.Account;
 using Discode_MVC_Client.ViewModels.Dm;
 using Discode_MVC_Client.ViewModels.Friends;
@@ -194,7 +195,7 @@ namespace Discode_MVC_Client.Controllers
                 return NotFound();
 
             var offset = int.TryParse(Request.Cookies["tz"], out var minutes) && Math.Abs(minutes) <= 14 * 60 ? minutes : 0;
-            return PartialView("_DmProfileInfo", DmProfileVM.From(profile, offset));
+            return PartialView("_DmProfileInfo", profile.ToDmProfile(offset));
         }
 
         [HttpGet]
