@@ -1133,6 +1133,65 @@
         render();
     });
 
+    var streamMenu = null;
+
+    function closeStreamMenu() {
+        if (streamMenu && streamMenu.parentNode) streamMenu.parentNode.removeChild(streamMenu);
+        streamMenu = null;
+    }
+
+    function openStreamMenu(x, y, options) {
+        closeStreamMenu();
+        var menu = document.createElement("div");
+        menu.className = "stream-menu";
+        menu.setAttribute("role", "menu");
+        menu.innerHTML = '<button type="button" role="menuitem" data-act="stop"><i class="fa-solid fa-display"></i><span>Stop Watching</span></button>' +
+            '<hr>' +
+            '<button type="button" role="menuitem" data-act="popout"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>Pop Out Stream</span></button>';
+        document.body.appendChild(menu);
+        var width = menu.offsetWidth;
+        var height = menu.offsetHeight;
+        menu.style.left = Math.max(8, Math.min(x, window.innerWidth - width - 8)) + "px";
+        menu.style.top = Math.max(8, Math.min(y, window.innerHeight - height - 8)) + "px";
+        var popout = menu.querySelector('[data-act="popout"]');
+        if (!options.video || !options.video.requestPictureInPicture || !document.pictureInPictureEnabled) popout.hidden = true;
+        menu.addEventListener("click", function (event) {
+            var item = event.target.closest("button[data-act]");
+            if (!item) return;
+            closeStreamMenu();
+            if (item.getAttribute("data-act") === "stop") options.onStop();
+            else if (options.video && options.video.requestPictureInPicture) options.video.requestPictureInPicture().catch(function () {});
+        });
+        streamMenu = menu;
+    }
+
+    document.addEventListener("mousedown", function (event) {
+        if (streamMenu && !event.target.closest(".stream-menu")) closeStreamMenu();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") closeStreamMenu();
+    });
+    window.addEventListener("blur", closeStreamMenu);
+    window.addEventListener("resize", closeStreamMenu);
+
+    document.addEventListener("contextmenu", function (event) {
+        var tile = event.target.closest && event.target.closest("#call-faces .call-face.is-screen");
+        if (!tile || !call) return;
+        var owner = (tile.getAttribute("data-user") || "").replace("screen-", "");
+        if (owner === "me" || tile.classList.contains("is-unwatched")) return;
+        event.preventDefault();
+        openStreamMenu(event.clientX, event.clientY, {
+            video: tile.querySelector("video"),
+            onStop: function () {
+                delete watching[owner];
+                if (focused === tile.id) focused = "";
+                renderStage();
+            }
+        });
+    });
+
+    window.discodeStreamMenu = { open: openStreamMenu, close: closeStreamMenu };
+
     window.discodeGroupCalls = {
         current: function () { return call; },
         activeFor: function (groupId) { return active[groupId] || null; },

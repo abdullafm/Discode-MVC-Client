@@ -1019,3 +1019,51 @@ section#group-members.no-motion .group-members {
 #call-mute {
     display: none !important;
 }
+
+.stream-menu {
+    position: fixed;
+    z-index: 500;
+    width: 240px;
+    padding: 8px;
+    border-radius: 8px;
+    background: #111214;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    color: #dbdee1;
+    font-size: 15px;
+}
+
+.stream-menu button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+}
+
+.stream-menu button:hover {
+    background: #4752c4;
+    color: #fff;
+}
+
+.stream-menu button[hidden] {
+    display: none;
+}
+
+.stream-menu hr {
+    margin: 6px 0;
+    border: 0;
+    border-top: 1px solid #2e3035;
+}
+
+.stream-menu i {
+    width: 18px;
+    text-align: center;
+}

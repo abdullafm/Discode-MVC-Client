@@ -396,6 +396,20 @@
         }
     });
 
+    document.addEventListener("contextmenu", function (event) {
+        var tile = event.target.closest && event.target.closest("#call-screen-peer");
+        if (!tile || !window.discodeStreamMenu || tile.classList.contains("is-unwatched") || !watchingPeerScreen) return;
+        event.preventDefault();
+        window.discodeStreamMenu.open(event.clientX, event.clientY, {
+            video: tile.querySelector("video"),
+            onStop: function () {
+                watchingPeerScreen = false;
+                if (focusedScreen === "call-screen-peer") focusedScreen = "";
+                renderTiles();
+            }
+        });
+    });
+
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape" && focusedScreen) {
             focusedScreen = "";
