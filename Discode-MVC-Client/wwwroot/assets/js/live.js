@@ -422,7 +422,35 @@
         video.srcObject = null;
         byId("live-mute-btn").querySelector("i").className = "fa-solid " + (mine ? "fa-volume-xmark" : "fa-volume-high");
         setWait(mine ? "" : "Connecting to the stream...");
+        updateGuestButton();
+        updateMinimizeButton();
     }
+
+    function updateMinimizeButton() {
+        byId("live-minimize-btn").hidden = !watching || !!myGuest;
+    }
+
+    byId("live-minimize-btn").addEventListener("click", function () {
+        if (!watching || !watching.pc || myGuest || !window.discodeLiveDock) return;
+        var current = watching;
+        var video = byId("live-stream-video");
+        var info = {
+            streamId: current.stream.id,
+            pc: current.pc,
+            stream: video.srcObject,
+            title: current.stream.title,
+            host: hostName(current.stream),
+            muted: video.muted
+        };
+        watching = null;
+        clearGuest();
+        closeViewerList();
+        setReply(null);
+        closeChatMenu();
+        video.srcObject = null;
+        byId("live-watch-modal").hidden = true;
+        window.discodeLiveDock.take(info);
+    });
 
     function refreshRoster() {
         var id = currentStreamId();
@@ -477,6 +505,7 @@
     });
 
     function openStream(stream, attempt) {
+        if (window.discodeLiveDock) window.discodeLiveDock.close();
         if (stream.isMine) {
             if (broadcast && broadcast.streamId === stream.id) {
                 showWatchDialog(stream, true);
@@ -493,6 +522,12 @@
             if (!watching || watching.stream.id !== stream.id) return;
             watching.stream = join.stream;
             byId("live-viewers-count").textContent = viewerText(join.stream.viewerCount);
+            if (join.guest) {
+                guest = join.guest;
+                showGuestTile(guest, null, false);
+                wantGuest();
+            }
+            updateGuestButton();
         }).catch(function (err) {
             if (!watching || watching.stream.id !== stream.id) return;
             if (/not ready/i.test(String((err && err.message) || "")) && (attempt || 0) < 12) {
@@ -510,6 +545,7 @@
         var current = watching;
         watching = null;
         if (current.pc) current.pc.close();
+        clearGuest();
         hub("LeaveLive", current.stream.id).catch(function () {});
         var video = byId("live-stream-video");
         video.srcObject = null;
@@ -758,7 +794,11 @@
             pc.ontrack = function (event) {
                 var video = byId("live-stream-video");
                 video.srcObject = event.streams[0];
-                video.play().catch(function () {});
+                video.play().catch(function () {
+                    video.muted = true;
+                    byId("live-mute-btn").querySelector("i").className = "fa-solid fa-volume-xmark";
+                    video.play().catch(function () {});
+                });
                 setWait("");
             };
             pc.setRemoteDescription(message.sdp).then(function () {
@@ -784,6 +824,10 @@
         } catch (err) {
             return;
         }
+        if (message.role === "guest") {
+            if (currentStreamId() === data.streamId) guestSignal(data.from, message);
+            return;
+        }
         if (broadcast && broadcast.streamId === data.streamId) hostSignal(data.from, message);
         else if (watching && watching.stream.id === data.streamId) {
             viewerSignal(data.from, message);
@@ -796,6 +840,8 @@
 
     document.addEventListener("discode-live-viewer-left", function (event) {
         dropPeer(event.detail.connectionId);
+        if (guest && guest.connectionId === event.detail.connectionId && currentStreamId() === event.detail.streamId) clearGuest();
+        removeGuestRequest(event.detail.connectionId);
     });
 
     document.addEventListener("discode-live-viewers", function (event) {
@@ -842,6 +888,250 @@
 
     document.addEventListener("discode-live-heart", function (event) {
         if (currentStreamId() === event.detail.streamId) spawnHeart();
+    });
+
+    /* ---------------- guests ---------------- */
+
+    var guest = null;
+    var myGuest = null;
+    var guestPending = false;
+    var guestRecv = {};
+    var earlyGuestIce = {};
+
+    function isHostNow() {
+        return !!broadcast && broadcast.streamId === currentStreamId();
+    }
+
+    function guestNote(text) {
+        var holder = byId("live-guest-requests");
+        var note = element("div", "watch-guest-note", text);
+        holder.appendChild(note);
+        setTimeout(function () {
+            if (note.parentNode) note.parentNode.removeChild(note);
+        }, 3500);
+    }
+
+    function showGuestTile(info, stream, mine) {
+        byId("live-guest-tile").hidden = false;
+        byId("live-guest-name").textContent = mine ? "You" : (info.displayName || info.userName || "");
+        var video = byId("live-guest-video");
+        video.muted = !!mine;
+        if (stream) {
+            video.srcObject = stream;
+            video.play().catch(function () {});
+        }
+        byId("live-guest-remove").hidden = !(isHostNow() || mine);
+    }
+
+    function updateGuestButton() {
+        var button = byId("live-guest-btn");
+        button.hidden = !watching || isHostNow();
+        button.classList.toggle("is-pending", guestPending);
+        button.classList.toggle("is-guest", !!myGuest);
+        button.disabled = guestPending || (!!guest && !myGuest);
+        updateMinimizeButton();
+        button.title = myGuest ? "Leave as guest" : guestPending ? "Request sent" : guest ? "A guest is already on" : "Request to join";
+    }
+
+    function clearGuest() {
+        Object.keys(guestRecv).forEach(function (key) { guestRecv[key].pc.close(); });
+        guestRecv = {};
+        earlyGuestIce = {};
+        if (myGuest) {
+            Object.keys(myGuest.peers).forEach(function (key) { myGuest.peers[key].pc.close(); });
+            stopTracks(myGuest.stream);
+            myGuest = null;
+        }
+        guest = null;
+        guestPending = false;
+        byId("live-guest-tile").hidden = true;
+        byId("live-guest-video").srcObject = null;
+        updateGuestButton();
+    }
+
+    function wantGuest() {
+        if (!guest || myGuest) return;
+        signal(currentStreamId(), guest.connectionId, { kind: "want", role: "guest" });
+    }
+
+    function startGuestPeer(target) {
+        var streamId = currentStreamId();
+        var pc = new RTCPeerConnection(ICE);
+        var peer = { pc: pc, pending: [] };
+        if (myGuest.peers[target]) myGuest.peers[target].pc.close();
+        myGuest.peers[target] = peer;
+        myGuest.stream.getTracks().forEach(function (track) {
+            pc.addTrack(track, myGuest.stream);
+        });
+        pc.onicecandidate = function (event) {
+            if (event.candidate) signal(streamId, target, { kind: "ice", role: "guest", candidate: event.candidate });
+        };
+        pc.onconnectionstatechange = function () {
+            if ((pc.connectionState === "failed" || pc.connectionState === "closed") && myGuest && myGuest.peers[target] === peer) {
+                delete myGuest.peers[target];
+            }
+        };
+        pc.createOffer().then(function (offer) {
+            return pc.setLocalDescription(offer);
+        }).then(function () {
+            tuneSenders(pc);
+            signal(streamId, target, { kind: "offer", role: "guest", sdp: pc.localDescription });
+        }).catch(function () {});
+    }
+
+    function guestSignal(from, message) {
+        var streamId = currentStreamId();
+        if (message.kind === "want") {
+            if (!myGuest) return;
+            if (myGuest.stream) startGuestPeer(from);
+            else myGuest.wants.push(from);
+        } else if (message.kind === "offer") {
+            if (guestRecv[from]) guestRecv[from].pc.close();
+            var pc = new RTCPeerConnection(ICE);
+            var peer = { pc: pc, pending: (earlyGuestIce[from] || []).splice(0) };
+            guestRecv[from] = peer;
+            pc.onicecandidate = function (event) {
+                if (event.candidate) signal(streamId, from, { kind: "ice", role: "guest", candidate: event.candidate });
+            };
+            pc.ontrack = function (event) {
+                var video = byId("live-guest-video");
+                video.srcObject = event.streams[0];
+                video.muted = false;
+                video.play().catch(function () {
+                    video.muted = true;
+                    video.play().catch(function () {});
+                });
+                byId("live-guest-tile").hidden = false;
+            };
+            pc.setRemoteDescription(message.sdp).then(function () {
+                flushCandidates(peer);
+                return pc.createAnswer();
+            }).then(function (answer) {
+                return pc.setLocalDescription(answer);
+            }).then(function () {
+                signal(streamId, from, { kind: "answer", role: "guest", sdp: pc.localDescription });
+            }).catch(function () {});
+        } else if (message.kind === "answer") {
+            var sender = myGuest && myGuest.peers[from];
+            if (sender) {
+                sender.pc.setRemoteDescription(message.sdp).then(function () {
+                    flushCandidates(sender);
+                }).catch(function () {});
+            }
+        } else if (message.kind === "ice") {
+            var target = (myGuest && myGuest.peers[from]) || guestRecv[from];
+            if (target) addRemoteCandidate(target, message.candidate);
+            else (earlyGuestIce[from] = earlyGuestIce[from] || []).push(message.candidate);
+        }
+    }
+
+    function becomeGuest() {
+        myGuest = { stream: null, peers: {}, wants: [] };
+        guestPending = false;
+        updateGuestButton();
+        acquireCamera().then(function (stream) {
+            if (!myGuest) {
+                stopTracks(stream);
+                return;
+            }
+            myGuest.stream = stream;
+            showGuestTile(guest || {}, stream, true);
+            myGuest.wants.splice(0).forEach(startGuestPeer);
+        }).catch(function () {
+            guestNote("Your camera or microphone is not available.");
+            hub("EndLiveGuest", currentStreamId()).catch(function () {});
+            clearGuest();
+        });
+    }
+
+    function removeGuestRequest(connectionId) {
+        var card = byId("live-guest-requests").querySelector('[data-connection="' + connectionId + '"]');
+        if (card && card.parentNode) card.parentNode.removeChild(card);
+    }
+
+    byId("live-guest-btn").addEventListener("click", function () {
+        var id = currentStreamId();
+        if (!id) return;
+        if (myGuest) {
+            hub("EndLiveGuest", id).catch(function () {});
+            return;
+        }
+        guestPending = true;
+        updateGuestButton();
+        hub("RequestLiveGuest", id).catch(function (err) {
+            guestPending = false;
+            updateGuestButton();
+            guestNote(hubMessage(err));
+        });
+    });
+
+    byId("live-guest-tile").addEventListener("click", function (event) {
+        if (event.target.closest("#live-guest-remove")) return;
+        var video = byId("live-guest-video");
+        if (!myGuest && video.muted) {
+            video.muted = false;
+            video.play().catch(function () {});
+        }
+    });
+
+    byId("live-guest-remove").addEventListener("click", function () {
+        var id = currentStreamId();
+        if (id) hub("EndLiveGuest", id).catch(function () {});
+    });
+
+    document.addEventListener("discode-live-guest-requested", function (event) {
+        var request = event.detail;
+        if (!isHostNow() || broadcast.streamId !== request.streamId) return;
+        removeGuestRequest(request.connectionId);
+        var card = element("div", "watch-guest-request");
+        card.setAttribute("data-connection", request.connectionId);
+        var face = element("img");
+        face.alt = "";
+        face.src = request.avatarUrl || DEFAULT_AVATAR;
+        var text = element("span", "", (request.displayName || request.userName) + " wants to join");
+        var accept = element("button", "watch-guest-accept", "Accept");
+        accept.type = "button";
+        var decline = element("button", "watch-guest-decline", "Decline");
+        decline.type = "button";
+        accept.addEventListener("click", function () {
+            removeGuestRequest(request.connectionId);
+            hub("RespondLiveGuest", request.streamId, request.connectionId, true).catch(function (err) { guestNote(hubMessage(err)); });
+        });
+        decline.addEventListener("click", function () {
+            removeGuestRequest(request.connectionId);
+            hub("RespondLiveGuest", request.streamId, request.connectionId, false).catch(function () {});
+        });
+        card.appendChild(face);
+        card.appendChild(text);
+        card.appendChild(accept);
+        card.appendChild(decline);
+        byId("live-guest-requests").appendChild(card);
+    });
+
+    document.addEventListener("discode-live-guest-response", function (event) {
+        if (!watching || watching.stream.id !== event.detail.streamId) return;
+        if (event.detail.accepted) {
+            becomeGuest();
+        } else {
+            guestPending = false;
+            updateGuestButton();
+            guestNote("The host declined your request.");
+        }
+    });
+
+    document.addEventListener("discode-live-guest-started", function (event) {
+        var info = event.detail;
+        if (currentStreamId() !== info.streamId) return;
+        guest = info;
+        updateGuestButton();
+        if (myGuest) return;
+        showGuestTile(info, null, false);
+        wantGuest();
+    });
+
+    document.addEventListener("discode-live-guest-ended", function (event) {
+        if (currentStreamId() !== event.detail.streamId) return;
+        clearGuest();
     });
 
     /* ---------------- Go Live: capture + preview ---------------- */
@@ -1018,6 +1308,7 @@
     });
 
     function openCreateDialog() {
+        if (window.discodeLiveDock) window.discodeLiveDock.close();
         if (broadcast) {
             showWatchDialog(broadcast.info, true);
             byId("live-stream-video").srcObject = broadcast.stream;
@@ -1149,6 +1440,8 @@
         if (!broadcast) return;
         var current = broadcast;
         broadcast = null;
+        clearGuest();
+        byId("live-guest-requests").textContent = "";
         clearTimeout(current.snapshotTimer);
         removeThumbnail(current.thumbnail);
         Object.keys(current.peers).forEach(function (key) { current.peers[key].pc.close(); });

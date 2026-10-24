@@ -280,6 +280,22 @@
                     document.dispatchEvent(new CustomEvent("discode-live-viewer-left", { detail: { streamId: streamId, connectionId: connectionId } }));
                 });
 
+                connection.on("GuestRequested", function (guest) {
+                    document.dispatchEvent(new CustomEvent("discode-live-guest-requested", { detail: guest }));
+                });
+
+                connection.on("GuestResponse", function (streamId, accepted) {
+                    document.dispatchEvent(new CustomEvent("discode-live-guest-response", { detail: { streamId: streamId, accepted: accepted } }));
+                });
+
+                connection.on("GuestStarted", function (guest) {
+                    document.dispatchEvent(new CustomEvent("discode-live-guest-started", { detail: guest }));
+                });
+
+                connection.on("GuestEnded", function (streamId, connectionId) {
+                    document.dispatchEvent(new CustomEvent("discode-live-guest-ended", { detail: { streamId: streamId, connectionId: connectionId } }));
+                });
+
                 connection.on("ReceiveSignal", function (streamId, from, payload) {
                     document.dispatchEvent(new CustomEvent("discode-live-signal", { detail: { streamId: streamId, from: from, payload: payload } }));
                 });
