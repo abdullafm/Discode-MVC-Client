@@ -1431,3 +1431,11 @@ html.theme-dark .mini-profile .dm-profile-card p {
 .mini-profile .dm-profile-avatar {
     cursor: pointer;
 }
+
+.mini-profile .dm-profile-avatar {
+    transition: filter 0.15s ease;
+}
+
+.mini-profile .dm-profile-avatar:hover {
+    filter: brightness(0.7);
+}
