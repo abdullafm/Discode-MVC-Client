@@ -1531,21 +1531,32 @@ html.theme-dark .mini-profile .dm-profile-card p {
     cursor: pointer;
 }
 
+.mini-profile:has(.dm-private-head) .mini-banner {
+    margin-top: 36px;
+    border-radius: 0;
+}
+
 .mini-profile .dm-private-head {
-    top: 10px;
-    left: auto;
-    right: 12px;
-    height: auto;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 36px;
     margin: 0;
     padding: 0;
-    z-index: 2;
-    color: #ffffff;
-    font-size: 12px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    justify-content: center;
+    border-radius: 10px 10px 0 0;
+    background: #f2f3f5;
+    color: #060607;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+html.theme-dark .mini-profile .dm-private-head {
+    background: #111214;
 }
 
 html.theme-dark body .mini-profile .dm-private-head,
 html.theme-dark body .mini-profile .dm-private-head span,
 html.theme-dark body .mini-profile .dm-private-head i {
-    color: #ffffff !important;
+    color: #f2f3f5 !important;
 }
