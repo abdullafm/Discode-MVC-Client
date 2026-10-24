@@ -1025,7 +1025,26 @@
         if (!document.hidden) refreshActive();
     });
 
+    var sideWatcher = null;
+    var sideHits = [];
+
+    function watchSidebarWidget() {
+        if (sideWatcher) sideWatcher.disconnect();
+        var widget = document.getElementById("sidebar-call");
+        if (!widget) return;
+        sideWatcher = new MutationObserver(function () {
+            if (!call || !widget.hidden) return;
+            var now = Date.now();
+            sideHits = sideHits.filter(function (stamp) { return now - stamp < 1000; });
+            if (sideHits.length >= 5) return;
+            sideHits.push(now);
+            renderSidebar();
+        });
+        sideWatcher.observe(widget, { attributes: true, attributeFilter: ["hidden"] });
+    }
+
     function bindPage() {
+        watchSidebarWidget();
         micIcon = document.getElementById("mic");
         headIcon = document.getElementById("head");
         headButton = document.getElementById("headp-btn");
@@ -1036,9 +1055,8 @@
         if (decline1) decline1.addEventListener("click", decline);
         var sideHang = document.getElementById("sidebar-call-hangup");
         if (sideHang) sideHang.addEventListener("click", function () { if (call) leave(); });
-        var hangup = document.getElementById("call-hangup");
-        if (!hangup) return;
-        hangup.addEventListener("click", leave);
+        if (!document.getElementById("gcall-answer-bar")) return;
+        document.getElementById("call-hangup").addEventListener("click", leave);
         document.getElementById("gcall-answer-video").addEventListener("click", function () { joinFromStage(true); });
         document.getElementById("gcall-answer-voice").addEventListener("click", function () { joinFromStage(false); });
         document.getElementById("gcall-answer-decline").addEventListener("click", function () {
