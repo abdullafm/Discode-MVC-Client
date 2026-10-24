@@ -1530,3 +1530,20 @@ html.theme-dark .mini-profile .dm-profile-card p {
     font-style: italic;
     cursor: pointer;
 }
+
+.mini-profile .dm-private-head {
+    top: 10px;
+    left: auto;
+    right: 12px;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    z-index: 2;
+    color: #ffffff;
+    font-size: 12px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+html.theme-dark .mini-profile .dm-private-head {
+    color: #ffffff;
+}
