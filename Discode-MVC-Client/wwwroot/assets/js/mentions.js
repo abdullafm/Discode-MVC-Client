@@ -44,7 +44,7 @@
         return map;
     }
 
-    function decorateElement(element, names, me) {
+    function decorateElement(element, names, me, loose) {
         var found = false;
         var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
         var nodes = [];
@@ -60,8 +60,13 @@
             while ((match = pattern.exec(text))) {
                 var raw = match[1];
                 var cut = raw;
-                while (cut.length && !names[cut.toLowerCase()]) cut = cut.slice(0, -1);
-                if (!cut.length) continue;
+                if (loose) {
+                    while (cut.length && /[.\-]$/.test(cut)) cut = cut.slice(0, -1);
+                    if (cut.length < 2 || (match.index > 0 && /[\w@]/.test(text.charAt(match.index - 1)))) continue;
+                } else {
+                    while (cut.length && !names[cut.toLowerCase()]) cut = cut.slice(0, -1);
+                    if (!cut.length) continue;
+                }
                 var start = match.index;
                 var end = start + 1 + cut.length;
                 if (start > last) pieces.push(document.createTextNode(text.slice(last, start)));
@@ -94,6 +99,46 @@
             if (row && mentioned) row.classList.add("is-mentioned");
             else if (row && !element.querySelector(".mention")) row.classList.remove("is-mentioned");
         });
+    }
+
+    function scanFeed(container) {
+        [].forEach.call(container.querySelectorAll(".post-text, .comment-body p"), function (element) {
+            var current = element.textContent;
+            if (element._mentionText === current) return;
+            if (current.indexOf("@") !== -1) decorateElement(element, {}, "", true);
+            element._mentionText = element.textContent;
+        });
+    }
+
+    function observeFeed(container) {
+        var queued = false;
+        var schedule = function () {
+            if (queued) return;
+            queued = true;
+            window.requestAnimationFrame(function () {
+                queued = false;
+                scanFeed(container);
+            });
+        };
+        new MutationObserver(schedule).observe(container, { childList: true, subtree: true, characterData: true });
+        schedule();
+    }
+
+    var friendCache = [];
+    var friendsLoaded = false;
+
+    function friendPeople() {
+        if (!friendsLoaded) {
+            friendsLoaded = true;
+            fetch("/Home/Friends", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+                return response.ok ? response.json() : [];
+            }).then(function (list) {
+                friendCache = (Array.isArray(list) ? list : []).map(function (friend) {
+                    return { userName: friend.userName || "", displayName: friend.name || friend.displayName || friend.userName || "", avatarUrl: friend.avatarUrl || "" };
+                }).filter(function (person) { return person.userName; });
+            }).catch(function () { friendsLoaded = false; });
+        }
+        return friendCache;
     }
 
     function observe(container, peopleFn) {
@@ -262,6 +307,20 @@
         if (dmInput && dmBox) {
             attach(dmInput, dmPeople);
             observe(dmBox, dmPeople);
+        }
+        var socialView = document.querySelector(".social-view");
+        var postInput = document.getElementById("post-text");
+        if (socialView) {
+            if (postInput) attach(postInput, friendPeople);
+            observeFeed(socialView);
+            document.addEventListener("focusin", function (event) {
+                var box = event.target.closest && event.target.closest(".comment-form .rich-text");
+                if (box && !box._mentionBound) {
+                    box._mentionBound = true;
+                    attach(box, friendPeople);
+                }
+            });
+            friendPeople();
         }
         var groupInput = document.getElementById("group-input");
         var groupBox = document.getElementById("group-messages");

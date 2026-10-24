@@ -118,7 +118,7 @@
                                             {
                                                 <img class="notify-avatar-img" src="@notification.ActorAvatarUrl" alt="@notification.ActorUserName">
                                             }
-                                            <span class="notify-badge-icon @(notification.Type switch { "PostComment" or "CommentReply" => "badge-comment", "FriendRequest" or "FriendAccepted" => "badge-friend", _ => "badge-like" })"><i class="fa-solid @(notification.Type switch { "PostComment" or "CommentReply" => "fa-comment", "FriendRequest" => "fa-user-plus", "FriendAccepted" => "fa-user-check", "LiveInvite" => "fa-tower-broadcast", _ => "fa-heart" })"></i></span>
+                                            <span class="notify-badge-icon @(notification.Type switch { "PostComment" or "CommentReply" or "PostMention" or "CommentMention" => "badge-comment", "FriendRequest" or "FriendAccepted" => "badge-friend", _ => "badge-like" })"><i class="fa-solid @(notification.Type switch { "PostComment" or "CommentReply" => "fa-comment", "FriendRequest" => "fa-user-plus", "FriendAccepted" => "fa-user-check", "LiveInvite" => "fa-tower-broadcast", "PostMention" or "CommentMention" => "fa-at", _ => "fa-heart" })"></i></span>
                                         </div>
                                         <a class="notify-content" href="@Url.Action("Open", "Notification", new { id = notification.Id, tab = notification.Type == "FriendRequest" ? "pending" : (notification.Type == "FriendAccepted" ? "all" : null), live = notification.LiveStreamId })">
                                             <div class="notify-headline">
@@ -134,6 +134,8 @@
                                                         "FriendRequest" => "sent you a friend request",
                                                         "FriendAccepted" => "accepted your friend request",
                                                         "LiveInvite" => "invited you to watch a live stream",
+                                                        "PostMention" => "mentioned you in a post",
+                                                        "CommentMention" => "mentioned you in a comment",
                                                         _ => "sent you a notification"
                                                     })
                                                 </span>

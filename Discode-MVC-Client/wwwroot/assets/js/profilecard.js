@@ -99,6 +99,8 @@
     }
 
     function trigger(target) {
+        var tag = target.closest(".mention");
+        if (tag && !target.closest("#dm-messages, #group-messages")) return { user: tag.textContent.replace(/^@/, ""), anchor: tag, side: "below" };
         var inChat = target.closest("#dm-messages, #group-messages");
         if (inChat) {
             var row = target.closest(".dm-msg");
