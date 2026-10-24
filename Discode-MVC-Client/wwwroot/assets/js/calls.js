@@ -1067,6 +1067,9 @@
         answer: answer,
         decline: decline,
         end: end,
+        sync: function () {
+            return invoke("GetMyCall").then(finishSync).catch(function () {});
+        },
         ready: function (callback) {
             if (isReady) callback();
             else readyCallbacks.push(callback);

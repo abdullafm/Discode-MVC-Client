@@ -809,13 +809,28 @@
         return items;
     }
 
+    var dockTimer = 0;
+
+    function checkDock() {
+        if (document.hidden) return;
+        if (window.discodeCalls && window.discodeCalls.sync) window.discodeCalls.sync();
+        refreshActive();
+    }
+
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden && dockTimer) checkDock();
+    });
+
     function renderDock() {
         var dock = document.getElementById("call-dock");
         var items = dockItems();
         if (!items.length) {
             if (dock) dock.hidden = true;
+            clearInterval(dockTimer);
+            dockTimer = 0;
             return;
         }
+        if (!dockTimer) dockTimer = setInterval(checkDock, 8000);
         if (!dock) {
             dock = document.createElement("div");
             dock.id = "call-dock";
