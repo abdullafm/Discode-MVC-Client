@@ -1510,3 +1510,23 @@ html.theme-dark .mini-profile .dm-profile-card p {
     color: #b5bac1;
     font-size: 12px;
 }
+
+.member-menu {
+    z-index: 700;
+}
+
+.member-menu li[hidden] {
+    display: none;
+}
+
+.dm-msg.is-ignored:not(.show-ignored) .dm-msg-body > :not(.dm-msg-head) {
+    display: none;
+}
+
+.dm-msg.is-ignored:not(.show-ignored) .dm-msg-body::after {
+    content: "Ignored message - click to show";
+    color: #80848e;
+    font-size: 13px;
+    font-style: italic;
+    cursor: pointer;
+}
