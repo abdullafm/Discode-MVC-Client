@@ -1186,7 +1186,7 @@ html.theme-dark .mention-chip {
 }
 
 .dm-msg.is-mentioned {
-    background: rgba(250, 166, 26, 0.1);
+    background: rgba(88, 101, 242, 0.1);
     border-radius: 0 6px 6px 0;
 }
 
@@ -1198,12 +1198,20 @@ html.theme-dark .mention-chip {
     bottom: 0;
     width: 3px;
     border-radius: 0;
-    background: #f0b232;
+    background: #5865f2;
     pointer-events: none;
 }
 
 .dm-msg.is-mentioned:hover {
-    background: rgba(250, 166, 26, 0.16);
+    background: rgba(88, 101, 242, 0.16);
+}
+
+html.theme-dark .dm-msg.is-mentioned {
+    background: rgba(88, 101, 242, 0.14);
+}
+
+html.theme-dark .dm-msg.is-mentioned:hover {
+    background: rgba(88, 101, 242, 0.2);
 }
 
 .mention-popup {
