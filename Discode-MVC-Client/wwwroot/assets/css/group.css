@@ -1163,3 +1163,104 @@ section#group-members.no-motion .group-members {
 .call-dock-btn.is-decline:hover {
     background: #a12828;
 }
+
+.mention,
+.mention-chip {
+    padding: 0 3px;
+    border-radius: 3px;
+    background: rgba(88, 101, 242, 0.15);
+    color: #505cdc;
+    font-weight: 500;
+    cursor: default;
+}
+
+.mention-chip {
+    display: inline-block;
+    user-select: all;
+}
+
+html.theme-dark .mention,
+html.theme-dark .mention-chip {
+    background: rgba(88, 101, 242, 0.3);
+    color: #c9cdfb;
+}
+
+.dm-msg.is-mentioned {
+    background: rgba(250, 166, 26, 0.1);
+    box-shadow: inset 2px 0 0 #f0b232;
+}
+
+.dm-msg.is-mentioned:hover {
+    background: rgba(250, 166, 26, 0.16);
+}
+
+.mention-popup {
+    position: fixed;
+    z-index: 600;
+    max-height: 320px;
+    overflow-y: auto;
+    padding: 8px;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #060607;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+html.theme-dark .mention-popup {
+    background: #2b2d31;
+    color: #f2f3f5;
+}
+
+.mention-head {
+    padding: 4px 8px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #5c5e66;
+}
+
+html.theme-dark .mention-head {
+    color: #b5bac1;
+}
+
+.mention-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mention-item img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.mention-item strong {
+    font-weight: 600;
+}
+
+.mention-item span {
+    margin-left: auto;
+    font-size: 13px;
+    color: #80848e;
+}
+
+.mention-item.is-active,
+.mention-item:hover {
+    background: rgba(78, 80, 88, 0.14);
+}
+
+html.theme-dark .mention-item.is-active,
+html.theme-dark .mention-item:hover {
+    background: rgba(78, 80, 88, 0.6);
+}
