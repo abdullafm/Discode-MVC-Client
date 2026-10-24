@@ -774,36 +774,21 @@
 
     function dockItems() {
         var items = [];
-        var dm = window.discodeCalls && window.discodeCalls.current && window.discodeCalls.current();
-        if (dm && dm.joined === false && dm.other && window.discodeOpenDm !== dm.other.userName) {
+        if (ringing && !call && !onGroupPage(ringing.groupId)) {
+            var target = ringing;
             items.push({
-                key: "dm-" + dm.callId,
-                title: dm.other.displayName || dm.other.userName,
-                sub: dm.peerScreen ? "is sharing their screen" : "is in a call",
-                avatars: [dm.other.avatarUrl || DEFAULT_AVATAR],
+                key: "group-" + target.callId,
+                title: target.groupName,
+                sub: target.starterDisplayName + (target.video ? " is video calling" : " is calling"),
+                avatars: [target.groupIconUrl || target.starterAvatarUrl || DEFAULT_AVATAR],
+                dismiss: decline,
                 join: function (video) {
-                    return window.discodeCalls.answer(video).then(function () {
-                        if (window.discodeOpenDm !== dm.other.userName && window.discodeGo) window.discodeGo("/Dm/Index?name=" + encodeURIComponent(dm.other.userName));
+                    stopRing();
+                    ringing = null;
+                    return join(target.callId, video).then(function () {
+                        if (!onGroupPage(target.groupId) && window.discodeGo) window.discodeGo("/Group/Index?id=" + target.groupId);
                     });
                 }
-            });
-        }
-        if (!call) {
-            Object.keys(active).forEach(function (groupId) {
-                var info = active[groupId];
-                if (!info || !info.active || onGroupPage(info.groupId)) return;
-                var sharing = info.participants.filter(function (p) { return p.screen; })[0];
-                items.push({
-                    key: "group-" + info.callId,
-                    title: info.groupName,
-                    sub: sharing ? sharing.displayName + " is sharing their screen" : info.participants.length + (info.participants.length === 1 ? " person is" : " people are") + " in the call",
-                    avatars: info.participants.slice(0, 4).map(function (p) { return p.avatarUrl || DEFAULT_AVATAR; }),
-                    join: function (video) {
-                        return join(info.callId, video).then(function () {
-                            if (!onGroupPage(info.groupId) && window.discodeGo) window.discodeGo("/Group/Index?id=" + info.groupId);
-                        });
-                    }
-                });
             });
         }
         return items;
@@ -871,12 +856,19 @@
             voice.className = "call-dock-btn";
             voice.setAttribute("aria-label", "Join with voice");
             voice.innerHTML = '<i class="fa-solid fa-phone"></i>';
+            var close = document.createElement("button");
+            close.type = "button";
+            close.className = "call-dock-btn is-decline";
+            close.setAttribute("aria-label", "Decline");
+            close.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+            close.addEventListener("click", function () { item.dismiss(); });
             video.addEventListener("click", function () { item.join(true).catch(function () {}); });
             voice.addEventListener("click", function () { item.join(false).catch(function () {}); });
             card.appendChild(faces);
             card.appendChild(text);
             card.appendChild(video);
             card.appendChild(voice);
+            card.appendChild(close);
             dock.appendChild(card);
         });
     }
@@ -909,7 +901,7 @@
     function renderInvite() {
         var invite = document.getElementById("incoming-group-call");
         if (!invite) return;
-        var show = !!ringing && !call && !onGroupPage(ringing.groupId);
+        var show = false;
         invite.hidden = !show;
         if (!show) return;
         document.getElementById("incoming-group-call-avatar").src = ringing.groupIconUrl || ringing.starterAvatarUrl || DEFAULT_AVATAR;

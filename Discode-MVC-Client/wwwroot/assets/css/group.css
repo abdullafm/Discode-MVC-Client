@@ -1155,3 +1155,11 @@ section#group-members.no-motion .group-members {
     background: #da373c;
     color: #fff;
 }
+
+.call-dock-btn.is-decline {
+    background: #da373c;
+}
+
+.call-dock-btn.is-decline:hover {
+    background: #a12828;
+}
