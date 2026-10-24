@@ -4179,9 +4179,19 @@ body .conversation-sidebar .direct-messages h2 .dm-new {
     cursor: pointer;
 }
 
-.me-tabs button.on {
+.me-tabs button {
+    transition: color 0.15s, box-shadow 0.15s;
+}
+
+.me-tabs button:hover {
     color: #060607;
-    box-shadow: inset 0 -2px 0 #060607;
+    box-shadow: inset 0 -2px 0 #b5bac1;
+}
+
+.me-tabs button.on,
+.me-tabs button.on:hover {
+    color: #060607;
+    box-shadow: inset 0 -2px 0 #5865f2;
 }
 
 .me-board h3 {
@@ -5722,8 +5732,19 @@ html.theme-dark .me-tabs {
 
 html.theme-dark .me-tabs button,
 html.theme-dark .me-tabs button.on {
-    color: #fff !important;
+    color: #b5bac1 !important;
     box-shadow: none;
+}
+
+html.theme-dark .me-tabs button:hover {
+    color: #fff !important;
+    box-shadow: inset 0 -2px 0 #4e5058;
+}
+
+html.theme-dark .me-tabs button.on,
+html.theme-dark .me-tabs button.on:hover {
+    color: #fff !important;
+    box-shadow: inset 0 -2px 0 #5865f2;
 }
 
 html.theme-dark .dm-meta button,
