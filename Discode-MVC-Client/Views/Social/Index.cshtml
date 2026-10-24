@@ -243,6 +243,10 @@
                     <aside class="watch-chat">
                         <header>Live chat</header>
                         <div class="watch-chat-feed" id="live-chat-feed"></div>
+                        <div class="watch-reply-bar" id="live-reply-bar" hidden>
+                            <span>Replying to <strong id="live-reply-name"></strong></span>
+                            <button type="button" id="live-reply-cancel" aria-label="Cancel reply"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
                         <form class="watch-chat-form" id="live-chat-form">
                             <input type="text" id="live-chat-input" placeholder="Send a message" maxlength="200" autocomplete="off">
                             <button type="submit" id="live-chat-submit" aria-label="Send"><i class="fa-solid fa-paper-plane"></i></button>

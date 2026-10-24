@@ -277,17 +277,84 @@
 
     /* ---------------- watch dialog ---------------- */
 
-    function appendChat(author, avatar, text) {
+    var replyTarget = null;
+    var chatMenu = null;
+
+    function closeChatMenu() {
+        if (chatMenu && chatMenu.parentNode) chatMenu.parentNode.removeChild(chatMenu);
+        chatMenu = null;
+    }
+
+    function setReply(target) {
+        replyTarget = target;
+        var bar = byId("live-reply-bar");
+        bar.hidden = !target;
+        byId("live-reply-name").textContent = target ? target.user : "";
+        if (target) byId("live-chat-input").focus();
+    }
+
+    function openChatMenu(anchor, line) {
+        closeChatMenu();
+        chatMenu = element("div", "watch-msg-menu");
+        var reply = element("button", "");
+        reply.type = "button";
+        reply.innerHTML = '<i class="fa-solid fa-reply"></i><span>Reply</span>';
+        reply.addEventListener("click", function () {
+            closeChatMenu();
+            setReply({ user: line.getAttribute("data-user"), text: line.getAttribute("data-text") });
+        });
+        chatMenu.appendChild(reply);
+        document.body.appendChild(chatMenu);
+        var rect = anchor.getBoundingClientRect();
+        var width = chatMenu.offsetWidth;
+        var left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
+        var top = rect.bottom + 4;
+        if (top + chatMenu.offsetHeight > window.innerHeight - 8) top = rect.top - chatMenu.offsetHeight - 4;
+        chatMenu.style.left = left + "px";
+        chatMenu.style.top = top + "px";
+    }
+
+    document.addEventListener("click", function (event) {
+        if (chatMenu && !event.target.closest(".watch-msg-menu, .watch-msg-more")) closeChatMenu();
+    });
+
+    byId("live-reply-cancel").addEventListener("click", function () { setReply(null); });
+    byId("live-chat-input").addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && replyTarget) {
+            event.preventDefault();
+            setReply(null);
+        }
+    });
+
+    function appendChat(author, avatar, text, replyUser, replyText) {
         var feed = byId("live-chat-feed");
         var line = element("div", "watch-msg");
+        line.setAttribute("data-user", author);
+        line.setAttribute("data-text", text);
         var face = element("img");
         face.src = avatar || DEFAULT_AVATAR;
         face.alt = "";
         var body = element("div");
+        if (replyUser) {
+            var quote = element("div", "watch-reply");
+            quote.innerHTML = '<i class="fa-solid fa-reply"></i>';
+            quote.appendChild(element("strong", "", replyUser));
+            quote.appendChild(element("span", "", replyText || ""));
+            body.appendChild(quote);
+        }
         body.appendChild(element("strong", "", author));
         body.appendChild(element("p", "", text));
+        var more = element("button", "watch-msg-more");
+        more.type = "button";
+        more.setAttribute("aria-label", "More");
+        more.innerHTML = '<i class="fa-solid fa-ellipsis"></i>';
+        more.addEventListener("click", function (event) {
+            event.stopPropagation();
+            openChatMenu(more, line);
+        });
         line.appendChild(face);
         line.appendChild(body);
+        line.appendChild(more);
         feed.appendChild(line);
         feed.scrollTop = feed.scrollHeight;
     }
@@ -349,7 +416,7 @@
         setWait(mine ? "" : "Connecting to the stream...");
     }
 
-    function openStream(stream) {
+    function openStream(stream, attempt) {
         if (stream.isMine) {
             if (broadcast && broadcast.streamId === stream.id) {
                 showWatchDialog(stream, true);
@@ -367,7 +434,14 @@
             watching.stream = join.stream;
             byId("live-viewers-count").textContent = viewerText(join.stream.viewerCount);
         }).catch(function (err) {
-            if (watching && watching.stream.id === stream.id) setWait(hubMessage(err));
+            if (!watching || watching.stream.id !== stream.id) return;
+            if (/not ready/i.test(String((err && err.message) || "")) && (attempt || 0) < 12) {
+                setTimeout(function () {
+                    if (watching && watching.stream.id === stream.id) openStream(stream, (attempt || 0) + 1);
+                }, 700);
+                return;
+            }
+            setWait(hubMessage(err));
         });
     }
 
@@ -382,6 +456,8 @@
     }
 
     function finishClose() {
+        setReply(null);
+        closeChatMenu();
         leaveWatching();
         byId("live-watch-modal").hidden = true;
         byId("live-stream-video").srcObject = null;
@@ -480,9 +556,6 @@
         if (!wantedLive) return;
         var id = wantedLive;
         wantedLive = 0;
-        try {
-            window.history.replaceState(window.history.state, "", window.location.pathname);
-        } catch (e) {}
         var found = liveStreams.filter(function (item) { return item.id === id; })[0];
         if (!found) {
             liveNotice("This live stream has ended.");
@@ -522,6 +595,12 @@
         var id = currentStreamId();
         if (!text || !id) return;
         input.value = "";
+        if (replyTarget) {
+            var target = replyTarget;
+            setReply(null);
+            hub("SendLiveReply", id, text, target.user, target.text).catch(function () {});
+            return;
+        }
         hub("SendLiveMessage", id, text).catch(function () {});
     });
 
@@ -688,7 +767,7 @@
 
     document.addEventListener("discode-live-message", function (event) {
         var message = event.detail;
-        if (currentStreamId() === message.streamId) appendChat(message.userName, message.avatarUrl, message.text);
+        if (currentStreamId() === message.streamId) appendChat(message.userName, message.avatarUrl, message.text, message.replyToUserName, message.replyToText);
     });
 
     document.addEventListener("discode-live-joined", function (event) {

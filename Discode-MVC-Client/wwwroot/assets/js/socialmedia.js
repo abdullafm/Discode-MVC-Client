@@ -180,9 +180,6 @@ function openWantedStory() {
     if (!wantedStory) return;
     var id = wantedStory;
     wantedStory = 0;
-    try {
-        window.history.replaceState(window.history.state, "", window.location.pathname);
-    } catch (e) {}
     var found = loadStories().filter(function (item) { return item.id === id; })[0];
     if (!found) {
         storyNotice("This story is no longer available.");
