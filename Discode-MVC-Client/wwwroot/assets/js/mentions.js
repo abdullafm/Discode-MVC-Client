@@ -171,6 +171,12 @@
         }
 
         function read() {
+            if (input.tagName === "INPUT") {
+                var caret = input.selectionStart;
+                var typed = /(^|\s)@([A-Za-z0-9_.\-]*)$/.exec(input.value.slice(0, caret));
+                if (!typed) return null;
+                return { plain: true, offset: caret, query: typed[2], start: caret - typed[2].length - 1 };
+            }
             var selection = window.getSelection();
             if (!selection.rangeCount || !selection.isCollapsed) return null;
             var range = selection.getRangeAt(0);
@@ -263,6 +269,15 @@
             var person = items[index];
             var found = context;
             if (!person || !found) return;
+            if (found.plain) {
+                var after = input.value.slice(found.offset);
+                input.value = input.value.slice(0, found.start) + "@" + person.userName + " " + after;
+                var at = found.start + person.userName.length + 2;
+                input.setSelectionRange(at, at);
+                close();
+                input.dispatchEvent(new Event("input", { bubbles: true }));
+                return;
+            }
             var range = document.createRange();
             range.setStart(found.node, found.start);
             range.setEnd(found.node, found.offset);
@@ -310,7 +325,35 @@
         window.addEventListener("resize", function () { if (popup) place(); });
     }
 
+    function livePeople() {
+        var seen = {};
+        var people = [];
+        function add(person) {
+            var key = String(person.userName || "").toLowerCase();
+            if (!key || seen[key]) return;
+            seen[key] = true;
+            people.push(person);
+        }
+        var host = document.getElementById("live-streamer-name");
+        var hostPhoto = document.getElementById("live-streamer-avatar");
+        if (host && host.getAttribute("data-username")) {
+            add({ userName: host.getAttribute("data-username"), displayName: host.textContent.trim(), avatarUrl: hostPhoto ? hostPhoto.getAttribute("src") : "" });
+        }
+        [].forEach.call(document.querySelectorAll("#live-chat-feed .watch-msg"), function (line) {
+            var photo = line.querySelector("img");
+            add({ userName: line.getAttribute("data-user"), displayName: line.getAttribute("data-user"), avatarUrl: photo ? photo.getAttribute("src") : "" });
+        });
+        friendPeople().forEach(add);
+        var me = meInfo().userName;
+        return people.filter(function (person) { return String(person.userName).toLowerCase() !== me.toLowerCase(); });
+    }
+
     function init() {
+        var liveInput = document.getElementById("live-chat-input");
+        if (liveInput) {
+            attach(liveInput, livePeople);
+            friendPeople();
+        }
         var dmInput = document.getElementById("dm-input");
         var dmBox = document.getElementById("dm-messages");
         if (dmInput && dmBox) {
@@ -339,7 +382,11 @@
         }
     }
 
-    window.discodeMentions = { init: init, attach: attach, friends: friendPeople };
+    function decorate(element) {
+        decorateElement(element, {}, meInfo().userName, true);
+    }
+
+    window.discodeMentions = { init: init, attach: attach, friends: friendPeople, decorate: decorate };
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
     else init();

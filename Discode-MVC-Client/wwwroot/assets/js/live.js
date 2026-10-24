@@ -343,7 +343,9 @@
             body.appendChild(quote);
         }
         body.appendChild(element("strong", "", author));
-        body.appendChild(element("p", "", text));
+        var said = element("p", "", text);
+        if (window.discodeMentions && window.discodeMentions.decorate) window.discodeMentions.decorate(said);
+        body.appendChild(said);
         var more = element("button", "watch-msg-more");
         more.type = "button";
         more.setAttribute("aria-label", "More");
@@ -406,6 +408,7 @@
         byId("live-watch-modal").hidden = false;
         byId("live-watch-title").textContent = stream.title;
         byId("live-streamer-name").textContent = hostName(stream);
+        byId("live-streamer-name").setAttribute("data-username", stream.hostUserName || "");
         byId("live-streamer-avatar").src = stream.hostAvatarUrl || DEFAULT_AVATAR;
         byId("live-viewers-count").textContent = viewerText(stream.viewerCount);
         byId("live-btn-end").hidden = !mine;

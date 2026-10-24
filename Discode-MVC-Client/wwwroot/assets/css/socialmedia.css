@@ -4717,3 +4717,8 @@ button.watch-viewers {
 .watch-viewer-row small {
     color: #b5bac1;
 }
+
+.watch-msg .mention {
+    background: rgba(88, 101, 242, 0.35);
+    color: #dee0fc;
+}
