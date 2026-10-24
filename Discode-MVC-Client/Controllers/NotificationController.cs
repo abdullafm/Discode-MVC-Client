@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using Discode_MVC_Client.ViewModels.Social;
 
 namespace Discode_MVC_Client.Controllers
 {
@@ -25,6 +26,16 @@ namespace Discode_MVC_Client.Controllers
                 return RedirectToAction("Index", "Social", new { live });
 
             return RedirectToAction("Index", "Social");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Unread()
+        {
+            var result = await GetAsync<List<NotificationVM>>("api/notification");
+            if (result.Status == HttpStatusCode.Unauthorized)
+                return Unauthorized();
+
+            return Ok((result.Data ?? new List<NotificationVM>()).Where(n => !n.IsRead).Select(n => n.Id));
         }
 
         [HttpPost]

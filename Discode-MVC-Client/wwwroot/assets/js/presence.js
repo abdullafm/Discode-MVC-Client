@@ -45,6 +45,59 @@
         if (watchedProfile && isConnected()) connection.invoke("WatchProfile", watchedProfile).catch(function () {});
     }
 
+    var notifySound = new Audio("/assets/css/audio/notification.mp3");
+    var lastSoundAt = 0;
+
+    function playNotifySound() {
+        var now = Date.now();
+        if (now - lastSoundAt < 600) return;
+        lastSoundAt = now;
+        try {
+            notifySound.currentTime = 0;
+            var started = notifySound.play();
+            if (started && started.catch) started.catch(function () {});
+        } catch (error) {}
+    }
+
+    window.discodeNotifySound = playNotifySound;
+
+    var knownUnread = null;
+
+    function checkNotificationSound() {
+        fetch("/Notification/Unread", {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        }).then(function (response) {
+            return response.ok ? response.json() : null;
+        }).then(function (ids) {
+            if (!Array.isArray(ids)) return;
+            var arrived = !!knownUnread && ids.some(function (id) { return !knownUnread[id]; });
+            knownUnread = {};
+            ids.forEach(function (id) { knownUnread[id] = true; });
+            if (arrived) playNotifySound();
+        }).catch(function () {});
+    }
+
+    document.addEventListener("discode-notifications-changed", checkNotificationSound);
+
+    function soundForDirectMessage(data) {
+        var message = data && data.message;
+        var conversation = data && data.conversation;
+        if (!message || message.mine || message.undelivered || message.isCall) return;
+        var watching = document.visibilityState === "visible" && window.discodeOpenDm && conversation && conversation.userName === window.discodeOpenDm;
+        if (!watching) playNotifySound();
+    }
+
+    function soundForGroupMessage(data) {
+        var message = data && data.message;
+        if (!message || message.isSystem || message.isCall) return;
+        var field = document.getElementById("Update_UserName");
+        if (field && message.senderUserName === field.value.trim()) return;
+        var chat = document.getElementById("group-chat");
+        var watching = document.visibilityState === "visible" && chat && Number(chat.getAttribute("data-group-id")) === data.groupId;
+        if (!watching) playNotifySound();
+    }
+
     function onConnected(pageSwap) {
         window.discodeLive = true;
         if (pageSwap !== true) {
@@ -138,6 +191,7 @@
                 });
 
                 connection.on("DirectMessage", function (data) {
+                    soundForDirectMessage(data);
                     document.dispatchEvent(new CustomEvent("discode-dm-message", { detail: data }));
                 });
 
@@ -158,6 +212,7 @@
                 });
 
                 connection.on("GroupMessage", function (data) {
+                    soundForGroupMessage(data);
                     document.dispatchEvent(new CustomEvent("discode-group-message", { detail: data }));
                 });
 
