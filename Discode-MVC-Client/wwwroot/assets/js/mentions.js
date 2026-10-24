@@ -339,11 +339,7 @@
         if (host && host.getAttribute("data-username")) {
             add({ userName: host.getAttribute("data-username"), displayName: host.textContent.trim(), avatarUrl: hostPhoto ? hostPhoto.getAttribute("src") : "" });
         }
-        [].forEach.call(document.querySelectorAll("#live-chat-feed .watch-msg"), function (line) {
-            var photo = line.querySelector("img");
-            add({ userName: line.getAttribute("data-user"), displayName: line.getAttribute("data-user"), avatarUrl: photo ? photo.getAttribute("src") : "" });
-        });
-        friendPeople().forEach(add);
+        (window.discodeLiveRoster || []).forEach(add);
         var me = meInfo().userName;
         return people.filter(function (person) { return String(person.userName).toLowerCase() !== me.toLowerCase(); });
     }
@@ -352,7 +348,6 @@
         var liveInput = document.getElementById("live-chat-input");
         if (liveInput) {
             attach(liveInput, livePeople);
-            friendPeople();
         }
         var dmInput = document.getElementById("dm-input");
         var dmBox = document.getElementById("dm-messages");

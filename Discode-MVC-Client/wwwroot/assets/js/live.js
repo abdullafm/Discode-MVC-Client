@@ -419,6 +419,16 @@
         setWait(mine ? "" : "Connecting to the stream...");
     }
 
+    function refreshRoster() {
+        var id = currentStreamId();
+        if (!id) return;
+        hub("GetLiveViewers", id).then(function (viewers) {
+            if (currentStreamId() === id) window.discodeLiveRoster = viewers;
+        }).catch(function () {});
+    }
+
+    byId("live-chat-input").addEventListener("focus", refreshRoster);
+
     function closeViewerList() {
         byId("live-viewer-list").hidden = true;
     }
@@ -501,6 +511,7 @@
     }
 
     function finishClose() {
+        window.discodeLiveRoster = [];
         closeViewerList();
         setReply(null);
         closeChatMenu();
@@ -794,6 +805,7 @@
         if (changed) renderLive();
         if (currentStreamId() === data.streamId) byId("live-viewers-count").textContent = viewerText(data.count);
         refreshViewerList();
+        refreshRoster();
     });
 
     document.addEventListener("discode-live-ended", function (event) {
