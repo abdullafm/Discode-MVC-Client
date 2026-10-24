@@ -62,6 +62,15 @@
                 since.remove();
             }
             [].forEach.call(body.querySelectorAll("[id]"), function (element) { element.removeAttribute("id"); });
+            var face = body.querySelector(".dm-profile-avatar");
+            if (face) {
+                face.setAttribute("title", "View Full Profile");
+                face.addEventListener("click", function () {
+                    var photo = face.getAttribute("src") || "";
+                    close();
+                    if (window.openUserProfile) window.openUserProfile(userName, photo);
+                });
+            }
             var actions = document.createElement("div");
             actions.className = "mini-actions";
             var button = document.createElement("button");

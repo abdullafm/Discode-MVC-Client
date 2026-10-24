@@ -1427,3 +1427,7 @@ html.theme-dark .mini-profile .dm-profile-card p {
 .mini-actions button:hover {
     background: #4752c4;
 }
+
+.mini-profile .dm-profile-avatar {
+    cursor: pointer;
+}
