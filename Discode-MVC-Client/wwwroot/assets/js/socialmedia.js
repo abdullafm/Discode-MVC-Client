@@ -160,7 +160,44 @@ function refreshStories() {
         var kept = seenIds().filter(function (id) { return ids.indexOf(id) !== -1; });
         localStorage.setItem(SEEN_KEY, JSON.stringify(kept));
         renderStories();
+        openWantedStory();
     }).catch(function () {});
+}
+
+var wantedStory = Number(new URLSearchParams(window.location.search).get("story")) || 0;
+
+function storyNotice(text) {
+    var note = document.createElement("div");
+    note.className = "story-notice";
+    note.textContent = text;
+    document.body.appendChild(note);
+    setTimeout(function () {
+        if (note.parentNode) note.parentNode.removeChild(note);
+    }, 3500);
+}
+
+function openWantedStory() {
+    if (!wantedStory) return;
+    var id = wantedStory;
+    wantedStory = 0;
+    try {
+        window.history.replaceState(window.history.state, "", window.location.pathname);
+    } catch (e) {}
+    var found = loadStories().filter(function (item) { return item.id === id; })[0];
+    if (!found) {
+        storyNotice("This story is no longer available.");
+        return;
+    }
+    openStories(found.author);
+    var group = storyGroups[storyCursor];
+    if (!group) return;
+    for (var i = 0; i < group.items.length; i++) {
+        if (group.items[i].id === id) {
+            storyIndex = i;
+            paintStory();
+            break;
+        }
+    }
 }
 
 function nextId() {
@@ -834,6 +871,33 @@ document.getElementById("story-like").addEventListener("click", function () {
         story.likes = result.count;
         paintStoryLike(story);
     }).catch(function () {});
+});
+
+function sendStoryReply() {
+    var group = storyGroups[storyCursor];
+    if (!group || group.author === ME) return;
+    var story = group.items[storyIndex];
+    var input = document.getElementById("story-reply-input");
+    var text = input.value.trim();
+    if (!story || !text) return;
+    input.disabled = true;
+    requestJson("/Home/ReplyStory", "POST", { id: story.id, text: text }).then(function () {
+        input.value = "";
+        input.placeholder = "Sent";
+    }).catch(function (error) {
+        input.placeholder = (error && error.message) || "Could not send";
+    }).then(function () {
+        input.disabled = false;
+        input.focus();
+        setTimeout(function () { input.placeholder = "Send message"; }, 2000);
+    });
+}
+
+document.getElementById("story-send").addEventListener("click", sendStoryReply);
+document.getElementById("story-reply-input").addEventListener("keydown", function (event) {
+    if (event.key !== "Enter" || event.isComposing) return;
+    event.preventDefault();
+    sendStoryReply();
 });
 
 (function () {

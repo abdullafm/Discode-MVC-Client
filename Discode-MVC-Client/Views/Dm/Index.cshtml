@@ -166,6 +166,10 @@
                                     {
                                         <div class="dm-msg-forwarded"><i class="fa-solid fa-share"></i> Forwarded</div>
                                     }
+                                    @if (message.StoryId is not null && !string.IsNullOrWhiteSpace(message.StoryImageUrl))
+                                    {
+                                        <a class="dm-story-reply" href="@Url.Action("Index", "Social", new { story = message.StoryId })" data-story-id="@message.StoryId"><img src="@message.StoryImageUrl" alt=""><span><i class="fa-solid fa-clapperboard"></i> @(message.Mine ? "You replied to a story" : "Replied to your story")</span></a>
+                                    }
                                     <div class="dm-msg-text">@message.Text@if (message.EditedAt is not null){<span class="dm-msg-edited">(edited)</span>}</div>
                                     @if (message.IsPoll && message.Poll is not null)
                                     {

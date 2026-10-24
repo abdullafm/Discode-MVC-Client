@@ -21,6 +21,8 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public bool CallMissed { get; set; }
         public List<MessageAttachmentVM> Attachments { get; set; } = new();
         public bool IsPoll { get; set; }
+        public int? StoryId { get; set; }
+        public string StoryImageUrl { get; set; } = string.Empty;
         public PollVM? Poll { get; set; }
 
         public string CallName => string.IsNullOrWhiteSpace(SenderDisplayName) ? SenderUserName : SenderDisplayName;

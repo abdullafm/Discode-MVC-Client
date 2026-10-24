@@ -87,6 +87,13 @@ function cloneTpl(id) {
 var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
 var dmPartner = null;
 
+document.addEventListener("error", function (event) {
+    var image = event.target;
+    if (image && image.tagName === "IMG" && image.parentNode && image.parentNode.classList && image.parentNode.classList.contains("dm-story-reply")) {
+        image.parentNode.classList.add("is-gone");
+    }
+}, true);
+
 function dmToken() {
     var input = document.querySelector("input[name='__RequestVerificationToken']");
     return input ? input.value : "";
@@ -332,6 +339,21 @@ function appendMessage(message, forceScroll) {
         forwarded.className = "dm-msg-forwarded";
         forwarded.innerHTML = '<i class="fa-solid fa-share"></i> Forwarded';
         body.appendChild(forwarded);
+    }
+    if (message.storyId && message.storyImageUrl) {
+        var storyCard = document.createElement("a");
+        storyCard.className = "dm-story-reply";
+        storyCard.href = "/Social/Index?story=" + message.storyId;
+        storyCard.setAttribute("data-story-id", String(message.storyId));
+        var storyImage = document.createElement("img");
+        storyImage.alt = "";
+        storyImage.src = message.storyImageUrl;
+        var storyLabel = document.createElement("span");
+        storyLabel.innerHTML = '<i class="fa-solid fa-clapperboard"></i> ';
+        storyLabel.appendChild(document.createTextNode(message.mine ? "You replied to a story" : "Replied to your story"));
+        storyCard.appendChild(storyImage);
+        storyCard.appendChild(storyLabel);
+        body.appendChild(storyCard);
     }
     var textHolder = messageNodes(message.text);
     if (message.editedAt) textHolder.appendChild(dmEditedLabel());

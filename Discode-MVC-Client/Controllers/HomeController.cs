@@ -477,6 +477,16 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> ReplyStory([FromBody] StoryReplyVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Story not found." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/story/{model.Id}/reply", new { text = model.Text ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> RecordStoryView([FromBody] PostIdVM model)
         {
             if (model is null || model.Id <= 0)
