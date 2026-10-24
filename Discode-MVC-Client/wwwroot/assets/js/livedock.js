@@ -22,6 +22,67 @@
         });
     }
 
+    var POSITION_KEY = "discode-live-dock-position";
+
+    function clampPosition(el, left, top) {
+        var maxLeft = Math.max(0, window.innerWidth - el.offsetWidth);
+        var maxTop = Math.max(0, window.innerHeight - el.offsetHeight);
+        return { left: Math.min(Math.max(0, left), maxLeft), top: Math.min(Math.max(0, top), maxTop) };
+    }
+
+    function place(el, left, top) {
+        var spot = clampPosition(el, left, top);
+        el.style.left = spot.left + "px";
+        el.style.top = spot.top + "px";
+        el.style.right = "auto";
+        el.style.bottom = "auto";
+    }
+
+    function restorePosition(el) {
+        try {
+            var saved = JSON.parse(localStorage.getItem(POSITION_KEY) || "null");
+            if (saved && typeof saved.left === "number" && typeof saved.top === "number") place(el, saved.left, saved.top);
+        } catch (error) {}
+    }
+
+    function makeDraggable(el) {
+        el.addEventListener("pointerdown", function (event) {
+            if (event.button !== 0 || event.target.closest("button")) return;
+            event.preventDefault();
+            var box = el.getBoundingClientRect();
+            var offsetX = event.clientX - box.left;
+            var offsetY = event.clientY - box.top;
+            el.classList.add("is-dragging");
+            el.setPointerCapture(event.pointerId);
+
+            function move(moveEvent) {
+                place(el, moveEvent.clientX - offsetX, moveEvent.clientY - offsetY);
+            }
+
+            function stop() {
+                el.removeEventListener("pointermove", move);
+                el.removeEventListener("pointerup", stop);
+                el.removeEventListener("pointercancel", stop);
+                el.classList.remove("is-dragging");
+                var rect = el.getBoundingClientRect();
+                try {
+                    localStorage.setItem(POSITION_KEY, JSON.stringify({ left: rect.left, top: rect.top }));
+                } catch (error) {}
+            }
+
+            el.addEventListener("pointermove", move);
+            el.addEventListener("pointerup", stop);
+            el.addEventListener("pointercancel", stop);
+        });
+    }
+
+    window.addEventListener("resize", function () {
+        [dock, hostEl].forEach(function (el) {
+            if (!el || !el.style.left) return;
+            place(el, parseFloat(el.style.left), parseFloat(el.style.top));
+        });
+    });
+
     function attach() {
         if (dock) {
             document.body.appendChild(dock);
@@ -69,7 +130,9 @@
         top.appendChild(open);
         hostEl.appendChild(hostVideo);
         hostEl.appendChild(top);
+        makeDraggable(hostEl);
         attach();
+        restorePosition(hostEl);
     }
 
     function build() {
@@ -99,6 +162,7 @@
         top.appendChild(close);
         dock.appendChild(video);
         dock.appendChild(top);
+        makeDraggable(dock);
         open.addEventListener("click", function () {
             var id = state.streamId;
             release();
@@ -128,6 +192,7 @@
         video.muted = !!info.muted;
         video.srcObject = info.stream;
         attach();
+        restorePosition(dock);
     }
 
     window.discodeKeepOnce = function (name, type, handler) {

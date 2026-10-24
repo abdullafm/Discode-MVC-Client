@@ -7801,3 +7801,17 @@ a.notify-content {
 #live-minimize-btn[hidden] {
     display: none;
 }
+
+.live-dock {
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.live-dock.is-dragging {
+    cursor: grabbing;
+}
+
+.live-dock video {
+    pointer-events: none;
+}
