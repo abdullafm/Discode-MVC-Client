@@ -1544,6 +1544,8 @@ html.theme-dark .mini-profile .dm-profile-card p {
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
-html.theme-dark .mini-profile .dm-private-head {
-    color: #ffffff;
+html.theme-dark body .mini-profile .dm-private-head,
+html.theme-dark body .mini-profile .dm-private-head span,
+html.theme-dark body .mini-profile .dm-private-head i {
+    color: #ffffff !important;
 }
