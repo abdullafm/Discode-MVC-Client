@@ -80,17 +80,39 @@
 
     document.addEventListener("discode-notifications-changed", checkNotificationSound);
 
+    window.discodeIgnored = window.discodeIgnored || {};
+
+    function loadIgnored() {
+        fetch("/Home/IgnoredUsers", {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        }).then(function (response) {
+            return response.ok ? response.json() : null;
+        }).then(function (list) {
+            if (!Array.isArray(list)) return;
+            var map = {};
+            list.forEach(function (name) { map[String(name).toLowerCase()] = true; });
+            window.discodeIgnored = map;
+            document.dispatchEvent(new CustomEvent("discode-ignore-updated"));
+        }).catch(function () {});
+    }
+
+    function isIgnored(userName) {
+        return !!window.discodeIgnored[String(userName || "").toLowerCase()];
+    }
+
     function soundForDirectMessage(data) {
         var message = data && data.message;
         var conversation = data && data.conversation;
         if (!message || message.mine || message.undelivered || message.isCall) return;
+        if (isIgnored(message.senderUserName)) return;
         var watching = document.visibilityState === "visible" && window.discodeOpenDm && conversation && conversation.userName === window.discodeOpenDm;
         if (!watching) playNotifySound();
     }
 
     function soundForGroupMessage(data) {
         var message = data && data.message;
-        if (!message || message.isSystem || message.isCall) return;
+        if (!message || message.isSystem || message.isCall || isIgnored(message.senderUserName)) return;
         var field = document.getElementById("Update_UserName");
         if (field && message.senderUserName === field.value.trim()) return;
         var chat = document.getElementById("group-chat");
@@ -109,6 +131,7 @@
         document.dispatchEvent(new CustomEvent("discode-posts-changed"));
         document.dispatchEvent(new CustomEvent("discode-notifications-changed"));
         document.dispatchEvent(new CustomEvent("discode-dm-changed"));
+        loadIgnored();
         document.dispatchEvent(new CustomEvent("discode-hub-connected", { detail: { pageSwap: pageSwap === true } }));
         refreshFriends();
         joinWatchedProfile();
@@ -278,6 +301,10 @@
 
                 connection.on("ViewerLeft", function (streamId, connectionId) {
                     document.dispatchEvent(new CustomEvent("discode-live-viewer-left", { detail: { streamId: streamId, connectionId: connectionId } }));
+                });
+
+                connection.on("IgnoreChanged", function () {
+                    loadIgnored();
                 });
 
                 connection.on("GuestRequested", function (guest) {

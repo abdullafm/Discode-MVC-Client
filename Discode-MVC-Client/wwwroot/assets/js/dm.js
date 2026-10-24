@@ -450,6 +450,14 @@ function scrollDmToEnd() {
     scroller.scrollTop = scroller.scrollHeight;
 }
 
+function dmAutoCall(attempt) {
+    if (window.discodeLive === true && window.discodeCalls) {
+        startDmCall(false);
+        return;
+    }
+    if (attempt < 25) window.setTimeout(function () { dmAutoCall(attempt + 1); }, 300);
+}
+
 function showDmPage() {
     var chat = document.getElementById("dm-chat");
     var userName = chat ? chat.getAttribute("data-user-name") : "";
@@ -458,6 +466,7 @@ function showDmPage() {
     dmOngoingCall = Number(chat.getAttribute("data-ongoing-call")) || 0;
     dmRefreshJoinLinks();
     dmCheckIdleNote();
+    if (/[?&]call=1(&|$)/.test(location.search)) dmAutoCall(0);
     document.addEventListener("discode-call-idle", function () {
         dmCheckIdleNote();
     });

@@ -388,7 +388,35 @@
         });
     }
 
-    window.discodeMentions = { init: init, attach: attach, friends: friendPeople, decorate: decorate, mentionsMe: mentionsMe };
+    function insert(input, userName) {
+        if (!input) return;
+        input.focus();
+        var selection = window.getSelection();
+        var range;
+        if (selection.rangeCount && input.contains(selection.getRangeAt(0).startContainer)) {
+            range = selection.getRangeAt(0);
+            range.deleteContents();
+        } else {
+            range = document.createRange();
+            range.selectNodeContents(input);
+            range.collapse(false);
+        }
+        var chip = document.createElement("span");
+        chip.className = "mention-chip";
+        chip.setAttribute("contenteditable", "false");
+        chip.textContent = "@" + userName;
+        var space = document.createTextNode(" ");
+        range.insertNode(space);
+        range.insertNode(chip);
+        var caret = document.createRange();
+        caret.setStart(space, 1);
+        caret.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(caret);
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+
+    window.discodeMentions = { init: init, attach: attach, friends: friendPeople, decorate: decorate, mentionsMe: mentionsMe, insert: insert };
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
     else init();
