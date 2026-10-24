@@ -580,7 +580,7 @@
     function renderStage() {
         var stage = document.getElementById("call-stage");
         var faces = document.getElementById("call-faces");
-        if (!stage || !faces) return;
+        if (!stage || !faces || !document.getElementById("gcall-answer-bar")) return;
         var ghost = joinable();
         var here = !!call && onGroupPage(call.groupId);
         var answerBar = document.getElementById("gcall-answer-bar");
