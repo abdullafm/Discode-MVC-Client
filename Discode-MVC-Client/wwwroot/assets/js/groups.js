@@ -374,6 +374,7 @@ document.addEventListener("visibilitychange", function () {
         var name = nameEl ? nameEl.textContent.trim() : "user";
         var photo = item.querySelector("img");
         menu.dataset.name = name;
+        menu.dataset.user = item.getAttribute("data-dm") || "";
         menu.dataset.photo = photo ? photo.getAttribute("src") || "" : "";
         if (muteName) muteName.textContent = name;
         var pinLabel = menu.querySelector('[data-action="pin"] .row-menu-label');
@@ -445,7 +446,7 @@ document.addEventListener("visibilitychange", function () {
         if (!action) return;
         if (action.getAttribute("data-action") === "pin") togglePin(menu.dataset.name);
         if (action.getAttribute("data-action") === "profile" && typeof openUserProfile === "function") {
-            openUserProfile(menu.dataset.name, menu.dataset.photo);
+            openUserProfile(menu.dataset.user || menu.dataset.name, menu.dataset.photo);
         }
         closeRowMenu();
     });
