@@ -849,7 +849,7 @@ section#group-members.no-motion .group-members {
     height: 440px;
 }
 
-.call-stage.gcall-stage.is-video .call-faces.is-many {
+.call-stage.gcall-stage.is-video:not(.has-focus) .call-faces.is-many {
     flex-wrap: wrap;
     row-gap: 10px;
     column-gap: 10px;
@@ -861,7 +861,7 @@ section#group-members.no-motion .group-members {
     padding-bottom: 8px;
 }
 
-.call-stage.gcall-stage.is-video .call-faces.is-many .call-face {
+.call-stage.gcall-stage.is-video:not(.has-focus) .call-faces.is-many .call-face {
     flex: 1 1 150px;
     max-width: 240px;
     max-height: none;
