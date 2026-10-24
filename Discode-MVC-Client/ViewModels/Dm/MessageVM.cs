@@ -23,6 +23,10 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public bool IsPoll { get; set; }
         public int? StoryId { get; set; }
         public string StoryImageUrl { get; set; } = string.Empty;
+        public int? LiveStreamId { get; set; }
+        public string LiveTitle { get; set; } = string.Empty;
+        public string LiveHostName { get; set; } = string.Empty;
+        public string LiveImageUrl { get; set; } = string.Empty;
         public PollVM? Poll { get; set; }
 
         public string CallName => string.IsNullOrWhiteSpace(SenderDisplayName) ? SenderUserName : SenderDisplayName;

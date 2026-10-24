@@ -190,6 +190,43 @@ function dmEditedLabel() {
     return label;
 }
 
+function dmLiveCard(message) {
+    var card = document.createElement("a");
+    card.className = "dm-live-card";
+    card.href = "/Social/Index?live=" + message.liveStreamId;
+    var thumb = document.createElement("span");
+    thumb.className = "dm-live-thumb";
+    if (message.liveImageUrl) {
+        var image = document.createElement("img");
+        image.alt = "";
+        image.src = message.liveImageUrl;
+        thumb.appendChild(image);
+    } else {
+        thumb.innerHTML = '<i class="fa-solid fa-tower-broadcast"></i>';
+    }
+    var badge = document.createElement("em");
+    badge.textContent = "LIVE";
+    thumb.appendChild(badge);
+    var info = document.createElement("span");
+    info.className = "dm-live-info";
+    var label = document.createElement("small");
+    label.textContent = message.mine ? "You shared a live stream" : "Shared a live stream with you";
+    var title = document.createElement("strong");
+    title.textContent = message.liveTitle || "";
+    var host = document.createElement("span");
+    host.textContent = message.liveHostName || "";
+    info.appendChild(label);
+    info.appendChild(title);
+    info.appendChild(host);
+    var watch = document.createElement("span");
+    watch.className = "dm-live-watch";
+    watch.textContent = "Watch";
+    card.appendChild(thumb);
+    card.appendChild(info);
+    card.appendChild(watch);
+    return card;
+}
+
 function messageNodes(text) {
     var holder = document.createElement("div");
     holder.className = "dm-msg-text";
@@ -355,6 +392,7 @@ function appendMessage(message, forceScroll) {
         storyCard.appendChild(storyLabel);
         body.appendChild(storyCard);
     }
+    if (message.liveStreamId) body.appendChild(dmLiveCard(message));
     var textHolder = messageNodes(message.text);
     if (message.editedAt) textHolder.appendChild(dmEditedLabel());
     body.appendChild(textHolder);

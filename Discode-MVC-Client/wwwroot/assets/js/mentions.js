@@ -86,24 +86,6 @@
         return found;
     }
 
-    function linkLive(element) {
-        var pattern = /\/Social\/Index\?live=\d+/;
-        var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null);
-        var nodes = [];
-        while (walker.nextNode()) nodes.push(walker.currentNode);
-        nodes.forEach(function (node) {
-            var match = pattern.exec(node.nodeValue);
-            if (!match || node.parentNode.closest("a")) return;
-            var after = node.splitText(match.index);
-            after.nodeValue = after.nodeValue.slice(match[0].length);
-            var link = document.createElement("a");
-            link.className = "dm-live-link";
-            link.href = match[0];
-            link.textContent = "Watch the live stream";
-            node.parentNode.insertBefore(link, after);
-        });
-    }
-
     function scan(container, peopleFn) {
         var people = peopleFn();
         var names = nameSet(people);
@@ -111,7 +93,6 @@
         [].forEach.call(container.querySelectorAll(".dm-msg-text"), function (element) {
             var current = element.textContent;
             if (element._mentionText === current) return;
-            if (current.indexOf("/Social/Index?live=") !== -1) linkLive(element);
             var mentioned = Object.keys(names).length ? decorateElement(element, names, me) : false;
             element._mentionText = element.textContent;
             var row = element.closest(".dm-msg");

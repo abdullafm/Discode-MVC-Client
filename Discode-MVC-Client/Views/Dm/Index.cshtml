@@ -170,6 +170,14 @@
                                     {
                                         <a class="dm-story-reply" href="@Url.Action("Index", "Social", new { story = message.StoryId })" data-story-id="@message.StoryId"><img src="@message.StoryImageUrl" alt=""><span><i class="fa-solid fa-clapperboard"></i> @(message.Mine ? "You replied to a story" : "Replied to your story")</span></a>
                                     }
+                                    @if (message.LiveStreamId is not null)
+                                    {
+                                        <a class="dm-live-card" href="@Url.Action("Index", "Social", new { live = message.LiveStreamId })">
+                                            <span class="dm-live-thumb">@if (!string.IsNullOrWhiteSpace(message.LiveImageUrl)){<img src="@message.LiveImageUrl" alt="">}else{<i class="fa-solid fa-tower-broadcast"></i>}<em>LIVE</em></span>
+                                            <span class="dm-live-info"><small>@(message.Mine ? "You shared a live stream" : "Shared a live stream with you")</small><strong>@message.LiveTitle</strong><span>@message.LiveHostName</span></span>
+                                            <span class="dm-live-watch">Watch</span>
+                                        </a>
+                                    }
                                     <div class="dm-msg-text">@message.Text@if (message.EditedAt is not null){<span class="dm-msg-edited">(edited)</span>}</div>
                                     @if (message.IsPoll && message.Poll is not null)
                                     {
