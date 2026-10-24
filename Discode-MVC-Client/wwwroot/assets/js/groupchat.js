@@ -261,6 +261,17 @@
         if (force || atBottom || message.senderUserName === meName) scroller.scrollTop = scroller.scrollHeight;
     }
 
+    function markRead() {
+        if (document.hidden) return;
+        request("/Group/Read", "POST", { id: groupId }).catch(function () {});
+        if (Array.isArray(window.discodeGroupCache) && typeof paintGroupRows === "function") {
+            window.discodeGroupCache.forEach(function (item) {
+                if (item.id === groupId) item.unreadCount = 0;
+            });
+            paintGroupRows(window.discodeGroupCache);
+        }
+    }
+
     function loadMessages() {
         return request("/Group/Messages?id=" + groupId).then(function (list) {
             box.textContent = "";
@@ -506,6 +517,7 @@
         var data = event.detail;
         if (!data || data.groupId !== groupId || !data.message) return;
         append(data.message, false);
+        if (!data.message.isSystem && data.message.senderUserName !== meName) markRead();
     });
 
     document.addEventListener("discode-group-message-deleted", function (event) {
@@ -558,7 +570,10 @@
 
     document.addEventListener("discode-hub-connected", sync);
     document.addEventListener("visibilitychange", function () {
-        if (!document.hidden) sync();
+        if (!document.hidden) {
+            sync();
+            markRead();
+        }
     });
 
     if (window.matchMedia("(max-width: 1100px)").matches) setMembers(false);
@@ -570,5 +585,6 @@
         } catch (e) {}
         if (pending === String(groupId)) showIdleNote();
         updateBanner();
+        markRead();
     });
 })();

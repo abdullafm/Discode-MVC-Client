@@ -129,6 +129,13 @@ function paintGroupRows(groups) {
         var count = group.memberCount + " Members";
         if (meta && meta.textContent !== count) meta.textContent = count;
         link.classList.toggle("active", id === openId);
+        var unread = Number(group.unreadCount || 0);
+        var badge = link.querySelector(".dm-unread");
+        if (badge) {
+            badge.textContent = unread > 99 ? "99+" : String(unread);
+            badge.hidden = unread <= 0;
+        }
+        link.classList.toggle("has-unread", unread > 0);
         link.setAttribute("data-last", String(Date.parse(/Z$|[+-]\d\d:\d\d$/.test(String(group.lastMessageAt)) ? group.lastMessageAt : group.lastMessageAt + "Z") || 0));
     });
     applyPins();
@@ -316,8 +323,16 @@ document.addEventListener("discode-groups-changed", renderGroupList);
 document.addEventListener("discode-group-message", function (event) {
     var data = event.detail;
     if (!data || !data.message || !Array.isArray(window.discodeGroupCache)) return;
+    var field = document.getElementById("Update_UserName");
+    var me = field ? field.value.trim() : "";
+    var open = document.getElementById("group-chat");
+    var openId = open ? Number(open.getAttribute("data-group-id")) : 0;
     window.discodeGroupCache.forEach(function (group) {
-        if (group.id === data.groupId) group.lastMessageAt = data.message.createdAt;
+        if (group.id !== data.groupId) return;
+        group.lastMessageAt = data.message.createdAt;
+        if (data.message.senderUserName !== me && !data.message.isSystem && !(openId === group.id && !document.hidden)) {
+            group.unreadCount = Number(group.unreadCount || 0) + 1;
+        }
     });
     paintGroupRows(window.discodeGroupCache);
 });

@@ -64,6 +64,16 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.GetAsync($"api/group/{id}"));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Read([FromBody] GroupIdVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Group not found." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/group/{model.Id}/read", new { }));
+        }
+
         [HttpGet]
         public Task<IActionResult> Messages(int id)
         {
