@@ -370,6 +370,10 @@ document.addEventListener("visibilitychange", function () {
     }
 
     function openRowMenu(item, x, y) {
+        if (menu.getAttribute("data-pop-lock") === "1") {
+            window.setTimeout(function () { openRowMenu(item, x, y); }, 230);
+            return;
+        }
         var nameEl = item.querySelector("p");
         var name = nameEl ? nameEl.textContent.trim() : "user";
         var photo = item.querySelector("img");
@@ -386,7 +390,10 @@ document.addEventListener("visibilitychange", function () {
 
     document.addEventListener("contextmenu", function (event) {
         var item = event.target.closest(".friend-list .friend-item:not(.group-row)");
-        if (!item) return;
+        if (!item) {
+            if (!menu.hidden && !menu.contains(event.target)) closeRowMenu();
+            return;
+        }
         event.preventDefault();
         openRowMenu(item, event.clientX, event.clientY);
     });
@@ -443,21 +450,32 @@ document.addEventListener("visibilitychange", function () {
             return;
         }
         var action = event.target.closest("[data-action]");
-        if (!action) return;
-        if (action.getAttribute("data-action") === "pin") togglePin(menu.dataset.name);
-        if (action.getAttribute("data-action") === "profile" && typeof openUserProfile === "function") {
-            openUserProfile(menu.dataset.user || menu.dataset.name, menu.dataset.photo);
+        if (!action) {
+            if (!event.target.closest("button")) closeRowMenu();
+            return;
         }
+        var kind = action.getAttribute("data-action");
+        var user = menu.dataset.user || menu.dataset.name;
+        var name = menu.dataset.name;
+        var photo = menu.dataset.photo;
         closeRowMenu();
+        if (kind === "pin") togglePin(name);
+        if (kind === "profile" && typeof openUserProfile === "function") openUserProfile(user, photo);
     });
 
-    document.addEventListener("click", function (event) {
+    function closeOutside(event) {
         if (menu.hidden || menu.contains(event.target)) return;
+        if (event.button === 2) return;
         closeRowMenu();
-    });
+    }
+
+    document.addEventListener("mousedown", closeOutside, true);
+    document.addEventListener("touchstart", closeOutside, { capture: true, passive: true });
+    document.addEventListener("click", closeOutside, true);
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") closeRowMenu();
     });
+    window.addEventListener("blur", closeRowMenu);
     window.addEventListener("resize", closeRowMenu);
     document.addEventListener("scroll", closeRowMenu, true);
 })();
