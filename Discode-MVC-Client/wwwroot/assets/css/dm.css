@@ -3742,3 +3742,18 @@ html.theme-dark .dm-poll-emojis {
 .dm-modal-confirm.is-danger:hover {
     background: #a12828;
 }
+
+.dm-live-link {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #5865f2;
+    color: #fff !important;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.dm-live-link:hover {
+    background: #4752c4;
+}
