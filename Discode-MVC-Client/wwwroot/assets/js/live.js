@@ -416,6 +416,48 @@
         setWait(mine ? "" : "Connecting to the stream...");
     }
 
+    function closeViewerList() {
+        byId("live-viewer-list").hidden = true;
+    }
+
+    function refreshViewerList() {
+        var id = currentStreamId();
+        if (!broadcast || broadcast.streamId !== id || byId("live-viewer-list").hidden) return;
+        hub("GetLiveViewers", id).then(function (viewers) {
+            var rows = byId("live-viewer-rows");
+            rows.textContent = "";
+            byId("live-viewer-empty").hidden = viewers.length > 0;
+            viewers.forEach(function (viewer) {
+                var row = element("button", "watch-viewer-row");
+                row.type = "button";
+                var face = element("img");
+                face.alt = "";
+                face.src = viewer.avatarUrl || DEFAULT_AVATAR;
+                var names = element("span");
+                names.appendChild(element("strong", "", viewer.displayName || viewer.userName));
+                names.appendChild(element("small", "", viewer.userName));
+                row.appendChild(face);
+                row.appendChild(names);
+                row.addEventListener("click", function () {
+                    if (window.openUserProfile) window.openUserProfile(viewer.userName, viewer.avatarUrl || "");
+                });
+                rows.appendChild(row);
+            });
+        }).catch(function () {});
+    }
+
+    byId("live-viewers-btn").addEventListener("click", function (event) {
+        event.stopPropagation();
+        var panel = byId("live-viewer-list");
+        if (!broadcast || broadcast.streamId !== currentStreamId()) return;
+        panel.hidden = !panel.hidden;
+        refreshViewerList();
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest("#live-viewer-list, #live-viewers-btn")) closeViewerList();
+    });
+
     function openStream(stream, attempt) {
         if (stream.isMine) {
             if (broadcast && broadcast.streamId === stream.id) {
@@ -456,6 +498,7 @@
     }
 
     function finishClose() {
+        closeViewerList();
         setReply(null);
         closeChatMenu();
         leaveWatching();
@@ -747,6 +790,7 @@
         });
         if (changed) renderLive();
         if (currentStreamId() === data.streamId) byId("live-viewers-count").textContent = viewerText(data.count);
+        refreshViewerList();
     });
 
     document.addEventListener("discode-live-ended", function (event) {

@@ -225,7 +225,12 @@
                                 <em class="watch-live-badge">LIVE</em>
                             </div>
                             <div class="watch-top-right">
-                                <div class="watch-viewers"><i class="fa-solid fa-eye"></i> <b id="live-viewers-count">0</b></div>
+                                <button type="button" class="watch-viewers" id="live-viewers-btn"><i class="fa-solid fa-eye"></i> <b id="live-viewers-count">0</b></button>
+                                <div class="watch-viewer-list" id="live-viewer-list" hidden>
+                                    <h4>Watching now</h4>
+                                    <div id="live-viewer-rows"></div>
+                                    <p id="live-viewer-empty" hidden>Nobody is watching yet.</p>
+                                </div>
                                 <button type="button" class="watch-end" id="live-btn-end" hidden>End stream</button>
                                 <button type="button" class="watch-icon-btn" id="live-watch-close" aria-label="Close">
                                     <i class="fa-solid fa-xmark"></i>
