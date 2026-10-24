@@ -151,25 +151,7 @@ function openToggle() {
     var livePresence = {};
     var currentTab = activeFilter;
 
-    function friendToken() {
-        var input = document.querySelector("input[name='__RequestVerificationToken']");
-        return input ? input.value : "";
-    }
-
-    function friendPost(action, fields) {
-        var body = new URLSearchParams();
-        Object.keys(fields).forEach(function (key) { body.append(key, fields[key]); });
-        body.append("__RequestVerificationToken", friendToken());
-        return fetch("/Friend/" + action, {
-            method: "POST",
-            credentials: "same-origin",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "X-Requested-With": "XMLHttpRequest"
-            },
-            body: body.toString()
-        });
-    }
+    var friendPost = window.discodeFriends.post;
 
     function reapplyLivePresence() {
         var rows = document.querySelectorAll("#friends-all-list .online-row");
@@ -234,7 +216,7 @@ function openToggle() {
         });
     });
 
-    window.discodeFriends = {
+    Object.assign(window.discodeFriends, {
         reload: refreshFriends,
         reloadFriends: refreshFriends,
         setPresence: function (userId, status) {
@@ -244,14 +226,6 @@ function openToggle() {
                 if (rows[i].getAttribute("data-user-id") === userId) paintRowPresence(rows[i], status);
             }
             paintFriends(currentFilter);
-        },
-        respond: function (requestId, accept) {
-            return friendPost(accept ? "Accept" : "Decline", { id: requestId })
-                .then(function (response) {
-                    if (response.ok) refreshFriends();
-                    return response.ok;
-                })
-                .catch(function () { return false; });
         },
         removeRow: function (row) {
             var requestId = Number(row.getAttribute("data-id") || 0);
@@ -273,47 +247,8 @@ function openToggle() {
                 if (rows[i].getAttribute("data-user") === username) return true;
             }
             return false;
-        },
-        send: function (user, button) {
-            var username = user && (user.username || user.userName || "");
-            var userId = user && (user.id || user.userId || "");
-            if ((!username && !userId) || !button) return;
-            button.disabled = true;
-            friendPost("Send", { userName: username, userId: userId || "" })
-                .then(function (response) {
-                    return response.json().then(function (data) {
-                        return { ok: response.ok, data: data || {} };
-                    }).catch(function () {
-                        return { ok: response.ok, data: {} };
-                    });
-                })
-                .then(function (result) {
-                    var message = result.data && result.data.errors && result.data.errors[0]
-                        ? String(result.data.errors[0])
-                        : "";
-                    var already = !result.ok && message.toLowerCase().indexOf("already") !== -1;
-                    if (!result.ok && !already) {
-                        button.disabled = false;
-                        var span = button.querySelector("span") || button;
-                        var prev = span === button ? button.innerHTML : span.textContent;
-                        if (span === button) button.innerHTML = message || "Couldn't send";
-                        else span.textContent = message || "Couldn't send";
-                        setTimeout(function () {
-                            if (span === button) button.innerHTML = prev;
-                            else span.textContent = prev;
-                        }, 2500);
-                        return;
-                    }
-                    button.classList.add("button-sent");
-                    button.disabled = true;
-                    button.innerHTML = '<i class="fa-solid fa-check"></i><span>Request Sent</span>';
-                    refreshFriends();
-                })
-                .catch(function () {
-                    button.disabled = false;
-                });
         }
-    };
+    });
     paintFriends(currentFilter);
     document.addEventListener("visibilitychange", function () {
         if (!document.hidden && currentTab !== "add") refreshFriends();
