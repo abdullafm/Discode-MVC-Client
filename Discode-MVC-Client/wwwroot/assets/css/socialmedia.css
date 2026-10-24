@@ -4719,8 +4719,8 @@ button.watch-viewers {
 }
 
 .watch-msg .mention {
-    background: rgba(88, 101, 242, 0.35);
-    color: #dee0fc;
+    background: rgba(88, 101, 242, 0.6);
+    color: #ffffff;
 }
 
 .watch-msg.is-mentioned {

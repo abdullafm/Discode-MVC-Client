@@ -1169,12 +1169,18 @@ section#group-members.no-motion .group-members {
 
 .mention,
 .mention-chip {
-    padding: 0 3px;
-    border-radius: 3px;
-    background: rgba(88, 101, 242, 0.15);
-    color: #505cdc;
-    font-weight: 500;
+    padding: 0 4px;
+    border-radius: 4px;
+    background: rgba(88, 101, 242, 0.28);
+    color: #3a44c2;
+    font-weight: 600;
     cursor: default;
+    transition: background 0.12s, color 0.12s;
+}
+
+.mention:hover {
+    background: #5865f2;
+    color: #ffffff;
 }
 
 .mention-chip {
@@ -1184,8 +1190,17 @@ section#group-members.no-motion .group-members {
 
 html.theme-dark .mention,
 html.theme-dark .mention-chip {
-    background: rgba(88, 101, 242, 0.3);
-    color: #c9cdfb;
+    background: rgba(88, 101, 242, 0.6);
+    color: #ffffff;
+}
+
+html.theme-dark .mention:hover {
+    background: #5865f2;
+}
+
+html.theme-dark body .mention,
+html.theme-dark body .mention-chip {
+    color: #ffffff !important;
 }
 
 .dm-msg.is-mentioned {
