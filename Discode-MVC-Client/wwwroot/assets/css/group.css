@@ -1187,7 +1187,19 @@ html.theme-dark .mention-chip {
 
 .dm-msg.is-mentioned {
     background: rgba(250, 166, 26, 0.1);
-    box-shadow: inset 2px 0 0 #f0b232;
+    border-radius: 0 6px 6px 0;
+}
+
+.dm-msg.is-mentioned::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 0;
+    background: #f0b232;
+    pointer-events: none;
 }
 
 .dm-msg.is-mentioned:hover {
