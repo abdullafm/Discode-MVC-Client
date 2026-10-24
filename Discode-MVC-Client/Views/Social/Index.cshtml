@@ -235,6 +235,7 @@
                         <div class="ig-floating-hearts-zone" id="live-floating-reactions"></div>
                         <div class="watch-controls">
                             <button type="button" class="watch-icon-btn" id="live-mute-btn" title="Sound"><i class="fa-solid fa-volume-high"></i></button>
+                            <button type="button" class="watch-icon-btn" id="live-share-btn" title="Invite friends"><i class="fa-solid fa-share-nodes"></i></button>
                             <button type="button" class="watch-icon-btn" id="live-fullscreen-btn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
                             <button type="button" class="watch-heart" id="ig-heart-btn" aria-label="Like"><i class="fa-solid fa-heart"></i></button>
                         </div>
@@ -251,6 +252,25 @@
             </div>
 
             <!-- Go Live Broadcaster Modal -->
+            <div class="dm-modal" id="live-share-modal" role="dialog" aria-modal="true" aria-labelledby="live-share-title" hidden>
+                <div class="dm-modal-backdrop" data-close></div>
+                <div class="dm-modal-card dm-forward-card">
+                    <button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>
+                    <h2 id="live-share-title">Invite friends to watch</h2>
+                    <p class="dm-modal-text">Pick the friends you want to invite to this live stream.</p>
+                    <label class="dm-forward-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="search" id="live-share-search" placeholder="Search" aria-label="Search" autocomplete="off">
+                    </label>
+                    <div class="dm-forward-list" id="live-share-list"></div>
+                    <div class="dm-forward-foot">
+                        <p class="dm-forward-error" id="live-share-error" hidden></p>
+                        <div class="dm-forward-send">
+                            <button type="button" id="live-share-submit" disabled>Invite <i class="fa-solid fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div id="live-create-modal" class="live-modal" hidden>
                 <div class="live-modal-backdrop" id="live-create-backdrop"></div>
                 <div class="live-create-dialog" role="dialog" aria-labelledby="live-create-heading">

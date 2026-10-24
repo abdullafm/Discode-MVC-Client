@@ -477,6 +477,16 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> InviteToLive([FromBody] InviteToLiveVM model)
+        {
+            if (model is null || model.Id <= 0 || model.UserNames is null || model.UserNames.Count == 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Pick at least one friend." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/live/{model.Id}/invite", new { userNames = model.UserNames }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> ReplyStory([FromBody] StoryReplyVM model)
         {
             if (model is null || model.Id <= 0)

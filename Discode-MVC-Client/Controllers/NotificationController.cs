@@ -12,7 +12,7 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Open(int id, string? tab)
+        public async Task<IActionResult> Open(int id, string? tab, int? live)
         {
             var result = await PostAsync($"api/notification/{id}/read", new { });
             if (result.Status == HttpStatusCode.Unauthorized)
@@ -20,6 +20,9 @@ namespace Discode_MVC_Client.Controllers
 
             if (tab == "pending" || tab == "all")
                 return RedirectToAction("Index", "Home", new { tab });
+
+            if (live is > 0)
+                return RedirectToAction("Index", "Social", new { live });
 
             return RedirectToAction("Index", "Social");
         }

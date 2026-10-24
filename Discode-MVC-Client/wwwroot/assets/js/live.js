@@ -104,6 +104,7 @@
         return requestJson("/Home/LiveStreams").then(function (data) {
             liveStreams = Array.isArray(data) ? data : [];
             renderLive();
+            if (typeof openWantedLive === "function") openWantedLive();
         }).catch(function () {});
     }
 
@@ -396,6 +397,98 @@
             return;
         }
         finishClose();
+    }
+
+    var shareModal = byId("live-share-modal");
+    var shareList = byId("live-share-list");
+    var shareSubmit = byId("live-share-submit");
+
+    function shareError(text) {
+        var box = byId("live-share-error");
+        box.textContent = text || "";
+        box.hidden = !text;
+    }
+
+    function closeShare() {
+        shareModal.hidden = true;
+        shareList.textContent = "";
+        byId("live-share-search").value = "";
+        shareError("");
+    }
+
+    function liveNotice(text) {
+        var note = document.createElement("div");
+        note.className = "story-notice";
+        note.textContent = text;
+        document.body.appendChild(note);
+        setTimeout(function () {
+            if (note.parentNode) note.parentNode.removeChild(note);
+        }, 3000);
+    }
+
+    byId("live-share-btn").addEventListener("click", function () {
+        if (!currentStreamId()) return;
+        shareError("");
+        shareList.textContent = "";
+        shareSubmit.disabled = true;
+        shareModal.hidden = false;
+        byId("live-share-search").focus();
+        fetch("/Dm/ForwardTargets", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            if (!response.ok) throw new Error("targets");
+            return response.text();
+        }).then(function (html) {
+            shareList.innerHTML = html;
+        }).catch(function () {
+            shareError("Could not load your friends. Try again.");
+        });
+    });
+
+    shareModal.addEventListener("click", function (event) {
+        if (event.target.closest("[data-close]")) closeShare();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !shareModal.hidden) closeShare();
+    });
+    shareList.addEventListener("change", function () {
+        shareSubmit.disabled = shareList.querySelectorAll(".dm-forward-check:checked").length === 0;
+    });
+    byId("live-share-search").addEventListener("input", function () {
+        var term = this.value.trim().toLowerCase();
+        [].forEach.call(shareList.querySelectorAll(".dm-forward-item"), function (item) {
+            item.hidden = term.length > 0 && item.getAttribute("data-name").indexOf(term) === -1 && item.getAttribute("data-key").toLowerCase().indexOf(term) === -1;
+        });
+    });
+    shareSubmit.addEventListener("click", function () {
+        var id = currentStreamId();
+        var names = [];
+        [].forEach.call(shareList.querySelectorAll(".dm-forward-check:checked"), function (box) { names.push(box.value); });
+        if (!id || !names.length) return;
+        shareSubmit.disabled = true;
+        shareError("");
+        requestJson("/Home/InviteToLive", "POST", { id: id, userNames: names }).then(function () {
+            closeShare();
+            liveNotice("Invitation sent.");
+        }).catch(function (error) {
+            shareError((error && error.message) || "Could not send the invitation.");
+            shareSubmit.disabled = false;
+        });
+    });
+
+    var wantedLive = Number(new URLSearchParams(window.location.search).get("live")) || 0;
+
+    function openWantedLive() {
+        if (!wantedLive) return;
+        var id = wantedLive;
+        wantedLive = 0;
+        try {
+            window.history.replaceState(window.history.state, "", window.location.pathname);
+        } catch (e) {}
+        var found = liveStreams.filter(function (item) { return item.id === id; })[0];
+        if (!found) {
+            liveNotice("This live stream has ended.");
+            return;
+        }
+        openStream(found);
     }
 
     byId("live-watch-close").addEventListener("click", closeWatchDialog);

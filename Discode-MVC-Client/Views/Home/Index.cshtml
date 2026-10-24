@@ -118,9 +118,9 @@
                                             {
                                                 <img class="notify-avatar-img" src="@notification.ActorAvatarUrl" alt="@notification.ActorUserName">
                                             }
-                                            <span class="notify-badge-icon @(notification.Type switch { "PostComment" or "CommentReply" => "badge-comment", "FriendRequest" or "FriendAccepted" => "badge-friend", _ => "badge-like" })"><i class="fa-solid @(notification.Type switch { "PostComment" or "CommentReply" => "fa-comment", "FriendRequest" => "fa-user-plus", "FriendAccepted" => "fa-user-check", _ => "fa-heart" })"></i></span>
+                                            <span class="notify-badge-icon @(notification.Type switch { "PostComment" or "CommentReply" => "badge-comment", "FriendRequest" or "FriendAccepted" => "badge-friend", _ => "badge-like" })"><i class="fa-solid @(notification.Type switch { "PostComment" or "CommentReply" => "fa-comment", "FriendRequest" => "fa-user-plus", "FriendAccepted" => "fa-user-check", "LiveInvite" => "fa-tower-broadcast", _ => "fa-heart" })"></i></span>
                                         </div>
-                                        <a class="notify-content" href="@Url.Action("Open", "Notification", new { id = notification.Id, tab = notification.Type == "FriendRequest" ? "pending" : (notification.Type == "FriendAccepted" ? "all" : null) })">
+                                        <a class="notify-content" href="@Url.Action("Open", "Notification", new { id = notification.Id, tab = notification.Type == "FriendRequest" ? "pending" : (notification.Type == "FriendAccepted" ? "all" : null), live = notification.LiveStreamId })">
                                             <div class="notify-headline">
                                                 <span class="notify-author">@notification.ActorUserName</span>
                                                 <span class="notify-action">
@@ -133,6 +133,7 @@
                                                         "CommentReply" => "replied to your comment",
                                                         "FriendRequest" => "sent you a friend request",
                                                         "FriendAccepted" => "accepted your friend request",
+                                                        "LiveInvite" => "invited you to watch a live stream",
                                                         _ => "sent you a notification"
                                                     })
                                                 </span>

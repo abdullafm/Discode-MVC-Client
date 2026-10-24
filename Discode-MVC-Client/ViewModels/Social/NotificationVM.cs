@@ -10,6 +10,7 @@ namespace Discode_MVC_Client.ViewModels.Social
         public string Snippet { get; set; } = string.Empty;
         public int? PostId { get; set; }
         public int? StoryId { get; set; }
+        public int? LiveStreamId { get; set; }
         public bool IsRead { get; set; }
         public DateTime CreatedAt { get; set; }
     }
