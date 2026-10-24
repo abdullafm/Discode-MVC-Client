@@ -881,15 +881,19 @@ function sendStoryReply() {
     var text = input.value.trim();
     if (!story || !text) return;
     input.disabled = true;
+    var author = group.author;
     requestJson("/Home/ReplyStory", "POST", { id: story.id, text: text }).then(function () {
         input.value = "";
-        input.placeholder = "Sent";
+        input.disabled = false;
+        closeStories();
+        var target = "/Dm/Index?name=" + encodeURIComponent(author);
+        if (window.discodeGo) window.discodeGo(target);
+        else window.location.href = target;
     }).catch(function (error) {
-        input.placeholder = (error && error.message) || "Could not send";
-    }).then(function () {
         input.disabled = false;
         input.focus();
-        setTimeout(function () { input.placeholder = "Send message"; }, 2000);
+        input.placeholder = (error && error.message) || "Could not send";
+        setTimeout(function () { input.placeholder = "Send message"; }, 2500);
     });
 }
 
