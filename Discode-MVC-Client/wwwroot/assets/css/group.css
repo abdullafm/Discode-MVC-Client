@@ -1188,6 +1188,7 @@ html.theme-dark .mention-chip {
 .dm-msg.is-mentioned {
     background: rgba(250, 166, 26, 0.1);
     border-radius: 0 6px 6px 0;
+    padding-left: 9px;
 }
 
 .dm-msg.is-mentioned::before {
