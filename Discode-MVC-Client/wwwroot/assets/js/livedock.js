@@ -4,6 +4,9 @@
     var dock = null;
     var video = null;
     var state = null;
+    var hostEl = null;
+    var hostVideo = null;
+    var kept = {};
 
     function invoke() {
         var presence = window.discodePresence;
@@ -20,9 +23,53 @@
     }
 
     function attach() {
-        if (!dock) return;
-        document.body.appendChild(dock);
-        play();
+        if (dock) {
+            document.body.appendChild(dock);
+            play();
+        }
+        if (hostEl) {
+            document.body.appendChild(hostEl);
+            hostVideo.play().catch(function () {});
+        }
+    }
+
+    function hideHost() {
+        if (hostVideo) hostVideo.srcObject = null;
+        if (hostEl && hostEl.parentNode) hostEl.parentNode.removeChild(hostEl);
+        hostEl = null;
+        hostVideo = null;
+    }
+
+    function takeHost(info) {
+        hideHost();
+        hostEl = document.createElement("div");
+        hostEl.className = "live-dock live-dock-host";
+        hostVideo = document.createElement("video");
+        hostVideo.autoplay = true;
+        hostVideo.playsInline = true;
+        hostVideo.muted = true;
+        hostVideo.srcObject = info.stream;
+        var top = document.createElement("div");
+        top.className = "live-dock-top";
+        var badge = document.createElement("em");
+        badge.textContent = "LIVE";
+        var title = document.createElement("span");
+        title.className = "live-dock-title";
+        title.textContent = "You are live · " + info.title;
+        var open = document.createElement("button");
+        open.type = "button";
+        open.setAttribute("aria-label", "Open your stream");
+        open.innerHTML = '<i class="fa-solid fa-up-right-and-down-left-from-center"></i>';
+        open.addEventListener("click", function () {
+            hideHost();
+            window.discodeGo("/Social/Index?hostlive=1&t=" + Date.now());
+        });
+        top.appendChild(badge);
+        top.appendChild(title);
+        top.appendChild(open);
+        hostEl.appendChild(hostVideo);
+        hostEl.appendChild(top);
+        attach();
     }
 
     function build() {
@@ -83,8 +130,16 @@
         attach();
     }
 
+    window.discodeKeepOnce = function (name, type, handler) {
+        if (kept[name]) return;
+        kept[name] = true;
+        document.addEventListener(type, handler);
+    };
+
     window.discodeLiveDock = {
         take: take,
+        takeHost: takeHost,
+        hideHost: hideHost,
         close: release,
         active: function () { return state ? state.streamId : 0; }
     };

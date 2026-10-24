@@ -17,7 +17,7 @@
     var liveStreams = [];
     var liveCategory = "All";
     var heroIndex = 0;
-    var broadcast = null;
+    var hostState = window.discodeHost = window.discodeHost || { current: null };
     var watching = null;
     var notice = "";
     var capture = { camera: null, screen: null, camVideo: makeVideo(), scrVideo: makeVideo(), timer: 0 };
@@ -409,6 +409,12 @@
     }
 
     function showWatchDialog(stream, mine) {
+        if (mine && window.discodeLiveDock) window.discodeLiveDock.hideHost();
+        if (mine) {
+            hub("GetLiveViewers", stream.id).then(function (viewers) {
+                if (currentStreamId() === stream.id) byId("live-viewers-count").textContent = viewerText(viewers.length);
+            }).catch(function () {});
+        }
         var video = byId("live-stream-video");
         byId("live-watch-modal").hidden = false;
         byId("live-watch-title").textContent = stream.title;
@@ -427,10 +433,20 @@
     }
 
     function updateMinimizeButton() {
-        byId("live-minimize-btn").hidden = !watching || !!myGuest;
+        byId("live-minimize-btn").hidden = isHostNow() ? false : (!watching || !!myGuest);
     }
 
     byId("live-minimize-btn").addEventListener("click", function () {
+        if (isHostNow() && window.discodeLiveDock) {
+            var session = hostState.current;
+            closeViewerList();
+            setReply(null);
+            closeChatMenu();
+            byId("live-stream-video").srcObject = null;
+            byId("live-watch-modal").hidden = true;
+            window.discodeLiveDock.takeHost({ stream: session.stream, title: session.info.title });
+            return;
+        }
         if (!watching || !watching.pc || myGuest || !window.discodeLiveDock) return;
         var current = watching;
         var video = byId("live-stream-video");
@@ -468,7 +484,7 @@
 
     function refreshViewerList() {
         var id = currentStreamId();
-        if (!broadcast || broadcast.streamId !== id || byId("live-viewer-list").hidden) return;
+        if (!hostState.current || hostState.current.streamId !== id || byId("live-viewer-list").hidden) return;
         hub("GetLiveViewers", id).then(function (viewers) {
             var rows = byId("live-viewer-rows");
             rows.textContent = "";
@@ -495,7 +511,7 @@
     byId("live-viewers-btn").addEventListener("click", function (event) {
         event.stopPropagation();
         var panel = byId("live-viewer-list");
-        if (!broadcast || broadcast.streamId !== currentStreamId()) return;
+        if (!hostState.current || hostState.current.streamId !== currentStreamId()) return;
         panel.hidden = !panel.hidden;
         refreshViewerList();
     });
@@ -507,9 +523,9 @@
     function openStream(stream, attempt) {
         if (window.discodeLiveDock) window.discodeLiveDock.close();
         if (stream.isMine) {
-            if (broadcast && broadcast.streamId === stream.id) {
+            if (hostState.current && hostState.current.streamId === stream.id) {
                 showWatchDialog(stream, true);
-                byId("live-stream-video").srcObject = broadcast.stream;
+                byId("live-stream-video").srcObject = hostState.current.stream;
                 byId("live-stream-video").play().catch(function () {});
             }
             return;
@@ -562,9 +578,9 @@
     }
 
     function closeWatchDialog() {
-        if (broadcast && !byId("live-watch-modal").hidden && !byId("live-btn-end").hidden) {
+        if (hostState.current && !byId("live-watch-modal").hidden && !byId("live-btn-end").hidden) {
             askConfirm("End your stream?", "You are live. Closing this window will stop the stream for everyone watching.", "End stream").then(function (ok) {
-                if (!ok || !broadcast) return;
+                if (!ok || !hostState.current) return;
                 endBroadcast();
                 finishClose();
             });
@@ -678,9 +694,9 @@
     });
 
     byId("live-btn-end").addEventListener("click", function () {
-        if (!broadcast) return;
+        if (!hostState.current) return;
         askConfirm("End your stream?", "Your viewers will be disconnected and the stream will stop.", "End stream").then(function (ok) {
-            if (!ok || !broadcast) return;
+            if (!ok || !hostState.current) return;
             endBroadcast();
             byId("live-watch-modal").hidden = true;
         });
@@ -709,7 +725,7 @@
 
     function currentStreamId() {
         if (watching) return watching.stream.id;
-        if (broadcast) return broadcast.streamId;
+        if (hostState.current) return hostState.current.streamId;
         return 0;
     }
 
@@ -731,13 +747,13 @@
     }
 
     function startPeerFor(viewerConnection) {
-        var streamId = broadcast.streamId;
+        var streamId = hostState.current.streamId;
         var pc = new RTCPeerConnection(ICE);
         var peer = { pc: pc, pending: [] };
-        broadcast.peers[viewerConnection] = peer;
+        hostState.current.peers[viewerConnection] = peer;
 
-        broadcast.stream.getTracks().forEach(function (track) {
-            pc.addTrack(track, broadcast.stream);
+        hostState.current.stream.getTracks().forEach(function (track) {
+            pc.addTrack(track, hostState.current.stream);
         });
         pc.onicecandidate = function (event) {
             if (event.candidate) signal(streamId, viewerConnection, { kind: "ice", candidate: event.candidate });
@@ -765,13 +781,13 @@
     }
 
     function dropPeer(viewerConnection) {
-        if (!broadcast || !broadcast.peers[viewerConnection]) return;
-        broadcast.peers[viewerConnection].pc.close();
-        delete broadcast.peers[viewerConnection];
+        if (!hostState.current || !hostState.current.peers[viewerConnection]) return;
+        hostState.current.peers[viewerConnection].pc.close();
+        delete hostState.current.peers[viewerConnection];
     }
 
     function hostSignal(from, message) {
-        var peer = broadcast.peers[from];
+        var peer = hostState.current.peers[from];
         if (!peer) return;
         if (message.kind === "answer") {
             peer.pc.setRemoteDescription(message.sdp).then(function () {
@@ -828,18 +844,37 @@
             if (currentStreamId() === data.streamId) guestSignal(data.from, message);
             return;
         }
-        if (broadcast && broadcast.streamId === data.streamId) hostSignal(data.from, message);
-        else if (watching && watching.stream.id === data.streamId) {
+        if (hostState.current && hostState.current.streamId === data.streamId) return;
+        if (watching && watching.stream.id === data.streamId) {
             viewerSignal(data.from, message);
         }
     });
 
-    document.addEventListener("discode-live-viewer-joined", function (event) {
-        if (broadcast && broadcast.streamId === event.detail.streamId) startPeerFor(event.detail.connectionId);
-    });
+    function keepHostHandlers() {
+        var keep = window.discodeKeepOnce;
+        if (!keep) return;
+        keep("host-signal", "discode-live-signal", function (event) {
+            var data = event.detail;
+            var message;
+            try {
+                message = JSON.parse(data.payload);
+            } catch (err) {
+                return;
+            }
+            if (message.role === "guest") return;
+            if (hostState.current && hostState.current.streamId === data.streamId) hostSignal(data.from, message);
+        });
+        keep("host-joined", "discode-live-viewer-joined", function (event) {
+            if (hostState.current && hostState.current.streamId === event.detail.streamId) startPeerFor(event.detail.connectionId);
+        });
+        keep("host-left", "discode-live-viewer-left", function (event) {
+            dropPeer(event.detail.connectionId);
+        });
+    }
+
+    keepHostHandlers();
 
     document.addEventListener("discode-live-viewer-left", function (event) {
-        dropPeer(event.detail.connectionId);
         if (guest && guest.connectionId === event.detail.connectionId && currentStreamId() === event.detail.streamId) clearGuest();
         removeGuestRequest(event.detail.connectionId);
     });
@@ -867,7 +902,7 @@
             byId("live-stream-video").srcObject = null;
             setWait("This stream has ended.");
         }
-        if (broadcast && broadcast.streamId === id) {
+        if (hostState.current && hostState.current.streamId === id) {
             releaseBroadcast();
             byId("live-watch-modal").hidden = true;
         }
@@ -899,7 +934,7 @@
     var earlyGuestIce = {};
 
     function isHostNow() {
-        return !!broadcast && broadcast.streamId === currentStreamId();
+        return !!hostState.current && hostState.current.streamId === currentStreamId();
     }
 
     function guestNote(text) {
@@ -1092,7 +1127,7 @@
 
     document.addEventListener("discode-live-guest-requested", function (event) {
         var request = event.detail;
-        if (!isHostNow() || broadcast.streamId !== request.streamId) return;
+        if (!isHostNow() || hostState.current.streamId !== request.streamId) return;
         removeGuestRequest(request.connectionId);
         var card = element("div", "watch-guest-request");
         card.setAttribute("data-connection", request.connectionId);
@@ -1321,9 +1356,9 @@
 
     function openCreateDialog() {
         if (window.discodeLiveDock) window.discodeLiveDock.close();
-        if (broadcast) {
-            showWatchDialog(broadcast.info, true);
-            byId("live-stream-video").srcObject = broadcast.stream;
+        if (hostState.current) {
+            showWatchDialog(hostState.current.info, true);
+            byId("live-stream-video").srcObject = hostState.current.stream;
             byId("live-stream-video").play().catch(function () {});
             return;
         }
@@ -1339,7 +1374,7 @@
 
     function closeCreateDialog() {
         byId("live-create-modal").hidden = true;
-        if (!broadcast) {
+        if (!hostState.current) {
             discardCapture();
             refreshSourceUi();
         }
@@ -1381,7 +1416,7 @@
 
         var out = buildOutputStream();
         hub("StartLive", { title: title, category: category }).then(function (stream) {
-            broadcast = { streamId: stream.id, stream: out.stream, mixer: out.mixer, peers: {}, info: stream, thumbnail: "", snapshotTimer: 0 };
+            hostState.current = { streamId: stream.id, stream: out.stream, mixer: out.mixer, peers: {}, info: stream, thumbnail: "", snapshotTimer: 0, sources: [capture.camera, capture.screen].filter(Boolean), discard: function () { try { discardCapture(); } catch (error) {} } };
             scheduleSnapshot(5000);
             byId("live-create-modal").hidden = true;
             showWatchDialog(stream, true);
@@ -1414,16 +1449,16 @@
     }
 
     function takeSnapshot() {
-        if (!broadcast) return;
-        var current = broadcast;
+        if (!hostState.current) return;
+        var current = hostState.current;
         var shot = document.createElement("canvas");
         shot.width = 640;
         shot.height = 360;
         shot.getContext("2d").drawImage(canvas, 0, 0, shot.width, shot.height);
         shot.toBlob(function (blob) {
-            if (!blob || broadcast !== current) return;
+            if (!blob || hostState.current !== current) return;
             postThumbnail(blob, current.thumbnail).then(function (url) {
-                if (broadcast !== current) {
+                if (hostState.current !== current) {
                     removeThumbnail(url);
                     return;
                 }
@@ -1439,27 +1474,30 @@
     }
 
     function scheduleSnapshot(delay) {
-        var current = broadcast;
+        var current = hostState.current;
         if (!current) return;
         current.snapshotTimer = setTimeout(function () {
-            if (broadcast !== current) return;
+            if (hostState.current !== current) return;
             takeSnapshot();
             scheduleSnapshot((10 + Math.random() * 5) * 60 * 1000);
         }, delay);
     }
 
     function releaseBroadcast() {
-        if (!broadcast) return;
-        var current = broadcast;
-        broadcast = null;
+        if (!hostState.current) return;
+        var current = hostState.current;
+        hostState.current = null;
         clearGuest();
         byId("live-guest-requests").textContent = "";
         clearTimeout(current.snapshotTimer);
         removeThumbnail(current.thumbnail);
         Object.keys(current.peers).forEach(function (key) { current.peers[key].pc.close(); });
         stopTracks(current.stream);
+        (current.sources || []).forEach(stopTracks);
         if (current.mixer) current.mixer.close();
+        if (current.discard) current.discard();
         discardCapture();
+        if (window.discodeLiveDock) window.discodeLiveDock.hideHost();
         refreshSourceUi();
         byId("live-stream-video").srcObject = null;
     }
@@ -1472,4 +1510,6 @@
 
     drawFrame();
     refreshLive();
+
+    if (hostState.current && /[?&]hostlive=/.test(location.search)) openCreateDialog();
 })();
