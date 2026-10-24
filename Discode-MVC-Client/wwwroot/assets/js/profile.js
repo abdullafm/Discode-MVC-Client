@@ -827,6 +827,11 @@
             }
             var viewPronouns = document.getElementById("me-view-pronouns");
             if (viewPronouns) viewPronouns.hidden = true;
+            var viewBio = document.getElementById("me-view-bio");
+            if (viewBio) {
+                viewBio.hidden = true;
+                viewBio.textContent = "";
+            }
             var bioBlock = profile.querySelector(".me-bio-block");
             if (bioBlock) bioBlock.classList.remove("has-text");
             paintPop();
