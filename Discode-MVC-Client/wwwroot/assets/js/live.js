@@ -911,6 +911,14 @@
         }, 3500);
     }
 
+    function guestStatus(text) {
+        var holder = byId("live-guest-requests");
+        var old = holder.querySelector(".watch-guest-status");
+        if (old && old.parentNode) old.parentNode.removeChild(old);
+        if (!text) return;
+        holder.appendChild(element("div", "watch-guest-note watch-guest-status", text));
+    }
+
     function showGuestTile(info, stream, mine) {
         byId("live-guest-tile").hidden = false;
         byId("live-guest-name").textContent = mine ? "You" : (info.displayName || info.userName || "");
@@ -944,6 +952,7 @@
         }
         guest = null;
         guestPending = false;
+        guestStatus("");
         byId("live-guest-tile").hidden = true;
         byId("live-guest-video").srcObject = null;
         updateGuestButton();
@@ -1058,7 +1067,9 @@
         }
         guestPending = true;
         updateGuestButton();
-        hub("RequestLiveGuest", id).catch(function (err) {
+        hub("RequestLiveGuest", id).then(function () {
+            if (guestPending) guestStatus("Request sent. Waiting for the host to accept...");
+        }).catch(function (err) {
             guestPending = false;
             updateGuestButton();
             guestNote(hubMessage(err));
@@ -1110,6 +1121,7 @@
 
     document.addEventListener("discode-live-guest-response", function (event) {
         if (!watching || watching.stream.id !== event.detail.streamId) return;
+        guestStatus("");
         if (event.detail.accepted) {
             becomeGuest();
         } else {
