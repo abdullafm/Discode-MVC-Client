@@ -24,6 +24,7 @@
     var audioState = { muted: false, deafened: false };
     var focused = "";
     var silenced = {};
+    var watching = {};
     var ringTimer = 0;
     var ringUntil = 0;
     var ghostTimer = 0;
@@ -609,12 +610,16 @@
                 ? { key: "me", name: (myName ? myName.textContent.trim() : "") || person.displayName, avatar: person.avatarUrl || DEFAULT_AVATAR, muted: audioState.muted, deafened: audioState.deafened, stream: cameraStream, on: cameraState === "on", loading: cameraState === "starting", error: cameraState === "error" ? cameraError || "Unknown" : "" }
                 : { key: key, name: person.displayName, avatar: person.avatarUrl || DEFAULT_AVATAR, muted: peer ? peer.state.muted : false, deafened: peer ? peer.state.deafened : false, stream: peer ? peer.camStream : null, on: !!peer && peer.state.camera };
             fillTile(tile, info);
-            var sharing = isMe ? (screenState === "on" && !!screenStream) : (!!peer && !!peer.state.screen && !!peer.screenStream);
+            var remoteSharing = !isMe && !!person.screen;
+            var watched = isMe || !!watching[person.userId];
+            if (!isMe && !remoteSharing) delete watching[person.userId];
+            var sharing = isMe ? (screenState === "on" && !!screenStream) : (remoteSharing && (!watched || (!!peer && !!peer.screenStream)));
             if (sharing) {
                 var screenTile = tileFor("s-" + key, "is-screen");
                 wanted["gcall-s-" + key] = true;
-                var quality = isMe ? screenInfo() : peer.state.screen;
-                fillTile(screenTile, { key: "screen-" + key, name: info.name, stream: isMe ? screenStream : peer.screenStream, on: true, isScreen: true, quality: quality ? quality.h + "P " + quality.fps + "FPS" : "" });
+                var quality = isMe ? screenInfo() : (peer ? peer.state.screen : null);
+                screenTile.classList.toggle("is-unwatched", !watched);
+                fillTile(screenTile, { key: "screen-" + key, name: info.name, stream: watched ? (isMe ? screenStream : (peer ? peer.screenStream : null)) : null, on: watched, isScreen: true, quality: quality ? quality.h + "P " + quality.fps + "FPS" : "" });
                 if (screenTile.parentNode === faces && screenTile !== faces.firstChild && !screenTile.hasAttribute("data-placed")) {
                     faces.insertBefore(screenTile, faces.firstChild);
                     screenTile.setAttribute("data-placed", "1");
@@ -829,6 +834,7 @@
         micPromise = null;
         mediaCallId = 0;
         focused = "";
+        watching = {};
         try {
             sessionStorage.removeItem("discode-call-audio");
         } catch (e) {}
@@ -1067,13 +1073,17 @@
             render();
         });
         document.getElementById("call-faces").addEventListener("click", function (event) {
-            if (event.target.closest(".call-screen-watch")) {
-                joinFromStage(false);
+            var watch = event.target.closest(".call-screen-watch");
+            if (watch) {
+                var owner = (watch.closest(".call-face").getAttribute("data-user") || "").replace("screen-", "");
+                if (owner) watching[owner] = true;
+                if (call) renderStage();
+                else joinFromStage(false);
                 return;
             }
             var tile = event.target.closest(".call-face");
             if (!tile || !call) return;
-            var canFocus = tile.classList.contains("has-video") || tile.classList.contains("is-screen") || !!focused;
+            var canFocus = tile.classList.contains("has-video") || (tile.classList.contains("is-screen") && !tile.classList.contains("is-unwatched")) || !!focused;
             if (!canFocus) return;
             focused = focused === tile.id ? "" : tile.id;
             renderStage();
