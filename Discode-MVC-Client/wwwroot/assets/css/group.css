@@ -1146,3 +1146,12 @@ section#group-members.no-motion .group-members {
 .call-dock-btn:hover {
     background: #1a6334;
 }
+
+.stream-menu button.is-danger {
+    color: #f23f43;
+}
+
+.stream-menu button.is-danger:hover {
+    background: #da373c;
+    color: #fff;
+}

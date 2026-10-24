@@ -508,6 +508,30 @@
         });
     }
 
+    function changeScreen() {
+        if (!call || screenState !== "on" || !navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) return;
+        var token = ++screenToken;
+        navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false }).then(function (stream) {
+            if (token !== screenToken || !call || screenState !== "on") {
+                stream.getTracks().forEach(function (track) { track.stop(); });
+                return;
+            }
+            var old = screenStream;
+            screenStream = stream;
+            var track = stream.getVideoTracks()[0];
+            if (track) track.onended = function () { setScreen(false); };
+            if (old) {
+                old.getTracks().forEach(function (item) {
+                    item.onended = null;
+                    item.stop();
+                });
+            }
+            Object.keys(peers).forEach(function (id) { attachTracks(peers[id]); });
+            sendState();
+            render();
+        }).catch(function () {});
+    }
+
     function tileFor(id, className) {
         var faces = document.getElementById("call-faces");
         var tile = document.getElementById("gcall-" + id);
@@ -1242,7 +1266,11 @@
         var menu = document.createElement("div");
         menu.className = "stream-menu";
         menu.setAttribute("role", "menu");
-        menu.innerHTML = '<button type="button" role="menuitem" data-act="stop"><i class="fa-solid fa-display"></i><span>Stop Watching</span></button>' +
+        var head = options.own
+            ? '<button type="button" role="menuitem" class="is-danger" data-act="stop"><i class="fa-solid fa-display"></i><span>Stop Streaming</span></button>' +
+              '<button type="button" role="menuitem" data-act="change"><i class="fa-solid fa-rotate"></i><span>Change Stream</span></button>'
+            : '<button type="button" role="menuitem" data-act="stop"><i class="fa-solid fa-display"></i><span>Stop Watching</span></button>';
+        menu.innerHTML = head +
             '<hr>' +
             '<button type="button" role="menuitem" data-act="popout"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>Pop Out Stream</span></button>';
         document.body.appendChild(menu);
@@ -1257,6 +1285,7 @@
             if (!item) return;
             closeStreamMenu();
             if (item.getAttribute("data-act") === "stop") options.onStop();
+            else if (item.getAttribute("data-act") === "change") options.onChange();
             else if (options.video && options.video.requestPictureInPicture) options.video.requestPictureInPicture().catch(function () {});
         });
         streamMenu = menu;
@@ -1275,7 +1304,17 @@
         var tile = event.target.closest && event.target.closest("#call-faces .call-face.is-screen");
         if (!tile || !call) return;
         var owner = (tile.getAttribute("data-user") || "").replace("screen-", "");
-        if (owner === "me" || tile.classList.contains("is-unwatched")) return;
+        if (owner === "me") {
+            event.preventDefault();
+            openStreamMenu(event.clientX, event.clientY, {
+                own: true,
+                video: tile.querySelector("video"),
+                onStop: function () { setScreen(false); },
+                onChange: changeScreen
+            });
+            return;
+        }
+        if (tile.classList.contains("is-unwatched")) return;
         event.preventDefault();
         openStreamMenu(event.clientX, event.clientY, {
             video: tile.querySelector("video"),

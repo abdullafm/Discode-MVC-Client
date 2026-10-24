@@ -396,7 +396,42 @@
         }
     });
 
+    function changeScreen() {
+        if (!state || screenState !== "on" || !navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) return;
+        var token = ++screenToken;
+        navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false }).then(function (stream) {
+            if (token !== screenToken || !state || screenState !== "on") {
+                stream.getTracks().forEach(function (track) { track.stop(); });
+                return;
+            }
+            var old = screenStream;
+            screenStream = stream;
+            var track = stream.getVideoTracks()[0];
+            if (track) track.onended = function () { setScreen(false); };
+            if (old) {
+                old.getTracks().forEach(function (item) {
+                    item.onended = null;
+                    item.stop();
+                });
+            }
+            if (screenSender && track) screenSender.replaceTrack(track).catch(function () {});
+            sendMuteState();
+            renderTiles();
+        }).catch(function () {});
+    }
+
     document.addEventListener("contextmenu", function (event) {
+        var own = event.target.closest && event.target.closest("#call-screen-me");
+        if (own && window.discodeStreamMenu && screenState === "on") {
+            event.preventDefault();
+            window.discodeStreamMenu.open(event.clientX, event.clientY, {
+                own: true,
+                video: own.querySelector("video"),
+                onStop: function () { setScreen(false); },
+                onChange: changeScreen
+            });
+            return;
+        }
         var tile = event.target.closest && event.target.closest("#call-screen-peer");
         if (!tile || !window.discodeStreamMenu || tile.classList.contains("is-unwatched") || !watchingPeerScreen) return;
         event.preventDefault();
