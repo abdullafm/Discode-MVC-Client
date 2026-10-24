@@ -187,7 +187,16 @@
             var box = (input.closest("form") || input).getBoundingClientRect();
             popup.style.left = box.left + "px";
             popup.style.width = box.width + "px";
-            popup.style.bottom = (window.innerHeight - box.top + 8) + "px";
+            var room = popup.offsetHeight + 16;
+            if (box.top >= room || box.top >= window.innerHeight - box.bottom) {
+                popup.style.top = "";
+                popup.style.bottom = (window.innerHeight - box.top + 8) + "px";
+                popup.style.maxHeight = Math.max(120, Math.min(320, box.top - 16)) + "px";
+            } else {
+                popup.style.bottom = "";
+                popup.style.top = (box.bottom + 8) + "px";
+                popup.style.maxHeight = Math.max(120, Math.min(320, window.innerHeight - box.bottom - 16)) + "px";
+            }
         }
 
         function paint() {
