@@ -1391,11 +1391,23 @@ function bindDmCall() {
         if (!current || !dmPartner || current.other.userName !== dmPartner.userName) dmCloseCallStage();
     });
 
-    document.querySelector(".call-phone-add").addEventListener("click", function () {
-        var current = document.getElementById("dm-title");
-        var name = current ? current.textContent.trim() : "";
+    function openGroupPicker() {
+        var name = dmPartner ? dmPartner.userName : "";
         if (typeof openNewMessage === "function") openNewMessage(name ? [name] : []);
-    });
+    }
+
+    document.querySelector(".call-phone-add").addEventListener("click", openGroupPicker);
+
+    var dmAdd = document.getElementById("dm-add");
+    if (dmAdd) {
+        dmAdd.addEventListener("click", openGroupPicker);
+        dmAdd.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openGroupPicker();
+            }
+        });
+    }
 
     document.getElementById("call-phone-add-close").addEventListener("click", function (event) {
         event.preventDefault();
