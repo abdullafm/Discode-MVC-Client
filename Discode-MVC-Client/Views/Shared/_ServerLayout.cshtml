@@ -1,0 +1,1033 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="~/assets/js/theme.js"></script>
+    <script src="~/assets/js/i18n.js"></script>
+    <script src="~/assets/js/nav.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord | Server</title>
+    <link rel="stylesheet" href="~/assets/css/style.css">
+    <link rel="stylesheet" href="~/assets/css/server.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="shortcut icon" href="~/assets/icons/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <header class="app-header">
+        <div class="server-rail" id="server-rail">
+            <nav class="server-nav" aria-label="Servers">
+                <button type="button" class="server-home" onclick="openToggle()" aria-label="Home">
+                    <i class="fa-brands fa-discord" aria-hidden="true"></i>
+                </button>
+                <hr>
+                <a href="@Url.Action("Index", "Server")?id=azaan" data-id="azaan" aria-label="Azaan server">
+                    <img src="~/assets/img/Azaan.jpeg" alt="">
+                </a>
+                <div id="server-list"></div>
+                <template id="server-chip"><button type="button" class="server-chip"></button></template>
+                <button type="button" class="server-action" id="server-add" aria-label="Add a Server">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                </button>
+                <hr>
+                <a class="server-action" href="./discover.html" aria-label="Discover"><i class="fa-solid fa-compass"></i></a>
+                <a class="server-action" href="./discover.html" aria-label="Discover"><i class="fa-solid fa-server"></i></a>
+            </nav>
+        </div>
+        <aside class="conversation-sidebar server-channels" id="conversations">
+            <div class="server-banner-wrap" data-can-manage>
+                <button type="button" class="server-banner" id="server-menu-open" aria-expanded="false"
+                        aria-controls="server-menu">
+                    <span id="server-title">Azaan</span>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </button>
+                <div class="server-menu" id="server-menu" hidden>
+                    <button type="button"><i class="fa-solid fa-gem"></i><span>Server Boost</span></button>
+                    <button type="button" data-invite="server">
+                        <i class="fa-solid fa-user-plus"></i><span>
+                        Invite to
+                        Server
+                    </span>
+                </button>
+                <button type="button" id="server-settings-open">
+                    <i class="fa-solid fa-gear"></i><span>
+                    Server
+                    Settings
+                </span>
+            </button>
+            <button type="button" data-create="channel">
+                <i class="fa-solid fa-hashtag"></i><span>
+                Create
+                Channel
+            </span>
+        </button>
+        <button type="button" data-create="category">
+            <i class="fa-solid fa-folder-plus"></i><span>
+            Create
+            Category
+        </span>
+    </button>
+    <hr class="server-menu-divider" id="server-leave-sep">
+    <button type="button" class="server-menu-item server-menu-leave is-danger" id="server-leave-open">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        <span>Leave Server</span>
+    </button>
+</div>
+</div>
+<div class="server-channel-scroll" id="server-channel-scroll">
+    <nav id="server-channel-list" aria-label="Channels">
+        <div class="server-channel-loose" id="server-channel-loose"></div>
+        <div class="server-category">
+            <div class="server-category-head">
+                <button type="button" class="server-category-name">
+                    <i class="fa-solid fa-chevron-down"></i>
+                    <span>Text Channels</span>
+                </button>
+                <button type="button" class="server-category-add" data-create="channel"
+                        aria-label="Create Channel">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <div class="server-category-list">
+                <div class="server-channel-row">
+                    <button type="button" class="server-channel on" data-kind="text" data-send="1">
+                        <i class="fa-solid fa-hashtag"></i>
+                        <span class="server-channel-name">general</span>
+                        <i class="fa-solid fa-lock server-channel-lock" hidden aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="server-channel-edit" data-edit-channel
+                            aria-label="Edit Channel">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                </div>
+                <div class="server-channel-row">
+                    <button type="button" class="server-channel" data-kind="announce" data-send="0">
+                        <i class="fa-solid fa-bullhorn"></i>
+                        <span class="server-channel-name">announcements</span>
+                        <i class="fa-solid fa-lock server-channel-lock" aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="server-channel-edit" data-edit-channel
+                            aria-label="Edit Channel">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="server-category">
+            <div class="server-category-head">
+                <button type="button" class="server-category-name">
+                    <i class="fa-solid fa-chevron-down"></i>
+                    <span>Voice Channels</span>
+                </button>
+                <button type="button" class="server-category-add" data-create="channel"
+                        aria-label="Create Channel">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <div class="server-category-list">
+                <div class="server-channel-row">
+                    <button type="button" class="server-channel" data-kind="voice" data-join="1">
+                        <i class="fa-solid fa-volume-high"></i>
+                        <span class="server-channel-name">Lounge</span>
+                        <span class="server-voice-live" hidden>0:00</span>
+                        <i class="fa-solid fa-lock server-channel-lock" hidden aria-hidden="true"></i>
+                    </button>
+                    <button type="button" class="server-channel-edit" data-edit-channel
+                            aria-label="Edit Channel">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                </div>
+                <div class="server-voice-people" hidden>
+                    <div class="server-voice-user">
+                        <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+                        <span>
+                            <strong class="me-display">Anonymou5</strong><small>
+                            Set a channel
+                            status
+                        </small>
+                    </span>
+                    <span class="voice-user-icons">
+                        <i class="fa-solid fa-microphone-slash voice-mute-icon" aria-hidden="true"></i>
+                        <span class="voice-deaf-icon"><i class="fa-solid fa-headphones" aria-hidden="true"></i></span>
+                    </span>
+                </div>
+                <div class="server-voice-invite">
+                    <button type="button" class="server-voice-invite-open">
+                        <i class="fa-solid fa-user-plus"></i><span>Invite to Voice</span>
+                    </button>
+                    <button type="button" class="server-voice-invite-close" aria-label="Close">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <template id="server-category-new">
+        <div class="server-category">
+            <div class="server-category-head">
+                <button type="button" class="server-category-name">
+                    <i class="fa-solid fa-chevron-down"></i>
+                    <span></span>
+                </button>
+                <button type="button" class="server-category-add" data-create="channel"
+                        aria-label="Create Channel">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+            <div class="server-category-list"></div>
+        </div>
+    </template>
+    <template id="server-channel-new">
+        <div class="server-channel-row">
+            <button type="button" class="server-channel" data-kind="text"
+                    data-send="1">
+                <i class="fa-solid fa-hashtag"></i><span class="server-channel-name"></span><span class="server-voice-live"
+                                                                                                  hidden>0:00</span><i class="fa-solid fa-lock server-channel-lock" hidden
+                                     aria-hidden="true"></i>
+            </button><button type="button" class="server-channel-edit"
+                         data-edit-channel aria-label="Edit Channel">
+            <i class="fa-solid fa-gear"></i>
+        </button>
+    </div>
+    <div class="server-voice-people" hidden>
+        <div class="server-voice-user">
+            <img src="~/assets/img/img-icon-profile.jpeg"
+                 alt=""><span>
+            <strong class="me-display">Anonymou5</strong><small>
+            Set a channel
+            status
+        </small>
+    </span><span class="voice-user-icons"><i class="fa-solid fa-microphone-slash voice-mute-icon" aria-hidden="true"></i><span class="voice-deaf-icon"><i class="fa-solid fa-headphones" aria-hidden="true"></i></span></span>
+</div>
+<div class="server-voice-invite">
+    <button type="button"
+            class="server-voice-invite-open">
+        <i class="fa-solid fa-user-plus"></i><span>Invite to Voice</span>
+    </button><button type="button" class="server-voice-invite-close" aria-label="Close">
+    <i class="fa-solid fa-xmark"></i>
+</button>
+</div>
+</div>
+</template>
+</nav>
+<p class="server-channel-empty" id="server-channel-empty">No channels yet.</p>
+</div>
+<div class="channel-menu" id="channel-menu" hidden>
+    <label>Hide Muted Channels<input type="checkbox" aria-label="Hide Muted Channels"></label>
+    <hr>
+    <button type="button" data-create="channel">Create Channel</button>
+    <button type="button" data-create="category">Create Category</button>
+    <button type="button" data-invite="server">Invite to Server</button>
+</div>
+<div class="channel-menu" id="channel-row-menu" hidden>
+    <button type="button" data-action="edit">Edit Channel</button>
+    <button type="button" data-action="delete" class="is-danger">Delete Channel</button>
+</div>
+<div class="server-voice-bar" id="server-voice-bar" hidden>
+    <div>
+        <strong><i class="fa-solid fa-signal"></i> Voice Connected</strong>
+        <span id="server-voice-bar-where">Lounge / Azaan</span>
+    </div>
+    <button type="button" id="server-voice-bar-leave" aria-label="Disconnect">
+        <i class="fa-solid fa-phone-slash"></i>
+    </button>
+</div>
+<div class="user-panel" id="user-panel">
+    <div class="user-identity">
+        <div class="avatar">
+            <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+        </div>
+        <div class="user-details">
+            <p class="me-display">Anonymou5</p>
+            <span>Online</span>
+        </div>
+    </div>
+    <div class="user-controls">
+        <button type="button" onclick="mic()" aria-label="Mute microphone"><i class="fa-solid fa-microphone" id="mic" aria-hidden="true"></i></button>
+        <button type="button" id="headp-btn" onclick="headp()" aria-label="Deafen">
+            <i class="fa-solid fa-headphones"
+               id="head" aria-hidden="true"></i>
+        </button>
+        <button type="button" id="settings-open" aria-label="Settings">
+            <i class="fa-solid fa-gear"></i>
+        </button>
+    </div>
+</div>
+</aside>
+</header>
+        @RenderBody()
+ <footer>
+
+        <div class="channel-modal" id="channel-modal" hidden>
+            <form class="channel-card" id="channel-form">
+                <div class="channel-card-head">
+                    <div>
+                        <h2>Create Channel</h2>
+                        <p class="channel-where" id="channel-where" hidden>in <span id="channel-where-name"></span></p>
+                    </div>
+                    <button type="button" id="channel-modal-close" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <p class="channel-kicker">Channel Type</p>
+                <div class="channel-types" id="channel-types">
+                    <label class="channel-type">
+                        <input type="radio" name="channel-kind" value="text" checked>
+                        <span class="channel-type-mark"></span>
+                        <i class="fa-solid fa-hashtag"></i>
+                        <span><strong>Text</strong><small>Send messages, images, GIFs, emoji, opinions, and
+                                puns</small></span>
+                    </label>
+                    <label class="channel-type">
+                        <input type="radio" name="channel-kind" value="voice">
+                        <span class="channel-type-mark"></span>
+                        <i class="fa-solid fa-volume-high"></i>
+                        <span><strong>Voice</strong><small>Hang out together with voice, video, and screen
+                                share</small></span>
+                    </label>
+                </div>
+                <label class="channel-kicker" for="channel-name">Channel Name</label>
+                <div class="channel-name">
+                    <i class="fa-solid fa-hashtag" id="channel-name-icon"></i>
+                    <input id="channel-name" type="text" value="new-channel" maxlength="100" autocomplete="off">
+                    <i class="fa-solid fa-circle-check" id="channel-name-ok"></i>
+                </div>
+                <label class="channel-kicker" id="channel-category-label" for="channel-category-pick" hidden>Category</label>
+                <div class="channel-name" id="channel-category-wrap" hidden>
+                    <i class="fa-solid fa-folder"></i>
+                    <select id="channel-category-pick"></select>
+                </div>
+                <div class="channel-private">
+                    <i class="fa-solid fa-lock"></i>
+                    <span><strong>Private Channel</strong><small>Only selected members and roles will be able to view
+                            this channel.</small></span>
+                    <span class="perm-switch"><input type="checkbox" id="channel-private" role="switch"
+                            aria-label="Private Channel"></span>
+                </div>
+                <div class="channel-actions">
+                    <button type="button" id="channel-modal-cancel">Cancel</button>
+                    <button type="submit" id="channel-modal-confirm">Create Channel</button>
+                </div>
+            </form>
+        </div>
+        <div class="channel-modal" id="channel-edit" hidden>
+            <form class="channel-card" id="channel-edit-form">
+                <div class="channel-card-head">
+                    <div>
+                        <h2 id="channel-edit-title">Edit Channel</h2>
+                        <p class="channel-where" id="channel-edit-sub"></p>
+                    </div>
+                    <button type="button" id="channel-edit-close" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <label class="channel-kicker" for="channel-edit-name">Channel Name</label>
+                <div class="channel-name">
+                    <i class="fa-solid fa-hashtag" id="channel-edit-icon"></i>
+                    <input id="channel-edit-name" type="text" maxlength="100" autocomplete="off">
+                </div>
+                <div class="perm-group channel-edit-perms">
+                    <div class="perm-head">
+                        <h3>Permissions</h3>
+                    </div>
+                    <label class="perm-row" data-perm="view">
+                        <span class="perm-copy"><strong>View Channel</strong><small>Allows members to see this
+                                channel.</small></span>
+                        <span class="perm-switch"><input id="channel-perm-view" type="checkbox" role="switch"
+                                aria-label="View Channel"></span>
+                    </label>
+                    <label class="perm-row" data-perm="send">
+                        <span class="perm-copy"><strong>Send Messages</strong><small>Allows members to send messages in
+                                this channel.</small></span>
+                        <span class="perm-switch"><input id="channel-perm-send" type="checkbox" role="switch"
+                                aria-label="Send Messages"></span>
+                    </label>
+                    <label class="perm-row" data-perm="manage">
+                        <span class="perm-copy"><strong>Manage Messages</strong><small>Allows members to delete or pin
+                                messages by other members.</small></span>
+                        <span class="perm-switch"><input id="channel-perm-manage" type="checkbox" role="switch"
+                                aria-label="Manage Messages"></span>
+                    </label>
+                    <label class="perm-row" data-perm="connect">
+                        <span class="perm-copy"><strong>Connect</strong><small>Allows members to join this voice
+                                channel.</small></span>
+                        <span class="perm-switch"><input id="channel-perm-connect" type="checkbox" role="switch"
+                                aria-label="Connect"></span>
+                    </label>
+                    <label class="perm-row" data-perm="speak">
+                        <span class="perm-copy"><strong>Speak</strong><small>Allows members to talk in this voice
+                                channel.</small></span>
+                        <span class="perm-switch"><input id="channel-perm-speak" type="checkbox" role="switch"
+                                aria-label="Speak"></span>
+                    </label>
+                </div>
+                <div class="channel-actions">
+                    <button type="button" id="channel-edit-cancel">Cancel</button>
+                    <button type="submit" id="channel-edit-save">Save Changes</button>
+                </div>
+            </form>
+        </div>
+        <div class="channel-modal invite-modal" id="invite-modal" hidden>
+            <div class="channel-card invite-card" role="dialog" aria-labelledby="invite-title">
+                <div class="channel-card-head">
+                    <h2 id="invite-title">Invite friends to <span id="invite-server-name">Server</span></h2>
+                    <button type="button" id="invite-close" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <p class="invite-lead">Recipients will land in <span id="invite-room">the server</span></p>
+                <label class="invite-search">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="search" placeholder="Search for friends" aria-label="Search for friends">
+                </label>
+                <div class="invite-list" id="invite-list">
+                    <div class="invite-row" data-friend="Mr_Sigma">
+                        <img src="~/assets/img/img-icon 4.jpeg" alt="">
+                        <span><strong>Mr_Sigma</strong><small>mr_sigma</small></span>
+                        <button type="button" class="invite-send">Invite</button>
+                    </div>
+                    <div class="invite-row" data-friend="Gpro-fighter">
+                        <img src="~/assets/img/img-icon 3.png" alt="">
+                        <span><strong>Gpro-fighter</strong><small>gpro-fighter</small></span>
+                        <button type="button" class="invite-send">Invite</button>
+                    </div>
+                    <div class="invite-row" data-friend="Moiz Hussain">
+                        <img src="~/assets/img/img-icon 2.png" alt="">
+                        <span><strong>Moiz Hussain</strong><small>moiz-hussain</small></span>
+                        <button type="button" class="invite-send">Invite</button>
+                    </div>
+                    <div class="invite-row" data-friend="nxn">
+                        <img src="~/assets/img/img-icon 1.png" alt="">
+                        <span><strong>nxn</strong><small>nxn</small></span>
+                        <button type="button" class="invite-send">Invite</button>
+                    </div>
+                    <div class="invite-row" data-friend="Unknown_Inj3ctor">
+                        <img src="~/assets/img/img-icon.png" alt="">
+                        <span><strong>Unknown_Inj3ctor</strong><small>unknown_inj3ctor</small></span>
+                        <button type="button" class="invite-send">Invite</button>
+                    </div>
+                </div>
+                <div class="invite-link-block">
+                    <p>Or, send a server invite link to a friend</p>
+                    <div class="invite-link-row">
+                        <input id="invite-link" type="text" readonly placeholder="Invite link">
+                        <button type="button" id="invite-copy">Copy</button>
+                    </div>
+                    <p class="invite-note">Your invite link expires in 30 days. <button type="button"
+                            class="invite-edit">Edit invite link.</button></p>
+                </div>
+            </div>
+        </div>
+        <div class="channel-modal" id="category-modal" hidden>
+            <form class="channel-card" id="category-form">
+                <div class="channel-card-head">
+                    <h2 id="category-modal-title">Create Category</h2>
+                    <button type="button" id="category-modal-close" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <label class="channel-kicker" for="category-name">Category Name</label>
+                <div class="channel-name">
+                    <input id="category-name" type="text" value="New Category" maxlength="100" autocomplete="off">
+                    <button type="button" class="category-emoji" aria-label="Emoji"><i
+                            class="fa-regular fa-face-smile"></i></button>
+                </div>
+                <div class="channel-private">
+                    <span><strong>Private Category</strong><small>By making a category private, only select members and
+                            roles will be able to view this category. Linked channels in this category will
+                            automatically match to this setting.</small></span>
+                    <span class="perm-switch"><input type="checkbox" id="category-private" role="switch"
+                            aria-label="Private Category"></span>
+                </div>
+                <div class="channel-actions">
+                    <button type="button" id="category-modal-cancel">Cancel</button>
+                    <button type="submit" id="category-modal-confirm">Create Category</button>
+                </div>
+            </form>
+        </div>
+        <div class="server-delete-modal" id="server-delete-modal" hidden>
+            <form class="server-delete-card" id="server-delete-form">
+                <div class="server-delete-head">
+                    <h2>Delete '<span id="server-delete-title">Server</span>'</h2>
+                    <button type="button" id="server-delete-close" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <p>Are you sure you want to delete <strong id="server-delete-name">Server</strong>? This action cannot
+                    be undone.</p>
+                <label for="server-delete-input">Enter server name</label>
+                <input id="server-delete-input" type="text" autocomplete="off">
+                <div class="server-delete-actions">
+                    <button type="button" id="server-delete-cancel">Cancel</button>
+                    <button type="submit" id="server-delete-confirm" disabled>Delete Server</button>
+                </div>
+            </form>
+        </div>
+        <div class="server-delete-modal" id="remove-modal" hidden>
+            <form class="server-delete-card" id="remove-form">
+                <div class="server-delete-head">
+                    <h2 id="remove-title">Delete Channel</h2>
+                    <button type="button" id="remove-close" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <p>Are you sure you want to delete <strong id="remove-name">Channel</strong>? This cannot be undone.</p>
+                <p id="remove-note" hidden>Channels inside this category will also be deleted.</p>
+                <div class="server-delete-actions">
+                    <button type="button" id="remove-cancel">Cancel</button>
+                    <button type="submit" id="remove-confirm">Delete Channel</button>
+                </div>
+            </form>
+        </div>
+        <div class="server-delete-modal leave-server-modal" id="leave-server-modal" hidden>
+            <div class="server-delete-card leave-server-card" role="dialog" aria-labelledby="leave-server-title">
+                <div class="server-delete-head">
+                    <h2>Leave '<span id="leave-server-title">Server</span>'</h2>
+                    <button type="button" id="leave-server-close" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <p>Are you sure you want to leave <strong id="leave-server-name">Server</strong>? You won’t be able to re-join this server unless you are re-invited.</p>
+                <div class="server-delete-actions leave-server-actions">
+                    <button type="button" id="leave-server-cancel">Cancel</button>
+                    <button type="button" id="leave-server-confirm" class="leave-server-confirm-btn">Leave Server</button>
+                </div>
+            </div>
+        </div>
+        <div class="group-edit-modal" id="group-edit-modal" hidden>
+            <form class="group-edit-card" id="group-rename">
+                <div class="group-edit-head">
+                    <h2>Edit Group</h2>
+                    <button type="button" id="group-rename-cancel" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <label class="group-edit-icon" id="group-edit-icon">
+                    <i class="fa-solid fa-user-group"></i>
+                    <span><i class="fa-solid fa-pen"></i></span>
+                    <input type="file" id="group-icon-file" accept="image/*">
+                </label>
+                <input type="text" id="group-name-input" maxlength="80">
+                <div class="group-edit-actions">
+                    <button type="button" id="group-edit-cancel">Cancel</button>
+                    <button type="submit">Save</button>
+                </div>
+            </form>
+        </div>
+        <div class="new-msg" id="new-msg" hidden>
+            <div class="new-msg-card" role="dialog" aria-labelledby="new-msg-title">
+                <div class="new-msg-head">
+                    <div>
+                        <h2 id="new-msg-title">New Message</h2>
+                        <p>Group DMs can have up to 10 members.</p>
+                    </div>
+                    <button type="button" class="new-msg-close" id="new-msg-close" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <label class="new-msg-search">
+                    <span id="new-msg-chips"></span>
+                    <input id="new-msg-search" type="text" placeholder="Search">
+                </label>
+                <p class="new-msg-hint">Add friends or server members to group DMs.</p>
+                <template id="new-msg-chip"><span class="new-msg-chip"><span></span><button type="button"
+                            aria-label="Remove">×</button></span></template>
+                <div class="new-msg-list" id="new-msg-list">
+                    <p class="new-msg-empty" id="new-msg-empty" hidden>No friends found.</p>
+                    <label class="new-msg-friend" data-friend="Mr_Sigma"><img src="~/assets/img/img-icon 4.jpeg"
+                            alt=""><span>Mr_Sigma</span><input type="checkbox" data-friend="Mr_Sigma"></label>
+                    <label class="new-msg-friend" data-friend="Gpro-fighter"><img src="~/assets/img/img-icon 3.png"
+                            alt=""><span>Gpro-fighter</span><input type="checkbox" data-friend="Gpro-fighter"></label>
+                    <label class="new-msg-friend" data-friend="Moiz Hussain"><img src="~/assets/img/img-icon 2.png"
+                            alt=""><span>Moiz Hussain</span><input type="checkbox" data-friend="Moiz Hussain"></label>
+                    <label class="new-msg-friend" data-friend="nxn"><img src="~/assets/img/img-icon 1.png"
+                            alt=""><span>nxn</span><input type="checkbox" data-friend="nxn"></label>
+                    <label class="new-msg-friend" data-friend="Unknown_Inj3ctor"><img src="~/assets/img/img-icon.png"
+                            alt=""><span>Unknown_Inj3ctor</span><input type="checkbox"
+                            data-friend="Unknown_Inj3ctor"></label>
+                </div>
+                <div class="new-msg-actions">
+                    <button type="button" class="new-msg-cancel" id="new-msg-cancel">Cancel</button>
+                    <button type="button" class="new-msg-create" id="new-msg-create" disabled>Create Message</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="me-status-menu" id="me-status-menu" hidden>
+            <button type="button" data-status="online"><span class="me-swatch"
+                    style="background:#23a559"></span>Online</button>
+            <button type="button" data-status="idle"><span class="me-swatch"
+                    style="background:#f0b232"></span>Idle</button>
+            <button type="button" data-status="dnd"><span class="me-swatch" style="background:#f23f43"></span>Do Not
+                Disturb<small>You will not receive desktop notifications</small></button>
+            <button type="button" data-status="invisible"><span class="me-swatch"
+                    style="background:#80848e"></span>Invisible<small>You will appear offline</small></button>
+        </div>
+        <div class="me-pop d-none" id="me-pop">
+            <div class="me-banner"></div>
+            <div class="me-head">
+                <div class="me-avatar">
+                    <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+                    <span class="me-dot"></span>
+                </div>
+                <button type="button" class="me-chip" id="me-chip"><i class="fa-solid fa-plus"></i><span
+                        id="me-chip-text">Today I learned...</span></button>
+            </div>
+            <div class="me-body">
+                <h2 class="me-display">Anonymou5</h2>
+                <p class="me-handle">anonymou5</p>
+                <p class="me-about" id="me-about" hidden></p>
+                <button type="button" class="me-edit" id="me-edit"><i class="fa-solid fa-pen"></i> Edit Profile</button>
+                <button type="button" class="me-logout" id="me-logout"><i class="fa-solid fa-right-from-bracket"></i> Log out</button>
+                <button type="button" class="me-row" id="me-status-open"><span class="me-mini"></span><span
+                        id="me-status-label">Online</span><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </div>
+        <div class="me-profile d-none" id="me-profile">
+            <div class="me-profile-card" role="dialog" aria-label="Profile">
+                <button type="button" class="me-profile-close" id="me-profile-close" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+                <div class="me-profile-side">
+                    <div class="me-profile-banner"></div>
+                    <div class="me-profile-id">
+                        <div class="me-profile-top">
+                            <div class="me-profile-avatar">
+                                <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+                                <label class="me-avatar-edit" aria-label="Change avatar">
+                                    <input id="me-avatar-file" type="file" accept="image/*">
+                                    <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                                </label>
+                                <span class="me-dot"></span>
+                            </div>
+                            <button type="button" class="me-status-bubble" id="me-status-bubble"><i
+                                    class="fa-solid fa-plus"></i><span id="me-status-bubble-text">Today I
+                                    learned...</span></button>
+                        </div>
+                        <form class="me-name-form" id="me-name-form"><input id="me-display-input" type="text"
+                                maxlength="32" value="Anonymou5" aria-label="Display name"></form>
+                        <h2 id="me-view-name" hidden>Anonymou5</h2>
+                        <p class="me-handle"><span id="me-handle-name">anonymou5</span> <span
+                                id="me-handle-dot">•</span> <button type="button" class="me-pronouns"
+                                id="me-pronouns">Add pronouns</button><span id="me-view-pronouns" hidden></span></p>
+                        <div class="me-actions">
+                            <button type="button" class="me-add" id="me-add" hidden><i
+                                    class="fa-solid fa-user-plus"></i> Add Friend</button>
+                            <button type="button" class="me-msg" id="me-msg"><i class="fa-solid fa-comment"></i>
+                                <span>Message</span></button>
+                        </div>
+                        <div class="me-block me-bio-block">
+                            <h3>Bio</h3>
+                            <form class="me-bio-form" id="me-bio-form"><input id="me-bio" type="text" maxlength="190"
+                                    placeholder="No bio yet."><button type="button" id="me-bio-emoji"
+                                    aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>
+                                <div class="set-emoji d-none" id="me-bio-emoji-list"></div>
+                            </form>
+                            <p id="me-view-bio" hidden></p>
+                        </div>
+                        <div class="me-block me-about-block" id="me-about-block" hidden>
+                            <h3>About</h3>
+                            <p id="me-view-about"></p>
+                        </div>
+                        <div class="me-block me-note-block" id="me-note-block" hidden>
+                            <h3>Note <span>only visible to you</span></h3><button type="button" id="me-note-add">Click
+                                to add a note</button><input id="me-note-input" type="text" maxlength="190"
+                                placeholder="Click to add a note" hidden>
+                        </div>
+                        <div class="me-block">
+                            <h3>Member Since</h3>
+                            <p id="me-since">Sep 8, 2026</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="me-board">
+                    <div class="me-tabs">
+                        <button type="button" class="on" data-tab="board">Board</button>
+                    </div>
+                    <div class="me-panel" id="me-board">
+                        <template id="me-post">
+                            <div class="me-post"><img alt="" hidden>
+                                <p></p><time></time>
+                            </div>
+                        </template>
+                        <div class="me-posts" id="me-posts"></div>
+                        <p class="me-posts-empty" id="me-posts-empty">No posts yet.</p>
+                        <a class="me-posts-go" href="@Url.Action("Index", "Social")">Social Media</a>
+                    </div>
+                    <div class="me-panel d-none" id="me-activity">
+                        <p>Nothing here yet.</p>
+                    </div>
+                    <div class="me-panel d-none" id="me-wishlist">
+                        <p>Nothing here yet.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="set-status d-none" id="set-status">
+            <form class="set-status-card" id="set-status-form">
+                <div class="set-status-head">
+                    <h2>Set your status</h2>
+                    <button type="button" id="set-status-close" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="set-status-preview">
+                    <div class="set-status-banner"></div>
+                    <div class="set-status-person">
+                        <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+                        <span class="me-dot"></span>
+                        <span class="set-status-mini" id="set-status-mini"><span id="set-status-mini-emoji"></span><span
+                                id="set-status-mini-text">Today I learned...</span></span>
+                    </div>
+                    <h3 class="me-display">Anonymou5</h3>
+                    <p>anonymou5</p>
+                </div>
+                <p class="set-status-label">Status</p>
+                <div class="set-status-field">
+                    <button type="button" id="set-status-emoji" aria-label="Emoji">😀</button>
+                    <input id="set-status-input" type="text" maxlength="128" placeholder="Today I learned...">
+                    <div class="set-emoji d-none" id="set-emoji"></div>
+                </div>
+                <div class="set-status-foot">
+                    <div class="set-when-wrap">
+                        <button type="button" id="set-status-when">Clear tomorrow <i
+                                class="fa-solid fa-chevron-down"></i></button>
+                        <div class="set-when d-none" id="set-when">
+                            <button type="button" data-clear="none">Don't clear</button>
+                            <button type="button" data-clear="30">30 minutes</button>
+                            <button type="button" data-clear="60">1 hour</button>
+                            <button type="button" data-clear="240">4 hours</button>
+                            <button type="button" data-clear="today">Today</button>
+                            <button type="button" data-clear="tomorrow">Tomorrow</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="set-status-save">Save</button>
+                </div>
+            </form>
+        </div>
+        <div class="set-status d-none" id="set-pronouns">
+            <form class="set-status-card" id="set-pronouns-form">
+                <div class="set-status-head">
+                    <h2>Add pronouns</h2>
+                    <button type="button" id="set-pronouns-close" aria-label="Close"><i
+                            class="fa-solid fa-xmark"></i></button>
+                </div>
+                <p class="set-status-label">Pronouns</p>
+                <div class="set-status-field">
+                    <input id="set-pronouns-input" type="text" maxlength="40" placeholder="Add pronouns">
+                </div>
+                <div class="set-status-foot">
+                    <span></span>
+                    <button type="submit" class="set-status-save">Save</button>
+                </div>
+            </form>
+        </div>
+        <div class="row-menu" id="row-menu" hidden>
+            <ul>
+                <li><button type="button" data-action="pin"><i class="fa-solid fa-thumbtack"></i><span
+                            class="row-menu-label">Pin</span></button></li>
+                <li class="row-menu-line"></li>
+                <li><button type="button" data-action="profile"><i class="fa-solid fa-user"></i><span
+                            class="row-menu-label">Profile</span></button></li>
+                <li><button type="button" data-action="call"><i class="fa-solid fa-phone"></i><span
+                            class="row-menu-label">Start a Call</span></button></li>
+                <li><button type="button" data-action="note"><i class="fa-solid fa-note-sticky"></i><span
+                            class="row-menu-label">Add Note<span class="row-menu-hint">Only visible to
+                                you</span></span></button></li>
+                <li><button type="button" data-action="close"><i class="fa-solid fa-xmark"></i><span
+                            class="row-menu-label">Close DM</span></button></li>
+                <li class="row-menu-line"></li>
+                <li class="row-menu-branch">
+                    <button type="button" data-sub="invite"><i class="fa-solid fa-user-plus"></i><span
+                            class="row-menu-label">Invite to Server</span><i
+                            class="fa-solid fa-chevron-right row-menu-chev"></i></button>
+                    <ul class="row-menu-sub">
+                        <li><button type="button" data-action="invite">No servers</button></li>
+                    </ul>
+                </li>
+                <li class="row-menu-line"></li>
+                <li><button type="button" data-action="friend"><i class="fa-solid fa-user-plus"></i><span
+                            class="row-menu-label">Add Friend</span></button></li>
+                <li><button type="button" class="row-menu-danger" data-action="block"><i
+                            class="fa-solid fa-ban"></i><span class="row-menu-label">Block</span></button></li>
+                <li class="row-menu-line"></li>
+                <li class="row-menu-branch">
+                    <button type="button" data-sub="mute"><i class="fa-solid fa-volume-xmark"></i><span
+                            class="row-menu-label">Mute @@<span id="row-menu-mute-name"></span></span><i
+                            class="fa-solid fa-chevron-right row-menu-chev"></i></button>
+                    <ul class="row-menu-sub">
+                        <li><button type="button" data-action="mute">For 15 Minutes</button></li>
+                        <li><button type="button" data-action="mute">For 1 Hour</button></li>
+                        <li><button type="button" data-action="mute">For 3 Hours</button></li>
+                        <li><button type="button" data-action="mute">For 8 Hours</button></li>
+                        <li><button type="button" data-action="mute">For 24 Hours</button></li>
+                        <li><button type="button" data-action="mute">Until I turn it back on</button></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <div class="settings" id="settings" hidden>
+            <div class="settings-card" role="dialog" aria-label="Settings">
+                <button type="button" class="settings-close" id="settings-close" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+                <aside class="settings-nav">
+                    <div class="settings-me">
+                        <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+                        <div>
+                            <strong class="me-display">Anonymou5</strong>
+                            <span>Edit Profiles</span>
+                        </div>
+                    </div>
+                    <nav class="settings-tabs" aria-label="Settings">
+                        <p>Account</p>
+                        <ul>
+                            <li><button type="button" class="on" data-settings-tab="account"><i
+                                        class="fa-solid fa-user"></i> Account Info</button></li>
+                        </ul>
+                        <ul>
+                            <li><button type="button" data-settings-tab="notifications"><i class="fa-solid fa-bell"></i>
+                                    Notifications</button></li>
+                        </ul>
+                        <p>Experience</p>
+                        <ul>
+                            <li><button type="button" data-settings-tab="appearance"><i class="fa-solid fa-palette"></i>
+                                    Appearance</button></li>
+                            <li><button type="button" data-settings-tab="language"><span class="lang-icon"
+                                        aria-hidden="true">文A</span> Language &amp; Time</button></li>
+                        </ul>
+                    </nav>
+                </aside>
+                <div class="settings-main">
+                    <section id="settings-account">
+                        <div class="settings-panel">
+                            <h2>Account</h2>
+                            <h3>Account Info</h3>
+                            <div class="settings-row"><span>Username</span><b
+                                    id="settings-username">anonymou5</b><button type="button"
+                                    id="settings-username-edit">Edit</button></div>
+                            <div class="settings-row"><span>Email</span><b><span id="settings-email"
+                                        data-hidden="********@@gmail.com"
+                                        data-shown="anonymou5@@gmail.com">********@@gmail.com</span> <button type="button"
+                                        class="settings-link" id="settings-email-toggle" aria-label="Reveal email"><i
+                                            class="fa-regular fa-eye"></i></button></b><button
+                                    type="button">Edit</button></div>
+                            <h3>Password</h3>
+                            <div class="settings-row"><span>Password</span><button type="button"
+                                    id="settings-password-edit">Edit</button></div>
+                            <h3>Visibility</h3>
+                            <div class="notify-row">
+                                <div><strong>Public account</strong>
+                                    <p>Turn this off to hide your account from people who are not your friends.</p>
+                                </div>
+                                <button type="button" class="notify-switch on" id="account-public" aria-pressed="true"
+                                    aria-label="Public account"></button>
+                            </div>
+                        </div>
+                    </section>
+                    <section id="settings-security" hidden>
+                        <div class="settings-panel">
+                            <h2>Password &amp; Security</h2>
+                        </div>
+                    </section>
+                    <section id="settings-standing" hidden>
+                        <div class="settings-panel">
+                            <h2>Account Standing</h2>
+                        </div>
+                    </section>
+                    <section id="settings-family" hidden>
+                        <div class="settings-panel">
+                            <h2>Family Center</h2>
+                        </div>
+                    </section>
+                    <section id="settings-privacy" hidden>
+                        <div class="settings-panel">
+                            <h2>Data &amp; Privacy</h2>
+                        </div>
+                    </section>
+                    <section id="settings-messages" hidden>
+                        <div class="settings-panel">
+                            <h2>Messaging Permissions</h2>
+                        </div>
+                    </section>
+                    <section id="settings-notifications" hidden>
+                        <div class="settings-panel">
+                            <h2>Notifications</h2>
+                            <div class="notify-row">
+                                <div><strong>Enable notifications</strong>
+                                    <p>Turn all notifications on or off.</p>
+                                </div>
+                                <button type="button" class="notify-switch on" data-notify="all" aria-pressed="true"
+                                    aria-label="Enable notifications"></button>
+                            </div>
+                            <div class="notify-row">
+                                <div><strong>Direct messages</strong>
+                                    <p>Notify me when someone sends a message.</p>
+                                </div>
+                                <button type="button" class="notify-switch on" data-notify="dm" aria-pressed="true"
+                                    aria-label="Direct messages"></button>
+                            </div>
+                            <div class="notify-row">
+                                <div><strong>Friend requests</strong>
+                                    <p>Notify me when someone adds me.</p>
+                                </div>
+                                <button type="button" class="notify-switch on" data-notify="friends" aria-pressed="true"
+                                    aria-label="Friend requests"></button>
+                            </div>
+                            <div class="notify-row">
+                                <div><strong>Sounds</strong>
+                                    <p>Play a sound with notifications.</p>
+                                </div>
+                                <button type="button" class="notify-switch on" data-notify="sound" aria-pressed="true"
+                                    aria-label="Sounds"></button>
+                            </div>
+                        </div>
+                    </section>
+                    <section id="settings-voice" hidden>
+                        <div class="settings-panel">
+                            <h2>Voice &amp; Video</h2>
+                        </div>
+                    </section>
+                    <section id="settings-appearance" hidden>
+                        <div class="settings-panel">
+                            <h2>Appearance</h2>
+                            <h3>Theme</h3>
+                            <p class="settings-note">White is the default. Black stays on until you switch it back.</p>
+                            <div class="theme-choices">
+                                <label class="theme-choice"><input type="radio" name="theme" value="light" checked><span
+                                        class="theme-swatch light"></span> White</label>
+                                <label class="theme-choice"><input type="radio" name="theme" value="dark"><span
+                                        class="theme-swatch dark"></span> Black</label>
+                            </div>
+                        </div>
+                    </section>
+                    <section id="settings-language" hidden>
+                        <div class="settings-panel">
+                            <h2>Language &amp; Time</h2>
+                            <h3>Select a Language</h3>
+                            <p class="settings-note">Choose the language you want Discord to display.</p>
+                            <div class="lang-box">
+                                <label class="lang-field">
+                                    <img class="lang-flag" id="lang-field-flag" src="https://flagcdn.com/w40/us.png"
+                                        alt="">
+                                    <input id="lang-search" type="text" value="English" autocomplete="off">
+                                    <i class="fa-solid fa-chevron-down" id="lang-chevron"></i>
+                                </label>
+                                <ul id="lang-select-list" hidden>
+                                    <li><button type="button" class="on" data-lang="English" data-native="English"
+                                            data-flag="us"><img class="lang-flag" src="https://flagcdn.com/w40/us.png"
+                                                alt=""><span>English</span><span class="lang-en">English</span><i
+                                                class="fa-solid fa-check"></i></button></li>
+                                    <li><button type="button" data-lang="Turkish" data-native="Türkçe"
+                                            data-flag="tr"><img class="lang-flag" src="https://flagcdn.com/w40/tr.png"
+                                                alt=""><span>Türkçe</span><span class="lang-en">Turkish</span><i
+                                                class="fa-solid fa-check"></i></button></li>
+                                    <li><button type="button" data-lang="Azerbaijan" data-native="Azərbaycan"
+                                            data-flag="az"><img class="lang-flag" src="https://flagcdn.com/w40/az.png"
+                                                alt=""><span>Azərbaycan</span><span class="lang-en">Azerbaijan</span><i
+                                                class="fa-solid fa-check"></i></button></li>
+                                </ul>
+                            </div>
+                            <h3>Time format</h3>
+                            <div class="time-format">
+                                <label><input type="radio" name="time-format" value="auto" checked> Auto</label>
+                                <label><input type="radio" name="time-format" value="12"> 12-hour</label>
+                                <label><input type="radio" name="time-format" value="24"> 24-hour</label>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+        <div class="name-modal" id="name-modal" hidden>
+            <div class="name-modal-card" role="dialog" aria-labelledby="name-modal-title">
+                <button type="button" class="name-modal-x" id="name-modal-close" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+                <h2 id="name-modal-title">Change your username</h2>
+                <p>Enter a new username and your existing password.</p>
+                <label for="name-modal-user">Username</label>
+                <input id="name-modal-user" type="text" maxlength="32" autocomplete="off">
+                <p class="name-modal-hint">Please only use numbers, letters, underscores _ , or periods.</p>
+                <label for="name-modal-pass">Current Password</label>
+                <div class="name-modal-pass">
+                    <input id="name-modal-pass" type="password" autocomplete="current-password">
+                    <button type="button" id="name-modal-eye" aria-label="Show password"><i
+                            class="fa-regular fa-eye"></i></button>
+                </div>
+                <p class="name-modal-error" id="name-modal-error" hidden>Enter your username and current password.</p>
+                <div class="name-modal-actions">
+                    <button type="button" id="name-modal-cancel">Cancel</button>
+                    <button type="button" id="name-modal-done">Done</button>
+                </div>
+            </div>
+        </div>
+        <div class="name-modal" id="pass-modal" hidden>
+            <div class="name-modal-card" role="dialog" aria-labelledby="pass-modal-title">
+                <button type="button" class="name-modal-x" id="pass-modal-close" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+                <h2 id="pass-modal-title">Update your password</h2>
+                <p>Enter your current password and a new password.</p>
+                <label for="pass-modal-current">Current Password <span class="req">*</span></label>
+                <div class="name-modal-pass">
+                    <input id="pass-modal-current" type="password" autocomplete="current-password">
+                    <button type="button" class="pass-eye" aria-label="Show password"><i
+                            class="fa-regular fa-eye"></i></button>
+                </div>
+                <label for="pass-modal-new">New Password <span class="req">*</span></label>
+                <div class="name-modal-pass">
+                    <input id="pass-modal-new" type="password" autocomplete="new-password">
+                    <button type="button" class="pass-eye" aria-label="Show password"><i
+                            class="fa-regular fa-eye"></i></button>
+                </div>
+                <label for="pass-modal-confirm">Confirm New Password <span class="req">*</span></label>
+                <div class="name-modal-pass">
+                    <input id="pass-modal-confirm" type="password" autocomplete="new-password">
+                    <button type="button" class="pass-eye" aria-label="Show password"><i
+                            class="fa-regular fa-eye"></i></button>
+                </div>
+                <p class="name-modal-error" id="pass-modal-error" hidden>Fill in all password fields.</p>
+                <div class="name-modal-actions">
+                    <button type="button" id="pass-modal-cancel">Cancel</button>
+                    <button type="button" id="pass-modal-done">Done</button>
+                </div>
+            </div>
+        </div>
+        <div class="server-modal" id="server-modal" hidden>
+            <div class="server-modal-card" role="dialog" aria-labelledby="server-modal-title">
+                <button type="button" class="server-modal-x" id="server-modal-close" aria-label="Close"><i
+                        class="fa-solid fa-xmark"></i></button>
+                <section id="server-pick">
+                    <h2 id="server-modal-title">Create Your Server</h2>
+                    <p>Your server is where you and your friends hang out. Make yours and start talking.</p>
+                    <button type="button" class="server-choice" data-server="own"><i
+                            class="fa-solid fa-pen"></i><span>Create My Own</span><i
+                            class="fa-solid fa-chevron-right"></i></button>
+                    <h2 class="server-invite-title">Have an invite already?</h2>
+                    <button type="button" class="server-join-open" id="server-join-open">Join a Server</button>
+                </section>
+                <section id="server-create" hidden>
+                    <h2>Customize your server</h2>
+                    <p>Give your new server a personality with a name. You can always change it later.</p>
+                    <label for="server-name">Server Name</label>
+                    <div class="server-name-field">
+                        <input id="server-name" type="text" placeholder=" " maxlength="32">
+                        <span class="server-name-hint">Your Server Name</span>
+                    </div>
+                    <p class="server-modal-error" id="server-create-error" hidden>Enter a server name.</p>
+                    <div class="server-modal-actions">
+                        <button type="button" id="server-create-back">Back</button>
+                        <button type="button" id="server-create-done">Create</button>
+                    </div>
+                </section>
+                <section id="server-join" hidden>
+                    <h2>Join a Server</h2>
+                    <p>Enter an invite below to join an existing server.</p>
+                    <label for="server-invite">Invite Link</label>
+                    <input id="server-invite" type="text" placeholder="https://discord.gg/hTKzmak">
+                    <p class="server-modal-error" id="server-join-error" hidden>Enter an invite link.</p>
+                    <div class="server-modal-actions">
+                        <button type="button" id="server-join-back">Back</button>
+                        <button type="button" id="server-join-done">Join Server</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+        <script src="~/assets/js/groups.js"></script>
+        <script src="~/assets/js/profile.js"></script>
+        <script src="~/assets/js/script.js"></script>
+        <script src="~/assets/js/server.js"></script>
+    </footer>
+</body>
+
+</html>
