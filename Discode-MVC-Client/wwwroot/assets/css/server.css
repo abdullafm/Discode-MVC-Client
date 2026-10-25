@@ -3348,6 +3348,10 @@ body .conversation-sidebar.server-channels.voice-on {
     box-shadow: 0 0 0 4px #fff;
 }
 
+.member-pop[data-status="offline"] .member-pop-badge {
+    background: #80848e;
+}
+
 .member-pop[data-status="online"] .member-pop-badge {
     background: #23a559;
 }

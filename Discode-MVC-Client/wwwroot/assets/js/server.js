@@ -717,6 +717,7 @@
         memberPop.setAttribute("data-status", button.getAttribute("data-status") || "offline");
         memberPop.setAttribute("data-self", self ? "1" : "0");
         memberPop.setAttribute("data-name", name);
+        memberPop.setAttribute("data-handle", handle);
         var face = document.getElementById("member-pop-photo");
         if (face) face.src = photo ? photo.getAttribute("src") : "/assets/img/img-icon-profile.jpeg";
         var title = document.getElementById("member-pop-name");
@@ -868,15 +869,16 @@
         document.getElementById("member-pop-edit").addEventListener("click", function (event) {
             event.stopPropagation();
             var self = memberPop.getAttribute("data-self") === "1";
-            var name = memberPop.getAttribute("data-name") || "";
+            var handle = memberPop.getAttribute("data-handle") || "";
             var photo = document.getElementById("member-pop-photo");
             var src = photo ? photo.getAttribute("src") : "";
             closeMemberPop();
             if (self) {
-                if (window.openUserProfile) window.openUserProfile("Anonymou5", src);
+                if (window.openUserProfile) window.openUserProfile(handle, src);
                 return;
             }
-            if (window.openUserProfile) window.openUserProfile(name, src);
+            if (window.discodeGo) window.discodeGo("/Dm/Index?name=" + encodeURIComponent(handle));
+            else window.location.href = "/Dm/Index?name=" + encodeURIComponent(handle);
         });
         document.addEventListener("click", function (event) {
             if (!memberPop || memberPop.hidden) return;
