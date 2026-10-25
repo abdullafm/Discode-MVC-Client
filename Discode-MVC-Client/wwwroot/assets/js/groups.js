@@ -369,6 +369,25 @@ document.addEventListener("visibilitychange", function () {
         menu.style.top = top + "px";
     }
 
+    function oneToOneCall(user) {
+        var calls = window.discodeCalls;
+        var current = calls && calls.current ? calls.current() : null;
+        return current && current.other && String(current.other.userName).toLowerCase() === String(user).toLowerCase() ? current : null;
+    }
+
+    function paintCallItems(user) {
+        var current = oneToOneCall(user);
+        var ring = current && current.status === "active" && current.joined !== false && current.peerPresent === false;
+        var stop = current && current.status === "ringing" && current.role === "caller";
+        function setHidden(action, hidden) {
+            var button = menu.querySelector('[data-action="' + action + '"]');
+            if (button && button.parentNode) button.parentNode.hidden = hidden;
+        }
+        setHidden("call", !!current);
+        setHidden("ring", !ring);
+        setHidden("stopring", !stop);
+    }
+
     function openRowMenu(item, x, y) {
         if (menu.getAttribute("data-pop-lock") === "1") {
             window.setTimeout(function () { openRowMenu(item, x, y); }, 230);
@@ -379,6 +398,7 @@ document.addEventListener("visibilitychange", function () {
         var photo = item.querySelector("img");
         menu.dataset.name = name;
         menu.dataset.user = item.getAttribute("data-dm") || "";
+        paintCallItems(menu.dataset.user);
         menu.dataset.photo = photo ? photo.getAttribute("src") || "" : "";
         if (muteName) muteName.textContent = name;
         var pinLabel = menu.querySelector('[data-action="pin"] .row-menu-label');
@@ -389,6 +409,15 @@ document.addEventListener("visibilitychange", function () {
     }
 
     document.addEventListener("contextmenu", function (event) {
+        var face = event.target.closest("#call-faces .call-face");
+        if (face && face.querySelector("#call-avatar") && window.discodeOpenDm) {
+            var row = document.querySelector('.friend-list .friend-item[data-dm="' + window.discodeOpenDm + '"]');
+            if (row) {
+                event.preventDefault();
+                openRowMenu(row, event.clientX, event.clientY);
+                return;
+            }
+        }
         var item = event.target.closest(".friend-list .friend-item:not(.group-row)");
         if (!item) {
             if (!menu.hidden && !menu.contains(event.target)) closeRowMenu();
@@ -459,6 +488,10 @@ document.addEventListener("visibilitychange", function () {
         var name = menu.dataset.name;
         var photo = menu.dataset.photo;
         closeRowMenu();
+        var live = oneToOneCall(user);
+        if (kind === "call" && window.discodeGo) window.discodeGo("/Dm/Index?name=" + encodeURIComponent(user) + "&call=1&t=" + Date.now());
+        if (kind === "ring" && live && window.discodeCalls) window.discodeCalls.start(user, !!live.video).catch(function () {});
+        if (kind === "stopring" && live && window.discodePresence) window.discodePresence.invoke("EndCall", live.callId, true).catch(function () {});
         if (kind === "pin") togglePin(name);
         if (kind === "profile" && typeof openUserProfile === "function") openUserProfile(user, photo);
     });

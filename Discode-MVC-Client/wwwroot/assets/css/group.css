@@ -1557,3 +1557,7 @@ html.theme-dark body .mini-profile .dm-private-head span,
 html.theme-dark body .mini-profile .dm-private-head i {
     color: #f2f3f5 !important;
 }
+
+.row-menu li[hidden] {
+    display: none;
+}
