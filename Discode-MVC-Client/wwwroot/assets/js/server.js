@@ -106,6 +106,7 @@
 
     document.addEventListener("discode-server-updated", refreshMembers);
     document.addEventListener("discode-profile-changed", function () { refreshMembers(null); });
+    document.addEventListener("discode-status-set", function () { window.setTimeout(function () { refreshMembers(null); }, 300); });
     document.addEventListener("discode-user-presence", function (event) {
         var data = event.detail || {};
         var touched = false;
@@ -439,7 +440,7 @@
                 raw = {
                     name: me.name,
                     photo: raw.photo || raw.avatar || me.photo,
-                    status: me.status,
+                    status: raw.isSelf === true ? raw.status : me.status,
                     statusText: me.statusText || raw.statusText || raw.customStatus || raw.activity || "",
                     creator: raw.creator === true || raw.createdServer === true || raw.owner === true || raw.isOwner === true,
                     id: raw.id || raw.userId || "",
