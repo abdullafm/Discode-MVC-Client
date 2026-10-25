@@ -3,6 +3,7 @@
 
     var card = null;
     var token = 0;
+    var openAnchor = null;
 
     function meName() {
         var field = document.getElementById("Update_UserName");
@@ -13,6 +14,7 @@
         token++;
         if (card && card.parentNode) card.parentNode.removeChild(card);
         card = null;
+        openAnchor = null;
     }
 
     function place(anchor, side) {
@@ -41,6 +43,7 @@
         close();
         if (!userName) return;
         var mine = ++token;
+        openAnchor = anchor;
         card = document.createElement("div");
         card.className = "mini-profile";
         card.innerHTML = '<div class="mini-banner"></div><div class="mini-body"><p class="mini-loading">Loading...</p></div>';
@@ -122,7 +125,8 @@
         if (found) {
             event.preventDefault();
             event.stopPropagation();
-            open(found.user, found.anchor, found.side);
+            if (card && openAnchor === found.anchor) close();
+            else open(found.user, found.anchor, found.side);
             return;
         }
         if (card && !event.target.closest(".mini-profile")) close();
