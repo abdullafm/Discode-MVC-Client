@@ -88,6 +88,29 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> Preferences([FromBody] UpdateServerPreferencesVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Server not found." } }));
+
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.Id}/preferences", new
+            {
+                muteMinutes = model.MuteMinutes,
+                notificationLevel = model.NotificationLevel,
+                hideMutedChannels = model.HideMutedChannels,
+                showAllChannels = model.ShowAllChannels
+            }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Reorder([FromBody] ReorderServersVM model)
+        {
+            return Forward(client => client.PutAsJsonAsync("api/server/order", new { serverIds = model?.ServerIds ?? new List<int>() }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> Leave([FromBody] LeaveServerVM model)
         {
             if (model is null || model.Id <= 0)
