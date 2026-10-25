@@ -86,6 +86,16 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.PostAsJsonAsync("api/server/join", new { invite = model.Invite.Trim() }));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Leave([FromBody] LeaveServerVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Server not found." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/server/{model.Id}/leave", new { }));
+        }
+
         [HttpGet("/{code:regex(^(?=.*[[0-9]])(?=.*[[A-Za-z]])[[A-Za-z0-9]]{{7}}$)}")]
         public async Task<IActionResult> Invite(string code)
         {
