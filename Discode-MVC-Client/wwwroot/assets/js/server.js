@@ -83,9 +83,37 @@
         if (title && server.name) title.textContent = server.name;
         applyChannelAccess(server);
         setManage(canManageServer(server));
+        runPendingAction();
     }).catch(function () {
         setManage(checkServerOwnership());
     });
+
+    function runPendingAction() {
+        var wanted = new URLSearchParams(window.location.search).get("do");
+        if (!wanted) return;
+        try {
+            var cleaned = new URL(window.location.href);
+            cleaned.searchParams.delete("do");
+            window.history.replaceState(window.history.state, "", cleaned.pathname + cleaned.search);
+        } catch (error) {}
+        window.setTimeout(function () {
+            if (wanted.indexOf("settings:") === 0) {
+                var open = document.getElementById("server-settings-open");
+                if (open) open.click();
+                var panel = document.querySelector(".server-settings-nav [data-panel='" + wanted.slice(9) + "']");
+                if (panel) panel.click();
+                return;
+            }
+            var targets = {
+                invite: "[data-invite='server']",
+                channel: "[data-create='channel']",
+                category: "[data-create='category']",
+                leave: "#server-leave-open"
+            };
+            var button = targets[wanted] ? document.querySelector(targets[wanted]) : null;
+            if (button) button.click();
+        }, 250);
+    }
 
     window.setServerRole = function (role) {
         var serverId = (openId || "azaan").toLowerCase();
@@ -1837,7 +1865,7 @@
     var inviteCopy = document.getElementById("invite-copy");
 
     function openInviteModal() {
-        if (!inviteModal || !canManage) return;
+        if (!inviteModal) return;
         if (inviteName && serverTitle) inviteName.textContent = serverTitle.textContent.trim() || "Server";
         if (inviteRoom) {
             var room = document.querySelector("#server-channel-list .server-channel:not([hidden]) .server-channel-name");
@@ -2237,14 +2265,17 @@
 
     function confirmLeaveServer() {
         closeLeaveModal();
-        var serverId = (openId || "azaan").toLowerCase();
-        try {
-            var joined = JSON.parse(localStorage.getItem("discode-joined-servers") || "[]");
-            joined = joined.filter(function (id) { return String(id).toLowerCase() !== serverId; });
-            localStorage.setItem("discode-joined-servers", JSON.stringify(joined));
-            localStorage.removeItem("discode-server-role-" + serverId);
-        } catch (e) {}
-        window.location.href = "./index.html";
+        var field = document.querySelector("input[name='__RequestVerificationToken']");
+        fetch("/Server/Leave", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "RequestVerificationToken": field ? field.value : "", "X-Requested-With": "XMLHttpRequest" },
+            body: JSON.stringify({ id: Number(openId) || 0 })
+        }).then(function () {
+            window.location.href = "/Home/Index";
+        }).catch(function () {
+            window.location.href = "/Home/Index";
+        });
     }
 
     if (leaveOpen) leaveOpen.addEventListener("click", openLeaveModal);

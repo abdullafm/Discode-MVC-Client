@@ -7899,3 +7899,79 @@ main {
         animation: none;
     }
 }
+
+.server-ctx {
+    z-index: 800;
+    min-width: 220px;
+}
+
+.server-ctx li.row-menu-branch {
+    position: relative;
+}
+
+.server-ctx button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+}
+
+.server-ctx button:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.server-ctx .server-ctx-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.server-ctx .server-ctx-sub {
+    margin-top: 2px;
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.server-ctx-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 2px solid #80848e;
+    color: #ffffff;
+    font-size: 11px;
+}
+
+.server-ctx-check.on {
+    border-color: #5865f2;
+    background: #5865f2;
+}
+
+html.theme-dark body .server-ctx .server-ctx-sub,
+html.theme-dark body .server-ctx .server-ctx-check {
+    color: #b5bac1 !important;
+}
+
+html.theme-dark body .server-ctx .server-ctx-check.on {
+    color: #ffffff !important;
+}
+
+.server-menu-notice {
+    position: fixed;
+    left: 50%;
+    bottom: 40px;
+    z-index: 900;
+    transform: translateX(-50%);
+    padding: 10px 18px;
+    border-radius: 8px;
+    background: #111214;
+    color: #f2f3f5;
+    font-size: 14px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    animation: pop-in 0.2s ease both;
+}
