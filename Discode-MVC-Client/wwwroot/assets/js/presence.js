@@ -247,6 +247,10 @@
                     document.dispatchEvent(new CustomEvent("discode-gcall-updated", { detail: data }));
                 });
 
+                connection.on("GroupCallRingStopped", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-gcall-ring-stopped", { detail: data }));
+                });
+
                 connection.on("GroupCallSignal", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-gcall-signal", { detail: data }));
                 });

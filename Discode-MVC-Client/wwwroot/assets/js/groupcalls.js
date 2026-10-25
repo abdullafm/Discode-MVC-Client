@@ -24,6 +24,7 @@
     var audioState = { muted: false, deafened: false };
     var focused = "";
     var silenced = {};
+    var ringOff = {};
     var watching = {};
     var ringTimer = 0;
     var ringUntil = 0;
@@ -655,7 +656,7 @@
             clearTimeout(ghostTimer);
             ghostTimer = setTimeout(render, ringLeft + 100);
             window.discodeGroupInfo.members.forEach(function (member) {
-                if (member.userName === me) return;
+                if (member.userName === me || ringOff[member.userName]) return;
                 if (call.participants.some(function (p) { return p.userName === member.userName; })) return;
                 var ghostKey = "g-" + member.userName;
                 var ghost = tileFor("t-" + ghostKey, "is-peer");
@@ -1066,10 +1067,22 @@
 
     function decline() {
         stopRing();
-        if (ringing) silenced[ringing.callId] = true;
+        if (ringing) {
+            silenced[ringing.callId] = true;
+            invoke("DeclineGroupCall", ringing.callId).catch(function () {});
+        }
         ringing = null;
         render();
     }
+
+    document.addEventListener("discode-gcall-ring-stopped", function (event) {
+        var data = event.detail;
+        if (!data || !ringing || ringing.callId !== data.callId) return;
+        stopRing();
+        silenced[ringing.callId] = true;
+        ringing = null;
+        render();
+    });
 
     document.addEventListener("discode-gcall-incoming", function (event) {
         var dto = event.detail;
@@ -1337,6 +1350,11 @@
 
     window.discodeGroupCalls = {
         current: function () { return call; },
+        setRinging: function (userName, on) {
+            if (on) delete ringOff[userName];
+            else ringOff[userName] = true;
+            render();
+        },
         activeFor: function (groupId) { return active[groupId] || null; },
         start: start,
         join: join,
