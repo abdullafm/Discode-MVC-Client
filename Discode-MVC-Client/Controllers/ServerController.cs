@@ -52,6 +52,15 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        public Task<IActionResult> Preview(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+                return Task.FromResult<IActionResult>(NotFound(new { errors = new[] { "That invite is invalid or has expired." } }));
+
+            return Forward(client => client.GetAsync("api/server/invite/" + Uri.EscapeDataString(code.Trim())));
+        }
+
+        [HttpGet]
         public Task<IActionResult> Get(int id)
         {
             return Forward(client => client.GetAsync($"api/server/{id}"));

@@ -1561,3 +1561,174 @@ html.theme-dark body .mini-profile .dm-private-head i {
 .row-menu li[hidden] {
     display: none;
 }
+
+.dm-invite-link {
+    color: #00a8fc;
+    text-decoration: none;
+}
+
+.dm-invite-link:hover {
+    text-decoration: underline;
+}
+
+.dm-invite-card {
+    width: min(100%, 420px);
+    margin: 8px 0 4px;
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid rgba(78, 80, 88, 0.25);
+    background: #f2f3f5;
+    animation: pop-in 0.22s ease both;
+}
+
+.dm-invite-banner {
+    height: 60px;
+    background: linear-gradient(180deg, #7b8394 0%, #dfe2e8 100%);
+}
+
+.dm-invite-body {
+    position: relative;
+    padding: 0 16px 16px;
+}
+
+.dm-invite-body.is-plain {
+    padding: 14px 16px;
+    color: #5c5e66;
+    font-size: 14px;
+}
+
+.dm-invite-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin-top: -32px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 4px solid #f2f3f5;
+    background: #ffffff;
+    color: #060607;
+    font-size: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.dm-invite-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.dm-invite-name {
+    display: block;
+    color: #060607;
+    font-size: 17px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dm-invite-stats {
+    display: flex;
+    gap: 14px;
+    margin: 4px 0;
+}
+
+.dm-invite-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+}
+
+.dm-invite-stat em {
+    font-style: normal;
+    color: #5c5e66;
+}
+
+.dm-invite-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #80848e;
+}
+
+.dm-invite-stat.is-online .dm-invite-dot {
+    background: #23a559;
+}
+
+.dm-invite-est {
+    margin: 0 0 12px;
+    color: #5c5e66;
+    font-size: 13px;
+}
+
+.dm-invite-go {
+    width: 100%;
+    height: 40px;
+    border: 0;
+    border-radius: 6px;
+    background: #248046;
+    color: #ffffff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.dm-invite-go:hover {
+    background: #1a6334;
+}
+
+.dm-invite-go.is-join {
+    background: #5865f2;
+}
+
+.dm-invite-go.is-join:hover {
+    background: #4752c4;
+}
+
+.dm-invite-go:disabled {
+    opacity: 0.7;
+    cursor: default;
+}
+
+html.theme-dark .dm-invite-card {
+    background: #111214;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.theme-dark .dm-invite-banner {
+    background: linear-gradient(180deg, #7b8394 0%, #1e1f22 100%);
+}
+
+html.theme-dark .dm-invite-icon {
+    border-color: #111214;
+    background: #1e1f22;
+    color: #f2f3f5;
+}
+
+html.theme-dark body .dm-invite-name,
+html.theme-dark body .dm-invite-icon {
+    color: #f2f3f5 !important;
+}
+
+html.theme-dark body .dm-invite-stat em,
+html.theme-dark body .dm-invite-est,
+html.theme-dark body .dm-invite-body.is-plain {
+    color: #b5bac1 !important;
+}
+
+html.theme-dark body .dm-invite-go,
+html.theme-dark body .dm-invite-go.is-join {
+    color: #ffffff !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dm-invite-card {
+        animation: none;
+    }
+}
