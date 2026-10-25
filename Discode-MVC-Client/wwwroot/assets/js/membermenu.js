@@ -68,6 +68,9 @@
         addItem("mention", "fa-at", "Mention");
         addItem("message", "fa-message", "Message");
         addItem("call", "fa-phone", "Start a Call");
+        addLine("lineOwner");
+        addItem("remove", "fa-user-xmark", "Remove From Group", true);
+        addItem("owner", "fa-crown", "Make Group Owner", true);
         addLine("line");
         addItem("friend", "fa-user-minus", "Remove Friend");
         addItem("ignore", "fa-eye-slash", "Ignore");
@@ -80,8 +83,17 @@
         items[key].li.hidden = !on;
     }
 
+    function iAmOwner() {
+        var info = window.discodeGroupInfo;
+        return !!info && String(info.ownerUserName || "").toLowerCase() === meName.toLowerCase();
+    }
+
     function paint() {
         var self = current.user === meName;
+        var owner = !self && iAmOwner();
+        show("lineOwner", owner);
+        show("remove", owner);
+        show("owner", owner);
         show("mention", !self);
         show("message", !self);
         show("call", !self);
@@ -148,6 +160,8 @@
         else if (action === "mention" && window.discodeMentions) window.discodeMentions.insert(document.getElementById("group-input"), target.user);
         else if (action === "message") window.discodeGo("/Dm/Index?name=" + encodeURIComponent(target.user));
         else if (action === "call") window.discodeGo("/Dm/Index?name=" + encodeURIComponent(target.user) + "&call=1&t=" + Date.now());
+        else if (action === "remove") post("/Group/RemoveMember", { id: Number(chat.getAttribute("data-group-id")), userName: target.user }).catch(function (error) { note(error.message); });
+        else if (action === "owner") post("/Group/TransferOwner", { id: Number(chat.getAttribute("data-group-id")), userName: target.user }).catch(function (error) { note(error.message); });
         else if (action === "friend" && target.friendRequestId) post("/Friend/Remove?id=" + target.friendRequestId).catch(function (error) { note(error.message); });
         else if (action === "ignore") post("/Home/IgnoreUser", { userName: target.user }).catch(function (error) { note(error.message); });
         else if (action === "block" && target.relation === "blocked" && target.blockId) post("/Friend/Unblock?id=" + target.blockId).catch(function (error) { note(error.message); });

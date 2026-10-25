@@ -173,6 +173,16 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> TransferOwner([FromBody] TransferGroupOwnerVM model)
+        {
+            if (model is null || model.Id <= 0 || string.IsNullOrWhiteSpace(model.UserName))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a member." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/group/{model.Id}/owner", new { userName = model.UserName.Trim() }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> RemoveMember([FromBody] RemoveGroupMemberVM model)
         {
             if (model is null || model.Id <= 0 || string.IsNullOrWhiteSpace(model.UserName))
