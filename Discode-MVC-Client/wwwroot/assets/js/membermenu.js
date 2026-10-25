@@ -68,6 +68,8 @@
         addItem("mention", "fa-at", "Mention");
         addItem("message", "fa-message", "Message");
         addItem("call", "fa-phone", "Start a Call");
+        addItem("ring", "fa-bell", "Ring to Call");
+        addItem("stopring", "fa-bell-slash", "Stop Ringing");
         addLine("lineOwner");
         addItem("remove", "fa-user-xmark", "Remove From Group", true);
         addItem("owner", "fa-crown", "Make Group Owner", true);
@@ -88,8 +90,19 @@
         return !!info && String(info.ownerUserName || "").toLowerCase() === meName.toLowerCase();
     }
 
+    function groupCall() {
+        var calls = window.discodeGroupCalls;
+        var active = calls && calls.current ? calls.current() : null;
+        var groupId = Number(chat.getAttribute("data-group-id"));
+        return active && active.groupId === groupId && active.active !== false ? active : null;
+    }
+
     function paint() {
         var self = current.user === meName;
+        var inCall = groupCall();
+        var canRing = !self && !!inCall && !inCall.participants.some(function (p) { return p.userName === current.user; });
+        show("ring", canRing && !current.ringing);
+        show("stopring", canRing && !!current.ringing);
         var owner = !self && iAmOwner();
         show("lineOwner", owner);
         show("remove", owner);
@@ -135,6 +148,15 @@
         place(x, y);
         if (current.user === meName) return;
         var wanted = current.user;
+        var activeCall = groupCall();
+        if (activeCall && window.discodePresence && window.discodePresence.invoke) {
+            window.discodePresence.invoke("GetGroupCallRinging", activeCall.callId).then(function (names) {
+                if (!current || current.user !== wanted) return;
+                current.ringing = (names || []).some(function (name) { return String(name).toLowerCase() === wanted.toLowerCase(); });
+                paint();
+                if (!menu.hidden) place(parseFloat(menu.style.left), parseFloat(menu.style.top));
+            }).catch(function () {});
+        }
         fetch("/Dm/RelationInfo?name=" + encodeURIComponent(wanted), {
             credentials: "same-origin",
             headers: { "X-Requested-With": "XMLHttpRequest" }
@@ -150,6 +172,14 @@
         }).catch(function () {});
     }
 
+    function ringMember(userName, on) {
+        var activeCall = groupCall();
+        if (!activeCall || !window.discodePresence) return;
+        window.discodePresence.invoke(on ? "RingGroupCallMember" : "StopRingingGroupCallMember", activeCall.callId, userName).then(function () {
+            if (window.discodeGroupCalls.setRinging) window.discodeGroupCalls.setRinging(userName, on);
+        }).catch(function (error) { note(String((error && error.message) || "Could not change the ringing.").replace(/^.*HubException:\s*/, "")); });
+    }
+
     function onChoose(event) {
         var button = event.target.closest("[data-member-action]");
         if (!button || !current) return;
@@ -162,6 +192,8 @@
         else if (action === "call") window.discodeGo("/Dm/Index?name=" + encodeURIComponent(target.user) + "&call=1&t=" + Date.now());
         else if (action === "remove") post("/Group/RemoveMember", { id: Number(chat.getAttribute("data-group-id")), userName: target.user }).catch(function (error) { note(error.message); });
         else if (action === "owner") post("/Group/TransferOwner", { id: Number(chat.getAttribute("data-group-id")), userName: target.user }).catch(function (error) { note(error.message); });
+        else if (action === "ring") ringMember(target.user, true);
+        else if (action === "stopring") ringMember(target.user, false);
         else if (action === "friend" && target.friendRequestId) post("/Friend/Remove?id=" + target.friendRequestId).catch(function (error) { note(error.message); });
         else if (action === "ignore") post("/Home/IgnoreUser", { userName: target.user }).catch(function (error) { note(error.message); });
         else if (action === "block" && target.relation === "blocked" && target.blockId) post("/Friend/Unblock?id=" + target.blockId).catch(function (error) { note(error.message); });
