@@ -848,8 +848,39 @@ document.addEventListener("visibilitychange", function () {
         list.appendChild(button);
     }
 
+    function token() {
+        var field = document.querySelector("input[name='__RequestVerificationToken']");
+        return field ? field.value : "";
+    }
+
+    function sendServer(url, body) {
+        return fetch(url, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "RequestVerificationToken": token(), "X-Requested-With": "XMLHttpRequest" },
+            body: JSON.stringify(body)
+        }).then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (data) {
+                if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Something went wrong.");
+                return data;
+            });
+        });
+    }
+
+    function showError(box, message) {
+        if (!box) return;
+        box.textContent = message;
+        box.hidden = false;
+    }
+
+    function openServer(server) {
+        var url = "/Server/Index?id=" + encodeURIComponent(server.id);
+        if (window.discodeGo) window.discodeGo(url);
+        else window.location.href = url;
+    }
+
     function loadServers() {
-        fetch("/api/servers").then(function (response) {
+        fetch("/Server/List", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
             if (!response.ok) throw new Error("servers");
             return response.json();
         }).then(function (servers) {
@@ -858,6 +889,8 @@ document.addEventListener("visibilitychange", function () {
             servers.forEach(addChip);
         }).catch(function () {});
     }
+
+    document.addEventListener("discode-servers-changed", loadServers);
 
     function showStep(step) {
         pick.hidden = step !== "pick";
@@ -900,41 +933,29 @@ document.addEventListener("visibilitychange", function () {
     document.getElementById("server-create-done").addEventListener("click", function () {
         var name = nameInput.value.trim();
         if (!name) {
-            if (createError) createError.hidden = false;
+            showError(createError, "Enter a server name.");
             return;
         }
-        fetch("/api/servers", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: name, template: pendingTemplate })
-        }).then(function (response) {
-            if (!response.ok) throw new Error("create");
-            return response.json();
-        }).then(function (server) {
-            addChip(server);
+        sendServer("/Server/Create", { name: name }).then(function (server) {
             closeModal();
-        }).catch(function () {
-            if (createError) createError.hidden = false;
+            loadServers();
+            openServer(server);
+        }).catch(function (error) {
+            showError(createError, error.message);
         });
     });
     document.getElementById("server-join-done").addEventListener("click", function () {
         var invite = inviteInput.value.trim();
         if (!invite) {
-            if (joinError) joinError.hidden = false;
+            showError(joinError, "Enter an invite link.");
             return;
         }
-        fetch("/api/servers/join", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ invite: invite })
-        }).then(function (response) {
-            if (!response.ok) throw new Error("join");
-            return response.json();
-        }).then(function (server) {
-            addChip(server);
+        sendServer("/Server/Join", { invite: invite }).then(function (server) {
             closeModal();
-        }).catch(function () {
-            if (joinError) joinError.hidden = false;
+            loadServers();
+            openServer(server);
+        }).catch(function (error) {
+            showError(joinError, error.message);
         });
     });
 

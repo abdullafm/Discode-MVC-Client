@@ -72,10 +72,15 @@
     }
 
     setManage(checkServerOwnership());
-    fetch("/api/servers/" + encodeURIComponent(openId || "azaan")).then(function (response) {
+    var currentServer = null;
+
+    fetch("/Server/Get?id=" + encodeURIComponent(openId || "azaan"), { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
         if (!response.ok) throw new Error("server");
         return response.json();
     }).then(function (server) {
+        currentServer = server;
+        var title = document.getElementById("server-title");
+        if (title && server.name) title.textContent = server.name;
         applyChannelAccess(server);
         setManage(canManageServer(server));
     }).catch(function () {
@@ -1839,6 +1844,7 @@
             inviteRoom.textContent = room ? "#" + room.textContent.trim() : "the server";
         }
         if (inviteCopy) inviteCopy.textContent = "Copy";
+        if (inviteLink && currentServer && currentServer.inviteCode) inviteLink.value = window.location.origin + "/" + currentServer.inviteCode;
         var members = document.querySelectorAll("#server-member-list .server-member-name");
         var taken = [];
         for (var i = 0; i < members.length; i++) taken.push(members[i].textContent.trim());

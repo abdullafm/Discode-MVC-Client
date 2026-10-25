@@ -307,6 +307,14 @@
                     document.dispatchEvent(new CustomEvent("discode-live-viewer-left", { detail: { streamId: streamId, connectionId: connectionId } }));
                 });
 
+                connection.on("ServersChanged", function () {
+                    document.dispatchEvent(new CustomEvent("discode-servers-changed"));
+                });
+
+                connection.on("ServerUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-updated", { detail: data }));
+                });
+
                 connection.on("IgnoreChanged", function () {
                     loadIgnored();
                 });
