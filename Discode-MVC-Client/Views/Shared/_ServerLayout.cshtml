@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@model HomeVM
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -142,9 +143,9 @@
                 </div>
                 <div class="server-voice-people" hidden>
                     <div class="server-voice-user">
-                        <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+                        <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
                         <span>
-                            <strong class="me-display">Anonymou5</strong><small>
+                            <strong class="me-display">@Model.Profile.DisplayName</strong><small>
                             Set a channel
                             status
                         </small>
@@ -194,9 +195,9 @@
     </div>
     <div class="server-voice-people" hidden>
         <div class="server-voice-user">
-            <img src="~/assets/img/img-icon-profile.jpeg"
+            <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)"
                  alt=""><span>
-            <strong class="me-display">Anonymou5</strong><small>
+            <strong class="me-display">@Model.Profile.DisplayName</strong><small>
             Set a channel
             status
         </small>
@@ -238,10 +239,10 @@
 <div class="user-panel" id="user-panel">
     <div class="user-identity">
         <div class="avatar">
-            <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+            <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
         </div>
         <div class="user-details">
-            <p class="me-display">Anonymou5</p>
+            <p class="me-display">@Model.Profile.DisplayName</p>
             <span>Online</span>
         </div>
     </div>
@@ -561,15 +562,15 @@
             <div class="me-banner"></div>
             <div class="me-head">
                 <div class="me-avatar">
-                    <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+                    <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
                     <span class="me-dot"></span>
                 </div>
-                <button type="button" class="me-chip" id="me-chip"><i class="fa-solid fa-plus"></i><span
-                        id="me-chip-text">Today I learned...</span></button>
+                <button type="button" class="me-chip@(string.IsNullOrWhiteSpace(Model.Profile.CustomStatus) ? "" : " has-bio")" id="me-chip"><i class="fa-solid fa-plus"></i><span
+                        id="me-chip-text">@(string.IsNullOrWhiteSpace(Model.Profile.CustomStatus) ? "Today I learned..." : Model.Profile.CustomStatus)</span></button>
             </div>
             <div class="me-body">
-                <h2 class="me-display">Anonymou5</h2>
-                <p class="me-handle">anonymou5</p>
+                <h2 class="me-display">@Model.Profile.DisplayName</h2>
+                <p class="me-handle">@Model.Profile.UserName</p>
                 <p class="me-about" id="me-about" hidden></p>
                 <button type="button" class="me-edit" id="me-edit"><i class="fa-solid fa-pen"></i> Edit Profile</button>
                 <button type="button" class="me-logout" id="me-logout"><i class="fa-solid fa-right-from-bracket"></i> Log out</button>
@@ -586,23 +587,22 @@
                     <div class="me-profile-id">
                         <div class="me-profile-top">
                             <div class="me-profile-avatar">
-                                <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+                                <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
                                 <label class="me-avatar-edit" aria-label="Change avatar">
                                     <input id="me-avatar-file" type="file" accept="image/*">
                                     <i class="fa-solid fa-pen" aria-hidden="true"></i>
                                 </label>
                                 <span class="me-dot"></span>
                             </div>
-                            <button type="button" class="me-status-bubble" id="me-status-bubble"><i
-                                    class="fa-solid fa-plus"></i><span id="me-status-bubble-text">Today I
-                                    learned...</span></button>
+                            <button type="button" class="me-status-bubble@(string.IsNullOrWhiteSpace(Model.Profile.CustomStatus) ? "" : " has-bio")" id="me-status-bubble"><i
+                                    class="fa-solid fa-plus"></i><span id="me-status-bubble-text">@(string.IsNullOrWhiteSpace(Model.Profile.CustomStatus) ? "Today I learned..." : Model.Profile.CustomStatus)</span></button>
                         </div>
                         <form class="me-name-form" id="me-name-form"><input id="me-display-input" type="text"
-                                maxlength="32" value="Anonymou5" aria-label="Display name"></form>
-                        <h2 id="me-view-name" hidden>Anonymou5</h2>
-                        <p class="me-handle"><span id="me-handle-name">anonymou5</span> <span
+                                maxlength="32" value="@Model.Profile.DisplayName" aria-label="Display name"></form>
+                        <h2 id="me-view-name" hidden>@Model.Profile.DisplayName</h2>
+                        <p class="me-handle"><span id="me-handle-name">@Model.Profile.UserName</span> <span
                                 id="me-handle-dot">•</span> <button type="button" class="me-pronouns"
-                                id="me-pronouns">Add pronouns</button><span id="me-view-pronouns" hidden></span></p>
+                                id="me-pronouns">@(string.IsNullOrWhiteSpace(Model.Profile.Pronouns) ? "Add pronouns" : Model.Profile.Pronouns)</button><span id="me-view-pronouns" hidden>@Model.Profile.Pronouns</span></p>
                         <div class="me-actions">
                             <button type="button" class="me-add" id="me-add" hidden><i
                                     class="fa-solid fa-user-plus"></i> Add Friend</button>
@@ -612,7 +612,7 @@
                         <div class="me-block me-bio-block">
                             <h3>Bio</h3>
                             <form class="me-bio-form" id="me-bio-form"><input id="me-bio" type="text" maxlength="190"
-                                    placeholder="No bio yet."><button type="button" id="me-bio-emoji"
+                                    placeholder="No bio yet." value="@Model.Profile.Bio"><button type="button" id="me-bio-emoji"
                                     aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>
                                 <div class="set-emoji d-none" id="me-bio-emoji-list"></div>
                             </form>
@@ -629,7 +629,7 @@
                         </div>
                         <div class="me-block">
                             <h3>Member Since</h3>
-                            <p id="me-since">Sep 8, 2026</p>
+                            <p id="me-since">@Model.Profile.MemberSince</p>
                         </div>
                     </div>
                 </div>
@@ -666,18 +666,18 @@
                 <div class="set-status-preview">
                     <div class="set-status-banner"></div>
                     <div class="set-status-person">
-                        <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+                        <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
                         <span class="me-dot"></span>
                         <span class="set-status-mini" id="set-status-mini"><span id="set-status-mini-emoji"></span><span
-                                id="set-status-mini-text">Today I learned...</span></span>
+                                id="set-status-mini-text">@(string.IsNullOrWhiteSpace(Model.Profile.CustomStatus) ? "Today I learned..." : Model.Profile.CustomStatus)</span></span>
                     </div>
-                    <h3 class="me-display">Anonymou5</h3>
-                    <p>anonymou5</p>
+                    <h3 class="me-display">@Model.Profile.DisplayName</h3>
+                    <p>@Model.Profile.UserName</p>
                 </div>
                 <p class="set-status-label">Status</p>
                 <div class="set-status-field">
                     <button type="button" id="set-status-emoji" aria-label="Emoji">😀</button>
-                    <input id="set-status-input" type="text" maxlength="128" placeholder="Today I learned...">
+                    <input id="set-status-input" type="text" maxlength="128" placeholder="Today I learned..." value="@Model.Profile.CustomStatus">
                     <div class="set-emoji d-none" id="set-emoji"></div>
                 </div>
                 <div class="set-status-foot">
@@ -706,7 +706,7 @@
                 </div>
                 <p class="set-status-label">Pronouns</p>
                 <div class="set-status-field">
-                    <input id="set-pronouns-input" type="text" maxlength="40" placeholder="Add pronouns">
+                    <input id="set-pronouns-input" type="text" maxlength="40" placeholder="Add pronouns" value="@Model.Profile.Pronouns">
                 </div>
                 <div class="set-status-foot">
                     <span></span>
@@ -764,9 +764,9 @@
                         class="fa-solid fa-xmark"></i></button>
                 <aside class="settings-nav">
                     <div class="settings-me">
-                        <img src="~/assets/img/img-icon-profile.jpeg" alt="">
+                        <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
                         <div>
-                            <strong class="me-display">Anonymou5</strong>
+                            <strong class="me-display">@Model.Profile.DisplayName</strong>
                             <span>Edit Profiles</span>
                         </div>
                     </div>
@@ -795,11 +795,9 @@
                             <h2>Account</h2>
                             <h3>Account Info</h3>
                             <div class="settings-row"><span>Username</span><b
-                                    id="settings-username">anonymou5</b><button type="button"
+                                    id="settings-username">@Model.Profile.UserName</b><button type="button"
                                     id="settings-username-edit">Edit</button></div>
-                            <div class="settings-row"><span>Email</span><b><span id="settings-email"
-                                        data-hidden="********@@gmail.com"
-                                        data-shown="anonymou5@@gmail.com">********@@gmail.com</span> <button type="button"
+                            <div class="settings-row"><span>Email</span><b><span id="settings-email" data-email="@Model.Profile.Email">@Model.Profile.Email</span> <button type="button"
                                         class="settings-link" id="settings-email-toggle" aria-label="Reveal email"><i
                                             class="fa-regular fa-eye"></i></button></b><button
                                     type="button">Edit</button></div>
@@ -811,7 +809,7 @@
                                 <div><strong>Public account</strong>
                                     <p>Turn this off to hide your account from people who are not your friends.</p>
                                 </div>
-                                <button type="button" class="notify-switch on" id="account-public" aria-pressed="true"
+                                <button type="button" class="notify-switch@(Model.Profile.IsPublic ? " on" : "")" id="account-public" aria-pressed="@Model.Profile.IsPublic.ToString().ToLower()"
                                     aria-label="Public account"></button>
                             </div>
                         </div>
@@ -1028,6 +1026,17 @@
         <script src="~/assets/js/script.js"></script>
         <script src="~/assets/js/server.js"></script>
     </footer>
+    @Html.AntiForgeryToken()
+    <form id="logout-form" asp-controller="Account" asp-action="Logout" method="post" hidden></form>
+    <form id="profile-update-form" asp-controller="Home" asp-action="UpdateProfile" method="post" class="d-none">
+        <input type="hidden" asp-for="Update.DisplayName" />
+        <input type="hidden" asp-for="Update.UserName" />
+        <input type="hidden" asp-for="Update.AvatarUrl" id="Update_AvatarUrl" />
+        <input type="hidden" asp-for="Update.CustomStatus" />
+        <input type="hidden" asp-for="Update.Pronouns" />
+        <input type="hidden" asp-for="Update.Bio" />
+        <input type="hidden" name="Update.IsPublic" value="@(Model.Update.IsPublic ? "true" : "false")" />
+    </form>
 </body>
 
 </html>
