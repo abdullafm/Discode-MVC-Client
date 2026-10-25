@@ -10,9 +10,12 @@
         return field ? field.value.trim() : "";
     }
 
-    function close() {
+    function close(instant) {
         token++;
-        if (card && card.parentNode) card.parentNode.removeChild(card);
+        if (card && card.parentNode) {
+            if (instant === true || !window.discodeDismiss) card.parentNode.removeChild(card);
+            else window.discodeDismiss(card);
+        }
         card = null;
         openAnchor = null;
     }
@@ -40,7 +43,7 @@
     }
 
     function open(userName, anchor, side) {
-        close();
+        close(true);
         if (!userName) return;
         var mine = ++token;
         openAnchor = anchor;

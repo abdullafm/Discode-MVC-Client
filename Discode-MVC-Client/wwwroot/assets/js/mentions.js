@@ -164,7 +164,10 @@
         var context = null;
 
         function close() {
-            if (popup && popup.parentNode) popup.parentNode.removeChild(popup);
+            if (popup && popup.parentNode) {
+                if (window.discodeDismiss) window.discodeDismiss(popup, 140);
+                else popup.parentNode.removeChild(popup);
+            }
             popup = null;
             items = [];
             context = null;

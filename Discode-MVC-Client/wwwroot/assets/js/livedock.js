@@ -95,8 +95,12 @@
     }
 
     function hideHost() {
+        var leaving = hostEl;
         if (hostVideo) hostVideo.srcObject = null;
-        if (hostEl && hostEl.parentNode) hostEl.parentNode.removeChild(hostEl);
+        if (leaving && leaving.parentNode) {
+            if (window.discodeDismiss) window.discodeDismiss(leaving);
+            else leaving.parentNode.removeChild(leaving);
+        }
         hostEl = null;
         hostVideo = null;
     }
@@ -179,8 +183,12 @@
             current.pc.close();
         } catch (error) {}
         invoke("LeaveLive", current.streamId).catch(function () {});
+        var leavingDock = dock;
         if (video) video.srcObject = null;
-        if (dock && dock.parentNode) dock.parentNode.removeChild(dock);
+        if (leavingDock && leavingDock.parentNode) {
+            if (window.discodeDismiss) window.discodeDismiss(leavingDock);
+            else leavingDock.parentNode.removeChild(leavingDock);
+        }
         dock = null;
         video = null;
     }

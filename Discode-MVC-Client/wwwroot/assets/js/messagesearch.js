@@ -64,7 +64,9 @@
 
         function close() {
             panel.hidden = true;
-            panel.textContent = "";
+            window.setTimeout(function () {
+                if (panel.hidden) panel.textContent = "";
+            }, 260);
         }
 
         function jump(row) {

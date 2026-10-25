@@ -942,7 +942,8 @@
         var note = element("div", "watch-guest-note", text);
         holder.appendChild(note);
         setTimeout(function () {
-            if (note.parentNode) note.parentNode.removeChild(note);
+            if (window.discodeDismiss) window.discodeDismiss(note);
+            else if (note.parentNode) note.parentNode.removeChild(note);
         }, 3500);
     }
 
@@ -1089,8 +1090,11 @@
     }
 
     function removeGuestRequest(connectionId) {
-        var card = byId("live-guest-requests").querySelector('[data-connection="' + connectionId + '"]');
-        if (card && card.parentNode) card.parentNode.removeChild(card);
+        var card = byId("live-guest-requests").querySelector('[data-connection="' + connectionId + '"]:not(.is-leaving)');
+        if (card && card.parentNode) {
+            if (window.discodeDismiss) window.discodeDismiss(card);
+            else card.parentNode.removeChild(card);
+        }
     }
 
     byId("live-guest-btn").addEventListener("click", function () {

@@ -7815,3 +7815,59 @@ a.notify-content {
 .live-dock video {
     pointer-events: none;
 }
+
+.mini-profile,
+.live-dock,
+.mention-popup,
+.watch-guest-request,
+.watch-guest-note {
+    animation: pop-in 0.22s ease both;
+}
+
+.is-leaving {
+    animation: pop-out 0.18s ease forwards !important;
+    pointer-events: none;
+}
+
+.watch-msg {
+    animation: pop-fade-in 0.22s ease both;
+}
+
+.dm-msg.is-ignored.show-ignored .dm-msg-body > :not(.dm-msg-head) {
+    animation: pop-fade-in 0.25s ease both;
+}
+
+.dm-live-card,
+.msg-search-item,
+.watch-viewer-row,
+.mention,
+.mention-chip,
+.dm-live-watch {
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.dm-live-card:hover {
+    transform: translateY(-1px);
+}
+
+.post-repost.reposted i {
+    animation: repost-pop 0.35s ease;
+}
+
+@keyframes repost-pop {
+    0% { transform: scale(1) rotate(0deg); }
+    45% { transform: scale(1.35) rotate(180deg); }
+    100% { transform: scale(1) rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mini-profile,
+    .live-dock,
+    .mention-popup,
+    .watch-guest-request,
+    .watch-guest-note,
+    .watch-msg,
+    .post-repost.reposted i {
+        animation: none;
+    }
+}

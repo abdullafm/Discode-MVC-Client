@@ -4,7 +4,7 @@ try {
 } catch (e) {}
 
 (function () {
-    var pops = ".me-profile, .new-msg, .settings, .name-modal, .server-modal, .group-edit-modal, .channel-modal, .server-delete-modal, .set-status, .story-viewer, .story-editor, .story-modal, .me-status-menu, #story-viewer, #story-editor, #story-modal, #emoji-panel, .emoji-panel, .row-menu";
+    var pops = ".me-profile, .new-msg, .settings, .name-modal, .server-modal, .group-edit-modal, .channel-modal, .server-delete-modal, .set-status, .story-viewer, .story-editor, .story-modal, .me-status-menu, #story-viewer, #story-editor, #story-modal, #emoji-panel, .emoji-panel, .row-menu, .msg-search-panel, .watch-viewer-list, .watch-guest, .dm-modal, .live-modal";
 
     function hiddenBefore(record) {
         if (record.attributeName === "hidden") return record.oldValue !== null;
@@ -19,7 +19,7 @@ try {
     function cardOf(target) {
         var card = target.firstElementChild;
         if (!card) return null;
-        if (card.matches(".me-profile-card, .new-msg-card, .settings-card, .name-modal-card, .server-modal-card, .group-edit-card, .channel-card, .server-delete-card, .set-status-card, .story-frame")) return card;
+        if (card.matches(".dm-modal-card, .me-profile-card, .new-msg-card, .settings-card, .name-modal-card, .server-modal-card, .group-edit-card, .channel-card, .server-delete-card, .set-status-card, .story-frame")) return card;
         return null;
     }
 
@@ -51,10 +51,19 @@ try {
 
     function playMotion(target, opening) {
         var card = cardOf(target);
-        var self = !card && target.matches(".emoji-panel, #emoji-panel, .row-menu, .me-status-menu, .me-pop");
+        var self = !card && target.matches(".emoji-panel, #emoji-panel, .row-menu, .me-status-menu, .me-pop, .msg-search-panel, .watch-viewer-list, .watch-guest");
         tween(target, opening, self);
         if (card) tween(card, opening, true);
     }
+
+    window.discodeDismiss = function (node, ms) {
+        if (!node || !node.parentNode || node._dismissing) return;
+        node._dismissing = true;
+        node.classList.add("is-leaving");
+        window.setTimeout(function () {
+            if (node.parentNode) node.parentNode.removeChild(node);
+        }, ms || 190);
+    };
 
     window.discodePop = function (node, opening) {
         playMotion(node, opening !== false);
