@@ -132,7 +132,7 @@
         var photo = document.querySelector("#user-panel .avatar img");
         return {
             name: nameNode && nameNode.textContent.trim() ? nameNode.textContent.trim() : "Anonymou5",
-            photo: photo ? photo.getAttribute("src") : "./assets/img/img-icon-profile.jpeg"
+            photo: photo ? photo.getAttribute("src") : "/assets/img/img-icon-profile.jpeg"
         };
     }
 
@@ -195,7 +195,7 @@
             var item = list[i];
             var row = tpl.content.firstElementChild.cloneNode(true);
             var photo = row.querySelector("img");
-            if (photo) photo.src = item.photo || item.avatar || "./assets/img/img-icon-profile.jpeg";
+            if (photo) photo.src = item.photo || item.avatar || "/assets/img/img-icon-profile.jpeg";
             var name = row.querySelector("strong");
             if (name) name.textContent = item.name || item.author || "";
             var time = row.querySelector("time");
@@ -396,7 +396,7 @@
             var presence = memberPresence(people[p]);
             var row = {
                 name: people[p].name || people[p].displayName || people[p].username || "Member",
-                photo: people[p].photo || people[p].avatar || "./assets/img/img-icon-profile.jpeg",
+                photo: people[p].photo || people[p].avatar || "/assets/img/img-icon-profile.jpeg",
                 status: presence,
                 owner: isServerCreator(people[p]),
                 voice: memberInVoice(people[p]),
@@ -655,7 +655,7 @@
         memberPop.setAttribute("data-self", self ? "1" : "0");
         memberPop.setAttribute("data-name", name);
         var face = document.getElementById("member-pop-photo");
-        if (face) face.src = photo ? photo.getAttribute("src") : "./assets/img/img-icon-profile.jpeg";
+        if (face) face.src = photo ? photo.getAttribute("src") : "/assets/img/img-icon-profile.jpeg";
         var title = document.getElementById("member-pop-name");
         if (title) title.textContent = name;
         var handleEl = document.getElementById("member-pop-handle");

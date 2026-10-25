@@ -835,15 +835,15 @@ document.addEventListener("visibilitychange", function () {
         button.setAttribute("aria-label", name);
         if (server && server.id != null) button.setAttribute("data-id", server.id);
         var current = "";
-        if (window.location.pathname.indexOf("server.html") !== -1) {
+        if (window.location.pathname.toLowerCase().indexOf("/server") === 0) {
             current = new URLSearchParams(window.location.search).get("id") || "";
         }
         if (current && server && String(server.id) === String(current)) button.classList.add("on");
         button.addEventListener("click", function () {
             var id = button.getAttribute("data-id");
             if (!id) return;
-            if (window.discodeGo) window.discodeGo("./server.html?id=" + encodeURIComponent(id));
-            else window.location.href = "./server.html?id=" + encodeURIComponent(id);
+            if (window.discodeGo) window.discodeGo("/Server/Index?id=" + encodeURIComponent(id));
+            else window.location.href = "/Server/Index?id=" + encodeURIComponent(id);
         });
         list.appendChild(button);
     }
