@@ -4,7 +4,6 @@
     var list = document.getElementById("server-list");
     if (!list) return;
 
-    var PREFS_KEY = "discode-server-prefs";
     var menu = null;
     var current = null;
 
@@ -30,35 +29,33 @@
         { key: "bans", label: "Bans" }
     ];
 
-    function readPrefs() {
-        try {
-            return JSON.parse(localStorage.getItem(PREFS_KEY) || "{}") || {};
-        } catch (error) {
-            return {};
-        }
+    function token() {
+        var field = document.querySelector("input[name='__RequestVerificationToken']");
+        return field ? field.value : "";
     }
 
     function prefsOf(server) {
-        var all = readPrefs();
-        var saved = all[server.id] || {};
         return {
-            mutedUntil: saved.mutedUntil || 0,
-            notify: saved.notify || (server.isOwner ? "all" : "mentions"),
-            hideMuted: !!saved.hideMuted,
-            showAll: saved.showAll !== false
+            muted: !!server.muted,
+            notify: server.notificationLevel || (server.isOwner ? "all" : "mentions"),
+            hideMuted: !!server.hideMutedChannels,
+            showAll: server.showAllChannels !== false
         };
     }
 
     function savePref(server, changes) {
-        var all = readPrefs();
-        all[server.id] = Object.assign(all[server.id] || {}, changes);
-        try {
-            localStorage.setItem(PREFS_KEY, JSON.stringify(all));
-        } catch (error) {}
-    }
-
-    function isMuted(prefs) {
-        return prefs.mutedUntil === -1 || prefs.mutedUntil > Date.now();
+        var body = Object.assign({ id: server.id }, changes);
+        fetch("/Server/Preferences", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "RequestVerificationToken": token(), "X-Requested-With": "XMLHttpRequest" },
+            body: JSON.stringify(body)
+        }).then(function (response) {
+            if (!response.ok) throw new Error("preferences");
+            if (window.discodeReloadServers) window.discodeReloadServers();
+        }).catch(function () {
+            notice("Could not save that setting.");
+        });
     }
 
     function element(tag, className, text) {
@@ -154,7 +151,7 @@
 
     function build(server) {
         var prefs = prefsOf(server);
-        var muted = isMuted(prefs);
+        var muted = prefs.muted;
         var owner = !!server.isOwner;
         var notifyLabel = (NOTIFY.filter(function (n) { return n.key === prefs.notify; })[0] || NOTIFY[0]).label;
         var items = [];
@@ -164,7 +161,7 @@
         items.push({ label: "Invite to Server", onClick: function () { perform(server, "invite"); } });
         items.push({ line: true });
         if (muted) {
-            items.push({ label: "Unmute Server", onClick: function () { savePref(server, { mutedUntil: 0 }); notice("Server unmuted."); } });
+            items.push({ label: "Unmute Server", onClick: function () { savePref(server, { muteMinutes: 0 }); notice("Server unmuted."); } });
         } else {
             items.push({
                 label: "Mute Server",
@@ -172,7 +169,7 @@
                     return {
                         label: entry.label,
                         onClick: function () {
-                            savePref(server, { mutedUntil: entry.minutes ? Date.now() + entry.minutes * 60000 : -1 });
+                            savePref(server, { muteMinutes: entry.minutes ? entry.minutes : -1 });
                             notice("Server muted.");
                         }
                     };
@@ -186,20 +183,20 @@
                 return {
                     label: entry.label,
                     check: prefs.notify === entry.key,
-                    onClick: function () { savePref(server, { notify: entry.key }); }
+                    onClick: function () { savePref(server, { notificationLevel: entry.key }); }
                 };
             })
         });
         items.push({
             label: "Hide Muted Channels",
             check: prefs.hideMuted,
-            onClick: function () { savePref(server, { hideMuted: !prefs.hideMuted }); }
+            onClick: function () { savePref(server, { hideMutedChannels: !prefs.hideMuted }); }
         });
         if (!owner) {
             items.push({
                 label: "Show All Channels",
                 check: prefs.showAll,
-                onClick: function () { savePref(server, { showAll: !prefs.showAll }); }
+                onClick: function () { savePref(server, { showAllChannels: !prefs.showAll }); }
             });
         }
         items.push({ line: true });

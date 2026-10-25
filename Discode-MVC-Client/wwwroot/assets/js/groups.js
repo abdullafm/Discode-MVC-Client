@@ -880,28 +880,6 @@ document.addEventListener("visibilitychange", function () {
         else window.location.href = url;
     }
 
-    var ORDER_KEY = "discode-server-order";
-
-    function readOrder() {
-        try {
-            return JSON.parse(localStorage.getItem(ORDER_KEY) || "[]") || [];
-        } catch (error) {
-            return [];
-        }
-    }
-
-    function sortByOrder(servers) {
-        var order = readOrder();
-        return servers.slice().sort(function (a, b) {
-            var first = order.indexOf(a.id);
-            var second = order.indexOf(b.id);
-            if (first === -1 && second === -1) return 0;
-            if (first === -1) return 1;
-            if (second === -1) return -1;
-            return first - second;
-        });
-    }
-
     window.discodeMoveServer = function (id, where) {
         var ids = [].map.call(list.children, function (child) { return child._server ? child._server.id : null; }).filter(function (value) { return value !== null; });
         var at = ids.indexOf(id);
@@ -911,9 +889,10 @@ document.addEventListener("visibilitychange", function () {
         else if (where === "bottom") ids.push(id);
         else if (where === "up") ids.splice(Math.max(0, at - 1), 0, id);
         else ids.splice(Math.min(ids.length, at + 1), 0, id);
-        try {
-            localStorage.setItem(ORDER_KEY, JSON.stringify(ids));
-        } catch (error) {}
+        sendServer("/Server/Reorder", { serverIds: ids }).then(loadServers).catch(loadServers);
+    };
+
+    window.discodeReloadServers = function () {
         loadServers();
     };
 
@@ -924,7 +903,7 @@ document.addEventListener("visibilitychange", function () {
         }).then(function (servers) {
             while (list.firstChild) list.removeChild(list.firstChild);
             if (!servers || !servers.length) return;
-            sortByOrder(servers).forEach(addChip);
+            servers.forEach(addChip);
         }).catch(function () {});
     }
 
