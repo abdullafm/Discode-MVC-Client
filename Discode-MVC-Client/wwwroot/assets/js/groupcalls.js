@@ -1277,7 +1277,10 @@
     var streamMenu = null;
 
     function closeStreamMenu() {
-        if (streamMenu && streamMenu.parentNode) streamMenu.parentNode.removeChild(streamMenu);
+        if (streamMenu && streamMenu.parentNode) {
+            if (window.discodeDismiss) window.discodeDismiss(streamMenu, 140);
+            else streamMenu.parentNode.removeChild(streamMenu);
+        }
         streamMenu = null;
     }
 

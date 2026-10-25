@@ -612,7 +612,8 @@
         note.textContent = text;
         document.body.appendChild(note);
         setTimeout(function () {
-            if (note.parentNode) note.parentNode.removeChild(note);
+            if (window.discodeDismiss) window.discodeDismiss(note);
+            else if (note.parentNode) note.parentNode.removeChild(note);
         }, 3000);
     }
 

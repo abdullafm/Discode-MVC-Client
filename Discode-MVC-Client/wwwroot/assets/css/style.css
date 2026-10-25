@@ -7871,3 +7871,31 @@ a.notify-content {
         animation: none;
     }
 }
+
+.is-tab-in {
+    animation: pop-fade-in 0.22s ease both;
+}
+
+main {
+    animation: pop-fade-in 0.25s ease both;
+}
+
+.stream-menu,
+.story-notice,
+.call-dock-card,
+.row-menu-sub.open,
+.row-menu-branch:hover > .row-menu-sub {
+    animation: pop-in 0.18s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .is-tab-in,
+    main,
+    .stream-menu,
+    .story-notice,
+    .call-dock-card,
+    .row-menu-sub.open,
+    .row-menu-branch:hover > .row-menu-sub {
+        animation: none;
+    }
+}
