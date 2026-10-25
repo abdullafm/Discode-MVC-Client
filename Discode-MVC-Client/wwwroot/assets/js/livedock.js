@@ -22,7 +22,7 @@
         });
     }
 
-    var POSITION_KEY = "discode-live-dock-position";
+    var savedSpot = null;
 
     function clampPosition(el, left, top) {
         var maxLeft = Math.max(0, window.innerWidth - el.offsetWidth);
@@ -39,10 +39,7 @@
     }
 
     function restorePosition(el) {
-        try {
-            var saved = JSON.parse(localStorage.getItem(POSITION_KEY) || "null");
-            if (saved && typeof saved.left === "number" && typeof saved.top === "number") place(el, saved.left, saved.top);
-        } catch (error) {}
+        if (savedSpot) place(el, savedSpot.left, savedSpot.top);
     }
 
     function makeDraggable(el) {
@@ -65,9 +62,7 @@
                 el.removeEventListener("pointercancel", stop);
                 el.classList.remove("is-dragging");
                 var rect = el.getBoundingClientRect();
-                try {
-                    localStorage.setItem(POSITION_KEY, JSON.stringify({ left: rect.left, top: rect.top }));
-                } catch (error) {}
+                savedSpot = { left: rect.left, top: rect.top };
             }
 
             el.addEventListener("pointermove", move);
