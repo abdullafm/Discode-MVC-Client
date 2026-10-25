@@ -74,18 +74,48 @@
     setManage(checkServerOwnership());
     var currentServer = null;
 
-    fetch("/Server/Get?id=" + encodeURIComponent(openId || "azaan"), { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
-        if (!response.ok) throw new Error("server");
-        return response.json();
-    }).then(function (server) {
-        currentServer = server;
-        var title = document.getElementById("server-title");
-        if (title && server.name) title.textContent = server.name;
-        applyChannelAccess(server);
-        setManage(canManageServer(server));
-        runPendingAction();
-    }).catch(function () {
-        setManage(checkServerOwnership());
+    function loadServer(first) {
+        fetch("/Server/Get?id=" + encodeURIComponent(openId || "azaan"), { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            if (!response.ok) throw new Error("server");
+            return response.json();
+        }).then(function (server) {
+            currentServer = server;
+            var title = document.getElementById("server-title");
+            if (title && server.name) title.textContent = server.name;
+            applyChannelAccess(server);
+            setManage(canManageServer(server));
+            if (first) runPendingAction();
+        }).catch(function () {
+            if (first) setManage(checkServerOwnership());
+        });
+    }
+
+    loadServer(true);
+
+    function refreshMembers(event) {
+        var detail = event && event.detail;
+        if (detail && detail.serverId && String(detail.serverId) !== String(openId)) return;
+        fetch("/Server/Get?id=" + encodeURIComponent(openId || "azaan"), { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            return response.ok ? response.json() : null;
+        }).then(function (server) {
+            if (!server || !Array.isArray(server.members)) return;
+            serverMembers = server.members;
+            paintServerMembers();
+        }).catch(function () {});
+    }
+
+    document.addEventListener("discode-server-updated", refreshMembers);
+    document.addEventListener("discode-profile-changed", function () { refreshMembers(null); });
+    document.addEventListener("discode-user-presence", function (event) {
+        var data = event.detail || {};
+        var touched = false;
+        for (var i = 0; i < serverMembers.length; i++) {
+            if (serverMembers[i] && serverMembers[i].id === data.userId) {
+                serverMembers[i].status = data.status;
+                touched = true;
+            }
+        }
+        if (touched) paintServerMembers();
     });
 
     function runPendingAction() {
@@ -341,7 +371,7 @@
 
     function isServerCreator(member) {
         if (!member) return false;
-        if (member.creator === true || member.createdServer === true || member.owner === true) return true;
+        if (member.creator === true || member.createdServer === true || member.owner === true || member.isOwner === true) return true;
         var name = String(member.name || member.displayName || member.username || "").trim().toLowerCase();
         var id = String(member.id || member.userId || "").trim().toLowerCase();
         if (serverCreator && ((name && name === serverCreator) || (id && id === serverCreator))) return true;
@@ -390,7 +420,7 @@
 
     function sameMember(member, me) {
         var name = String(member.name || member.displayName || member.username || "").toLowerCase();
-        return name && (name === String(me.name || "").toLowerCase() || member.self === true || member.me === true);
+        return (name && name === String(me.name || "").toLowerCase()) || member.self === true || member.me === true || member.isSelf === true;
     }
 
     function paintServerMembers() {
@@ -411,7 +441,7 @@
                     photo: raw.photo || raw.avatar || me.photo,
                     status: me.status,
                     statusText: me.statusText || raw.statusText || raw.customStatus || raw.activity || "",
-                    creator: raw.creator === true || raw.createdServer === true || raw.owner === true,
+                    creator: raw.creator === true || raw.createdServer === true || raw.owner === true || raw.isOwner === true,
                     id: raw.id || raw.userId || "",
                     self: true,
                     voice: raw.voice,
@@ -429,13 +459,13 @@
             var presence = memberPresence(people[p]);
             var row = {
                 name: people[p].name || people[p].displayName || people[p].username || "Member",
-                photo: people[p].photo || people[p].avatar || "/assets/img/img-icon-profile.jpeg",
+                photo: people[p].photo || people[p].avatar || people[p].avatarUrl || "/assets/img/img-icon-profile.jpeg",
                 status: presence,
                 owner: isServerCreator(people[p]),
                 voice: memberInVoice(people[p]),
                 statusText: people[p].statusText || people[p].customStatus || people[p].activity || "",
                 self: people[p].self === true,
-                handle: people[p].username || people[p].handle || "",
+                handle: people[p].username || people[p].userName || people[p].handle || "",
                 about: people[p].about || people[p].bio || ""
             };
             if (presence === "offline") offline.push(row);
