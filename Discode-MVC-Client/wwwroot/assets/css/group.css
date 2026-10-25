@@ -510,7 +510,6 @@ section#group-members.no-motion .group-members {
     text-overflow: ellipsis;
 }
 
-#group-invite-side,
 #group-leave {
     margin: 8px;
     height: 36px;
@@ -528,7 +527,6 @@ section#group-members.no-motion .group-members {
     gap: 8px;
 }
 
-#group-invite-side:hover,
 #group-leave:hover {
     background: #dfe0e3;
 }
@@ -714,8 +712,7 @@ section#group-members.no-motion .group-members {
         min-height: 44px;
     }
 
-    .group-actions button,
-    #group-invite-side {
+    .group-actions button {
         min-height: 44px;
     }
 }

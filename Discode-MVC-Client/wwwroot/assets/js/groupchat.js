@@ -401,7 +401,6 @@
     }
 
     document.getElementById("group-invite").addEventListener("click", invite);
-    document.getElementById("group-invite-side").addEventListener("click", invite);
     document.getElementById("group-add").addEventListener("click", invite);
 
     var confirmModal = document.getElementById("group-confirm-modal");

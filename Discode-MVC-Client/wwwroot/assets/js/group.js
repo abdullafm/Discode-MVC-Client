@@ -324,7 +324,6 @@ function inviteHere() {
 }
 
 document.getElementById("group-invite").addEventListener("click", inviteHere);
-document.getElementById("group-invite-side").addEventListener("click", inviteHere);
 document.getElementById("group-add").addEventListener("click", inviteHere);
 document.querySelector(".call-phone-add").addEventListener("click", inviteHere);
 document.getElementById("call-phone-add-close").addEventListener("click", function (event) {
