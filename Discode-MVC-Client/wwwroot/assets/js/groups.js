@@ -831,7 +831,15 @@ document.addEventListener("visibilitychange", function () {
         var button = chip.content.firstElementChild.cloneNode(true);
         button._server = server;
         var name = server && server.name ? server.name : "Server";
-        button.textContent = name.trim().charAt(0).toUpperCase();
+        if (server && server.iconUrl) {
+            var face = document.createElement("img");
+            face.alt = "";
+            face.src = server.iconUrl;
+            face.className = "server-chip-icon";
+            button.appendChild(face);
+        } else {
+            button.textContent = name.trim().charAt(0).toUpperCase();
+        }
         button.title = name;
         button.setAttribute("aria-label", name);
         if (server && server.id != null) button.setAttribute("data-id", server.id);

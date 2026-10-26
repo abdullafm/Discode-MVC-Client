@@ -7975,3 +7975,16 @@ html.theme-dark body .server-ctx .server-ctx-check.on {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     animation: pop-in 0.2s ease both;
 }
+
+.server-chip {
+    overflow: hidden;
+    padding: 0;
+}
+
+.server-chip .server-chip-icon {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    object-fit: cover;
+    display: block;
+}
