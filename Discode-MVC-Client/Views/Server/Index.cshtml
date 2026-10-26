@@ -506,6 +506,28 @@
                aria-label="Manage Server">
     </span>
 </label>
+<label class="perm-row">
+    <span class="perm-copy">
+        <strong>Kick Members</strong><small>
+        Allows members to remove other members from this server. Kicked members can rejoin with an invite.
+    </small>
+</span>
+<span class="perm-switch">
+    <input type="checkbox" role="switch"
+           aria-label="Kick Members">
+</span>
+</label>
+<label class="perm-row">
+    <span class="perm-copy">
+        <strong>Ban Members</strong><small>
+        Allows members to permanently ban other members from this server and to lift those bans.
+    </small>
+</span>
+<span class="perm-switch">
+    <input type="checkbox" role="switch"
+           aria-label="Ban Members">
+</span>
+</label>
 </div>
 </section>
 <section id="perm-group-2">
@@ -681,10 +703,10 @@
         <div class="ban-search">
             <label>
                 <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="search" placeholder="Search Bans by User Id or Username"
-                       aria-label="Search Bans by User Id or Username">
+                <input id="ban-search-input" type="search" placeholder="Search Bans by User Id or Username"
+                       aria-label="Search Bans by User Id or Username" autocomplete="off">
             </label>
-            <button type="button">Search</button>
+            <button type="button" id="ban-search-go">Search</button>
         </div>
         <div class="ban-box">
             <div class="ban-list" id="server-ban-list"></div>
@@ -694,6 +716,7 @@
                 <p>You haven't banned anybody... but if and when you must, do not hesitate!</p>
             </div>
         </div>
+        <div class="ban-sentinel" id="ban-sentinel"></div>
     </div>
 </section>
 </div>

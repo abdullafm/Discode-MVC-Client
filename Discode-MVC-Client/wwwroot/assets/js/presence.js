@@ -311,6 +311,14 @@
                     document.dispatchEvent(new CustomEvent("discode-servers-changed"));
                 });
 
+                connection.on("ServerRemoved", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-removed", { detail: data }));
+                });
+
+                connection.on("ServerBansChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-bans-changed", { detail: data }));
+                });
+
                 connection.on("ServerAuditChanged", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-server-audit-changed", { detail: data }));
                 });

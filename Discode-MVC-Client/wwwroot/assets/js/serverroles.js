@@ -21,7 +21,9 @@
         "Mention @everyone": 1024,
         "Connect": 2048,
         "Speak": 4096,
-        "Mute Members": 8192
+        "Mute Members": 8192,
+        "Kick Members": 16384,
+        "Ban Members": 32768
     };
     var COLORS = {
         gray: "#80848e",
