@@ -285,13 +285,13 @@
                                    aria-label="Show Members In Channel List" checked>
                         </div>
                         <div class="members-bar">
-                            <h3>Recent Members</h3>
+                            <h3 id="members-title">Recent Members</h3>
                             <label class="members-search">
                                 <i class="fa-solid fa-magnifying-glass"></i>
-                                <input type="search" placeholder="Search by username or id"
+                                <input id="members-search-input" type="search" placeholder="Search by username or id"
                                        aria-label="Search by username or id">
                             </label>
-                            <button type="button" class="members-sort">
+                            <button type="button" class="members-sort" id="members-sort">
                                 <i class="fa-solid fa-arrow-down-wide-short"></i> Sort
                             </button>
                             <button type="button" class="members-prune">Prune</button>
@@ -303,18 +303,20 @@
                                         <th>
                                             <input id="members-select-all" type="checkbox" aria-label="Select all">
                                         </th>
-                                        <th>Name</th>
-                                        <th>Member Since <i class="fa-solid fa-arrow-down-wide-short"></i></th>
-                                        <th>Joined Discord <i class="fa-solid fa-arrow-down-wide-short"></i></th>
-                                        <th>Join Method <i class="fa-solid fa-arrow-down-wide-short"></i></th>
-                                        <th>Roles <i class="fa-solid fa-arrow-down-wide-short"></i></th>
-                                        <th>Signals <i class="fa-solid fa-arrow-down-wide-short"></i></th>
+                                        <th data-sort="name">Name</th>
+                                        <th data-sort="since">Member Since <i class="fa-solid fa-arrow-down-wide-short"></i></th>
+                                        <th data-sort="discord">Joined Discord <i class="fa-solid fa-arrow-down-wide-short"></i></th>
+                                        <th data-sort="method">Join Method <i class="fa-solid fa-arrow-down-wide-short"></i></th>
+                                        <th data-sort="roles">Roles <i class="fa-solid fa-arrow-down-wide-short"></i></th>
+                                        <th>Signals</th>
+                                        <th></th>
                                     </tr>
                                 </thead>
                                 <tbody id="server-member-table"></tbody>
                             </table>
-                            <p class="members-empty"><i class="fa-solid fa-magnifying-glass"></i>No members yet.</p>
+                            <p class="members-empty"><i class="fa-solid fa-magnifying-glass"></i><span>No members yet.</span></p>
                         </div>
+                        <p class="members-count" id="members-count"></p>
                     </div>
                 </section>
                 <section id="server-settings-panel-4" data-panel="roles" hidden>

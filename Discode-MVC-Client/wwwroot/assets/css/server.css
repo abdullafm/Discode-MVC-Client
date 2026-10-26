@@ -5220,3 +5220,100 @@ html.theme-dark body .server-banner-wrap.has-banner .server-banner i,
     background-size: cover;
     background-position: center;
 }
+
+.members-table th[data-sort] {
+    cursor: pointer;
+    user-select: none;
+}
+
+.members-table th.is-sorted {
+    color: #5865f2;
+}
+
+.members-who {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.members-who img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.members-names {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.members-names small {
+    font-size: 12px;
+    color: #80848e;
+}
+
+.members-method {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(128, 132, 142, 0.18);
+    font-size: 13px;
+}
+
+.members-unknown {
+    color: #80848e;
+}
+
+.members-role {
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(88, 101, 242, 0.18);
+    color: #5865f2;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.members-actions {
+    text-align: right;
+}
+
+.members-icon {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #80848e;
+    cursor: pointer;
+}
+
+.members-icon:hover {
+    background: rgba(128, 132, 142, 0.18);
+}
+
+.members-count {
+    margin: 12px 8px;
+    font-size: 14px;
+    color: #80848e;
+}
+
+.members-ctx {
+    position: fixed;
+    z-index: 900;
+}
+
+html.theme-dark body .members-method,
+html.theme-dark body .members-names small,
+html.theme-dark body .members-unknown,
+html.theme-dark body .members-count,
+html.theme-dark body .members-icon {
+    color: #b5bac1 !important;
+}
+
+html.theme-dark body .members-role {
+    color: #949cf7 !important;
+}
