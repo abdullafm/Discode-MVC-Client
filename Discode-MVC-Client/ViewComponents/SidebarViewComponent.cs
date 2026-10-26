@@ -13,9 +13,9 @@ namespace Discode_MVC_Client.ViewComponents
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(HomeVM home)
+        public async Task<IViewComponentResult> InvokeAsync(HomeUIVM home)
         {
-            var model = new SidebarVM
+            var model = new SidebarUIVM
             {
                 Profile = home.Profile,
                 Update = home.Update,
@@ -27,7 +27,7 @@ namespace Discode_MVC_Client.ViewComponents
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                model.Conversations = await client.GetFromJsonAsync<List<ConversationVM>>("api/dm") ?? new List<ConversationVM>();
+                model.Conversations = await client.GetFromJsonAsync<List<ConversationUIVM>>("api/dm") ?? new List<ConversationUIVM>();
             }
             catch (HttpRequestException)
             {

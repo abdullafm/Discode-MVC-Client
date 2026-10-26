@@ -5,14 +5,14 @@ namespace Discode_MVC_Client.Mappers
 {
     public static class DmProfileMapper
     {
-        public static DmProfileVM ToDmProfile(this ChatVM? chat, int utcOffsetMinutes)
+        public static DmProfileUIVM ToDmProfile(this ChatUIVM? chat, int utcOffsetMinutes)
         {
             if (chat is null)
             {
-                return new DmProfileVM { UtcOffsetMinutes = utcOffsetMinutes };
+                return new DmProfileUIVM { UtcOffsetMinutes = utcOffsetMinutes };
             }
 
-            return new DmProfileVM
+            return new DmProfileUIVM
             {
                 HasChat = true,
                 UserName = chat.UserName,
@@ -28,9 +28,9 @@ namespace Discode_MVC_Client.Mappers
             };
         }
 
-        public static DmProfileVM ToDmProfile(this UserProfileVM profile, int utcOffsetMinutes)
+        public static DmProfileUIVM ToDmProfile(this UserProfileUIVM profile, int utcOffsetMinutes)
         {
-            return new DmProfileVM
+            return new DmProfileUIVM
             {
                 HasChat = true,
                 UserName = profile.UserName,
