@@ -5,7 +5,7 @@
     if (!boxes.length) return;
 
     var MAX_CARDS = 3;
-    var pattern = new RegExp(window.location.origin.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "/([A-Za-z0-9]{7})(?![A-Za-z0-9])", "g");
+    var pattern = new RegExp(window.location.origin.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "/([A-Za-z0-9_-]{3,32})(?![A-Za-z0-9_\\-/?#=&]|\\.[A-Za-z0-9])", "g");
 
     function token() {
         var field = document.querySelector("input[name='__RequestVerificationToken']");
@@ -43,6 +43,11 @@
         card._info = info;
         var banner = element("div", "dm-invite-banner");
         banner.setAttribute("data-banner", info.bannerColor || "ink");
+        if (info.bannerUrl) {
+            banner.style.backgroundImage = "url('" + info.bannerUrl + "')";
+            banner.style.backgroundSize = "cover";
+            banner.style.backgroundPosition = "center";
+        }
         card.appendChild(banner);
         var body = element("div", "dm-invite-body");
         var icon = element("div", "dm-invite-icon");
@@ -71,6 +76,10 @@
     }
 
     function paintInvalid(card) {
+        if (card.getAttribute("data-strict") !== "1") {
+            if (card.parentNode) card.parentNode.removeChild(card);
+            return;
+        }
         card.textContent = "";
         card._info = null;
         card.classList.add("is-invalid");
@@ -157,7 +166,7 @@
         pattern.lastIndex = 0;
         var match;
         while ((match = pattern.exec(text))) {
-            if (/\d/.test(match[1]) && /[A-Za-z]/.test(match[1]) && codes.indexOf(match[1]) === -1) codes.push(match[1]);
+            if (codes.indexOf(match[1]) === -1) codes.push(match[1]);
         }
         if (!codes.length) return;
         linkify(textElement);
@@ -169,6 +178,7 @@
             }
             var card = element("div", "dm-invite-card");
             card.setAttribute("data-code", code);
+            if (/\d/.test(code) && /[A-Za-z]/.test(code) && code.length === 7) card.setAttribute("data-strict", "1");
             card.appendChild(element("div", "dm-invite-body is-plain", "Loading invite..."));
             textElement.parentNode.insertBefore(card, textElement.nextSibling);
             load(card);
