@@ -79,6 +79,24 @@ namespace Discode_MVC_Client.Controllers
             }));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> UpdateCategory([FromBody] UpdateServerCategoryUIVM model)
+        {
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/categories/{model.CategoryId}", new
+            {
+                name = model.Name ?? string.Empty,
+                isPrivate = model.IsPrivate
+            }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> DeleteCategory([FromBody] DeleteServerCategoryUIVM model)
+        {
+            return Forward(client => client.DeleteAsync($"api/server/{model.ServerId}/categories/{model.CategoryId}"));
+        }
+
         [HttpGet]
         public Task<IActionResult> List()
         {
