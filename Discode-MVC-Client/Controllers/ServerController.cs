@@ -81,6 +81,25 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> UpdateChannel([FromBody] UpdateServerChannelUIVM model)
+        {
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}", new
+            {
+                name = model.Name ?? string.Empty,
+                isPrivate = model.IsPrivate,
+                isReadOnly = model.IsReadOnly
+            }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> DeleteChannel([FromBody] DeleteServerChannelUIVM model)
+        {
+            return Forward(client => client.DeleteAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> UpdateCategory([FromBody] UpdateServerCategoryUIVM model)
         {
             return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/categories/{model.CategoryId}", new
