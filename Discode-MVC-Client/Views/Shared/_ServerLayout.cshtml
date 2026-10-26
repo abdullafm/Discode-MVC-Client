@@ -21,13 +21,10 @@
     <header class="app-header">
         <div class="server-rail" id="server-rail">
             <nav class="server-nav" aria-label="Servers">
-                <button type="button" class="server-home" onclick="openToggle()" aria-label="Home">
+                <a class="server-home" asp-action="Index" asp-controller="Home" aria-label="Home">
                     <i class="fa-brands fa-discord" aria-hidden="true"></i>
-                </button>
-                <hr>
-                <a href="@Url.Action("Index", "Server")?id=azaan" data-id="azaan" aria-label="Azaan server">
-                    <img src="~/assets/img/Azaan.jpeg" alt="">
                 </a>
+                <hr>
                 <div id="server-list"></div>
                 <template id="server-chip"><button type="button" class="server-chip"></button></template>
                 <button type="button" class="server-action" id="server-add" aria-label="Add a Server">
