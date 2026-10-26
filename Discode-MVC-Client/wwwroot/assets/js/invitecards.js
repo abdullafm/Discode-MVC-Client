@@ -41,7 +41,9 @@
     function paint(card, info) {
         card.textContent = "";
         card._info = info;
-        card.appendChild(element("div", "dm-invite-banner"));
+        var banner = element("div", "dm-invite-banner");
+        banner.setAttribute("data-banner", info.bannerColor || "ink");
+        card.appendChild(banner);
         var body = element("div", "dm-invite-body");
         var icon = element("div", "dm-invite-icon");
         if (info.iconUrl) {
@@ -59,6 +61,7 @@
         stats.appendChild(stat("is-members", info.memberCount, info.memberCount === 1 ? "Member" : "Members"));
         body.appendChild(stats);
         body.appendChild(element("p", "dm-invite-est", established(info.createdAt)));
+        if (info.description) body.appendChild(element("p", "dm-invite-about", info.description));
         var button = element("button", "dm-invite-go", info.isMember ? "Go to Server" : "Join");
         button.type = "button";
         button.classList.toggle("is-join", !info.isMember);
@@ -197,5 +200,11 @@
 
     document.addEventListener("discode-servers-changed", refreshAll);
     document.addEventListener("discode-server-updated", refreshAll);
+
+    var presenceTimer = 0;
+    document.addEventListener("discode-user-presence", function () {
+        window.clearTimeout(presenceTimer);
+        presenceTimer = window.setTimeout(refreshAll, 1500);
+    });
     schedule();
 })();

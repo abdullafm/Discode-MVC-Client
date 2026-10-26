@@ -1732,3 +1732,61 @@ html.theme-dark body .dm-invite-go.is-join {
         animation: none;
     }
 }
+
+.dm-invite-banner[data-banner="pink"],
+html.theme-dark .dm-invite-banner[data-banner="pink"] {
+    background: #eb459e;
+}
+
+.dm-invite-banner[data-banner="red"],
+html.theme-dark .dm-invite-banner[data-banner="red"] {
+    background: #ed4245;
+}
+
+.dm-invite-banner[data-banner="orange"],
+html.theme-dark .dm-invite-banner[data-banner="orange"] {
+    background: #f26522;
+}
+
+.dm-invite-banner[data-banner="yellow"],
+html.theme-dark .dm-invite-banner[data-banner="yellow"] {
+    background: #fee75c;
+}
+
+.dm-invite-banner[data-banner="purple"],
+html.theme-dark .dm-invite-banner[data-banner="purple"] {
+    background: #9b59d0;
+}
+
+.dm-invite-banner[data-banner="blue"],
+html.theme-dark .dm-invite-banner[data-banner="blue"] {
+    background: #3b82f6;
+}
+
+.dm-invite-banner[data-banner="cyan"],
+html.theme-dark .dm-invite-banner[data-banner="cyan"] {
+    background: #1abc9c;
+}
+
+.dm-invite-banner[data-banner="green"],
+html.theme-dark .dm-invite-banner[data-banner="green"] {
+    background: #23a559;
+}
+
+.dm-invite-banner[data-banner="gray"],
+html.theme-dark .dm-invite-banner[data-banner="gray"] {
+    background: #4e5058;
+}
+
+.dm-invite-about {
+    margin: 0 0 12px;
+    color: #4d5058;
+    font-size: 14px;
+    line-height: 1.4;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+html.theme-dark body .dm-invite-about {
+    color: #b5bac1 !important;
+}
