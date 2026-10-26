@@ -435,7 +435,8 @@
 
     function roleTint(roles) {
         var tinted = (roles || []).filter(function (role) { return role.color && role.color !== "gray"; })[0];
-        return tinted ? (ROLE_COLORS[tinted.color] || "") : "";
+        if (!tinted) return "";
+        return String(tinted.color).charAt(0) === "#" ? tinted.color : (ROLE_COLORS[tinted.color] || "");
     }
 
     function paintServerMembers() {
@@ -672,7 +673,7 @@
             var pill = document.createElement("span");
             pill.className = "member-pop-role";
             var dot = document.createElement("i");
-            dot.style.background = ROLE_COLORS[roles[i].color] || ROLE_COLORS.gray;
+            dot.style.background = String(roles[i].color).charAt(0) === "#" ? roles[i].color : (ROLE_COLORS[roles[i].color] || ROLE_COLORS.gray);
             pill.appendChild(dot);
             pill.appendChild(document.createTextNode(roles[i].name));
             box.appendChild(pill);
@@ -700,7 +701,7 @@
             button.className = on ? "on" : "";
             button.setAttribute("data-role-id", role.id);
             var dot = document.createElement("i");
-            dot.style.background = ROLE_COLORS[role.color] || ROLE_COLORS.gray;
+            dot.style.background = String(role.color).charAt(0) === "#" ? role.color : (ROLE_COLORS[role.color] || ROLE_COLORS.gray);
             var label = document.createElement("span");
             label.textContent = role.name;
             button.appendChild(dot);

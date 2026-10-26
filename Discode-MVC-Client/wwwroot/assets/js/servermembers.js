@@ -158,7 +158,7 @@
         (member.roles || []).forEach(function (role) {
             var pill = element("span", "members-role-pill");
             var dot = element("i", "members-role-dot");
-            dot.style.background = ROLE_COLORS[role.color] || ROLE_COLORS.gray;
+            dot.style.background = String(role.color).charAt(0) === "#" ? role.color : (ROLE_COLORS[role.color] || ROLE_COLORS.gray);
             pill.appendChild(dot);
             pill.appendChild(document.createTextNode(role.name));
             roles.appendChild(pill);
