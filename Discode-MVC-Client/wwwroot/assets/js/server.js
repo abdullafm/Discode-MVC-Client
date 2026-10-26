@@ -1176,7 +1176,7 @@
     }
 
     function canArrange() {
-        return !!(isOwner || pageCanManage());
+        return !!isOwner;
     }
 
     function channelMenuTarget(node) {
