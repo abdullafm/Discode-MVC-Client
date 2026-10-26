@@ -121,6 +121,43 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Banner([FromForm] UpdateServerBannerUIVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return BadRequest(new { errors = new[] { "Server not found." } });
+
+            var bannerUrl = string.Empty;
+            if (!model.Remove)
+            {
+                if (model.Banner is not { Length: > 0 })
+                    return BadRequest(new { errors = new[] { "Choose an image." } });
+
+                if (!model.Banner.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase) || model.Banner.Length > 8_000_000)
+                    return BadRequest(new { errors = new[] { "Choose an image that is at most 8 MB." } });
+
+                var folder = Path.Combine(_environment.WebRootPath, "uploads", "servers");
+                Directory.CreateDirectory(folder);
+                var fileName = Guid.NewGuid().ToString("N") + Path.GetExtension(model.Banner.FileName).ToLowerInvariant();
+                using (var stream = System.IO.File.Create(Path.Combine(folder, fileName)))
+                    await model.Banner.CopyToAsync(stream);
+                bannerUrl = "/uploads/servers/" + fileName;
+            }
+
+            return await Forward(client => client.PutAsJsonAsync($"api/server/{model.Id}/banner", new { bannerUrl }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> CustomInvite([FromBody] UpdateServerInviteUIVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Server not found." } }));
+
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.Id}/invite", new { inviteCode = model.Code ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> Preferences([FromBody] UpdateServerPreferencesUIVM model)
         {
             if (model is null || model.Id <= 0)
@@ -152,7 +189,7 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.PostAsJsonAsync($"api/server/{model.Id}/leave", new { }));
         }
 
-        [HttpGet("/{code:regex(^(?=.*[[0-9]])(?=.*[[A-Za-z]])[[A-Za-z0-9]]{{7}}$)}")]
+        [HttpGet("/{code:regex(^(?!(account|api|assets|admin|dm|emailtemplates|friend|group|home|hubs|login|logout|nitro|notification|register|server|servers|social|swagger|uploads)$)[[A-Za-z0-9_-]]{{3,32}}$)}")]
         public async Task<IActionResult> Invite(string code)
         {
             try
