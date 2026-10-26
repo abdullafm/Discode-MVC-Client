@@ -277,6 +277,22 @@
         });
     }
 
+    function revertInvite() {
+        if (!server || !inviteDirty) return;
+        inviteDirty = false;
+        paintInvite();
+    }
+
+    var settingsRoom = document.getElementById("server-settings");
+    if (settingsRoom) {
+        new MutationObserver(function () {
+            if (settingsRoom.hidden) revertInvite();
+        }).observe(settingsRoom, { attributes: true, attributeFilter: ["hidden", "class"] });
+    }
+
+    var settingsNav = document.querySelector(".server-settings-nav");
+    if (settingsNav) settingsNav.addEventListener("click", revertInvite);
+
     if (inviteSave) {
         inviteSave.addEventListener("click", function () {
             if (!server || !inviteInput) return;
