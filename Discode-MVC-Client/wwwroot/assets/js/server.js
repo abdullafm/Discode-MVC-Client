@@ -12,6 +12,7 @@
     var roomKind = "text";
     var openId = new URLSearchParams(window.location.search).get("id");
     var isOwner = false;
+    var lastManage = null;
 
     function canManageServer(server) {
         if (!server) return false;
@@ -47,11 +48,23 @@
         return pageCanManage();
     }
 
+    function manageChannelsAllowed(open) {
+        var server = typeof currentServer !== "undefined" ? currentServer : null;
+        if (server) {
+            if (server.isOwner === true) return true;
+            if (typeof server.permissions === "number") return (server.permissions & 2) === 2;
+        }
+        return !!open;
+    }
+
     function setManage(open) {
-        isOwner = !!open;
+        lastManage = !!open;
+        isOwner = manageChannelsAllowed(open);
         window.discodeCanManage = isOwner;
-        var manageOnly = document.querySelectorAll("#server-settings-open, [data-create='channel'], [data-create='category'], [data-edit-channel], [data-delete-channel], [data-delete-category], #server-welcome-edit, #channel-edit-delete");
+        var manageOnly = document.querySelectorAll("[data-create='channel'], [data-create='category'], [data-edit-channel], [data-delete-channel], [data-delete-category], #server-welcome-edit, #channel-edit-delete");
         for (var m = 0; m < manageOnly.length; m++) manageOnly[m].hidden = !isOwner;
+        var settingsEntry = document.getElementById("server-settings-open");
+        if (settingsEntry) settingsEntry.hidden = !open;
 
 
         if (channelList) channelList.classList.toggle("can-sort", isOwner);
@@ -102,7 +115,8 @@
         }).then(function (server) {
             if (!server || !Array.isArray(server.members)) return;
             currentServer = server;
-            if (canManageServer(server) !== isOwner) setManage(canManageServer(server));
+            var openNow = canManageServer(server);
+            if (openNow !== lastManage || manageChannelsAllowed(openNow) !== isOwner) setManage(openNow);
             serverMembers = server.members;
             paintServerMembers();
         }).catch(function () {});
@@ -1599,6 +1613,12 @@
     }
 
     function deleteChannel(channel) {
+        if (window.discodeServerChannels && channel && channel.getAttribute("data-id")) {
+            window.discodeServerChannels.deleteChannel(channel.getAttribute("data-id")).catch(function (error) {
+                flash(error.message);
+            });
+            return;
+        }
         settleAfterRemove(detachChannel(channel));
     }
 
@@ -1652,6 +1672,19 @@
             var kind = channel.getAttribute("data-kind") || "text";
             var label = channelLabel(kind, channelEditName.value);
             if (!label) return;
+            if (window.discodeServerChannels && channel.getAttribute("data-id")) {
+                window.discodeServerChannels.updateChannel({
+                    id: channel.getAttribute("data-id"),
+                    name: channelEditName.value,
+                    isPrivate: !(channelPerms.view && channelPerms.view.checked),
+                    isReadOnly: kind !== "voice" && !(channelPerms.send && channelPerms.send.checked)
+                }).then(function () {
+                    closeChannelEdit();
+                }).catch(function (error) {
+                    flash(error.message);
+                });
+                return;
+            }
             var nameNode = channel.querySelector(".server-channel-name");
             if (nameNode) nameNode.textContent = label;
             channel.setAttribute("data-view", channelPerms.view && channelPerms.view.checked ? "1" : "0");

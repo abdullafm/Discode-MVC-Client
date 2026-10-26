@@ -29,6 +29,8 @@
         if (icon) icon.className = "fa-solid " + (ICONS[channel.kind] || ICONS.text);
         button.setAttribute("data-kind", channel.kind);
         button.setAttribute("data-id", channel.id);
+        button.setAttribute("data-view", channel.isPrivate ? "0" : "1");
+        button.setAttribute("data-readonly", channel.isReadOnly ? "1" : "0");
         button.querySelector(".server-channel-name").textContent = channel.name;
         var lock = button.querySelector(".server-channel-lock");
         if (lock) lock.hidden = !channel.isPrivate && channel.kind !== "announce";
@@ -36,7 +38,7 @@
             button.setAttribute("data-join", "1");
             button.removeAttribute("data-send");
         } else {
-            button.setAttribute("data-send", channel.kind === "announce" ? "0" : "1");
+            button.setAttribute("data-send", channel.kind === "announce" || channel.isReadOnly ? "0" : "1");
             var people = frag.querySelector(".server-voice-people");
             if (people) people.remove();
         }
@@ -158,6 +160,16 @@
                 isPrivate: !!options.isPrivate
             }).then(function (channel) {
                 return reload(channel.id).then(function () { return channel; });
+            });
+        },
+        updateChannel: function (options) {
+            return post("/Server/UpdateChannel", { serverId: Number(serverId), channelId: Number(options.id), name: options.name, isPrivate: !!options.isPrivate, isReadOnly: !!options.isReadOnly }).then(function (channel) {
+                return reload().then(function () { return channel; });
+            });
+        },
+        deleteChannel: function (id) {
+            return post("/Server/DeleteChannel", { serverId: Number(serverId), channelId: Number(id) }).then(function () {
+                return reload();
             });
         },
         updateCategory: function (options) {

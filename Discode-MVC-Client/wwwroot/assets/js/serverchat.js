@@ -25,6 +25,7 @@
     var channelId = 0;
     var channelName = "";
     var channelKind = "text";
+    var channelReadOnly = false;
     var loaded = [];
     var hasMore = true;
     var loadingOlder = false;
@@ -79,7 +80,7 @@
     }
 
     function canSend() {
-        var needed = channelKind === "announce" ? 512 : 256;
+        var needed = channelKind === "announce" || channelReadOnly ? 512 : 256;
         var have = perms();
         return have === 0 ? true : (have & needed) === needed;
     }
@@ -275,11 +276,14 @@
                 return;
             }
             if (id === channelId && !scroller.hidden) {
+                channelReadOnly = button.getAttribute("data-readonly") === "1";
+                channelName = (button.querySelector(".server-channel-name") || {}).textContent || channelName;
                 paintAccess();
                 return;
             }
             channelId = id;
             channelKind = button.getAttribute("data-kind") || "text";
+            channelReadOnly = button.getAttribute("data-readonly") === "1";
             channelName = (button.querySelector(".server-channel-name") || {}).textContent || "";
             generation += 1;
             loaded = [];
