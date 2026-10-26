@@ -51,6 +51,7 @@
         var frag = tpl.content.cloneNode(true);
         var node = frag.querySelector(".server-category");
         node.setAttribute("data-id", category.id);
+        node.setAttribute("data-private", category.isPrivate ? "1" : "0");
         node.querySelector(".server-category-name span").textContent = category.name;
         var holder = node.querySelector(".server-category-list");
         category.channels.forEach(function (channel) {
@@ -157,6 +158,16 @@
                 isPrivate: !!options.isPrivate
             }).then(function (channel) {
                 return reload(channel.id).then(function () { return channel; });
+            });
+        },
+        updateCategory: function (options) {
+            return post("/Server/UpdateCategory", { serverId: Number(serverId), categoryId: Number(options.id), name: options.name, isPrivate: !!options.isPrivate }).then(function (category) {
+                return reload().then(function () { return category; });
+            });
+        },
+        deleteCategory: function (id) {
+            return post("/Server/DeleteCategory", { serverId: Number(serverId), categoryId: Number(id) }).then(function () {
+                return reload();
             });
         },
         createCategory: function (options) {

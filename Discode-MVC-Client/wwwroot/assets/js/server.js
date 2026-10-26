@@ -1604,6 +1604,12 @@
 
     function deleteCategory(category) {
         if (!category) return;
+        if (window.discodeServerChannels && category.getAttribute("data-id")) {
+            window.discodeServerChannels.deleteCategory(category.getAttribute("data-id")).catch(function (error) {
+                flash(error.message);
+            });
+            return;
+        }
         var nameNode = category.querySelector(".server-category-name span");
         var name = nameNode ? nameNode.textContent.trim() : "";
         var channels = category.querySelectorAll(".server-channel");
@@ -1688,7 +1694,7 @@
         if (categoryTitle) categoryTitle.textContent = categoryEditTarget ? "Edit Category" : "Create Category";
         if (categoryConfirm) categoryConfirm.textContent = categoryEditTarget ? "Save Changes" : "Create Category";
         if (categoryName) categoryName.value = currentName;
-        if (categoryPrivate) categoryPrivate.checked = false;
+        if (categoryPrivate) categoryPrivate.checked = !!categoryEditTarget && categoryEditTarget.getAttribute("data-private") === "1";
         syncCategoryName();
         closeMenu();
         closeChannelMenu();
@@ -1723,6 +1729,17 @@
             var text = categoryName ? categoryName.value.trim() : "";
             var editing = categoryEditTarget;
             if (!canArrange() || !text) return;
+            if (editing && window.discodeServerChannels && editing.getAttribute("data-id")) {
+                categoryConfirm.disabled = true;
+                window.discodeServerChannels.updateCategory({ id: editing.getAttribute("data-id"), name: text, isPrivate: !!(categoryPrivate && categoryPrivate.checked) }).then(function () {
+                    closeCategoryModal();
+                    categoryConfirm.disabled = false;
+                }).catch(function (error) {
+                    categoryConfirm.disabled = false;
+                    flash(error.message);
+                });
+                return;
+            }
             if (editing) {
                 var editedName = editing.querySelector(".server-category-name span");
                 if (editedName) editedName.textContent = text;
