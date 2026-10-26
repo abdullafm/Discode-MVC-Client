@@ -634,28 +634,40 @@
             <h2>Audit Log</h2>
             <label class="audit-filter">
                 <span>Filter by User</span>
-                <select aria-label="Filter by User">
-                    <option>All Users</option>
+                <select id="audit-user" aria-label="Filter by User">
+                    <option value="">All Users</option>
                 </select>
             </label>
             <label class="audit-filter">
                 <span>Filter by Action</span>
-                <select aria-label="Filter by Action">
-                    <option>All Actions</option>
-                    <option>Server update</option>
-                    <option>Channel create</option>
-                    <option>Channel delete</option>
-                    <option>Role create</option>
-                    <option>Role update</option>
-                    <option>Role delete</option>
-                    <option>Member kick</option>
-                    <option>Member ban</option>
-                    <option>Member role update</option>
+                <select id="audit-action" aria-label="Filter by Action">
+                    <option value="">All Actions</option>
+                    <option value="ServerUpdate">Server update</option>
+                    <option value="InviteUpdate">Invite link update</option>
+                    <option value="ChannelCreate">Channel create</option>
+                    <option value="ChannelUpdate">Channel update</option>
+                    <option value="ChannelDelete">Channel delete</option>
+                    <option value="CategoryCreate">Category create</option>
+                    <option value="CategoryUpdate">Category update</option>
+                    <option value="CategoryDelete">Category delete</option>
+                    <option value="RoleCreate">Role create</option>
+                    <option value="RoleUpdate">Role update</option>
+                    <option value="RoleDelete">Role delete</option>
+                    <option value="MemberJoin">Member join</option>
+                    <option value="MemberLeave">Member leave</option>
+                    <option value="MemberKick">Member kick</option>
+                    <option value="MemberBan">Member ban</option>
+                    <option value="MemberUnban">Member unban</option>
+                    <option value="MemberRoleUpdate">Member role update</option>
+                    <option value="MemberMute">Member mute</option>
+                    <option value="MemberUnmute">Member unmute</option>
+                    <option value="MemberVoiceDisconnect">Member voice disconnect</option>
                 </select>
             </label>
         </div>
         <div class="audit-list" id="server-audit-list"></div>
         <p class="audit-empty">No audit log entries yet.</p>
+        <button type="button" class="audit-more" id="audit-more" hidden>Load more</button>
     </div>
 </section>
 <section id="server-settings-panel-6" data-panel="bans" hidden>
