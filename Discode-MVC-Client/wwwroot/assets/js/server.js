@@ -106,6 +106,7 @@
 
     document.addEventListener("discode-server-updated", refreshMembers);
     document.addEventListener("discode-profile-changed", function () { refreshMembers(null); });
+    document.addEventListener("discode-hub-connected", function () { window.setTimeout(function () { refreshMembers(null); }, 400); });
     document.addEventListener("discode-status-set", function () { window.setTimeout(function () { refreshMembers(null); }, 300); });
     document.addEventListener("discode-user-presence", function (event) {
         var data = event.detail || {};
