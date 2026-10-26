@@ -6115,43 +6115,80 @@ html.theme-dark body .ban-why small {
     background: rgba(128, 132, 142, 0.18);
 }
 
-.channel-access {
-    margin-top: 18px;
+.channel-card-wide {
+    width: min(100%, 640px);
 }
 
-.channel-access[hidden] {
+.ow-host {
+    margin-top: 16px;
+}
+
+.ow-host[hidden] {
     display: none;
 }
 
-.channel-access h3 {
-    margin: 0 0 4px;
-    font-size: 14px;
+.ow-sync {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: #f2f3f5;
 }
 
-.channel-access p {
-    margin: 0 0 10px;
-    color: #5c5e66;
+.ow-sync[hidden] {
+    display: none;
+}
+
+.ow-sync-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ow-sync-copy small,
+.ow-row-copy small,
+.ow-option small,
+.ow-none {
+    color: #6d6f78;
     font-size: 12px;
 }
 
-.channel-access-picker {
+.ow-body {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 14px;
+    min-height: 260px;
+}
+
+.ow-side {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.ow-picker {
     position: relative;
 }
 
-.channel-access-picker input {
+.ow-picker input {
     width: 100%;
     box-sizing: border-box;
-    padding: 9px 10px;
+    padding: 8px 10px;
     border: 1px solid #c4c9ce;
     border-radius: 4px;
     background: #fff;
     color: inherit;
     font: inherit;
+    font-size: 13px;
 }
 
-.channel-access-results {
+.ow-results {
     position: absolute;
-    z-index: 5;
+    z-index: 6;
     top: calc(100% + 4px);
     left: 0;
     right: 0;
@@ -6163,62 +6200,75 @@ html.theme-dark body .ban-why small {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
 }
 
-.channel-access-results[hidden] {
+.ow-results[hidden] {
     display: none;
 }
 
-.channel-access-option {
+.ow-option {
     display: flex;
     width: 100%;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
     padding: 8px 10px;
     border: 0;
     background: transparent;
     color: inherit;
     font: inherit;
+    font-size: 13px;
     text-align: left;
     cursor: pointer;
 }
 
-.channel-access-option:hover {
+.ow-option:hover {
     background: rgba(88, 101, 242, 0.12);
 }
 
-.channel-access-option small,
-.channel-access-empty {
-    color: #80848e;
-    font-size: 12px;
-}
-
-.channel-access-results .channel-access-empty {
+.ow-none {
     display: block;
     padding: 10px;
 }
 
-.channel-access-list {
+.ow-targets {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 10px;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 260px;
+    overflow: auto;
 }
 
-.channel-access-chip {
-    display: inline-flex;
+.ow-target {
+    display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 6px;
-    padding: 4px 6px 4px 10px;
-    border-radius: 12px;
-    background: #e3e5e8;
-    font-size: 13px;
+    padding: 7px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
 }
 
-.channel-access-chip button {
+.ow-target:hover {
+    background: rgba(116, 127, 141, 0.12);
+}
+
+.ow-target.on {
+    background: rgba(88, 101, 242, 0.16);
+    font-weight: 600;
+}
+
+.ow-target-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ow-target-remove {
     display: grid;
     place-items: center;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     padding: 0;
     border: 0;
     border-radius: 50%;
@@ -6228,30 +6278,112 @@ html.theme-dark body .ban-why small {
     cursor: pointer;
 }
 
-.channel-access-chip button:hover {
+.ow-target-remove:hover {
     background: rgba(0, 0, 0, 0.15);
 }
 
-.channel-access-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #99aab5;
+.ow-main {
+    min-width: 0;
 }
 
-html.theme-dark .channel-access p,
-html.theme-dark .channel-access-option small,
-html.theme-dark .channel-access-empty {
+.ow-title {
+    margin: 0 0 6px;
+    font-size: 15px;
+}
+
+.ow-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 0;
+    border-top: 1px solid #e9e9ea;
+}
+
+.ow-row-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.ow-tri {
+    display: inline-flex;
+    flex: none;
+    overflow: hidden;
+    border: 1px solid #c4c9ce;
+    border-radius: 4px;
+}
+
+.ow-tri button {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #80848e;
+    cursor: pointer;
+}
+
+.ow-tri button + button {
+    border-left: 1px solid #c4c9ce;
+}
+
+.ow-tri button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.ow-tri .ow-tri-deny.on {
+    background: #da373c;
+    color: #fff;
+}
+
+.ow-tri .ow-tri-neutral.on {
+    background: #80848e;
+    color: #fff;
+}
+
+.ow-tri .ow-tri-allow.on {
+    background: #23a559;
+    color: #fff;
+}
+
+.ow-editor.is-synced .ow-body {
+    opacity: 0.6;
+}
+
+@media (max-width: 560px) {
+    .ow-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+html.theme-dark .ow-sync {
+    background: #2b2d31;
+}
+
+html.theme-dark .ow-sync-copy small,
+html.theme-dark .ow-row-copy small,
+html.theme-dark .ow-option small,
+html.theme-dark .ow-none {
     color: #b5bac1;
 }
 
-html.theme-dark .channel-access-picker input,
-html.theme-dark .channel-access-results {
+html.theme-dark .ow-picker input,
+html.theme-dark .ow-results {
     background: #1e1f22;
     border-color: #1e1f22;
     color: #f2f3f5;
 }
 
-html.theme-dark .channel-access-chip {
-    background: #404249;
+html.theme-dark .ow-row {
+    border-top-color: rgba(78, 80, 88, 0.48);
+}
+
+html.theme-dark .ow-tri,
+html.theme-dark .ow-tri button + button {
+    border-color: #4e5058;
 }

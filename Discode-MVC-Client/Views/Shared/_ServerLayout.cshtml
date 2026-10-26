@@ -231,7 +231,7 @@
             </form>
         </div>
         <div class="channel-modal" id="channel-edit" hidden>
-            <form class="channel-card" id="channel-edit-form">
+            <form class="channel-card channel-card-wide" id="channel-edit-form">
                 <div class="channel-card-head">
                     <div>
                         <h2 id="channel-edit-title">Edit Channel</h2>
@@ -245,51 +245,7 @@
                     <i class="fa-solid fa-hashtag" id="channel-edit-icon"></i>
                     <input id="channel-edit-name" type="text" maxlength="100" autocomplete="off">
                 </div>
-                <div class="perm-group channel-edit-perms">
-                    <div class="perm-head">
-                        <h3>Permissions</h3>
-                    </div>
-                    <label class="perm-row" data-perm="view">
-                        <span class="perm-copy"><strong>View Channel</strong><small>Allows members to see this
-                                channel.</small></span>
-                        <span class="perm-switch"><input id="channel-perm-view" type="checkbox" role="switch"
-                                aria-label="View Channel"></span>
-                    </label>
-                    <label class="perm-row" data-perm="send">
-                        <span class="perm-copy"><strong>Send Messages</strong><small>Allows members to send messages in
-                                this channel.</small></span>
-                        <span class="perm-switch"><input id="channel-perm-send" type="checkbox" role="switch"
-                                aria-label="Send Messages"></span>
-                    </label>
-                    <label class="perm-row" data-perm="manage">
-                        <span class="perm-copy"><strong>Manage Messages</strong><small>Allows members to delete or pin
-                                messages by other members.</small></span>
-                        <span class="perm-switch"><input id="channel-perm-manage" type="checkbox" role="switch"
-                                aria-label="Manage Messages"></span>
-                    </label>
-                    <label class="perm-row" data-perm="connect">
-                        <span class="perm-copy"><strong>Connect</strong><small>Allows members to join this voice
-                                channel.</small></span>
-                        <span class="perm-switch"><input id="channel-perm-connect" type="checkbox" role="switch"
-                                aria-label="Connect"></span>
-                    </label>
-                    <label class="perm-row" data-perm="speak">
-                        <span class="perm-copy"><strong>Speak</strong><small>Allows members to talk in this voice
-                                channel.</small></span>
-                        <span class="perm-switch"><input id="channel-perm-speak" type="checkbox" role="switch"
-                                aria-label="Speak"></span>
-                    </label>
-                </div>
-                <div class="channel-access" id="channel-access" hidden>
-                    <h3>Who can access this channel</h3>
-                    <p>Only the people and roles below can see this private channel. Owners and members who manage channels always can.</p>
-                    <div class="channel-access-picker">
-                        <input id="channel-access-search" type="text" autocomplete="off" maxlength="40"
-                            placeholder="Add members or roles">
-                        <div class="channel-access-results" id="channel-access-results" hidden></div>
-                    </div>
-                    <div class="channel-access-list" id="channel-access-list"></div>
-                </div>
+                <div class="ow-host" id="channel-overwrites"></div>
                 <div class="channel-actions">
                     <button type="button" id="channel-edit-cancel">Cancel</button>
                     <button type="submit" id="channel-edit-save">Save Changes</button>
@@ -347,7 +303,7 @@
             </div>
         </div>
         <div class="channel-modal" id="category-modal" hidden>
-            <form class="channel-card" id="category-form">
+            <form class="channel-card channel-card-wide" id="category-form">
                 <div class="channel-card-head">
                     <h2 id="category-modal-title">Create Category</h2>
                     <button type="button" id="category-modal-close" aria-label="Close"><i
@@ -366,6 +322,7 @@
                     <span class="perm-switch"><input type="checkbox" id="category-private" role="switch"
                             aria-label="Private Category"></span>
                 </div>
+                <div class="ow-host" id="category-overwrites" hidden></div>
                 <div class="channel-actions">
                     <button type="button" id="category-modal-cancel">Cancel</button>
                     <button type="submit" id="category-modal-confirm">Create Category</button>
@@ -967,6 +924,7 @@
             <button type="button" class="incoming-call-btn is-accept" id="incoming-group-call-accept" aria-label="Join"><i class="fa-solid fa-phone"></i></button>
         </div>
         <script src="~/assets/js/serverchannels.js" asp-append-version="true"></script>
+        <script src="~/assets/js/serveroverwrites.js" asp-append-version="true"></script>
         <script src="~/assets/js/groupparts.js" asp-append-version="true"></script>
         <script src="~/assets/js/serverchat.js" asp-append-version="true"></script>
         <script src="~/assets/js/groups.js" asp-append-version="true"></script>

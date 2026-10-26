@@ -86,23 +86,27 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}", new
             {
                 name = model.Name ?? string.Empty,
-                isPrivate = model.IsPrivate,
-                isReadOnly = model.IsReadOnly,
-                accessRoleIds = model.AccessRoleIds,
-                accessUserIds = model.AccessUserIds
+                syncWithCategory = model.SyncWithCategory,
+                overwrites = model.Overwrites
             }));
         }
 
         [HttpGet]
-        public Task<IActionResult> ChannelAccess(int id, int channelId)
+        public Task<IActionResult> ChannelPermissions(int id, int channelId)
         {
-            return Forward(client => client.GetAsync($"api/server/{id}/channels/{channelId}/access"));
+            return Forward(client => client.GetAsync($"api/server/{id}/channels/{channelId}/permissions"));
         }
 
         [HttpGet]
-        public Task<IActionResult> ChannelAccessSearch(int id, string? search)
+        public Task<IActionResult> CategoryPermissions(int id, int categoryId)
         {
-            return Forward(client => client.GetAsync($"api/server/{id}/channel-access/search?search={Uri.EscapeDataString(search ?? string.Empty)}"));
+            return Forward(client => client.GetAsync($"api/server/{id}/categories/{categoryId}/permissions"));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> PermissionTargets(int id, string? search)
+        {
+            return Forward(client => client.GetAsync($"api/server/{id}/permission-targets?search={Uri.EscapeDataString(search ?? string.Empty)}"));
         }
 
         [HttpPost]
@@ -119,7 +123,7 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/categories/{model.CategoryId}", new
             {
                 name = model.Name ?? string.Empty,
-                isPrivate = model.IsPrivate
+                overwrites = model.Overwrites
             }));
         }
 

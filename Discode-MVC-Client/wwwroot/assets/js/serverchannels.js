@@ -173,21 +173,22 @@
                 return reload(channel.id).then(function () { return channel; });
             });
         },
-        getAccess: function (id) {
-            return get("/Server/ChannelAccess?id=" + encodeURIComponent(serverId) + "&channelId=" + encodeURIComponent(id));
+        getChannelPermissions: function (id) {
+            return get("/Server/ChannelPermissions?id=" + encodeURIComponent(serverId) + "&channelId=" + encodeURIComponent(id));
         },
-        searchAccess: function (text) {
-            return get("/Server/ChannelAccessSearch?id=" + encodeURIComponent(serverId) + "&search=" + encodeURIComponent(text || ""));
+        getCategoryPermissions: function (id) {
+            return get("/Server/CategoryPermissions?id=" + encodeURIComponent(serverId) + "&categoryId=" + encodeURIComponent(id));
+        },
+        searchTargets: function (text) {
+            return get("/Server/PermissionTargets?id=" + encodeURIComponent(serverId) + "&search=" + encodeURIComponent(text || ""));
         },
         updateChannel: function (options) {
             return post("/Server/UpdateChannel", {
                 serverId: Number(serverId),
                 channelId: Number(options.id),
                 name: options.name,
-                isPrivate: !!options.isPrivate,
-                isReadOnly: !!options.isReadOnly,
-                accessRoleIds: options.accessRoleIds || null,
-                accessUserIds: options.accessUserIds || null
+                syncWithCategory: options.syncWithCategory === undefined ? null : options.syncWithCategory,
+                overwrites: options.overwrites || null
             }).then(function (channel) {
                 return reload().then(function () { return channel; });
             });
@@ -198,7 +199,7 @@
             });
         },
         updateCategory: function (options) {
-            return post("/Server/UpdateCategory", { serverId: Number(serverId), categoryId: Number(options.id), name: options.name, isPrivate: !!options.isPrivate }).then(function (category) {
+            return post("/Server/UpdateCategory", { serverId: Number(serverId), categoryId: Number(options.id), name: options.name, overwrites: options.overwrites || null }).then(function (category) {
                 return reload().then(function () { return category; });
             });
         },
