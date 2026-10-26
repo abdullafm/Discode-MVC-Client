@@ -2305,7 +2305,8 @@
             headers: { "Content-Type": "application/json", "RequestVerificationToken": field ? field.value : "", "X-Requested-With": "XMLHttpRequest" },
             body: JSON.stringify({ id: Number(openId) || 0 })
         }).then(function () {
-            window.location.href = "/Home/Index";
+            if (window.discodeGo) window.discodeGo("/Home/Index");
+            else window.location.href = "/Home/Index";
         }).catch(function () {
             window.location.href = "/Home/Index";
         });

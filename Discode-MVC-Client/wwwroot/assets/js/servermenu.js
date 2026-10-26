@@ -80,7 +80,8 @@
 
     function go(server, action) {
         var url = "/Server/Index?id=" + encodeURIComponent(server.id) + (action ? "&do=" + encodeURIComponent(action) : "");
-        window.location.href = url;
+        if (window.discodeGo) window.discodeGo(url);
+        else window.location.href = url;
     }
 
     function runHere(action) {
