@@ -36,7 +36,7 @@
 
     function isAppPage(url) {
         if (url.origin !== location.origin) return false;
-        return /\.html$/i.test(url.pathname) || /^\/(Home|Dm|Social|Nitro|Group)\/Index\/?$/i.test(url.pathname);
+        return /\.html$/i.test(url.pathname) || /^\/(Home|Dm|Social|Nitro|Group|Server)\/Index\/?$/i.test(url.pathname);
     }
 
     function sheetHref(link) {
