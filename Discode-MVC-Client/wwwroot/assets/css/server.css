@@ -5035,3 +5035,97 @@ html.theme-dark .role-colors button.on {
         min-height: 44px;
     }
 }
+.server-preview-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+}
+
+.server-preview-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.server-preview-stat i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #80848e;
+}
+
+.server-preview-stat.is-online i {
+    background: #23a559;
+}
+
+.server-preview-about {
+    margin-bottom: 16px !important;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.server-preview-about[hidden] {
+    display: none;
+}
+
+.server-preview-icon img,
+.server-icon-face img {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+}
+
+.server-save-bar {
+    position: sticky;
+    bottom: 16px;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+    padding: 10px 10px 10px 16px;
+    border-radius: 8px;
+    background: #111214;
+    color: #f2f3f5;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    animation: pop-in 0.2s ease both;
+}
+
+.server-save-bar[hidden] {
+    display: none;
+}
+
+.server-save-bar span {
+    flex: 1;
+    font-size: 14px;
+    color: #f2f3f5 !important;
+}
+
+.server-save-bar span.is-error {
+    color: #f23f43 !important;
+}
+
+.server-save-bar button {
+    border: 0;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.server-save-reset {
+    background: transparent;
+    color: #f2f3f5;
+}
+
+.server-save-go {
+    background: #23a559;
+    color: #fff;
+}
+
+.server-save-go:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
