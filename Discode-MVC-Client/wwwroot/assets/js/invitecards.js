@@ -111,8 +111,10 @@
         }).then(function (response) {
             if (!response.ok) throw new Error("join");
             return response.json();
-        }).then(function () {
-            load(card);
+        }).then(function (server) {
+            var url = "/Server/Index?id=" + encodeURIComponent((server && server.id) || info.serverId);
+            if (window.discodeGo) window.discodeGo(url);
+            else window.location.href = url;
         }).catch(function () {
             button.disabled = false;
             button.textContent = "Couldn't join";
