@@ -5785,7 +5785,8 @@ html.theme-dark .role-colors button.on {
 
 .audit-detail {
     display: none;
-    padding: 0 18px 16px 108px;
+    padding: 0 18px 16px 124px;
+    margin-top: -6px;
 }
 
 .audit-card.open .audit-detail {
@@ -5794,10 +5795,17 @@ html.theme-dark .role-colors button.on {
 }
 
 .audit-notes {
-    margin: 0 0 10px;
-    padding-left: 18px;
+    margin: 0;
+    padding: 2px 0 2px 12px;
+    list-style: none;
+    border-left: 2px solid rgba(128, 132, 142, 0.4);
     font-size: 14px;
+    line-height: 1.5;
     overflow-wrap: anywhere;
+}
+
+.audit-notes li + li {
+    margin-top: 2px;
 }
 
 .audit-meta {

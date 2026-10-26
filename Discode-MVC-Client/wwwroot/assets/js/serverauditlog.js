@@ -148,7 +148,7 @@
             details.forEach(function (text) { notes.appendChild(element("li", "", text)); });
             body.appendChild(notes);
         }
-        body.appendChild(element("p", "audit-meta", "Done by " + entry.actorDisplayName + " on " + new Date(entry.createdAt).toLocaleString()));
+        if (!details.length) body.appendChild(element("p", "audit-meta", new Date(entry.createdAt).toLocaleString()));
         wrap.appendChild(body);
 
         head.addEventListener("click", function () {
