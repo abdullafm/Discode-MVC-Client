@@ -65,6 +65,44 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        public Task<IActionResult> Bans(int id, string? search, int? beforeId, int take = 50)
+        {
+            var query = "take=" + take;
+            if (!string.IsNullOrWhiteSpace(search)) query += "&search=" + Uri.EscapeDataString(search);
+            if (beforeId is not null) query += "&beforeId=" + beforeId;
+
+            return Forward(client => client.GetAsync($"api/server/{id}/bans?{query}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Ban([FromBody] ServerMemberActionUIVM model)
+        {
+            return Forward(client => client.PostAsJsonAsync($"api/server/{model.ServerId}/bans", new { userId = model.UserId ?? string.Empty, reason = model.Reason ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Unban([FromBody] ServerMemberActionUIVM model)
+        {
+            return Forward(client => client.DeleteAsync($"api/server/{model.ServerId}/bans/{Uri.EscapeDataString(model.UserId ?? string.Empty)}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Kick([FromBody] ServerMemberActionUIVM model)
+        {
+            return Forward(client => client.DeleteAsync($"api/server/{model.ServerId}/members/{Uri.EscapeDataString(model.UserId ?? string.Empty)}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Delete([FromBody] DeleteServerUIVM model)
+        {
+            return Forward(client => client.PostAsJsonAsync($"api/server/{model.ServerId}/delete", new { name = model.Name ?? string.Empty }));
+        }
+
+        [HttpGet]
         public Task<IActionResult> Members(int id)
         {
             return Forward(client => client.GetAsync($"api/server/{id}/members"));
