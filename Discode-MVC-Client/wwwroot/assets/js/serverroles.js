@@ -37,6 +37,14 @@
     var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
 
     var list = document.getElementById("server-role-list");
+    var picker = null;
+    var pickArea = null;
+    var pickHandle = null;
+    var pickHue = null;
+    var pickHueHandle = null;
+    var pickHex = null;
+    var customSwatch = null;
+    var pick = { h: 0, s: 1, v: 1 };
     var title = document.getElementById("role-editor-name");
     var nameInput = document.getElementById("role-name");
     var colors = document.getElementById("role-colors");
@@ -173,7 +181,7 @@
             row.type = "button";
             row.setAttribute("data-id", role.id);
             var dot = element("span", "role-dot");
-            dot.style.background = COLORS[role.color] || COLORS.gray;
+            dot.style.background = colorOf(role.color);
             row.appendChild(dot);
             row.appendChild(element("span", "role-label", role.name));
             list.appendChild(row);
@@ -194,6 +202,7 @@
                 swatch.classList.toggle("on", swatch.getAttribute("data-role-color") === draft.color);
                 swatch.disabled = !editable;
             });
+            paintCustomSwatch();
         }
         if (separate) {
             separate.checked = !!draft.displaySeparately;
@@ -205,8 +214,173 @@
         if (addOpen) addOpen.hidden = role.isEveryone || !editable;
     }
 
+    function colorOf(value) {
+        if (value && String(value).charAt(0) === "#") return value;
+        return COLORS[value] || COLORS.gray;
+    }
+
+    function hsvToHex(h, s, v) {
+        var c = v * s;
+        var x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+        var m = v - c;
+        var r = 0, g = 0, b = 0;
+        if (h < 60) { r = c; g = x; }
+        else if (h < 120) { r = x; g = c; }
+        else if (h < 180) { g = c; b = x; }
+        else if (h < 240) { g = x; b = c; }
+        else if (h < 300) { r = x; b = c; }
+        else { r = c; b = x; }
+        function part(n) {
+            var hex = Math.round((n + m) * 255).toString(16);
+            return hex.length === 1 ? "0" + hex : hex;
+        }
+        return part(r) + part(g) + part(b);
+    }
+
+    function hexToHsv(hex) {
+        var r = parseInt(hex.slice(0, 2), 16) / 255;
+        var g = parseInt(hex.slice(2, 4), 16) / 255;
+        var b = parseInt(hex.slice(4, 6), 16) / 255;
+        var max = Math.max(r, g, b);
+        var min = Math.min(r, g, b);
+        var d = max - min;
+        var h = 0;
+        if (d) {
+            if (max === r) h = 60 * (((g - b) / d) % 6);
+            else if (max === g) h = 60 * ((b - r) / d + 2);
+            else h = 60 * ((r - g) / d + 4);
+        }
+        if (h < 0) h += 360;
+        return { h: h, s: max ? d / max : 0, v: max };
+    }
+
+    function currentHex() {
+        return colorOf(draft ? draft.color : "gray").replace("#", "");
+    }
+
+    function paintCustomSwatch() {
+        if (!customSwatch || !draft) return;
+        var custom = String(draft.color).charAt(0) === "#";
+        customSwatch.classList.toggle("on", custom);
+        customSwatch.style.background = custom ? draft.color : "";
+        customSwatch.disabled = !canEdit();
+    }
+
+    function paintPicker(fromInput) {
+        if (!picker) return;
+        var hex = hsvToHex(pick.h, pick.s, pick.v);
+        pickArea.style.backgroundColor = "#" + hsvToHex(pick.h, 1, 1);
+        pickHandle.style.left = pick.s * 100 + "%";
+        pickHandle.style.top = (1 - pick.v) * 100 + "%";
+        pickHueHandle.style.left = pick.h / 360 * 100 + "%";
+        if (!fromInput) pickHex.value = hex;
+        return hex;
+    }
+
+    function applyPick(fromInput) {
+        var hex = paintPicker(fromInput);
+        if (!draft || !hex) return;
+        draft.color = "#" + hex;
+        [].forEach.call(colors.querySelectorAll("[data-role-color]"), function (swatch) { swatch.classList.remove("on"); });
+        paintCustomSwatch();
+        var row = list ? list.querySelector(".role-row.on .role-dot") : null;
+        if (row) row.style.background = draft.color;
+        markDirty();
+    }
+
+    function drag(node, move) {
+        function at(event) {
+            var rect = node.getBoundingClientRect();
+            var x = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+            var y = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
+            move(x, y);
+        }
+        node.addEventListener("pointerdown", function (event) {
+            event.preventDefault();
+            node.setPointerCapture(event.pointerId);
+            at(event);
+            function onMove(e) { at(e); }
+            function onUp() {
+                node.removeEventListener("pointermove", onMove);
+                node.removeEventListener("pointerup", onUp);
+            }
+            node.addEventListener("pointermove", onMove);
+            node.addEventListener("pointerup", onUp);
+        });
+    }
+
+    function buildPicker() {
+        if (!colors || picker) return;
+        customSwatch = element("button", "role-color-custom");
+        customSwatch.type = "button";
+        customSwatch.setAttribute("aria-label", "Custom color");
+        customSwatch.appendChild(element("i", "fa-solid fa-eye-dropper"));
+        colors.appendChild(customSwatch);
+        picker = element("div", "color-picker");
+        picker.hidden = true;
+        pickArea = element("div", "cp-area");
+        pickHandle = element("span", "cp-handle");
+        pickArea.appendChild(pickHandle);
+        pickHue = element("div", "cp-hue");
+        pickHueHandle = element("span", "cp-hue-handle");
+        pickHue.appendChild(pickHueHandle);
+        var field = element("label", "cp-hex");
+        field.appendChild(element("span", "", "#"));
+        pickHex = document.createElement("input");
+        pickHex.type = "text";
+        pickHex.maxLength = 6;
+        pickHex.spellcheck = false;
+        pickHex.setAttribute("aria-label", "Hex color");
+        field.appendChild(pickHex);
+        picker.appendChild(pickArea);
+        picker.appendChild(pickHue);
+        picker.appendChild(field);
+        colors.parentNode.insertBefore(picker, colors.nextSibling);
+        drag(pickArea, function (x, y) {
+            pick.s = x;
+            pick.v = 1 - y;
+            applyPick(false);
+        });
+        drag(pickHue, function (x) {
+            pick.h = Math.min(359.9, x * 360);
+            applyPick(false);
+        });
+        pickHex.addEventListener("focus", function () {
+            pickHex.select();
+        });
+        pickHex.addEventListener("input", function () {
+            var value = pickHex.value.replace(/[^0-9a-fA-F]/g, "");
+            if (value !== pickHex.value) pickHex.value = value;
+            if (value.length !== 6) return;
+            var hsv = hexToHsv(value);
+            pick.h = hsv.h;
+            pick.s = hsv.s;
+            pick.v = hsv.v;
+            applyPick(true);
+        });
+        customSwatch.addEventListener("click", function (event) {
+            event.stopPropagation();
+            if (!canEdit()) return;
+            picker.hidden = !picker.hidden;
+            if (!picker.hidden) {
+                var hsv = hexToHsv(currentHex());
+                pick.h = hsv.h;
+                pick.s = hsv.s;
+                pick.v = hsv.v;
+                paintPicker(false);
+            }
+        });
+        picker.addEventListener("click", function (event) {
+            event.stopPropagation();
+        });
+        document.addEventListener("click", function () {
+            picker.hidden = true;
+        });
+    }
+
     function select(id) {
         selectedId = id;
+        if (picker) picker.hidden = true;
         var role = selected();
         if (!role) return;
         draft = { name: role.name, color: role.color, permissions: role.permissions, displaySeparately: role.displaySeparately };
@@ -399,6 +573,10 @@
             if (!swatch || !draft || !canEdit()) return;
             draft.color = swatch.getAttribute("data-role-color");
             [].forEach.call(colors.querySelectorAll("[data-role-color]"), function (item) { item.classList.toggle("on", item === swatch); });
+            paintCustomSwatch();
+            if (picker) picker.hidden = true;
+            var dot = list ? list.querySelector(".role-row.on .role-dot") : null;
+            if (dot) dot.style.background = colorOf(draft.color);
             markDirty();
         });
     }
@@ -513,5 +691,6 @@
     });
 
     buildBar();
+    buildPicker();
     loadPerms().then(function () { return loadRoles(false); });
 })();

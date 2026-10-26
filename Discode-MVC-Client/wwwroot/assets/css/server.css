@@ -5420,3 +5420,98 @@ html.theme-dark body .members-role-pill {
     box-shadow: none;
     border: 1px solid rgba(128, 132, 142, 0.35);
 }
+
+.role-color-custom {
+    width: 28px;
+    height: 28px;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    background: conic-gradient(#ed4245, #fee75c, #23a559, #1abc9c, #5865f2, #eb459e, #ed4245);
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.role-color-custom.on {
+    border-color: #fff;
+    box-shadow: 0 0 0 2px #5865f2;
+}
+
+.role-color-custom i {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.color-picker {
+    width: 296px;
+    margin: 12px 0;
+    padding: 12px;
+    border-radius: 8px;
+    background: #000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.color-picker[hidden] {
+    display: none;
+}
+
+.cp-area {
+    position: relative;
+    height: 170px;
+    border-radius: 4px;
+    cursor: crosshair;
+    touch-action: none;
+    background-image: linear-gradient(to top, #000, rgba(0, 0, 0, 0)), linear-gradient(to right, #fff, rgba(255, 255, 255, 0));
+}
+
+.cp-handle,
+.cp-hue-handle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.8);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.cp-hue {
+    position: relative;
+    height: 10px;
+    margin: 16px 0;
+    border-radius: 5px;
+    cursor: pointer;
+    touch-action: none;
+    background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+}
+
+.cp-hue-handle {
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    background: #fff;
+}
+
+.cp-hex {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border: 2px solid #5865f2;
+    border-radius: 6px;
+    background: #000;
+    color: #b5bac1;
+}
+
+.cp-hex input {
+    flex: 1;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #f2f3f5;
+    font: inherit;
+    font-size: 16px;
+}
