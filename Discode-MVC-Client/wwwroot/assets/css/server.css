@@ -5618,3 +5618,48 @@ html.theme-dark .role-colors button.on {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+.role-editor {
+    align-items: stretch;
+    min-height: calc(100vh - 80px);
+}
+
+.role-main {
+    display: flex;
+    flex-direction: column;
+}
+
+.role-main > .role-save-bar {
+    margin-top: auto;
+    flex: none;
+}
+
+.role-main > .role-panel {
+    margin-bottom: 24px;
+}
+
+.server-profile-layout {
+    min-height: calc(100vh - 80px);
+}
+
+.server-profile-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.server-profile-form > .server-save-bar {
+    margin-top: auto;
+    flex: none;
+}
+
+.server-profile-form > .server-private {
+    margin-bottom: 24px;
+}
+
+.server-settings-main {
+    padding-bottom: 24px;
+}
+
+.server-profile-layout {
+    align-items: stretch;
+}
