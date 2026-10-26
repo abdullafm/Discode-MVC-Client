@@ -120,7 +120,17 @@
         }
     }
 
+    function paintAccess() {
+        var deleteOpen = document.getElementById("server-delete-open");
+        if (deleteOpen) deleteOpen.hidden = !server.isOwner;
+        var leaveOpen = document.getElementById("server-leave-open");
+        if (leaveOpen) leaveOpen.hidden = !!server.isOwner;
+        var leaveSep = document.getElementById("server-leave-sep");
+        if (leaveSep) leaveSep.hidden = !!server.isOwner;
+    }
+
     function paintShared() {
+        paintAccess();
         paintBanner();
         paintInvite();
         var title = document.getElementById("server-title");

@@ -70,6 +70,78 @@
         if (menu) menu.hidden = true;
     }
 
+    function tokenValue() {
+        var field = document.querySelector("input[name='__RequestVerificationToken']");
+        return field ? field.value : "";
+    }
+
+    function confirmAction(options) {
+        var shade = element("div", "server-delete-modal");
+        var form = element("form", "server-delete-card");
+        var head = element("div", "server-delete-head");
+        head.appendChild(element("h2", "", options.title));
+        var close = element("button");
+        close.type = "button";
+        close.setAttribute("aria-label", "Close");
+        close.appendChild(element("i", "fa-solid fa-xmark"));
+        head.appendChild(close);
+        form.appendChild(head);
+        form.appendChild(element("p", "", options.text));
+        var reason = null;
+        if (options.reason) {
+            form.appendChild(element("label", "", "Reason (optional)"));
+            reason = document.createElement("input");
+            reason.type = "text";
+            reason.maxLength = 300;
+            reason.autocomplete = "off";
+            form.appendChild(reason);
+        }
+        var problem = element("p", "confirm-error");
+        problem.hidden = true;
+        form.appendChild(problem);
+        var actions = element("div", "server-delete-actions");
+        var cancel = element("button", "", "Cancel");
+        cancel.type = "button";
+        var go = element("button", "confirm-danger", options.confirm);
+        go.type = "submit";
+        actions.appendChild(cancel);
+        actions.appendChild(go);
+        form.appendChild(actions);
+        shade.appendChild(form);
+        document.body.appendChild(shade);
+        if (reason) reason.focus();
+
+        function dismiss() {
+            if (shade.parentNode) shade.parentNode.removeChild(shade);
+        }
+
+        close.addEventListener("click", dismiss);
+        cancel.addEventListener("click", dismiss);
+        shade.addEventListener("mousedown", function (event) {
+            if (event.target === shade) dismiss();
+        });
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            go.disabled = true;
+            fetch(options.url, {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json", "RequestVerificationToken": tokenValue(), "X-Requested-With": "XMLHttpRequest" },
+                body: JSON.stringify({ serverId: Number(serverId), userId: options.member.id, reason: reason ? reason.value.trim() : "" })
+            }).then(function (response) {
+                return response.json().catch(function () { return {}; }).then(function (data) {
+                    if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Something went wrong.");
+                    dismiss();
+                    load();
+                });
+            }).catch(function (error) {
+                go.disabled = false;
+                problem.textContent = error.message;
+                problem.hidden = false;
+            });
+        });
+    }
+
     function openMenu(member, anchor) {
         if (!menu) {
             menu = element("div", "row-menu members-ctx");
@@ -79,10 +151,11 @@
         }
         var list = menu.firstChild;
         list.textContent = "";
-        function add(label, action) {
+        function add(label, action, danger) {
             var li = document.createElement("li");
             var button = document.createElement("button");
             button.type = "button";
+            if (danger) button.className = "row-menu-danger";
             button.appendChild(element("span", "row-menu-label", label));
             button.addEventListener("click", function () {
                 closeMenu();
@@ -104,6 +177,32 @@
         add("Copy User ID", function () {
             if (navigator.clipboard) navigator.clipboard.writeText(member.id).catch(function () {});
         });
+        var perms = window.discodeServerRoles ? Number(window.discodeServerRoles.perms) || 0 : 0;
+        if (!member.isSelf && !member.isOwner) {
+            if ((perms & 16384) === 16384) {
+                add("Kick " + member.displayName, function () {
+                    confirmAction({
+                        title: "Kick " + member.displayName,
+                        text: "They will be removed from the server but can rejoin with an invite.",
+                        confirm: "Kick",
+                        url: "/Server/Kick",
+                        member: member
+                    });
+                }, true);
+            }
+            if ((perms & 32768) === 32768) {
+                add("Ban " + member.displayName, function () {
+                    confirmAction({
+                        title: "Ban " + member.displayName,
+                        text: "They will be removed and can't rejoin until you unban them.",
+                        confirm: "Ban",
+                        url: "/Server/Ban",
+                        reason: true,
+                        member: member
+                    });
+                }, true);
+            }
+        }
         menu.hidden = false;
         var rect = anchor.getBoundingClientRect();
         var width = menu.offsetWidth;

@@ -2162,7 +2162,31 @@
         deleteForm.addEventListener("submit", function (event) {
             event.preventDefault();
             if (!deleteConfirm || deleteConfirm.disabled) return;
-            closeDeleteModal();
+            var typed = deleteInput ? deleteInput.value : "";
+            deleteConfirm.disabled = true;
+            var field = document.querySelector("input[name='__RequestVerificationToken']");
+            fetch("/Server/Delete", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json", "RequestVerificationToken": field ? field.value : "", "X-Requested-With": "XMLHttpRequest" },
+                body: JSON.stringify({ serverId: Number(openId) || 0, name: typed })
+            }).then(function (response) {
+                return response.json().catch(function () { return {}; }).then(function (data) {
+                    if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Could not delete the server.");
+                    closeDeleteModal();
+                    if (window.discodeGo) window.discodeGo("/Home/Index");
+                    else window.location.href = "/Home/Index";
+                });
+            }).catch(function (error) {
+                deleteConfirm.disabled = false;
+                var note = deleteForm.querySelector(".confirm-error");
+                if (!note) {
+                    note = document.createElement("p");
+                    note.className = "confirm-error";
+                    deleteForm.insertBefore(note, deleteForm.querySelector(".server-delete-actions"));
+                }
+                note.textContent = error.message;
+            });
         });
     }
 

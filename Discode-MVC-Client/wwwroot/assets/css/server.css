@@ -5988,3 +5988,106 @@ html.theme-dark body .audit-notes li,
 html.theme-dark body .audit-meta {
     color: #b5bac1 !important;
 }
+
+.ban-sentinel {
+    height: 1px;
+}
+
+.ban-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 6px 10px;
+}
+
+.ban-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 8px;
+    border-bottom: 1px solid rgba(128, 132, 142, 0.25);
+}
+
+.ban-row img {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.ban-names {
+    flex: 0 0 200px;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ban-names strong,
+.ban-names small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ban-names small,
+.ban-why small {
+    font-size: 12px;
+    color: #80848e;
+}
+
+.ban-why {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.ban-undo {
+    flex: none;
+    padding: 8px 16px;
+    border: 1px solid #da373c;
+    border-radius: 4px;
+    background: transparent;
+    color: #da373c;
+    font: inherit;
+    cursor: pointer;
+}
+
+.ban-undo:hover:not(:disabled) {
+    background: #da373c;
+    color: #fff;
+}
+
+.ban-undo:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.ban-box:has(.ban-list:not(:empty)) {
+    min-height: 0;
+    align-items: stretch;
+}
+
+.confirm-error {
+    color: #f23f43 !important;
+    font-size: 14px;
+    margin: 8px 0 0;
+}
+
+.server-delete-actions .confirm-danger {
+    background: #da373c;
+    color: #fff;
+}
+
+.server-delete-actions .confirm-danger:disabled {
+    opacity: 0.6;
+}
+
+html.theme-dark body .ban-names small,
+html.theme-dark body .ban-why small {
+    color: #b5bac1 !important;
+}
