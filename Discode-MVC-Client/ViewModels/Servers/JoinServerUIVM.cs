@@ -1,6 +1,6 @@
 namespace Discode_MVC_Client.ViewModels.Servers
 {
-    public class JoinServerVM
+    public class JoinServerUIVM
     {
         public string? Invite { get; set; }
     }

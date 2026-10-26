@@ -70,7 +70,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Create([FromBody] CreateServerVM model)
+        public Task<IActionResult> Create([FromBody] CreateServerUIVM model)
         {
             if (model is null || string.IsNullOrWhiteSpace(model.Name))
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Enter a server name." } }));
@@ -80,7 +80,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Join([FromBody] JoinServerVM model)
+        public Task<IActionResult> Join([FromBody] JoinServerUIVM model)
         {
             if (model is null || string.IsNullOrWhiteSpace(model.Invite))
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Enter an invite link." } }));
@@ -90,7 +90,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Profile([FromForm] UpdateServerProfileVM model)
+        public async Task<IActionResult> Profile([FromForm] UpdateServerProfileUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return BadRequest(new { errors = new[] { "Server not found." } });
@@ -121,7 +121,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Preferences([FromBody] UpdateServerPreferencesVM model)
+        public Task<IActionResult> Preferences([FromBody] UpdateServerPreferencesUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Server not found." } }));
@@ -137,14 +137,14 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Reorder([FromBody] ReorderServersVM model)
+        public Task<IActionResult> Reorder([FromBody] ReorderServersUIVM model)
         {
             return Forward(client => client.PutAsJsonAsync("api/server/order", new { serverIds = model?.ServerIds ?? new List<int>() }));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Leave([FromBody] LeaveServerVM model)
+        public Task<IActionResult> Leave([FromBody] LeaveServerUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Server not found." } }));
@@ -161,7 +161,7 @@ namespace Discode_MVC_Client.Controllers
                 var response = await client.PostAsJsonAsync("api/server/join", new { invite = code });
                 if (response.IsSuccessStatusCode)
                 {
-                    var server = await response.Content.ReadFromJsonAsync<ServerVM>();
+                    var server = await response.Content.ReadFromJsonAsync<ServerUIVM>();
                     if (server is not null)
                         return LocalRedirect("/Server/Index?id=" + server.Id);
                 }

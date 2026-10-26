@@ -1,6 +1,6 @@
 namespace Discode_MVC_Client.ViewModels.Servers
 {
-    public class UpdateServerPreferencesVM
+    public class UpdateServerPreferencesUIVM
     {
         public int Id { get; set; }
         public int? MuteMinutes { get; set; }

@@ -1,6 +1,6 @@
 namespace Discode_MVC_Client.ViewModels.Servers
 {
-    public class ServerVM
+    public class ServerUIVM
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;

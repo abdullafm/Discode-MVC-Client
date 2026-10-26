@@ -1,6 +1,6 @@
 namespace Discode_MVC_Client.ViewModels.Servers
 {
-    public class ReorderServersVM
+    public class ReorderServersUIVM
     {
         public List<int> ServerIds { get; set; } = new();
     }

@@ -1,6 +1,6 @@
 namespace Discode_MVC_Client.ViewModels.Servers
 {
-    public class LeaveServerVM
+    public class LeaveServerUIVM
     {
         public int Id { get; set; }
     }
