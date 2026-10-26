@@ -54,6 +54,12 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        public Task<IActionResult> Members(int id)
+        {
+            return Forward(client => client.GetAsync($"api/server/{id}/members"));
+        }
+
+        [HttpGet]
         public Task<IActionResult> Preview(string code)
         {
             if (string.IsNullOrWhiteSpace(code))
