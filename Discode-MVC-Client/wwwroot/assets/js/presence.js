@@ -311,6 +311,10 @@
                     document.dispatchEvent(new CustomEvent("discode-servers-changed"));
                 });
 
+                connection.on("ServerRolesChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-roles-changed", { detail: data }));
+                });
+
                 connection.on("ServerUpdated", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-server-updated", { detail: data }));
                 });
