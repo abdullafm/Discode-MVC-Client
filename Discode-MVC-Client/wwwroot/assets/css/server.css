@@ -5409,3 +5409,14 @@ html.theme-dark body .role-person-remove,
 html.theme-dark body .members-role-pill {
     color: #b5bac1 !important;
 }
+
+.member-pop-body .member-pop-role-menu {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    margin-top: 8px;
+    margin-bottom: 4px;
+    box-shadow: none;
+    border: 1px solid rgba(128, 132, 142, 0.35);
+}
