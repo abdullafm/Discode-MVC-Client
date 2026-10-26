@@ -20,8 +20,10 @@ namespace Discode_MVC_Client.Controllers
             _environment = environment;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int id = 0)
         {
+            ViewData["ServerChannels"] = await LoadChannelsAsync(id);
+
             var displayName = User.Identity?.Name ?? "";
             var fallback = new ProfileUIVM
             {
@@ -45,6 +47,36 @@ namespace Discode_MVC_Client.Controllers
             }
 
             return View(ToHome(fallback));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> Channels(int id)
+        {
+            return Forward(client => client.GetAsync($"api/server/{id}/channels"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> CreateChannel([FromBody] CreateServerChannelUIVM model)
+        {
+            return Forward(client => client.PostAsJsonAsync($"api/server/{model.ServerId}/channels", new
+            {
+                name = model.Name ?? string.Empty,
+                kind = model.Kind,
+                categoryId = model.CategoryId,
+                isPrivate = model.IsPrivate
+            }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> CreateCategory([FromBody] CreateServerCategoryUIVM model)
+        {
+            return Forward(client => client.PostAsJsonAsync($"api/server/{model.ServerId}/categories", new
+            {
+                name = model.Name ?? string.Empty,
+                isPrivate = model.IsPrivate
+            }));
         }
 
         [HttpGet]
@@ -267,6 +299,25 @@ namespace Discode_MVC_Client.Controllers
 
             TempData["Error"] = "That invite is invalid or has expired.";
             return RedirectToAction("Index", "Home");
+        }
+
+        private async Task<string> LoadChannelsAsync(int serverId)
+        {
+            if (serverId <= 0)
+                return "{}";
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await client.GetAsync($"api/server/{serverId}/channels");
+                if (response.IsSuccessStatusCode)
+                    return await response.Content.ReadAsStringAsync();
+            }
+            catch (HttpRequestException)
+            {
+            }
+
+            return "{}";
         }
 
         private async Task<IActionResult> Forward(Func<HttpClient, Task<HttpResponseMessage>> send)
