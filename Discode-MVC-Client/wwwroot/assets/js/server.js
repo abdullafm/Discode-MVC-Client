@@ -99,6 +99,7 @@
             return response.ok ? response.json() : null;
         }).then(function (server) {
             if (!server || !Array.isArray(server.members)) return;
+            currentServer = server;
             serverMembers = server.members;
             paintServerMembers();
         }).catch(function () {});

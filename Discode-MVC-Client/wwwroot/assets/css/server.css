@@ -5129,3 +5129,94 @@ html.theme-dark .role-colors button.on {
     opacity: 0.6;
     cursor: default;
 }
+
+.boost-drop-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.boost-drop-remove {
+    align-self: flex-start;
+    border: 0;
+    background: transparent;
+    color: #ed4245;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.boost-drop-remove[hidden] {
+    display: none;
+}
+
+.boost-note {
+    margin: 0 !important;
+    font-size: 13px !important;
+    min-height: 1em;
+}
+
+.boost-note.is-error {
+    color: #ed4245 !important;
+}
+
+.boost-note.is-ok {
+    color: #23a559 !important;
+}
+
+.boost-invite-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.boost-invite-row #boost-invite-link {
+    margin-bottom: 0;
+    flex: 1;
+}
+
+.boost-invite-save {
+    border: 0;
+    border-radius: 4px;
+    padding: 10px 16px;
+    background: #5865f2;
+    color: #fff;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.boost-invite-save:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.server-banner-wrap.has-banner {
+    height: 140px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.server-banner-wrap.has-banner .server-banner,
+html.theme-dark .server-banner-wrap.has-banner .server-banner {
+    height: 56px;
+    border-bottom: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0) 100%) !important;
+    color: #fff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+html.theme-dark body .server-banner-wrap.has-banner .server-banner span,
+html.theme-dark body .server-banner-wrap.has-banner .server-banner i,
+.server-banner-wrap.has-banner .server-banner span,
+.server-banner-wrap.has-banner .server-banner i {
+    color: #fff !important;
+}
+
+.server-preview-banner.has-image {
+    background-size: cover;
+    background-position: center;
+}

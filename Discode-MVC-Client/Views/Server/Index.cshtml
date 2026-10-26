@@ -239,11 +239,15 @@
                                         recommended aspect ratio is 16:9.
                                     </p>
                                 </div>
-                                <label class="boost-drop">
-                                    <input id="boost-banner-file" type="file" accept="image/*">
-                                    <img id="boost-banner-preview" alt="" hidden>
-                                    <i class="fa-regular fa-image"></i>
-                                </label>
+                                <div class="boost-drop-col">
+                                    <label class="boost-drop">
+                                        <input id="boost-banner-file" type="file" accept="image/*">
+                                        <img id="boost-banner-preview" alt="" hidden>
+                                        <i class="fa-regular fa-image"></i>
+                                    </label>
+                                    <button type="button" class="boost-drop-remove" id="boost-banner-remove" hidden>Remove banner</button>
+                                    <p class="boost-note" id="boost-banner-note"></p>
+                                </div>
                             </div>
                             <div class="boost-perk">
                                 <div>
@@ -254,8 +258,12 @@
                                         text channel that is open to all server members.
                                     </p>
                                     <label for="boost-invite-link">Invite link</label>
-                                    <input id="boost-invite-link" type="text" maxlength="32"
-                                           placeholder="your-link">
+                                    <div class="boost-invite-row">
+                                        <input id="boost-invite-link" type="text" maxlength="32"
+                                               placeholder="your-link" autocomplete="off" spellcheck="false">
+                                        <button type="button" class="boost-invite-save" id="boost-invite-save" disabled>Save Link</button>
+                                    </div>
+                                    <p class="boost-note" id="boost-invite-note"></p>
                                 </div>
                             </div>
                         </div>

@@ -18,11 +18,19 @@
     var note = document.getElementById("server-save-note");
     var resetButton = document.getElementById("server-save-reset");
     var saveButton = document.getElementById("server-save-go");
+    var bannerFile = document.getElementById("boost-banner-file");
+    var bannerPreview = document.getElementById("boost-banner-preview");
+    var bannerRemove = document.getElementById("boost-banner-remove");
+    var bannerNote = document.getElementById("boost-banner-note");
+    var inviteInput = document.getElementById("boost-invite-link");
+    var inviteSave = document.getElementById("boost-invite-save");
+    var inviteNote = document.getElementById("boost-invite-note");
 
     var server = null;
     var dirty = false;
     var saving = false;
     var presenceTimer = 0;
+    var inviteDirty = false;
 
     function token() {
         var field = document.querySelector("input[name='__RequestVerificationToken']");
@@ -77,7 +85,44 @@
         }
     }
 
+    function say(node, text, kind) {
+        if (!node) return;
+        node.textContent = text || "";
+        node.classList.toggle("is-error", kind === "error");
+        node.classList.toggle("is-ok", kind === "ok");
+    }
+
+    function paintBanner() {
+        var url = server.bannerUrl || "";
+        if (bannerPreview) {
+            if (url) bannerPreview.src = url;
+            bannerPreview.hidden = !url;
+        }
+        if (bannerRemove) bannerRemove.hidden = !url;
+        var wrap = document.querySelector(".server-banner-wrap");
+        if (wrap) {
+            wrap.classList.toggle("has-banner", !!url);
+            wrap.style.backgroundImage = url ? "url('" + url + "')" : "";
+        }
+        var previewBanner = preview ? preview.querySelector(".server-preview-banner") : null;
+        if (previewBanner) {
+            previewBanner.classList.toggle("has-image", !!url);
+            previewBanner.style.backgroundImage = url ? "url('" + url + "')" : "";
+        }
+    }
+
+    function paintInvite() {
+        if (!inviteInput) return;
+        if (!inviteDirty) {
+            inviteInput.value = server.inviteCode || "";
+            if (inviteSave) inviteSave.disabled = true;
+            say(inviteNote, window.location.origin + "/" + (server.inviteCode || ""), "");
+        }
+    }
+
     function paintShared() {
+        paintBanner();
+        paintInvite();
         var title = document.getElementById("server-title");
         if (title) title.textContent = server.name;
         var settingsName = document.getElementById("server-settings-name");
@@ -164,6 +209,98 @@
         if (!note) return;
         note.textContent = message;
         note.classList.add("is-error");
+    }
+
+    function sendBanner(data) {
+        return fetch("/Server/Banner", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "RequestVerificationToken": token(), "X-Requested-With": "XMLHttpRequest" },
+            body: data
+        }).then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (body) {
+                if (!response.ok) throw new Error((body && body.errors && body.errors[0]) || "Could not change the banner.");
+                return body;
+            });
+        });
+    }
+
+    if (bannerFile) {
+        bannerFile.addEventListener("change", function () {
+            var image = bannerFile.files && bannerFile.files[0];
+            if (!image || !server) return;
+            var data = new FormData();
+            data.append("Id", server.id);
+            data.append("Banner", image);
+            say(bannerNote, "Uploading...", "");
+            sendBanner(data).then(function (body) {
+                server = body;
+                say(bannerNote, "Banner updated.", "ok");
+                paintAll();
+            }).catch(function (error) {
+                say(bannerNote, error.message, "error");
+            }).then(function () {
+                bannerFile.value = "";
+            });
+        });
+    }
+
+    if (bannerRemove) {
+        bannerRemove.addEventListener("click", function () {
+            if (!server) return;
+            var data = new FormData();
+            data.append("Id", server.id);
+            data.append("Remove", "true");
+            sendBanner(data).then(function (body) {
+                server = body;
+                say(bannerNote, "Banner removed.", "ok");
+                paintAll();
+            }).catch(function (error) {
+                say(bannerNote, error.message, "error");
+            });
+        });
+    }
+
+    if (inviteInput) {
+        inviteInput.addEventListener("input", function () {
+            var cleaned = inviteInput.value.replace(/[^A-Za-z0-9_-]/g, "");
+            if (cleaned !== inviteInput.value) inviteInput.value = cleaned;
+            inviteDirty = !!server && cleaned !== (server.inviteCode || "");
+            if (inviteSave) inviteSave.disabled = !inviteDirty || cleaned.length < 3;
+            say(inviteNote, cleaned ? window.location.origin + "/" + cleaned : "", "");
+        });
+        inviteInput.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                if (inviteSave && !inviteSave.disabled) inviteSave.click();
+            }
+        });
+    }
+
+    if (inviteSave) {
+        inviteSave.addEventListener("click", function () {
+            if (!server || !inviteInput) return;
+            inviteSave.disabled = true;
+            fetch("/Server/CustomInvite", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json", "RequestVerificationToken": token(), "X-Requested-With": "XMLHttpRequest" },
+                body: JSON.stringify({ id: server.id, code: inviteInput.value.trim() })
+            }).then(function (response) {
+                return response.json().catch(function () { return {}; }).then(function (body) {
+                    if (!response.ok) throw new Error((body && body.errors && body.errors[0]) || "Could not change the invite link.");
+                    return body;
+                });
+            }).then(function (body) {
+                server = body;
+                inviteDirty = false;
+                paintInvite();
+                say(inviteNote, "Saved. " + window.location.origin + "/" + server.inviteCode, "ok");
+            }).catch(function (error) {
+                inviteSave.disabled = false;
+                say(inviteNote, error.message, "error");
+            });
+        });
     }
 
     form.addEventListener("submit", function (event) {
