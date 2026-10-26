@@ -867,6 +867,13 @@
             menu.hidden = !menu.hidden;
             placeMemberPop(currentMemberButton());
         });
+        memberPop.addEventListener("click", function (event) {
+            var rolesMenu = document.getElementById("member-pop-role-menu");
+            if (!rolesMenu || rolesMenu.hidden) return;
+            if (event.target.closest("#member-pop-role-menu, #member-pop-add")) return;
+            rolesMenu.hidden = true;
+            placeMemberPop(currentMemberButton());
+        }, true);
         document.getElementById("member-pop-role-menu").addEventListener("click", function (event) {
             var button = event.target.closest("button");
             if (!button) return;
