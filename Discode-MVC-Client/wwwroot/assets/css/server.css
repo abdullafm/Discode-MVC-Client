@@ -6091,3 +6091,26 @@ html.theme-dark body .ban-names small,
 html.theme-dark body .ban-why small {
     color: #b5bac1 !important;
 }
+
+.server-compose[hidden],
+.server-messages[hidden],
+.server-chat-scroll[hidden],
+.dm-compose[hidden],
+.server-room-empty[hidden] {
+    display: none !important;
+}
+
+.server-chat-modals {
+    display: contents;
+}
+
+.server-chat-modals[hidden] {
+    display: contents;
+}
+
+.server-chat-lock {
+    margin: 0 16px 16px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: rgba(128, 132, 142, 0.18);
+}

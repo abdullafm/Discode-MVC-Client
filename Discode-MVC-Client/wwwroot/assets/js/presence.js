@@ -311,6 +311,18 @@
                     document.dispatchEvent(new CustomEvent("discode-servers-changed"));
                 });
 
+                connection.on("ServerMessage", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-message", { detail: data }));
+                });
+
+                connection.on("ServerMessageDeleted", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-message-deleted", { detail: data }));
+                });
+
+                connection.on("ServerMessageUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-message-updated", { detail: data }));
+                });
+
                 connection.on("ServerChannelsChanged", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-server-channels-changed", { detail: data }));
                 });

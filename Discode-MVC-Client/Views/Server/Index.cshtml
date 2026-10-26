@@ -3,7 +3,7 @@
     Layout = "_ServerLayout";
 }
 <main class="friends-view server-view">
-    <section id="server-chat">
+    <section id="server-chat" data-me="@Model.Profile.UserName">
         <div class="server-room">
             <div class="server-bar">
                 <button type="button" class="server-back" onclick="openToggle()" aria-label="Channels">
@@ -37,7 +37,36 @@
             <template id="server-voice-user">
                 <div class="server-voice-user"><img alt=""><span></span><span class="voice-user-icons"><i class="fa-solid fa-microphone-slash voice-mute-icon" aria-hidden="true"></i><span class="voice-deaf-icon"><i class="fa-solid fa-headphones" aria-hidden="true"></i></span></span></div>
             </template>
-            <div class="server-messages" id="server-messages">
+            <div class="group-scroll server-chat-scroll" id="group-scroll" hidden>
+                <div class="group-intro server-chat-intro">
+                    <span class="group-badge"><i class="fa-solid fa-hashtag" id="server-chat-badge"></i></span>
+                    <h2 id="server-chat-title">Welcome to #general!</h2>
+                    <p id="server-chat-welcome">This is the start of the #general channel.</p>
+                </div>
+                <div class="dm-messages group-messages" id="group-messages"></div>
+            </div>
+            <p class="group-error" id="group-error" hidden></p>
+            <div class="dm-reply-bar" id="group-reply-bar" hidden>
+                <span>Replying to <strong id="group-reply-name"></strong></span>
+                <button type="button" id="group-reply-cancel" aria-label="Cancel reply"><i class="fa-solid fa-circle-xmark"></i></button>
+            </div>
+            <p class="server-announce-lock server-chat-lock" id="server-chat-lock" hidden>You do not have permission to send messages in this channel.</p>
+            <form class="dm-compose" id="group-compose" hidden>
+                <button type="button" id="group-attach" aria-label="Add"><i class="fa-solid fa-plus"></i></button>
+                <input type="file" id="group-file" multiple hidden>
+                <div class="dm-attach-menu" id="group-attach-menu" role="menu" hidden>
+                    <button type="button" role="menuitem" data-act="upload"><i class="fa-solid fa-file-arrow-up"></i><span>Upload a File</span></button>
+                </div>
+                <div class="dm-input-wrap">
+                    <span class="dm-placeholder" id="group-placeholder" aria-hidden="true">Message</span>
+                    <div class="rich-text" id="group-input" contenteditable="true" role="textbox" aria-label="Message" data-placeholder="Message" data-empty="1"></div>
+                </div>
+                <div class="dm-compose-tools">
+                    <button type="button" id="group-emoji" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>
+                </div>
+                <div class="emoji-panel" id="emoji-panel" hidden></div>
+            </form>
+            <div class="server-messages" id="server-messages" hidden>
                 <div class="server-welcome" id="server-welcome" hidden>
                     <span class="server-welcome-mark" aria-hidden="true">#</span>
                     <h2 id="server-welcome-title">Welcome to #general!</h2>
@@ -50,7 +79,7 @@
                 <div id="server-message-list"></div>
             </div>
             <p class="server-room-empty" id="server-chat-empty">Select a channel.</p>
-            <form class="server-compose" id="server-compose">
+            <form class="server-compose" id="server-compose" hidden>
                 <p class="server-announce-lock" id="server-announce-lock" hidden>
                     You do not have permission to send
                     messages in this channel.
@@ -757,3 +786,67 @@
     </div>
 </div>
 </main>
+<div class="server-chat-modals" hidden>
+    <div class="dm-modal" id="group-poll-modal" role="dialog" aria-modal="true" aria-labelledby="group-poll-title" hidden>
+        <div class="dm-modal-backdrop" data-close></div>
+        <div class="dm-modal-card dm-poll-card">
+            <button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>
+            <h2 id="group-poll-title">Create a Poll</h2>
+            <label class="dm-poll-label" for="group-poll-question">Question</label>
+            <input type="text" id="group-poll-question" class="dm-poll-input" maxlength="300" placeholder="What question do you want to ask?" autocomplete="off">
+            <div class="dm-poll-count"><span id="group-poll-count">0</span> / 300</div>
+            <div class="dm-poll-label">Answers</div>
+            <div class="dm-poll-answers" id="group-poll-answers"></div>
+            <button type="button" class="dm-poll-add" id="group-poll-add"><i class="fa-solid fa-plus"></i> Add another answer</button>
+            <label class="dm-poll-label" for="group-poll-duration">Duration</label>
+            <select id="group-poll-duration" class="dm-poll-input dm-poll-select">
+                <option value="1">1 hour</option>
+                <option value="4">4 hours</option>
+                <option value="8">8 hours</option>
+                <option value="24" selected>24 hours</option>
+                <option value="72">3 days</option>
+                <option value="168">1 week</option>
+                <option value="336">2 weeks</option>
+            </select>
+            <p class="dm-poll-error" id="group-poll-error" hidden></p>
+            <div class="dm-poll-foot">
+                <label class="dm-poll-multi"><input type="checkbox" id="group-poll-multiple"><span>Allow Multiple Answers</span></label>
+                <button type="button" class="dm-poll-post" id="group-poll-post">Post</button>
+            </div>
+            <div class="dm-poll-emojis" id="group-poll-emojis" hidden></div>
+        </div>
+    </div>
+    <div class="dm-msg-menu" id="group-msg-menu" role="menu" hidden>
+        <div class="dm-menu-quick">
+            <button type="button" class="dm-react" data-act="react" aria-label="React with heart">&#10084;&#65039;</button>
+        </div>
+        <button type="button" role="menuitem" class="emoji-open" data-menu="reaction"><i class="fa-solid fa-face-smile"></i><span>Add Reaction</span><i class="fa-solid fa-chevron-right dm-menu-arrow"></i></button>
+        <hr>
+        <button type="button" role="menuitem" data-menu="reply"><i class="fa-solid fa-reply"></i><span>Reply</span></button>
+        <hr>
+        <button type="button" role="menuitem" data-menu="copy-text"><i class="fa-solid fa-copy"></i><span>Copy Text</span></button>
+        <hr data-own-only>
+        <button type="button" role="menuitem" class="is-danger" data-menu="delete" data-own-only><i class="fa-solid fa-trash-can"></i><span>Delete Message</span></button>
+    </div>
+    <div class="dm-modal" id="group-forward-modal" role="dialog" aria-modal="true" aria-labelledby="group-forward-title" hidden>
+        <div class="dm-modal-backdrop" data-close></div>
+        <div class="dm-modal-card dm-forward-card">
+            <button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>
+            <h2 id="group-forward-title">Forward To</h2>
+            <p class="dm-modal-text">Select where you want to share this message.</p>
+            <label class="dm-forward-search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="search" id="group-forward-search" placeholder="Search" aria-label="Search" autocomplete="off">
+            </label>
+            <div class="dm-forward-list" id="group-forward-list"></div>
+            <div class="dm-forward-foot">
+                <div class="dm-forward-preview" id="group-forward-preview"></div>
+                <p class="dm-forward-error" id="group-forward-error" hidden></p>
+                <div class="dm-forward-send">
+                    <input type="text" id="group-forward-note" maxlength="2000" placeholder="Add an optional message..." aria-label="Optional message" autocomplete="off">
+                    <button type="button" id="group-forward-submit" disabled>Send <i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

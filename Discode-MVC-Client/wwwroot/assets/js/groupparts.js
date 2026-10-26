@@ -520,7 +520,9 @@ function renderReactions(row, reactions) {
 
 function react(row, emoji) {
     ctx.showError("");
-    ctx.request("/Group/React", "POST", { id: ctx.groupId, messageId: Number(row.getAttribute("data-id")), emoji: emoji }).then(function (message) {
+    var messageId = Number(row.getAttribute("data-id"));
+    var sending = ctx.call ? ctx.call("react", { messageId: messageId, emoji: emoji }) : ctx.request("/Group/React", "POST", { id: ctx.groupId, messageId: messageId, emoji: emoji });
+    sending.then(function (message) {
         renderReactions(row, message.reactions || []);
     }).catch(function (error) {
         ctx.showError(error.message);
@@ -539,8 +541,8 @@ function messageTools(mine) {
         '<span class="dm-tools-sep"></span>' +
         '<button type="button" class="emoji-open" data-act="picker" aria-label="Add reaction"><i class="fa-regular fa-face-smile"></i></button>' +
         (mine ? '' : '<button type="button" data-act="reply" aria-label="Reply"><i class="fa-solid fa-reply"></i></button>') +
-        '<button type="button" data-act="forward" aria-label="Forward"><i class="fa-solid fa-share"></i></button>' +
-        (mine ? '<button type="button" class="dm-tool-delete" data-act="delete" aria-label="Delete"><i class="fa-solid fa-trash-can"></i></button>' : '') +
+        (ctx.noForward ? '' : '<button type="button" data-act="forward" aria-label="Forward"><i class="fa-solid fa-share"></i></button>') +
+        (mine || ctx.canDeleteAny ? '<button type="button" class="dm-tool-delete" data-act="delete" aria-label="Delete"><i class="fa-solid fa-trash-can"></i></button>' : '') +
         '<button type="button" data-act="more" aria-label="More"><i class="fa-solid fa-ellipsis"></i></button>';
     return tools;
 }
@@ -698,7 +700,7 @@ function bindAttach() {
         addFiles(input.files);
         input.value = "";
     });
-    var chat = document.querySelector(".group-chat");
+    var chat = ctx.dropZone || document.querySelector(".group-chat");
     chat.addEventListener("dragover", function (event) {
         if (event.dataTransfer && [].indexOf.call(event.dataTransfer.types || [], "Files") !== -1) {
             event.preventDefault();
@@ -1001,7 +1003,9 @@ function removeMessage(id) {
 
 function deleteMessage(row) {
     ctx.showError("");
-    ctx.request("/Group/DeleteMessage", "POST", { id: ctx.groupId, messageId: Number(row.getAttribute("data-id")) }).then(function () {
+    var messageId = Number(row.getAttribute("data-id"));
+    var removing = ctx.call ? ctx.call("delete", { messageId: messageId }) : ctx.request("/Group/DeleteMessage", "POST", { id: ctx.groupId, messageId: messageId });
+    removing.then(function () {
         removeMessage(row.getAttribute("data-id"));
     }).catch(function (error) {
         ctx.showError(error.message);
@@ -1021,7 +1025,7 @@ function closeMenu() {
 
 function showMenu(row) {
     var menu = menuEl();
-    var mine = row.getAttribute("data-mine") === "1";
+    var mine = row.getAttribute("data-mine") === "1" || !!ctx.canDeleteAny;
     var gated = menu.querySelectorAll("[data-own-only]");
     for (var i = 0; i < gated.length; i++) gated[i].hidden = !mine;
     menu.setAttribute("data-row", row.getAttribute("data-id"));

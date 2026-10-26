@@ -986,6 +986,7 @@
         var canPost = canPostIn(button);
         for (var i = 0; i < buttons.length; i++) buttons[i].classList.toggle("on", buttons[i] === button);
         showRoom(isVoice ? "voice" : "text");
+        if (!isVoice && window.discodeServerChat) window.discodeServerChat.open(button);
         if (isVoice) {
             if (voiceName) voiceName.textContent = name;
             if (keepVoice) paintVoice();
