@@ -1,5 +1,5 @@
 @using System.Globalization
-@model DmProfileVM
+@model DmProfileUIVM
 @{
     var avatar = string.IsNullOrWhiteSpace(Model.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.AvatarUrl;
     var status = Model.HasChat && Model.Status != "online" ? " " + Model.Status : "";

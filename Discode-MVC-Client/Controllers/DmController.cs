@@ -30,17 +30,17 @@ namespace Discode_MVC_Client.Controllers
 
         public async Task<IActionResult> Index(string? name)
         {
-            var (profile, profileStatus) = await GetAsync<ProfileVM>("api/account/profile");
+            var (profile, profileStatus) = await GetAsync<ProfileUIVM>("api/account/profile");
             if (profileStatus == System.Net.HttpStatusCode.Unauthorized)
                 return await SessionExpiredAsync();
 
-            var page = new DmPageVM { Name = name?.Trim() ?? string.Empty };
+            var page = new DmPageUIVM { Name = name?.Trim() ?? string.Empty };
             if (int.TryParse(Request.Cookies["tz"], out var offset) && Math.Abs(offset) <= 14 * 60)
                 page.UtcOffsetMinutes = offset;
 
             if (page.Name.Length > 0)
             {
-                var (chat, chatStatus) = await GetAsync<ChatVM>("api/dm/" + Uri.EscapeDataString(page.Name));
+                var (chat, chatStatus) = await GetAsync<ChatUIVM>("api/dm/" + Uri.EscapeDataString(page.Name));
                 page.Chat = chat;
                 if (chat is null)
                     page.Error = chatStatus is null ? "The API is not running. Start Discode-API-FinalProject and try again." : "This conversation is not available.";
@@ -59,32 +59,32 @@ namespace Discode_MVC_Client.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var conversations = await client.GetFromJsonAsync<List<ConversationVM>>("api/dm");
-                return Ok(conversations ?? new List<ConversationVM>());
+                var conversations = await client.GetFromJsonAsync<List<ConversationUIVM>>("api/dm");
+                return Ok(conversations ?? new List<ConversationUIVM>());
             }
             catch (HttpRequestException ex)
             {
-                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<ConversationVM>());
+                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<ConversationUIVM>());
             }
             catch (JsonException)
             {
-                return Ok(Array.Empty<ConversationVM>());
+                return Ok(Array.Empty<ConversationUIVM>());
             }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Send([FromBody] DmTargetVM model)
+        public Task<IActionResult> Send([FromBody] DmTargetUIVM model)
         {
             if (model is null || string.IsNullOrWhiteSpace(model.UserName))
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a friend." } }));
 
-            return ForwardToApi(client => client.PostAsJsonAsync("api/dm/" + Uri.EscapeDataString(model.UserName.Trim()), new { text = model.Text ?? string.Empty, replyToMessageId = model.ReplyToMessageId, attachments = model.Attachments ?? new List<MessageAttachmentVM>() }));
+            return ForwardToApi(client => client.PostAsJsonAsync("api/dm/" + Uri.EscapeDataString(model.UserName.Trim()), new { text = model.Text ?? string.Empty, replyToMessageId = model.ReplyToMessageId, attachments = model.Attachments ?? new List<MessageAttachmentUIVM>() }));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> CreatePoll([FromBody] CreatePollVM model)
+        public Task<IActionResult> CreatePoll([FromBody] CreatePollUIVM model)
         {
             if (model is null || string.IsNullOrWhiteSpace(model.UserName))
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a friend." } }));
@@ -94,13 +94,13 @@ namespace Discode_MVC_Client.Controllers
                 question = model.Question ?? string.Empty,
                 allowMultiple = model.AllowMultiple,
                 durationHours = model.DurationHours,
-                options = (model.Options ?? new List<CreatePollOptionVM>()).Select(o => new { text = o.Text ?? string.Empty, emoji = o.Emoji ?? string.Empty })
+                options = (model.Options ?? new List<CreatePollOptionUIVM>()).Select(o => new { text = o.Text ?? string.Empty, emoji = o.Emoji ?? string.Empty })
             }));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> VotePoll([FromBody] VotePollVM model)
+        public Task<IActionResult> VotePoll([FromBody] VotePollUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Poll not found." } }));
@@ -148,7 +148,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Edit([FromBody] EditMessageVM model)
+        public Task<IActionResult> Edit([FromBody] EditMessageUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
@@ -158,7 +158,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> DeleteMessage([FromBody] EditMessageVM model)
+        public Task<IActionResult> DeleteMessage([FromBody] EditMessageUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
@@ -172,7 +172,7 @@ namespace Discode_MVC_Client.Controllers
             if (string.IsNullOrWhiteSpace(name))
                 return BadRequest(new { errors = new[] { "Choose a user." } });
 
-            var (relation, status) = await GetAsync<DmRelationVM>("api/dm/" + Uri.EscapeDataString(name.Trim()) + "/relation");
+            var (relation, status) = await GetAsync<DmRelationUIVM>("api/dm/" + Uri.EscapeDataString(name.Trim()) + "/relation");
             if (status == System.Net.HttpStatusCode.Unauthorized)
                 return Unauthorized();
             if (relation is null)
@@ -187,7 +187,7 @@ namespace Discode_MVC_Client.Controllers
             if (string.IsNullOrWhiteSpace(name))
                 return BadRequest(new { errors = new[] { "Choose a friend." } });
 
-            var (relation, status) = await GetAsync<DmRelationVM>("api/dm/" + Uri.EscapeDataString(name.Trim()) + "/relation");
+            var (relation, status) = await GetAsync<DmRelationUIVM>("api/dm/" + Uri.EscapeDataString(name.Trim()) + "/relation");
             if (status == System.Net.HttpStatusCode.Unauthorized)
                 return Unauthorized();
             if (relation is null)
@@ -203,7 +203,7 @@ namespace Discode_MVC_Client.Controllers
             if (string.IsNullOrWhiteSpace(name))
                 return BadRequest(new { errors = new[] { "Choose a friend." } });
 
-            var (profile, status) = await GetAsync<UserProfileVM>("api/account/users/" + Uri.EscapeDataString(name.Trim()));
+            var (profile, status) = await GetAsync<UserProfileUIVM>("api/account/users/" + Uri.EscapeDataString(name.Trim()));
             if (status == System.Net.HttpStatusCode.Unauthorized)
                 return Unauthorized();
             if (profile is null)
@@ -216,15 +216,15 @@ namespace Discode_MVC_Client.Controllers
         [HttpGet]
         public async Task<IActionResult> ForwardTargets()
         {
-            var (friends, status) = await GetAsync<List<FriendRequestVM>>("api/friend");
+            var (friends, status) = await GetAsync<List<FriendRequestUIVM>>("api/friend");
             if (status == System.Net.HttpStatusCode.Unauthorized)
                 return Unauthorized();
 
-            var model = new ForwardTargetsVM
+            var model = new ForwardTargetsUIVM
             {
-                People = (friends ?? new List<FriendRequestVM>())
+                People = (friends ?? new List<FriendRequestUIVM>())
                     .OrderBy(friend => friend.Name, StringComparer.OrdinalIgnoreCase)
-                    .Select(friend => new ForwardTargetVM { Kind = "user", Key = friend.UserName, Name = friend.Name, Subtitle = friend.UserName, AvatarUrl = friend.AvatarUrl })
+                    .Select(friend => new ForwardTargetUIVM { Kind = "user", Key = friend.UserName, Name = friend.Name, Subtitle = friend.UserName, AvatarUrl = friend.AvatarUrl })
                     .ToList()
             };
             return PartialView("_ForwardTargets", model);
@@ -232,7 +232,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Forward([FromBody] ForwardMessageVM model)
+        public Task<IActionResult> Forward([FromBody] ForwardMessageUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
@@ -246,11 +246,11 @@ namespace Discode_MVC_Client.Controllers
             if (string.IsNullOrWhiteSpace(name))
                 return BadRequest(new { errors = new[] { "Choose a friend." } });
 
-            var (messages, status) = await GetAsync<List<MessageVM>>("api/dm/" + Uri.EscapeDataString(name.Trim()) + "/pins");
+            var (messages, status) = await GetAsync<List<MessageUIVM>>("api/dm/" + Uri.EscapeDataString(name.Trim()) + "/pins");
             if (status == System.Net.HttpStatusCode.Unauthorized)
                 return Unauthorized();
 
-            var model = new PinnedMessagesVM { Messages = messages ?? new List<MessageVM>() };
+            var model = new PinnedMessagesUIVM { Messages = messages ?? new List<MessageUIVM>() };
             if (int.TryParse(Request.Cookies["tz"], out var offset) && Math.Abs(offset) <= 14 * 60)
                 model.UtcOffsetMinutes = offset;
 
@@ -259,7 +259,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Pin([FromBody] PinMessageVM model)
+        public Task<IActionResult> Pin([FromBody] PinMessageUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
@@ -269,7 +269,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> React([FromBody] ReactMessageVM model)
+        public Task<IActionResult> React([FromBody] ReactMessageUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
@@ -279,7 +279,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Read([FromBody] DmTargetVM model)
+        public Task<IActionResult> Read([FromBody] DmTargetUIVM model)
         {
             if (model is null || string.IsNullOrWhiteSpace(model.UserName))
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a friend." } }));
@@ -289,7 +289,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Close([FromBody] DmTargetVM model)
+        public Task<IActionResult> Close([FromBody] DmTargetUIVM model)
         {
             if (model is null || string.IsNullOrWhiteSpace(model.UserName))
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a friend." } }));
@@ -320,10 +320,10 @@ namespace Discode_MVC_Client.Controllers
             }
         }
 
-        private ProfileVM FallbackProfile()
+        private ProfileUIVM FallbackProfile()
         {
             var displayName = User.Identity?.Name ?? string.Empty;
-            return new ProfileVM
+            return new ProfileUIVM
             {
                 DisplayName = displayName,
                 UserName = User.FindFirst("userName")?.Value ?? displayName,
@@ -331,10 +331,10 @@ namespace Discode_MVC_Client.Controllers
             };
         }
 
-        private static void ApplyProfile(HomeVM home, ProfileVM profile)
+        private static void ApplyProfile(HomeUIVM home, ProfileUIVM profile)
         {
             home.Profile = profile;
-            home.Update = new UpdateProfileVM
+            home.Update = new UpdateProfileUIVM
             {
                 UserName = profile.UserName,
                 DisplayName = profile.DisplayName,

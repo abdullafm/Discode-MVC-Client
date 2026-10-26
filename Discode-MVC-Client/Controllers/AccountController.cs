@@ -32,12 +32,12 @@ namespace Discode_MVC_Client.Controllers
             if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Home");
 
-            return View(new RegisterVM { Email = TempData["AuthEmail"] as string ?? string.Empty });
+            return View(new RegisterUIVM { Email = TempData["AuthEmail"] as string ?? string.Empty });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Register(RegisterVM model)
+        public async Task<IActionResult> Register(RegisterUIVM model)
         {
             model.Email = model.Email?.Trim() ?? string.Empty;
             model.DisplayName = model.DisplayName?.Trim() ?? string.Empty;
@@ -94,7 +94,7 @@ namespace Discode_MVC_Client.Controllers
                     return RedirectToAction(nameof(VerifyEmail), new { email = model.Email });
                 }
 
-                var result = await ReadJsonAsync<RegisterResponseVM>(response);
+                var result = await ReadJsonAsync<RegisterResponseUIVM>(response);
                 foreach (var error in result?.Errors is { Length: > 0 } ? result.Errors : new[] { "Could not create the account. Check the details and try again." })
                     ModelState.AddModelError(string.Empty, error);
             }
@@ -114,7 +114,7 @@ namespace Discode_MVC_Client.Controllers
             if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Home");
 
-            return View(new LoginVM
+            return View(new LoginUIVM
             {
                 ReturnUrl = returnUrl,
                 Email = TempData["AuthEmail"] as string ?? string.Empty
@@ -123,7 +123,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginVM model)
+        public async Task<IActionResult> Login(LoginUIVM model)
         {
             var password = model.Password;
             model.Email = model.Email?.Trim() ?? string.Empty;
@@ -150,7 +150,7 @@ namespace Discode_MVC_Client.Controllers
                     return View(model);
                 }
 
-                var result = await ReadJsonAsync<LoginResponseVM>(response);
+                var result = await ReadJsonAsync<LoginResponseUIVM>(response);
                 if (!response.IsSuccessStatusCode || result is null || !result.IsSuccess || string.IsNullOrEmpty(result.Token))
                 {
                     foreach (var error in result?.Errors is { Length: > 0 } ? result.Errors : new[] { "Could not log in. Check your details and try again." })
@@ -180,12 +180,12 @@ namespace Discode_MVC_Client.Controllers
             if (string.IsNullOrWhiteSpace(email))
                 return RedirectToAction(nameof(Register));
 
-            return View(new VerifyEmailVM { Email = email.Trim() });
+            return View(new VerifyEmailUIVM { Email = email.Trim() });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> VerifyEmail(VerifyEmailVM model)
+        public async Task<IActionResult> VerifyEmail(VerifyEmailUIVM model)
         {
             if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Home");
@@ -208,7 +208,7 @@ namespace Discode_MVC_Client.Controllers
                     model.Code
                 });
 
-                var result = await ReadJsonAsync<RegisterResponseVM>(response);
+                var result = await ReadJsonAsync<RegisterResponseUIVM>(response);
                 if (response.IsSuccessStatusCode && result is not null && result.IsSuccess)
                 {
                     TempData["AuthEmail"] = model.Email;
@@ -229,7 +229,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ResendCode(VerifyEmailVM model)
+        public async Task<IActionResult> ResendCode(VerifyEmailUIVM model)
         {
             if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Home");
@@ -242,7 +242,7 @@ namespace Discode_MVC_Client.Controllers
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
                 var response = await client.PostAsJsonAsync("api/account/resend-code", new { model.Email });
-                var result = await ReadJsonAsync<RegisterResponseVM>(response);
+                var result = await ReadJsonAsync<RegisterResponseUIVM>(response);
                 if (response.IsSuccessStatusCode && result is not null && result.IsSuccess)
                     TempData["Info"] = "A new code was sent to your email.";
                 else
@@ -254,7 +254,7 @@ namespace Discode_MVC_Client.Controllers
                 ModelState.AddModelError(string.Empty, "The service is unavailable right now. Please try again later.");
             }
 
-            return View(nameof(VerifyEmail), new VerifyEmailVM { Email = model.Email });
+            return View(nameof(VerifyEmail), new VerifyEmailUIVM { Email = model.Email });
         }
 
         [HttpGet]
@@ -263,12 +263,12 @@ namespace Discode_MVC_Client.Controllers
             if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Home");
 
-            return View(new ForgotPasswordVM());
+            return View(new ForgotPasswordUIVM());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ForgotPassword(ForgotPasswordVM model)
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordUIVM model)
         {
             if (User.Identity?.IsAuthenticated == true)
                 return RedirectToAction("Index", "Home");
@@ -295,7 +295,7 @@ namespace Discode_MVC_Client.Controllers
                     return View(model);
                 }
 
-                var result = await ReadJsonAsync<RegisterResponseVM>(response);
+                var result = await ReadJsonAsync<RegisterResponseUIVM>(response);
                 if (!response.IsSuccessStatusCode || result is null || !result.IsSuccess)
                 {
                     foreach (var error in result?.Errors is { Length: > 0 } ? result.Errors : new[] { "Could not send the reset email. Try again in a moment." })
@@ -304,7 +304,7 @@ namespace Discode_MVC_Client.Controllers
                 }
 
                 ViewBag.Sent = true;
-                return View(new ForgotPasswordVM());
+                return View(new ForgotPasswordUIVM());
             }
             catch (HttpRequestException)
             {
@@ -316,7 +316,7 @@ namespace Discode_MVC_Client.Controllers
         [HttpGet]
         public IActionResult ResetPassword(string? email, string? token)
         {
-            return View(new ResetPasswordVM
+            return View(new ResetPasswordUIVM
             {
                 Email = email?.Trim() ?? string.Empty,
                 Token = token ?? string.Empty
@@ -325,7 +325,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ResetPassword(ResetPasswordVM model)
+        public async Task<IActionResult> ResetPassword(ResetPasswordUIVM model)
         {
             model.Email = model.Email?.Trim() ?? string.Empty;
             model.Token = model.Token ?? string.Empty;
@@ -365,7 +365,7 @@ namespace Discode_MVC_Client.Controllers
                     return View(model);
                 }
 
-                var result = await ReadJsonAsync<RegisterResponseVM>(response);
+                var result = await ReadJsonAsync<RegisterResponseUIVM>(response);
                 if (!response.IsSuccessStatusCode || result is null || !result.IsSuccess)
                 {
                     foreach (var error in result?.Errors is { Length: > 0 } ? result.Errors : new[] { "Could not reset the password." })
@@ -395,7 +395,7 @@ namespace Discode_MVC_Client.Controllers
             return RedirectToAction(nameof(Login));
         }
 
-        private async Task SignInAsync(LoginResponseVM login)
+        private async Task SignInAsync(LoginResponseUIVM login)
         {
             var claims = new List<Claim>
             {

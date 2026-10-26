@@ -30,33 +30,33 @@ namespace Discode_MVC_Client.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(string? tab, string? search)
         {
-            var (profile, profileStatus) = await GetAsync<ProfileVM>("api/account/profile");
+            var (profile, profileStatus) = await GetAsync<ProfileUIVM>("api/account/profile");
             if (profileStatus == System.Net.HttpStatusCode.Unauthorized)
                 return await SessionExpiredAsync();
 
-            var model = new HomeIndexVM
+            var model = new HomeIndexUIVM
             {
-                Tab = HomeIndexVM.Tabs.Contains(tab) ? tab! : "online",
+                Tab = HomeIndexUIVM.Tabs.Contains(tab) ? tab! : "online",
                 Search = search?.Trim() ?? string.Empty,
                 ApiUnavailable = profile is null && profileStatus is null
             };
             ApplyProfile(model, profile ?? FallbackProfile());
 
-            var friends = GetAsync<List<FriendRequestVM>>("api/friend");
-            var requests = GetAsync<FriendPendingVM>("api/friend/pending");
-            var blocked = GetAsync<List<FriendRequestVM>>("api/block");
-            var notifications = GetAsync<List<NotificationVM>>("api/notification");
+            var friends = GetAsync<List<FriendRequestUIVM>>("api/friend");
+            var requests = GetAsync<FriendPendingUIVM>("api/friend/pending");
+            var blocked = GetAsync<List<FriendRequestUIVM>>("api/block");
+            var notifications = GetAsync<List<NotificationUIVM>>("api/notification");
             await Task.WhenAll(friends, requests, blocked, notifications);
 
-            model.Friends = friends.Result.Data ?? new List<FriendRequestVM>();
-            model.Requests = requests.Result.Data ?? new FriendPendingVM();
-            model.Blocked = blocked.Result.Data ?? new List<FriendRequestVM>();
-            model.Notifications = notifications.Result.Data ?? new List<NotificationVM>();
+            model.Friends = friends.Result.Data ?? new List<FriendRequestUIVM>();
+            model.Requests = requests.Result.Data ?? new FriendPendingUIVM();
+            model.Blocked = blocked.Result.Data ?? new List<FriendRequestUIVM>();
+            model.Notifications = notifications.Result.Data ?? new List<NotificationUIVM>();
 
             if (model.Tab == "add" && model.Search.Length > 0)
             {
-                var (users, _) = await GetAsync<List<UserSearchVM>>("api/account/search?searchName=" + Uri.EscapeDataString(model.Search));
-                model.SearchResults = users ?? new List<UserSearchVM>();
+                var (users, _) = await GetAsync<List<UserSearchUIVM>>("api/account/search?searchName=" + Uri.EscapeDataString(model.Search));
+                model.SearchResults = users ?? new List<UserSearchUIVM>();
             }
 
             return View(model);
@@ -79,10 +79,10 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileVM model)
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileUIVM model)
         {
             if (model is null)
-                return BadRequest(new UpdateProfileResponseVM { Errors = new[] { "Profile data is missing." } });
+                return BadRequest(new UpdateProfileResponseUIVM { Errors = new[] { "Profile data is missing." } });
 
             try
             {
@@ -90,79 +90,79 @@ namespace Discode_MVC_Client.Controllers
                 var response = await client.PutAsJsonAsync("api/account/myprofileupdate", model);
                 if (response.StatusCode is System.Net.HttpStatusCode.NotFound or System.Net.HttpStatusCode.MethodNotAllowed)
                     response = await client.PutAsJsonAsync("api/account/profile", model);
-                var result = await ReadJsonAsync<UpdateProfileResponseVM>(response);
+                var result = await ReadJsonAsync<UpdateProfileResponseUIVM>(response);
 
                 if (!response.IsSuccessStatusCode || result is null || !result.IsSuccess)
                 {
                     var error = result?.Errors is { Length: > 0 }
                         ? result.Errors[0]
                         : $"Could not update the profile ({(int)response.StatusCode}).";
-                    return BadRequest(new UpdateProfileResponseVM { Errors = new[] { error } });
+                    return BadRequest(new UpdateProfileResponseUIVM { Errors = new[] { error } });
                 }
 
                 return Ok(result);
             }
             catch (HttpRequestException)
             {
-                return StatusCode(503, new UpdateProfileResponseVM { Errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+                return StatusCode(503, new UpdateProfileResponseUIVM { Errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
             }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangeUsername([FromBody] ChangeUsernameVM model)
+        public async Task<IActionResult> ChangeUsername([FromBody] ChangeUsernameUIVM model)
         {
             if (model is null)
-                return BadRequest(new UpdateProfileResponseVM { Errors = new[] { "Username data is missing." } });
+                return BadRequest(new UpdateProfileResponseUIVM { Errors = new[] { "Username data is missing." } });
 
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
                 var response = await client.PutAsJsonAsync("api/account/username", model);
-                var result = await ReadJsonAsync<UpdateProfileResponseVM>(response);
+                var result = await ReadJsonAsync<UpdateProfileResponseUIVM>(response);
 
                 if (!response.IsSuccessStatusCode || result is null || !result.IsSuccess)
                 {
                     var error = result?.Errors is { Length: > 0 }
                         ? result.Errors[0]
                         : "Could not change the username.";
-                    return BadRequest(new UpdateProfileResponseVM { Errors = new[] { error } });
+                    return BadRequest(new UpdateProfileResponseUIVM { Errors = new[] { error } });
                 }
 
                 return Ok(result);
             }
             catch (HttpRequestException)
             {
-                return StatusCode(503, new UpdateProfileResponseVM { Errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+                return StatusCode(503, new UpdateProfileResponseUIVM { Errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
             }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordVM model)
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordUIVM model)
         {
             if (model is null)
-                return BadRequest(new UpdateProfileResponseVM { Errors = new[] { "Password data is missing." } });
+                return BadRequest(new UpdateProfileResponseUIVM { Errors = new[] { "Password data is missing." } });
 
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
                 var response = await client.PutAsJsonAsync("api/account/password", model);
-                var result = await ReadJsonAsync<UpdateProfileResponseVM>(response);
+                var result = await ReadJsonAsync<UpdateProfileResponseUIVM>(response);
 
                 if (!response.IsSuccessStatusCode || result is null || !result.IsSuccess)
                 {
                     var error = result?.Errors is { Length: > 0 }
                         ? result.Errors[0]
                         : "Could not change the password.";
-                    return BadRequest(new UpdateProfileResponseVM { Errors = new[] { error } });
+                    return BadRequest(new UpdateProfileResponseUIVM { Errors = new[] { error } });
                 }
 
                 return Ok(result);
             }
             catch (HttpRequestException)
             {
-                return StatusCode(503, new UpdateProfileResponseVM { Errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+                return StatusCode(503, new UpdateProfileResponseUIVM { Errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
             }
         }
 
@@ -194,16 +194,16 @@ namespace Discode_MVC_Client.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var data = await client.GetFromJsonAsync<List<FriendRequestVM>>("api/friend");
-                return Ok(data ?? new List<FriendRequestVM>());
+                var data = await client.GetFromJsonAsync<List<FriendRequestUIVM>>("api/friend");
+                return Ok(data ?? new List<FriendRequestUIVM>());
             }
             catch (HttpRequestException)
             {
-                return StatusCode(503, Array.Empty<FriendRequestVM>());
+                return StatusCode(503, Array.Empty<FriendRequestUIVM>());
             }
             catch (JsonException)
             {
-                return Ok(Array.Empty<FriendRequestVM>());
+                return Ok(Array.Empty<FriendRequestUIVM>());
             }
         }
 
@@ -216,7 +216,7 @@ namespace Discode_MVC_Client.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var profile = await client.GetFromJsonAsync<UserProfileVM>("api/account/users/" + Uri.EscapeDataString(name.Trim()));
+                var profile = await client.GetFromJsonAsync<UserProfileUIVM>("api/account/users/" + Uri.EscapeDataString(name.Trim()));
                 if (profile is null)
                     return NotFound(new { errors = new[] { "User not found." } });
 
@@ -253,8 +253,8 @@ namespace Discode_MVC_Client.Controllers
                 if (!response.IsSuccessStatusCode)
                     return StatusCode((int)response.StatusCode, new { errors = new[] { response.StatusCode == System.Net.HttpStatusCode.BadRequest ? "This profile is private." : "Friends are not available." } });
 
-                var friends = await response.Content.ReadFromJsonAsync<List<FriendRequestVM>>();
-                return Ok((friends ?? new List<FriendRequestVM>()).Select(f => new { userName = f.UserName, name = f.Name, avatarUrl = f.AvatarUrl, status = f.Status }));
+                var friends = await response.Content.ReadFromJsonAsync<List<FriendRequestUIVM>>();
+                return Ok((friends ?? new List<FriendRequestUIVM>()).Select(f => new { userName = f.UserName, name = f.Name, avatarUrl = f.AvatarUrl, status = f.Status }));
             }
             catch (HttpRequestException)
             {
@@ -283,7 +283,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> IgnoreUser([FromBody] IgnoreUserVM model)
+        public Task<IActionResult> IgnoreUser([FromBody] IgnoreUserUIVM model)
         {
             if (model is null || string.IsNullOrWhiteSpace(model.UserName))
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a user." } }));
@@ -302,7 +302,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> TogglePostRepost([FromBody] PostIdVM model)
+        public Task<IActionResult> TogglePostRepost([FromBody] PostIdUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
@@ -312,7 +312,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> CreatePost([FromBody] CreatePostVM model)
+        public Task<IActionResult> CreatePost([FromBody] CreatePostUIVM model)
         {
             if (model is null)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post data is missing." } }));
@@ -326,7 +326,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> UpdatePost([FromBody] UpdateTextVM model)
+        public Task<IActionResult> UpdatePost([FromBody] UpdateTextUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
@@ -336,7 +336,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> UpdateComment([FromBody] UpdateTextVM model)
+        public Task<IActionResult> UpdateComment([FromBody] UpdateTextUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Comment not found." } }));
@@ -346,7 +346,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> DeletePost([FromBody] PostIdVM model)
+        public Task<IActionResult> DeletePost([FromBody] PostIdUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
@@ -356,7 +356,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> TogglePostLike([FromBody] PostIdVM model)
+        public Task<IActionResult> TogglePostLike([FromBody] PostIdUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
@@ -366,7 +366,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> CreateComment([FromBody] CreateCommentVM model)
+        public Task<IActionResult> CreateComment([FromBody] CreateCommentUIVM model)
         {
             if (model is null || model.PostId <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
@@ -376,7 +376,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> DeleteComment([FromBody] CommentIdVM model)
+        public Task<IActionResult> DeleteComment([FromBody] CommentIdUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Comment not found." } }));
@@ -386,7 +386,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> ToggleCommentLike([FromBody] CommentIdVM model)
+        public Task<IActionResult> ToggleCommentLike([FromBody] CommentIdUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Comment not found." } }));
@@ -419,16 +419,16 @@ namespace Discode_MVC_Client.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var categories = await client.GetFromJsonAsync<List<EmojiCategoryVM>>("api/emoji");
-                return Ok(categories ?? new List<EmojiCategoryVM>());
+                var categories = await client.GetFromJsonAsync<List<EmojiCategoryUIVM>>("api/emoji");
+                return Ok(categories ?? new List<EmojiCategoryUIVM>());
             }
             catch (HttpRequestException ex)
             {
-                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<EmojiCategoryVM>());
+                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<EmojiCategoryUIVM>());
             }
             catch (JsonException)
             {
-                return Ok(Array.Empty<EmojiCategoryVM>());
+                return Ok(Array.Empty<EmojiCategoryUIVM>());
             }
         }
 
@@ -438,16 +438,16 @@ namespace Discode_MVC_Client.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var streams = await client.GetFromJsonAsync<List<LiveStreamVM>>("api/live");
-                return Ok(streams ?? new List<LiveStreamVM>());
+                var streams = await client.GetFromJsonAsync<List<LiveStreamUIVM>>("api/live");
+                return Ok(streams ?? new List<LiveStreamUIVM>());
             }
             catch (HttpRequestException ex)
             {
-                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<LiveStreamVM>());
+                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<LiveStreamUIVM>());
             }
             catch (JsonException)
             {
-                return Ok(Array.Empty<LiveStreamVM>());
+                return Ok(Array.Empty<LiveStreamUIVM>());
             }
         }
 
@@ -473,7 +473,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult RemoveLiveThumbnail([FromBody] LiveThumbnailVM model)
+        public IActionResult RemoveLiveThumbnail([FromBody] LiveThumbnailUIVM model)
         {
             DeleteLiveThumbnailFile(model?.ImageUrl);
             return Ok(new { });
@@ -497,22 +497,22 @@ namespace Discode_MVC_Client.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var stories = await client.GetFromJsonAsync<List<StoryVM>>("api/story");
-                return Ok(stories ?? new List<StoryVM>());
+                var stories = await client.GetFromJsonAsync<List<StoryUIVM>>("api/story");
+                return Ok(stories ?? new List<StoryUIVM>());
             }
             catch (HttpRequestException ex)
             {
-                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<StoryVM>());
+                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<StoryUIVM>());
             }
             catch (JsonException)
             {
-                return Ok(Array.Empty<StoryVM>());
+                return Ok(Array.Empty<StoryUIVM>());
             }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> CreateStory([FromBody] CreateStoryVM model)
+        public Task<IActionResult> CreateStory([FromBody] CreateStoryUIVM model)
         {
             if (model is null)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Story data is missing." } }));
@@ -522,7 +522,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> ToggleStoryLike([FromBody] PostIdVM model)
+        public Task<IActionResult> ToggleStoryLike([FromBody] PostIdUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Story not found." } }));
@@ -532,7 +532,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> InviteToLive([FromBody] InviteToLiveVM model)
+        public Task<IActionResult> InviteToLive([FromBody] InviteToLiveUIVM model)
         {
             if (model is null || model.Id <= 0 || model.UserNames is null || model.UserNames.Count == 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Pick at least one friend." } }));
@@ -542,7 +542,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> ReplyStory([FromBody] StoryReplyVM model)
+        public Task<IActionResult> ReplyStory([FromBody] StoryReplyUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Story not found." } }));
@@ -552,7 +552,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> RecordStoryView([FromBody] PostIdVM model)
+        public Task<IActionResult> RecordStoryView([FromBody] PostIdUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Story not found." } }));
@@ -566,22 +566,22 @@ namespace Discode_MVC_Client.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var viewers = await client.GetFromJsonAsync<List<StoryViewerVM>>($"api/story/{id}/viewers");
-                return Ok(viewers ?? new List<StoryViewerVM>());
+                var viewers = await client.GetFromJsonAsync<List<StoryViewerUIVM>>($"api/story/{id}/viewers");
+                return Ok(viewers ?? new List<StoryViewerUIVM>());
             }
             catch (HttpRequestException ex)
             {
-                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<StoryViewerVM>());
+                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<StoryViewerUIVM>());
             }
             catch (JsonException)
             {
-                return Ok(Array.Empty<StoryViewerVM>());
+                return Ok(Array.Empty<StoryViewerUIVM>());
             }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteStory([FromBody] DeleteStoryVM model)
+        public async Task<IActionResult> DeleteStory([FromBody] DeleteStoryUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return BadRequest(new { errors = new[] { "Story not found." } });
@@ -639,23 +639,23 @@ namespace Discode_MVC_Client.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var posts = await client.GetFromJsonAsync<List<PostVM>>(url);
-                return Ok(posts ?? new List<PostVM>());
+                var posts = await client.GetFromJsonAsync<List<PostUIVM>>(url);
+                return Ok(posts ?? new List<PostUIVM>());
             }
             catch (HttpRequestException ex)
             {
-                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<PostVM>());
+                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<PostUIVM>());
             }
             catch (JsonException)
             {
-                return Ok(Array.Empty<PostVM>());
+                return Ok(Array.Empty<PostUIVM>());
             }
         }
 
-        private ProfileVM FallbackProfile()
+        private ProfileUIVM FallbackProfile()
         {
             var displayName = User.Identity?.Name ?? string.Empty;
-            return new ProfileVM
+            return new ProfileUIVM
             {
                 DisplayName = displayName,
                 UserName = User.FindFirst("userName")?.Value ?? displayName,
@@ -663,10 +663,10 @@ namespace Discode_MVC_Client.Controllers
             };
         }
 
-        private static void ApplyProfile(HomeVM home, ProfileVM profile)
+        private static void ApplyProfile(HomeUIVM home, ProfileUIVM profile)
         {
             home.Profile = profile;
-            home.Update = new UpdateProfileVM
+            home.Update = new UpdateProfileUIVM
             {
                 UserName = profile.UserName,
                 DisplayName = profile.DisplayName,

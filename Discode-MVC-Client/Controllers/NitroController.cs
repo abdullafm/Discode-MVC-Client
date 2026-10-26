@@ -20,7 +20,7 @@ namespace Discode_MVC_Client.Controllers
         public async Task<IActionResult> Index()
         {
             var displayName = User.Identity?.Name ?? "";
-            var fallback = new ProfileVM
+            var fallback = new ProfileUIVM
             {
                 DisplayName = displayName,
                 UserName = User.FindFirst("userName")?.Value ?? displayName,
@@ -30,7 +30,7 @@ namespace Discode_MVC_Client.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var profile = await client.GetFromJsonAsync<ProfileVM>("api/account/profile");
+                var profile = await client.GetFromJsonAsync<ProfileUIVM>("api/account/profile");
                 if (profile is not null)
                     return View(ToHome(profile));
             }
@@ -44,10 +44,10 @@ namespace Discode_MVC_Client.Controllers
             return View(ToHome(fallback));
         }
 
-        private static HomeVM ToHome(ProfileVM profile) => new()
+        private static HomeUIVM ToHome(ProfileUIVM profile) => new()
         {
             Profile = profile,
-            Update = new UpdateProfileVM
+            Update = new UpdateProfileUIVM
             {
                 UserName = profile.UserName,
                 DisplayName = profile.DisplayName,

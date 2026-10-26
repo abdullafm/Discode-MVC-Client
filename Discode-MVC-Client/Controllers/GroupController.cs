@@ -23,14 +23,14 @@ namespace Discode_MVC_Client.Controllers
 
         public async Task<IActionResult> Index(int id)
         {
-            var (profile, profileStatus) = await GetAsync<ProfileVM>("api/account/profile");
+            var (profile, profileStatus) = await GetAsync<ProfileUIVM>("api/account/profile");
             if (profileStatus == System.Net.HttpStatusCode.Unauthorized)
                 return await SessionExpiredAsync();
 
-            var page = new GroupPageVM();
+            var page = new GroupPageUIVM();
             ApplyProfile(page, profile ?? FallbackProfile());
 
-            var (group, status) = await GetAsync<GroupVM>("api/group/" + id);
+            var (group, status) = await GetAsync<GroupUIVM>("api/group/" + id);
             page.Group = group;
             if (group is null)
                 page.Error = status is null ? "The API is not running. Start Discode-API-FinalProject and try again." : "This group is not available.";
@@ -45,16 +45,16 @@ namespace Discode_MVC_Client.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var groups = await client.GetFromJsonAsync<List<GroupVM>>("api/group");
-                return Ok(groups ?? new List<GroupVM>());
+                var groups = await client.GetFromJsonAsync<List<GroupUIVM>>("api/group");
+                return Ok(groups ?? new List<GroupUIVM>());
             }
             catch (HttpRequestException ex)
             {
-                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<GroupVM>());
+                return StatusCode((int?)ex.StatusCode ?? 503, Array.Empty<GroupUIVM>());
             }
             catch (JsonException)
             {
-                return Ok(Array.Empty<GroupVM>());
+                return Ok(Array.Empty<GroupUIVM>());
             }
         }
 
@@ -66,7 +66,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Read([FromBody] GroupIdVM model)
+        public Task<IActionResult> Read([FromBody] GroupIdUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Group not found." } }));
@@ -82,7 +82,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Send([FromBody] SendGroupMessageVM model)
+        public Task<IActionResult> Send([FromBody] SendGroupMessageUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Group not found." } }));
@@ -91,13 +91,13 @@ namespace Discode_MVC_Client.Controllers
             {
                 text = model.Text ?? string.Empty,
                 replyToMessageId = model.ReplyToMessageId,
-                attachments = (model.Attachments ?? new List<MessageAttachmentVM>()).Select(a => new { url = a.Url, fileName = a.FileName, contentType = a.ContentType, size = a.Size })
+                attachments = (model.Attachments ?? new List<MessageAttachmentUIVM>()).Select(a => new { url = a.Url, fileName = a.FileName, contentType = a.ContentType, size = a.Size })
             }));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> DeleteMessage([FromBody] GroupMessageRefVM model)
+        public Task<IActionResult> DeleteMessage([FromBody] GroupMessageRefUIVM model)
         {
             if (model is null || model.Id <= 0 || model.MessageId <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
@@ -107,7 +107,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> ForwardMessage([FromBody] ForwardGroupMessageVM model)
+        public Task<IActionResult> ForwardMessage([FromBody] ForwardGroupMessageUIVM model)
         {
             if (model is null || model.Id <= 0 || model.MessageId <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
@@ -117,7 +117,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> CreatePoll([FromBody] CreateGroupPollVM model)
+        public Task<IActionResult> CreatePoll([FromBody] CreateGroupPollUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Group not found." } }));
@@ -127,13 +127,13 @@ namespace Discode_MVC_Client.Controllers
                 question = model.Question ?? string.Empty,
                 allowMultiple = model.AllowMultiple,
                 durationHours = model.DurationHours,
-                options = (model.Options ?? new List<CreatePollOptionVM>()).Select(o => new { text = o.Text ?? string.Empty, emoji = o.Emoji ?? string.Empty })
+                options = (model.Options ?? new List<CreatePollOptionUIVM>()).Select(o => new { text = o.Text ?? string.Empty, emoji = o.Emoji ?? string.Empty })
             }));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> React([FromBody] ReactGroupMessageVM model)
+        public Task<IActionResult> React([FromBody] ReactGroupMessageUIVM model)
         {
             if (model is null || model.Id <= 0 || model.MessageId <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
@@ -143,7 +143,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> VotePoll([FromBody] VoteGroupPollVM model)
+        public Task<IActionResult> VotePoll([FromBody] VoteGroupPollUIVM model)
         {
             if (model is null || model.Id <= 0 || model.MessageId <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Poll not found." } }));
@@ -153,7 +153,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Update([FromBody] UpdateGroupVM model)
+        public Task<IActionResult> Update([FromBody] UpdateGroupUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Group not found." } }));
@@ -163,7 +163,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> AddMembers([FromBody] AddGroupMembersVM model)
+        public Task<IActionResult> AddMembers([FromBody] AddGroupMembersUIVM model)
         {
             if (model is null || model.Id <= 0 || model.UserNames is null || model.UserNames.Count == 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Pick at least one friend." } }));
@@ -173,7 +173,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> TransferOwner([FromBody] TransferGroupOwnerVM model)
+        public Task<IActionResult> TransferOwner([FromBody] TransferGroupOwnerUIVM model)
         {
             if (model is null || model.Id <= 0 || string.IsNullOrWhiteSpace(model.UserName))
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a member." } }));
@@ -183,7 +183,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> RemoveMember([FromBody] RemoveGroupMemberVM model)
+        public Task<IActionResult> RemoveMember([FromBody] RemoveGroupMemberUIVM model)
         {
             if (model is null || model.Id <= 0 || string.IsNullOrWhiteSpace(model.UserName))
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a member." } }));
@@ -193,7 +193,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Leave([FromBody] GroupIdVM model)
+        public Task<IActionResult> Leave([FromBody] GroupIdUIVM model)
         {
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Group not found." } }));
@@ -221,7 +221,7 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([FromBody] CreateGroupVM model)
+        public async Task<IActionResult> Create([FromBody] CreateGroupUIVM model)
         {
             if (model is null || model.UserNames is null || model.UserNames.Count == 0)
                 return BadRequest(new { errors = new[] { "Pick at least two friends for a group." } });
@@ -267,10 +267,10 @@ namespace Discode_MVC_Client.Controllers
             }
         }
 
-        private ProfileVM FallbackProfile()
+        private ProfileUIVM FallbackProfile()
         {
             var displayName = User.Identity?.Name ?? string.Empty;
-            return new ProfileVM
+            return new ProfileUIVM
             {
                 DisplayName = displayName,
                 UserName = User.FindFirst("userName")?.Value ?? displayName,
@@ -278,10 +278,10 @@ namespace Discode_MVC_Client.Controllers
             };
         }
 
-        private static void ApplyProfile(HomeVM home, ProfileVM profile)
+        private static void ApplyProfile(HomeUIVM home, ProfileUIVM profile)
         {
             home.Profile = profile;
-            home.Update = new UpdateProfileVM
+            home.Update = new UpdateProfileUIVM
             {
                 UserName = profile.UserName,
                 DisplayName = profile.DisplayName,

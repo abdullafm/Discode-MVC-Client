@@ -1,6 +1,6 @@
 ﻿@using System.Globalization
 @using Discode_MVC_Client.Mappers
-@model DmPageVM
+@model DmPageUIVM
 @{
     Layout = "_HomeLayout";
     var chat = Model.Chat;
@@ -116,7 +116,7 @@
                         <div id="dm-relation" class="dm-meta-forms">
                             @if (chat is not null)
                             {
-                                <partial name="_DmRelation" model="new DmRelationVM { UserName = chat.UserName, Relation = chat.Relation, FriendRequestId = chat.FriendRequestId, BlockId = chat.BlockId }" />
+                                <partial name="_DmRelation" model="new DmRelationUIVM { UserName = chat.UserName, Relation = chat.Relation, FriendRequestId = chat.FriendRequestId, BlockId = chat.BlockId }" />
                             }
                         </div>
                     </div>
@@ -128,7 +128,7 @@
                 <div class="dm-messages" id="dm-messages">
                     @if (chat is not null)
                     {
-                        MessageVM? previous = null;
+                        MessageUIVM? previous = null;
                         foreach (var message in chat.Messages)
                         {
                             var sentAt = Local(message.CreatedAt);

@@ -31,11 +31,11 @@ namespace Discode_MVC_Client.Controllers
         [HttpGet]
         public async Task<IActionResult> Unread()
         {
-            var result = await GetAsync<List<NotificationVM>>("api/notification");
+            var result = await GetAsync<List<NotificationUIVM>>("api/notification");
             if (result.Status == HttpStatusCode.Unauthorized)
                 return Unauthorized();
 
-            return Ok((result.Data ?? new List<NotificationVM>()).Where(n => !n.IsRead).Select(n => n.Id));
+            return Ok((result.Data ?? new List<NotificationUIVM>()).Where(n => !n.IsRead).Select(n => n.Id));
         }
 
         [HttpPost]
