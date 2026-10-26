@@ -311,6 +311,10 @@
                     document.dispatchEvent(new CustomEvent("discode-servers-changed"));
                 });
 
+                connection.on("ServerChannelsChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-channels-changed", { detail: data }));
+                });
+
                 connection.on("ServerRemoved", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-server-removed", { detail: data }));
                 });

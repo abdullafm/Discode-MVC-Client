@@ -80,91 +80,7 @@
 <div class="server-channel-scroll" id="server-channel-scroll">
     <nav id="server-channel-list" aria-label="Channels">
         <div class="server-channel-loose" id="server-channel-loose"></div>
-        <div class="server-category">
-            <div class="server-category-head">
-                <button type="button" class="server-category-name">
-                    <i class="fa-solid fa-chevron-down"></i>
-                    <span>Text Channels</span>
-                </button>
-                <button type="button" class="server-category-add" data-create="channel"
-                        aria-label="Create Channel">
-                    <i class="fa-solid fa-plus"></i>
-                </button>
-            </div>
-            <div class="server-category-list">
-                <div class="server-channel-row">
-                    <button type="button" class="server-channel on" data-kind="text" data-send="1">
-                        <i class="fa-solid fa-hashtag"></i>
-                        <span class="server-channel-name">general</span>
-                        <i class="fa-solid fa-lock server-channel-lock" hidden aria-hidden="true"></i>
-                    </button>
-                    <button type="button" class="server-channel-edit" data-edit-channel
-                            aria-label="Edit Channel">
-                        <i class="fa-solid fa-gear"></i>
-                    </button>
-                </div>
-                <div class="server-channel-row">
-                    <button type="button" class="server-channel" data-kind="announce" data-send="0">
-                        <i class="fa-solid fa-bullhorn"></i>
-                        <span class="server-channel-name">announcements</span>
-                        <i class="fa-solid fa-lock server-channel-lock" aria-hidden="true"></i>
-                    </button>
-                    <button type="button" class="server-channel-edit" data-edit-channel
-                            aria-label="Edit Channel">
-                        <i class="fa-solid fa-gear"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="server-category">
-            <div class="server-category-head">
-                <button type="button" class="server-category-name">
-                    <i class="fa-solid fa-chevron-down"></i>
-                    <span>Voice Channels</span>
-                </button>
-                <button type="button" class="server-category-add" data-create="channel"
-                        aria-label="Create Channel">
-                    <i class="fa-solid fa-plus"></i>
-                </button>
-            </div>
-            <div class="server-category-list">
-                <div class="server-channel-row">
-                    <button type="button" class="server-channel" data-kind="voice" data-join="1">
-                        <i class="fa-solid fa-volume-high"></i>
-                        <span class="server-channel-name">Lounge</span>
-                        <span class="server-voice-live" hidden>0:00</span>
-                        <i class="fa-solid fa-lock server-channel-lock" hidden aria-hidden="true"></i>
-                    </button>
-                    <button type="button" class="server-channel-edit" data-edit-channel
-                            aria-label="Edit Channel">
-                        <i class="fa-solid fa-gear"></i>
-                    </button>
-                </div>
-                <div class="server-voice-people" hidden>
-                    <div class="server-voice-user">
-                        <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
-                        <span>
-                            <strong class="me-display">@Model.Profile.DisplayName</strong><small>
-                            Set a channel
-                            status
-                        </small>
-                    </span>
-                    <span class="voice-user-icons">
-                        <i class="fa-solid fa-microphone-slash voice-mute-icon" aria-hidden="true"></i>
-                        <span class="voice-deaf-icon"><i class="fa-solid fa-headphones" aria-hidden="true"></i></span>
-                    </span>
-                </div>
-                <div class="server-voice-invite">
-                    <button type="button" class="server-voice-invite-open">
-                        <i class="fa-solid fa-user-plus"></i><span>Invite to Voice</span>
-                    </button>
-                    <button type="button" class="server-voice-invite-close" aria-label="Close">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+        <div id="server-channels-data" hidden data-json="@(ViewData["ServerChannels"])"></div>
     <template id="server-category-new">
         <div class="server-category">
             <div class="server-category-head">
@@ -1038,6 +954,7 @@
             <button type="button" class="incoming-call-btn is-decline" id="incoming-group-call-decline" aria-label="Decline"><i class="fa-solid fa-phone-slash"></i></button>
             <button type="button" class="incoming-call-btn is-accept" id="incoming-group-call-accept" aria-label="Join"><i class="fa-solid fa-phone"></i></button>
         </div>
+        <script src="~/assets/js/serverchannels.js" asp-append-version="true"></script>
         <script src="~/assets/js/groups.js"></script>
         <script src="~/assets/js/profile.js"></script>
         <script src="~/assets/js/script.js"></script>

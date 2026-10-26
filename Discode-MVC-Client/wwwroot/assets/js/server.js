@@ -49,6 +49,7 @@
 
     function setManage(open) {
         isOwner = !!open;
+        window.discodeCanManage = isOwner;
         var manageOnly = document.querySelectorAll("#server-settings-open, [data-create='channel'], [data-create='category'], [data-edit-channel], [data-delete-channel], [data-delete-category], #server-welcome-edit, #channel-edit-delete");
         for (var m = 0; m < manageOnly.length; m++) manageOnly[m].hidden = !isOwner;
 
@@ -963,6 +964,17 @@
         fetch(serverApi("/voice"), { method: "DELETE" }).catch(function () {});
     }
 
+    function flash(text) {
+        var note = document.createElement("div");
+        note.className = "server-menu-notice";
+        note.textContent = text;
+        document.body.appendChild(note);
+        window.setTimeout(function () {
+            if (window.discodeDismiss) window.discodeDismiss(note);
+            else if (note.parentNode) note.parentNode.removeChild(note);
+        }, 3000);
+    }
+
     function selectChannel(button, keepVoice) {
         if (!button) return;
         currentChannel = button;
@@ -1262,6 +1274,7 @@
         document.addEventListener("scroll", closeRowMenu, true);
     }
 
+    window.discodeSelectChannel = selectChannel;
     var channelModal = document.getElementById("channel-modal");
     var channelName = document.getElementById("channel-name");
     var channelNameIcon = document.getElementById("channel-name-icon");
@@ -1392,6 +1405,25 @@
             if (!isOwner || !channelConfirm || channelConfirm.disabled) return;
             var picked = document.querySelector("#channel-types input:checked");
             var kind = picked ? picked.value : "text";
+            if (window.discodeServerChannels) {
+                var chosen = channelCategory;
+                var pickBox = document.getElementById("channel-category-pick");
+                if (!chosen && pickBox && pickBox.value) chosen = liveCategories()[Number(pickBox.value)] || null;
+                channelConfirm.disabled = true;
+                window.discodeServerChannels.createChannel({
+                    name: channelName ? channelName.value : "",
+                    kind: kind,
+                    categoryId: chosen ? chosen.getAttribute("data-id") : null,
+                    isPrivate: !!(channelPrivate && channelPrivate.checked)
+                }).then(function () {
+                    closeChannelModal();
+                    channelConfirm.disabled = false;
+                }).catch(function (error) {
+                    channelConfirm.disabled = false;
+                    flash(error.message);
+                });
+                return;
+            }
             var label = channelLabel(kind, channelName ? channelName.value : "");
             var list = channelCategory ? channelCategory.querySelector(".server-category-list") : null;
             if (!list) list = chosenCategoryList();
@@ -1694,6 +1726,17 @@
                 var editedName = editing.querySelector(".server-category-name span");
                 if (editedName) editedName.textContent = text;
                 closeCategoryModal();
+                return;
+            }
+            if (window.discodeServerChannels) {
+                categoryConfirm.disabled = true;
+                window.discodeServerChannels.createCategory({ name: text, isPrivate: !!(categoryPrivate && categoryPrivate.checked) }).then(function () {
+                    closeCategoryModal();
+                    categoryConfirm.disabled = false;
+                }).catch(function (error) {
+                    categoryConfirm.disabled = false;
+                    flash(error.message);
+                });
                 return;
             }
             var tpl = document.getElementById("server-category-new");
