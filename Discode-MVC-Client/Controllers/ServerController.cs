@@ -12,10 +12,12 @@ namespace Discode_MVC_Client.Controllers
     public class ServerController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IWebHostEnvironment _environment;
 
-        public ServerController(IHttpClientFactory httpClientFactory)
+        public ServerController(IHttpClientFactory httpClientFactory, IWebHostEnvironment environment)
         {
             _httpClientFactory = httpClientFactory;
+            _environment = environment;
         }
 
         public async Task<IActionResult> Index()
@@ -84,6 +86,37 @@ namespace Discode_MVC_Client.Controllers
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Enter an invite link." } }));
 
             return Forward(client => client.PostAsJsonAsync("api/server/join", new { invite = model.Invite.Trim() }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Profile([FromForm] UpdateServerProfileVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return BadRequest(new { errors = new[] { "Server not found." } });
+
+            string? iconUrl = null;
+            if (model.Icon is { Length: > 0 })
+            {
+                if (!model.Icon.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase) || model.Icon.Length > 5_000_000)
+                    return BadRequest(new { errors = new[] { "Choose an image that is at most 5 MB." } });
+
+                var folder = Path.Combine(_environment.WebRootPath, "uploads", "servers");
+                Directory.CreateDirectory(folder);
+                var fileName = Guid.NewGuid().ToString("N") + Path.GetExtension(model.Icon.FileName).ToLowerInvariant();
+                using (var stream = System.IO.File.Create(Path.Combine(folder, fileName)))
+                    await model.Icon.CopyToAsync(stream);
+                iconUrl = "/uploads/servers/" + fileName;
+            }
+
+            return await Forward(client => client.PutAsJsonAsync($"api/server/{model.Id}/profile", new
+            {
+                name = model.Name ?? string.Empty,
+                description = model.Description ?? string.Empty,
+                bannerColor = model.BannerColor,
+                isPrivate = model.IsPrivate,
+                iconUrl
+            }));
         }
 
         [HttpPost]
