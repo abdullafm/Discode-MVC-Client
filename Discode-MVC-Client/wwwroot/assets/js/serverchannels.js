@@ -55,6 +55,8 @@
         node.setAttribute("data-id", category.id);
         node.setAttribute("data-private", category.isPrivate ? "1" : "0");
         node.querySelector(".server-category-name span").textContent = category.name;
+        var add = node.querySelector(".server-category-add");
+        if (add) add.hidden = !window.discodeCanManage;
         var holder = node.querySelector(".server-category-list");
         category.channels.forEach(function (channel) {
             var item = channelNode(channel);
