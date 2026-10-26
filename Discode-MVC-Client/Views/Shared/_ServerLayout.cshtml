@@ -280,6 +280,16 @@
                                 aria-label="Speak"></span>
                     </label>
                 </div>
+                <div class="channel-access" id="channel-access" hidden>
+                    <h3>Who can access this channel</h3>
+                    <p>Only the people and roles below can see this private channel. Owners and members who manage channels always can.</p>
+                    <div class="channel-access-picker">
+                        <input id="channel-access-search" type="text" autocomplete="off" maxlength="40"
+                            placeholder="Add members or roles">
+                        <div class="channel-access-results" id="channel-access-results" hidden></div>
+                    </div>
+                    <div class="channel-access-list" id="channel-access-list"></div>
+                </div>
                 <div class="channel-actions">
                     <button type="button" id="channel-edit-cancel">Cancel</button>
                     <button type="submit" id="channel-edit-save">Save Changes</button>

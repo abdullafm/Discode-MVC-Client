@@ -138,6 +138,15 @@
         });
     }
 
+    function get(url) {
+        return fetch(url, { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (result) {
+                if (!response.ok) throw new Error((result && result.errors && result.errors[0]) || "Something went wrong.");
+                return result;
+            });
+        });
+    }
+
     function post(url, body) {
         return fetch(url, {
             method: "POST",
@@ -164,8 +173,22 @@
                 return reload(channel.id).then(function () { return channel; });
             });
         },
+        getAccess: function (id) {
+            return get("/Server/ChannelAccess?id=" + encodeURIComponent(serverId) + "&channelId=" + encodeURIComponent(id));
+        },
+        searchAccess: function (text) {
+            return get("/Server/ChannelAccessSearch?id=" + encodeURIComponent(serverId) + "&search=" + encodeURIComponent(text || ""));
+        },
         updateChannel: function (options) {
-            return post("/Server/UpdateChannel", { serverId: Number(serverId), channelId: Number(options.id), name: options.name, isPrivate: !!options.isPrivate, isReadOnly: !!options.isReadOnly }).then(function (channel) {
+            return post("/Server/UpdateChannel", {
+                serverId: Number(serverId),
+                channelId: Number(options.id),
+                name: options.name,
+                isPrivate: !!options.isPrivate,
+                isReadOnly: !!options.isReadOnly,
+                accessRoleIds: options.accessRoleIds || null,
+                accessUserIds: options.accessUserIds || null
+            }).then(function (channel) {
                 return reload().then(function () { return channel; });
             });
         },
@@ -204,6 +227,12 @@
     }
 
     document.addEventListener("discode-server-channels-changed", function (event) {
+        var detail = event && event.detail;
+        if (detail && detail.serverId && String(detail.serverId) !== String(serverId)) return;
+        reload();
+    });
+
+    document.addEventListener("discode-server-roles-changed", function (event) {
         var detail = event && event.detail;
         if (detail && detail.serverId && String(detail.serverId) !== String(serverId)) return;
         reload();

@@ -87,8 +87,22 @@ namespace Discode_MVC_Client.Controllers
             {
                 name = model.Name ?? string.Empty,
                 isPrivate = model.IsPrivate,
-                isReadOnly = model.IsReadOnly
+                isReadOnly = model.IsReadOnly,
+                accessRoleIds = model.AccessRoleIds,
+                accessUserIds = model.AccessUserIds
             }));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> ChannelAccess(int id, int channelId)
+        {
+            return Forward(client => client.GetAsync($"api/server/{id}/channels/{channelId}/access"));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> ChannelAccessSearch(int id, string? search)
+        {
+            return Forward(client => client.GetAsync($"api/server/{id}/channel-access/search?search={Uri.EscapeDataString(search ?? string.Empty)}"));
         }
 
         [HttpPost]

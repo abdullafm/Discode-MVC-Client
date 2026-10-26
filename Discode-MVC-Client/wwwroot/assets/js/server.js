@@ -1497,9 +1497,173 @@
         return value !== "0";
     }
 
+    var accessBox = document.getElementById("channel-access");
+    var accessSearch = document.getElementById("channel-access-search");
+    var accessResults = document.getElementById("channel-access-results");
+    var accessList = document.getElementById("channel-access-list");
+    var accessRoles = [];
+    var accessMembers = [];
+    var accessLoaded = false;
+    var accessTimer = 0;
+    var accessToken = 0;
+
+    function accessChip(kind, id, label, color) {
+        var chip = document.createElement("span");
+        chip.className = "channel-access-chip" + (kind === "role" ? " is-role" : "");
+        if (kind === "role") {
+            var dot = document.createElement("i");
+            dot.className = "channel-access-dot";
+            if (/^#[0-9a-f]{3,8}$/i.test(color || "")) dot.style.background = color;
+            chip.appendChild(dot);
+        }
+        var text = document.createElement("span");
+        text.textContent = (kind === "role" ? "@" : "") + label;
+        chip.appendChild(text);
+        var remove = document.createElement("button");
+        remove.type = "button";
+        remove.setAttribute("aria-label", "Remove");
+        remove.setAttribute("data-kind", kind);
+        remove.setAttribute("data-id", id);
+        remove.innerHTML = "<i class=\"fa-solid fa-xmark\"></i>";
+        chip.appendChild(remove);
+        return chip;
+    }
+
+    function paintAccess() {
+        if (!accessList) return;
+        accessList.innerHTML = "";
+        for (var r = 0; r < accessRoles.length; r++) accessList.appendChild(accessChip("role", accessRoles[r].id, accessRoles[r].name, accessRoles[r].color));
+        for (var m = 0; m < accessMembers.length; m++) accessList.appendChild(accessChip("member", accessMembers[m].id, accessMembers[m].displayName || accessMembers[m].userName));
+        if (!accessRoles.length && !accessMembers.length) {
+            var none = document.createElement("small");
+            none.className = "channel-access-empty";
+            none.textContent = "Nobody has been added yet.";
+            accessList.appendChild(none);
+        }
+    }
+
+    function syncAccessVisibility() {
+        if (!accessBox) return;
+        var isPrivate = !(channelPerms.view && channelPerms.view.checked);
+        accessBox.hidden = !isPrivate || !channelEditTarget || !channelEditTarget.getAttribute("data-id");
+        if (!accessBox.hidden && !accessLoaded) loadAccess();
+    }
+
+    function loadAccess() {
+        var target = channelEditTarget;
+        if (!target || !window.discodeServerChannels) return;
+        var token = ++accessToken;
+        window.discodeServerChannels.getAccess(target.getAttribute("data-id")).then(function (data) {
+            if (token !== accessToken || target !== channelEditTarget) return;
+            accessRoles = data.roles || [];
+            accessMembers = data.members || [];
+            accessLoaded = true;
+            paintAccess();
+        }).catch(function (error) {
+            flash(error.message);
+        });
+    }
+
+    function paintResults(data) {
+        if (!accessResults) return;
+        accessResults.innerHTML = "";
+        var taken = {};
+        for (var a = 0; a < accessRoles.length; a++) taken["r" + accessRoles[a].id] = true;
+        for (var b = 0; b < accessMembers.length; b++) taken["m" + accessMembers[b].id] = true;
+        var rows = 0;
+        var roles = data.roles || [];
+        for (var i = 0; i < roles.length; i++) {
+            if (taken["r" + roles[i].id]) continue;
+            accessResults.appendChild(accessOption("role", roles[i]));
+            rows++;
+        }
+        var members = data.members || [];
+        for (var j = 0; j < members.length; j++) {
+            if (taken["m" + members[j].id]) continue;
+            accessResults.appendChild(accessOption("member", members[j]));
+            rows++;
+        }
+        if (!rows) {
+            var none = document.createElement("small");
+            none.className = "channel-access-empty";
+            none.textContent = "No matches.";
+            accessResults.appendChild(none);
+        }
+        accessResults.hidden = false;
+    }
+
+    function accessOption(kind, item) {
+        var option = document.createElement("button");
+        option.type = "button";
+        option.className = "channel-access-option";
+        option.setAttribute("data-kind", kind);
+        option.setAttribute("data-id", item.id);
+        var label = kind === "role" ? "@" + item.name : (item.displayName || item.userName);
+        var hint = kind === "role" ? "Role" : "@" + item.userName;
+        var first = document.createElement("strong");
+        first.textContent = label;
+        var second = document.createElement("small");
+        second.textContent = hint;
+        option.appendChild(first);
+        option.appendChild(second);
+        option.accessItem = item;
+        return option;
+    }
+
+    function searchAccess() {
+        if (!window.discodeServerChannels || !accessSearch) return;
+        window.discodeServerChannels.searchAccess(accessSearch.value.trim()).then(paintResults).catch(function (error) {
+            flash(error.message);
+        });
+    }
+
+    if (accessSearch) {
+        accessSearch.addEventListener("focus", searchAccess);
+        accessSearch.addEventListener("input", function () {
+            clearTimeout(accessTimer);
+            accessTimer = setTimeout(searchAccess, 200);
+        });
+    }
+    if (accessResults) {
+        accessResults.addEventListener("mousedown", function (event) {
+            event.preventDefault();
+        });
+        accessResults.addEventListener("click", function (event) {
+            var option = event.target.closest(".channel-access-option");
+            if (!option) return;
+            if (option.getAttribute("data-kind") === "role") accessRoles.push(option.accessItem);
+            else accessMembers.push(option.accessItem);
+            paintAccess();
+            option.remove();
+            if (!accessResults.querySelector(".channel-access-option")) accessResults.hidden = true;
+        });
+    }
+    if (accessSearch) {
+        accessSearch.addEventListener("blur", function () {
+            setTimeout(function () { if (accessResults) accessResults.hidden = true; }, 120);
+        });
+    }
+    if (accessList) {
+        accessList.addEventListener("click", function (event) {
+            var remove = event.target.closest("button[data-kind]");
+            if (!remove) return;
+            var id = remove.getAttribute("data-id");
+            if (remove.getAttribute("data-kind") === "role") accessRoles = accessRoles.filter(function (r) { return String(r.id) !== id; });
+            else accessMembers = accessMembers.filter(function (m) { return m.id !== id; });
+            paintAccess();
+        });
+    }
+    if (channelPerms.view) channelPerms.view.addEventListener("change", syncAccessVisibility);
+
     function closeChannelEdit() {
         if (channelEdit) channelEdit.hidden = true;
         channelEditTarget = null;
+        accessLoaded = false;
+        accessRoles = [];
+        accessMembers = [];
+        accessToken++;
+        if (accessResults) accessResults.hidden = true;
+        if (accessSearch) accessSearch.value = "";
     }
 
     function openChannelEdit(channel) {
@@ -1525,6 +1689,11 @@
         closeMenu();
         closeChannelMenu();
         closeChannelModal();
+        accessLoaded = false;
+        accessRoles = [];
+        accessMembers = [];
+        paintAccess();
+        syncAccessVisibility();
         channelEdit.hidden = false;
         if (channelEditName) {
             channelEditName.focus();
@@ -1677,7 +1846,9 @@
                     id: channel.getAttribute("data-id"),
                     name: channelEditName.value,
                     isPrivate: !(channelPerms.view && channelPerms.view.checked),
-                    isReadOnly: kind !== "voice" && !(channelPerms.send && channelPerms.send.checked)
+                    isReadOnly: kind !== "voice" && !(channelPerms.send && channelPerms.send.checked),
+                    accessRoleIds: accessLoaded ? accessRoles.map(function (r) { return r.id; }) : null,
+                    accessUserIds: accessLoaded ? accessMembers.map(function (m) { return m.id; }) : null
                 }).then(function () {
                     closeChannelEdit();
                 }).catch(function (error) {
