@@ -5317,3 +5317,95 @@ html.theme-dark body .members-icon {
 html.theme-dark body .members-role {
     color: #949cf7 !important;
 }
+
+.members-role-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 4px 2px 0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(128, 132, 142, 0.18);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.members-role-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.role-person {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 6px;
+    border-radius: 6px;
+}
+
+.role-person img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.role-person-names {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    line-height: 1.2;
+    min-width: 0;
+}
+
+.role-person-names small {
+    font-size: 12px;
+    color: #80848e;
+}
+
+.role-person.is-pickable {
+    cursor: pointer;
+}
+
+.role-person.is-pickable:hover {
+    background: rgba(128, 132, 142, 0.18);
+}
+
+.role-person-remove {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: #80848e;
+    cursor: pointer;
+}
+
+.role-person-remove:hover {
+    color: #ed4245;
+    background: rgba(237, 66, 69, 0.12);
+}
+
+.role-save-bar {
+    position: sticky;
+    bottom: 16px;
+    margin-top: 24px;
+}
+
+#role-create[hidden],
+#role-add-open[hidden] {
+    display: none;
+}
+
+.role-colors button:disabled,
+.perm-switch input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+html.theme-dark body .role-person-names small,
+html.theme-dark body .role-person-remove,
+html.theme-dark body .members-role-pill {
+    color: #b5bac1 !important;
+}

@@ -15,6 +15,7 @@
     var selectAll = document.getElementById("members-select-all");
     var heads = document.querySelectorAll(".members-table th[data-sort]");
     var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
+    var ROLE_COLORS = { gray: "#80848e", pink: "#eb459e", red: "#ed4245", orange: "#f26522", yellow: "#fee75c", purple: "#9b59d0", blue: "#5865f2", cyan: "#1abc9c", green: "#23a559" };
 
     var members = [];
     var query = "";
@@ -50,7 +51,7 @@
         else if (sortKey === "since") result = new Date(a.joinedAt) - new Date(b.joinedAt);
         else if (sortKey === "discord") result = new Date(a.accountCreatedAt) - new Date(b.accountCreatedAt);
         else if (sortKey === "method") result = (a.joinMethod || "").localeCompare(b.joinMethod || "");
-        else if (sortKey === "roles") result = (a.isOwner ? 1 : 0) - (b.isOwner ? 1 : 0);
+        else if (sortKey === "roles") result = ((a.isOwner ? 1000 : 0) + (a.roles || []).length) - ((b.isOwner ? 1000 : 0) + (b.roles || []).length);
         return sortDesc ? -result : result;
     }
 
@@ -154,6 +155,14 @@
 
         var roles = document.createElement("td");
         if (member.isOwner) roles.appendChild(element("span", "members-role", "Owner"));
+        (member.roles || []).forEach(function (role) {
+            var pill = element("span", "members-role-pill");
+            var dot = element("i", "members-role-dot");
+            dot.style.background = ROLE_COLORS[role.color] || ROLE_COLORS.gray;
+            pill.appendChild(dot);
+            pill.appendChild(document.createTextNode(role.name));
+            roles.appendChild(pill);
+        });
         tr.appendChild(roles);
 
         tr.appendChild(document.createElement("td"));
@@ -254,6 +263,11 @@
         load();
     });
     document.addEventListener("discode-hub-connected", load);
+    document.addEventListener("discode-server-roles-changed", function (event) {
+        var detail = event && event.detail;
+        if (detail && detail.serverId && String(detail.serverId) !== String(serverId)) return;
+        load();
+    });
 
     var refresh = window.setInterval(function () {
         if (!document.body.contains(body)) {

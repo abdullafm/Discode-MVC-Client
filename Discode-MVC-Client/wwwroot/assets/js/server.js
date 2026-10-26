@@ -16,6 +16,7 @@
     function canManageServer(server) {
         if (!server) return false;
         if (server.canManage === true || server.owner === true || server.isOwner === true) return true;
+        if (typeof server.permissions === "number") return (server.permissions & (2 | 4 | 32 | 128)) !== 0;
         var role = String(server.role || server.membership || "").toLowerCase();
         return role === "owner" || role === "admin";
     }
@@ -100,6 +101,7 @@
         }).then(function (server) {
             if (!server || !Array.isArray(server.members)) return;
             currentServer = server;
+            if (canManageServer(server) !== isOwner) setManage(canManageServer(server));
             serverMembers = server.members;
             paintServerMembers();
         }).catch(function () {});
@@ -107,6 +109,11 @@
 
     document.addEventListener("discode-server-updated", refreshMembers);
     document.addEventListener("discode-profile-changed", function () { refreshMembers(null); });
+    document.addEventListener("discode-server-roles-changed", function () { refreshMembers(null); });
+    document.addEventListener("discode-roles-ready", function () {
+        var button = currentMemberButton();
+        if (button) fillMemberPop(button);
+    });
     document.addEventListener("discode-hub-connected", function () { window.setTimeout(function () { refreshMembers(null); }, 400); });
     document.addEventListener("discode-status-set", function () { window.setTimeout(function () { refreshMembers(null); }, 300); });
     document.addEventListener("discode-user-presence", function (event) {
@@ -426,6 +433,11 @@
         return (name && name === String(me.name || "").toLowerCase()) || member.self === true || member.me === true || member.isSelf === true;
     }
 
+    function roleTint(roles) {
+        var tinted = (roles || []).filter(function (role) { return role.color && role.color !== "gray"; })[0];
+        return tinted ? (ROLE_COLORS[tinted.color] || "") : "";
+    }
+
     function paintServerMembers() {
         var list = document.getElementById("server-member-list");
         if (!list) return;
@@ -446,6 +458,7 @@
                     statusText: me.statusText || raw.statusText || raw.customStatus || raw.activity || "",
                     creator: raw.creator === true || raw.createdServer === true || raw.owner === true || raw.isOwner === true,
                     id: raw.id || raw.userId || "",
+                    roles: raw.roles || [],
                     self: true,
                     voice: raw.voice,
                     inVoice: raw.inVoice,
@@ -468,6 +481,8 @@
                 voice: memberInVoice(people[p]),
                 statusText: people[p].statusText || people[p].customStatus || people[p].activity || "",
                 self: people[p].self === true,
+                id: people[p].id || people[p].userId || "",
+                roles: people[p].roles || [],
                 handle: people[p].username || people[p].userName || people[p].handle || "",
                 about: people[p].about || people[p].bio || ""
             };
@@ -495,6 +510,7 @@
                 button.className = "server-member" + (item.status === "offline" ? " is-offline" : "");
                 button.setAttribute("data-status", item.status);
                 button.setAttribute("data-name", item.name);
+                if (item.id) button.setAttribute("data-id", item.id);
                 if (item.self) button.setAttribute("data-self", "1");
                 if (item.handle) button.setAttribute("data-handle", item.handle);
                 if (item.bio) button.setAttribute("data-bio", item.bio);
@@ -515,6 +531,8 @@
                 var name = document.createElement("span");
                 name.className = "server-member-name";
                 name.textContent = item.name;
+                var tint = roleTint(item.roles);
+                if (tint) name.style.setProperty("color", tint, "important");
                 line.appendChild(name);
                 if (item.owner) {
                     var crown = document.createElement("i");
@@ -542,6 +560,19 @@
             }
             list.appendChild(group);
         }
+        var split = [];
+        var splitIndex = {};
+        online = online.filter(function (row) {
+            var top = (row.roles || []).filter(function (role) { return role.displaySeparately; })[0];
+            if (!top) return true;
+            if (splitIndex[top.id] === undefined) {
+                splitIndex[top.id] = split.length;
+                split.push({ name: top.name, rows: [] });
+            }
+            split[splitIndex[top.id]].rows.push(row);
+            return false;
+        });
+        split.forEach(function (group) { addGroup(group.name, group.rows); });
         addGroup("Online", online);
         addGroup("Offline", offline);
         syncMemberPop();
@@ -585,35 +616,24 @@
         }
     }
 
-    function roleStorage() {
-        try {
-            return JSON.parse(localStorage.getItem("discode-member-roles")) || {};
-        } catch (e) {
-            return {};
+    function popMember() {
+        var button = currentMemberButton();
+        var id = button ? button.getAttribute("data-id") : "";
+        for (var i = 0; i < serverMembers.length; i++) {
+            if (serverMembers[i] && serverMembers[i].id === id) return serverMembers[i];
         }
-    }
-
-    function roleBucket() {
-        return (openId || "server") + ":" + memberPopKey;
+        return null;
     }
 
     function assignedRoles() {
-        var all = roleStorage();
-        var list = all[roleBucket()];
-        return Array.isArray(list) ? list : [];
+        var member = popMember();
+        return member && Array.isArray(member.roles) ? member.roles : [];
     }
 
     function serverRoleChoices() {
-        var rows = document.querySelectorAll("#server-role-list .role-row");
-        var list = [];
-        for (var i = 0; i < rows.length; i++) {
-            if (rows[i].hidden || rows[i].id === "role-everyone") continue;
-            var label = rows[i].querySelector(".role-label");
-            var name = label ? label.textContent.trim() : "";
-            if (!name || name === "@everyone") continue;
-            list.push({ name: name, color: rows[i].getAttribute("data-color") || "gray" });
-        }
-        return list;
+        var state = window.discodeServerRoles;
+        if (!state || !Array.isArray(state.roles)) return [];
+        return state.roles.filter(function (role) { return !role.isEveryone; });
     }
 
     function closeMemberMenus() {
@@ -674,15 +694,11 @@
         }
         for (var i = 0; i < choices.length; i++) {
             var role = choices[i];
-            var on = false;
-            for (var j = 0; j < owned.length; j++) {
-                if (owned[j].name === role.name) on = true;
-            }
+            var on = owned.some(function (held) { return held.id === role.id; });
             var button = document.createElement("button");
             button.type = "button";
             button.className = on ? "on" : "";
-            button.setAttribute("data-role-name", role.name);
-            button.setAttribute("data-role-color", role.color);
+            button.setAttribute("data-role-id", role.id);
             var dot = document.createElement("i");
             dot.style.background = ROLE_COLORS[role.color] || ROLE_COLORS.gray;
             var label = document.createElement("span");
@@ -742,7 +758,7 @@
             chipText.textContent = statusLine || "Today I learned...";
         }
         var add = document.getElementById("member-pop-add");
-        if (add) add.hidden = !self;
+        if (add) add.hidden = !(window.discodeServerRoles && window.discodeServerRoles.canManage);
         var edit = document.getElementById("member-pop-edit");
         if (edit) {
             var icon = edit.querySelector("i");
@@ -794,24 +810,12 @@
         placeMemberPop(button);
     }
 
-    function toggleMemberRole(name, color) {
-        var all = roleStorage();
-        var key = roleBucket();
-        var list = Array.isArray(all[key]) ? all[key].slice() : [];
-        var next = [];
-        var found = false;
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].name === name) found = true;
-            else next.push(list[i]);
-        }
-        if (!found) next.push({ name: name, color: color || "gray" });
-        all[key] = next;
-        localStorage.setItem("discode-member-roles", JSON.stringify(all));
-        var button = currentMemberButton();
-        if (button) {
-            fillMemberPop(button);
-            placeMemberPop(button);
-        }
+    function toggleMemberRole(roleId) {
+        var member = popMember();
+        var state = window.discodeServerRoles;
+        if (!member || !state) return;
+        var has = (member.roles || []).some(function (role) { return role.id === roleId; });
+        state.toggle(roleId, member.id, has).catch(function () {});
     }
 
     if (memberPop) {
@@ -867,7 +871,7 @@
             var button = event.target.closest("button");
             if (!button) return;
             event.stopPropagation();
-            toggleMemberRole(button.getAttribute("data-role-name"), button.getAttribute("data-role-color"));
+            toggleMemberRole(Number(button.getAttribute("data-role-id")));
         });
         document.getElementById("member-pop-edit").addEventListener("click", function (event) {
             event.stopPropagation();
@@ -2094,124 +2098,6 @@
     function closeRoleAdd() {
         if (roleAdd) roleAdd.hidden = true;
     }
-
-    function showRoleTab(name) {
-        if (!roleEditor) return;
-        var tabs = roleEditor.querySelectorAll("[data-role-tab]");
-        var panels = roleEditor.querySelectorAll("[data-role-panel]");
-        for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle("on", tabs[i].getAttribute("data-role-tab") === name);
-        for (var j = 0; j < panels.length; j++) panels[j].hidden = panels[j].getAttribute("data-role-panel") !== name;
-    }
-
-    function selectRole(row) {
-        if (!roleEditor || !row) return;
-        var rows = roleEditor.querySelectorAll(".role-row");
-        var label = row.querySelector(".role-label");
-        var text = label ? label.textContent : "";
-        for (var i = 0; i < rows.length; i++) rows[i].classList.toggle("on", rows[i] === row);
-        if (roleTitle) roleTitle.textContent = text;
-        if (roleName) {
-            roleName.value = text;
-            roleName.readOnly = row === roleEveryone;
-        }
-        if (roleDelete) roleDelete.disabled = row === roleEveryone;
-        if (roleColors) {
-            var color = row.getAttribute("data-color") || "gray";
-            var swatches = roleColors.querySelectorAll("[data-role-color]");
-            for (var j = 0; j < swatches.length; j++) swatches[j].classList.toggle("on", swatches[j].getAttribute("data-role-color") === color);
-        }
-    }
-
-    var roleBack = document.getElementById("role-back");
-    if (roleBack && settingsNav) {
-        roleBack.addEventListener("click", function () {
-            var profile = settingsNav.querySelector('[data-panel="profile"]');
-            if (profile) profile.click();
-        });
-    }
-
-    var roleCreate = document.getElementById("role-create");
-    if (roleCreate && roleDraft) {
-        roleCreate.addEventListener("click", function () {
-            var label = roleDraft.querySelector(".role-label");
-            if (label) label.textContent = "new role";
-            roleDraft.hidden = false;
-            roleDraft.setAttribute("data-color", "gray");
-            selectRole(roleDraft);
-            showRoleTab("display");
-            if (roleName) roleName.focus();
-        });
-    }
-
-    if (roleEditor) {
-        roleEditor.addEventListener("click", function (event) {
-            var clear = event.target.closest(".perm-clear");
-            if (clear) {
-                var group = clear.closest(".perm-group");
-                var boxes = group ? group.querySelectorAll("input[type=checkbox]") : [];
-                for (var k = 0; k < boxes.length; k++) boxes[k].checked = false;
-                return;
-            }
-            var row = event.target.closest(".role-row");
-            if (row && roleEditor.contains(row)) selectRole(row);
-            var tab = event.target.closest("[data-role-tab]");
-            if (tab) showRoleTab(tab.getAttribute("data-role-tab"));
-        });
-    }
-
-    if (roleName && roleDraft) {
-        roleName.addEventListener("input", function () {
-            if (roleDraft.hidden || !roleDraft.classList.contains("on")) return;
-            var text = roleName.value.trim() || "new role";
-            var label = roleDraft.querySelector(".role-label");
-            if (label) label.textContent = text;
-            if (roleTitle) roleTitle.textContent = text;
-        });
-    }
-
-    if (roleColors) {
-        roleColors.addEventListener("click", function (event) {
-            var swatch = event.target.closest("[data-role-color]");
-            if (!swatch || !roleEditor) return;
-            var row = roleEditor.querySelector(".role-row.on");
-            if (!row) return;
-            var swatches = roleColors.querySelectorAll("[data-role-color]");
-            var color = swatch.getAttribute("data-role-color");
-            for (var i = 0; i < swatches.length; i++) swatches[i].classList.toggle("on", swatches[i] === swatch);
-            row.setAttribute("data-color", color);
-        });
-    }
-
-    if (roleMore && roleMoreMenu) {
-        roleMore.addEventListener("click", function (event) {
-            event.stopPropagation();
-            roleMoreMenu.hidden = !roleMoreMenu.hidden;
-            roleMore.setAttribute("aria-expanded", roleMoreMenu.hidden ? "false" : "true");
-        });
-        roleMoreMenu.addEventListener("click", function (event) {
-            event.stopPropagation();
-        });
-    }
-
-    if (roleDelete && roleDraft && roleEveryone) {
-        roleDelete.addEventListener("click", function () {
-            if (roleDelete.disabled || roleDraft.hidden || !roleDraft.classList.contains("on")) return;
-            roleDraft.hidden = true;
-            selectRole(roleEveryone);
-            closeRoleMenu();
-        });
-    }
-
-    function openRoleAdd() {
-        if (roleAdd) roleAdd.hidden = !roleAdd.hidden;
-    }
-
-    var roleAddOpen = document.getElementById("role-add-open");
-    var roleAddLink = document.getElementById("role-add-link");
-    if (roleAddOpen) roleAddOpen.addEventListener("click", openRoleAdd);
-    if (roleAddLink) roleAddLink.addEventListener("click", function () {
-        if (roleAdd) roleAdd.hidden = false;
-    });
 
     document.addEventListener("click", function (event) {
         if (roleMoreMenu && !roleMoreMenu.hidden && !event.target.closest("#role-more") && !event.target.closest("#role-more-menu")) closeRoleMenu();
