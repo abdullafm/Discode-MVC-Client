@@ -54,6 +54,17 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        public Task<IActionResult> Audit(int id, string? actorId, string? kind, int? beforeId, int take = 50)
+        {
+            var query = "take=" + take;
+            if (!string.IsNullOrWhiteSpace(actorId)) query += "&actorId=" + Uri.EscapeDataString(actorId);
+            if (!string.IsNullOrWhiteSpace(kind)) query += "&action=" + Uri.EscapeDataString(kind);
+            if (beforeId is not null) query += "&beforeId=" + beforeId;
+
+            return Forward(client => client.GetAsync($"api/server/{id}/audit?{query}"));
+        }
+
+        [HttpGet]
         public Task<IActionResult> Members(int id)
         {
             return Forward(client => client.GetAsync($"api/server/{id}/members"));
