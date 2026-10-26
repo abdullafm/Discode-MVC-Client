@@ -98,6 +98,12 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
+        public Task<IActionResult> ChannelViewers(int id, int channelId)
+        {
+            return Forward(client => client.GetAsync($"api/server/{id}/channels/{channelId}/viewers"));
+        }
+
+        [HttpGet]
         public Task<IActionResult> CategoryPermissions(int id, int categoryId)
         {
             return Forward(client => client.GetAsync($"api/server/{id}/categories/{categoryId}/permissions"));

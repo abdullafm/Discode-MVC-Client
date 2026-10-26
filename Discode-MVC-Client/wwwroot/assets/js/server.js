@@ -454,11 +454,47 @@
         return String(tinted.color).charAt(0) === "#" ? tinted.color : (ROLE_COLORS[tinted.color] || "");
     }
 
+    var channelViewers = null;
+    var viewersFor = "";
+    var viewersTicket = 0;
+
+    function loadViewers(force) {
+        var id = currentChannel ? currentChannel.getAttribute("data-id") : "";
+        if (!id || !window.discodeServerChannels) {
+            if (channelViewers) {
+                channelViewers = null;
+                viewersFor = "";
+                paintServerMembers();
+            }
+            return;
+        }
+        if (!force && id === viewersFor) return;
+        viewersFor = id;
+        var ticket = ++viewersTicket;
+        window.discodeServerChannels.getViewers(id).then(function (ids) {
+            if (ticket !== viewersTicket) return;
+            channelViewers = Array.isArray(ids) ? ids : null;
+            paintServerMembers();
+        }).catch(function () {
+            if (ticket !== viewersTicket) return;
+            channelViewers = null;
+            paintServerMembers();
+        });
+    }
+
+    document.addEventListener("discode-server-channels-changed", function () { window.setTimeout(function () { loadViewers(true); }, 300); });
+    document.addEventListener("discode-server-roles-changed", function () { window.setTimeout(function () { loadViewers(true); }, 300); });
+
     function paintServerMembers() {
         var list = document.getElementById("server-member-list");
         if (!list) return;
         var me = localMe();
         var source = Array.isArray(serverMembers) ? serverMembers.slice() : [];
+        if (channelViewers) {
+            source = source.filter(function (member) {
+                return !member || !member.id || channelViewers.indexOf(member.id) !== -1;
+            });
+        }
         var people = [];
         var sawMe = false;
         for (var i = 0; i < source.length; i++) {
@@ -994,6 +1030,7 @@
     function selectChannel(button, keepVoice) {
         if (!button) return;
         currentChannel = button;
+        loadViewers(false);
         var buttons = channelList.querySelectorAll(".server-channel");
         var name = channelTitle(button);
         var kind = button.getAttribute("data-kind") || "text";

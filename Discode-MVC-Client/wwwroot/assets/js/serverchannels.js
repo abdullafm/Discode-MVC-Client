@@ -176,6 +176,9 @@
         getChannelPermissions: function (id) {
             return get("/Server/ChannelPermissions?id=" + encodeURIComponent(serverId) + "&channelId=" + encodeURIComponent(id));
         },
+        getViewers: function (id) {
+            return get("/Server/ChannelViewers?id=" + encodeURIComponent(serverId) + "&channelId=" + encodeURIComponent(id));
+        },
         getCategoryPermissions: function (id) {
             return get("/Server/CategoryPermissions?id=" + encodeURIComponent(serverId) + "&categoryId=" + encodeURIComponent(id));
         },
