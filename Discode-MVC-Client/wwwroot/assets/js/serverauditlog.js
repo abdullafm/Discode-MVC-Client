@@ -7,8 +7,8 @@
     var serverId = new URLSearchParams(window.location.search).get("id");
     if (!serverId) return;
 
-    var userFilter = document.getElementById("audit-user");
-    var actionFilter = document.getElementById("audit-action");
+    var userSelect = document.getElementById("audit-user");
+    var actionSelect = document.getElementById("audit-action");
     var emptyNote = document.querySelector(".audit-empty");
     var moreButton = document.getElementById("audit-more");
     var nav = document.querySelector(".server-settings-nav [data-panel='audit']");
@@ -16,51 +16,39 @@
     var PAGE = 50;
     var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
 
-    var ICONS = {
-        ServerUpdate: "fa-gear",
-        InviteUpdate: "fa-link",
-        ChannelCreate: "fa-hashtag",
-        ChannelUpdate: "fa-hashtag",
-        ChannelDelete: "fa-hashtag",
-        CategoryCreate: "fa-folder",
-        CategoryUpdate: "fa-folder",
-        CategoryDelete: "fa-folder",
-        RoleCreate: "fa-shield",
-        RoleUpdate: "fa-shield",
-        RoleDelete: "fa-shield",
-        MemberJoin: "fa-right-to-bracket",
-        MemberLeave: "fa-right-from-bracket",
-        MemberKick: "fa-user-xmark",
-        MemberBan: "fa-gavel",
-        MemberUnban: "fa-gavel",
-        MemberRoleUpdate: "fa-user-tag",
-        MemberMute: "fa-microphone-slash",
-        MemberUnmute: "fa-microphone",
-        MemberVoiceDisconnect: "fa-phone-slash"
-    };
-    var TONES = {
-        RoleCreate: "good",
-        ChannelCreate: "good",
-        CategoryCreate: "good",
-        MemberJoin: "good",
-        MemberUnban: "good",
-        MemberUnmute: "good",
-        RoleDelete: "bad",
-        ChannelDelete: "bad",
-        CategoryDelete: "bad",
-        MemberLeave: "bad",
-        MemberKick: "bad",
-        MemberBan: "bad",
-        MemberMute: "bad",
-        MemberVoiceDisconnect: "bad"
-    };
+    var KINDS = [
+        { key: "", label: "All Actions", icon: "fa-list" },
+        { key: "ServerUpdate", label: "Update Server", icon: "fa-gear", badge: "update" },
+        { key: "InviteUpdate", label: "Update Invite Link", icon: "fa-link", badge: "update" },
+        { key: "ChannelCreate", label: "Create Channel", icon: "fa-hashtag", badge: "create" },
+        { key: "ChannelUpdate", label: "Update Channel", icon: "fa-hashtag", badge: "update" },
+        { key: "ChannelDelete", label: "Delete Channel", icon: "fa-hashtag", badge: "delete" },
+        { key: "CategoryCreate", label: "Create Category", icon: "fa-folder", badge: "create" },
+        { key: "CategoryUpdate", label: "Update Category", icon: "fa-folder", badge: "update" },
+        { key: "CategoryDelete", label: "Delete Category", icon: "fa-folder", badge: "delete" },
+        { key: "RoleCreate", label: "Create Role", icon: "fa-flag", badge: "create" },
+        { key: "RoleUpdate", label: "Update Role", icon: "fa-flag", badge: "update" },
+        { key: "RoleDelete", label: "Delete Role", icon: "fa-flag", badge: "delete" },
+        { key: "MemberJoin", label: "Member Join", icon: "fa-user-group", badge: "create" },
+        { key: "MemberLeave", label: "Member Leave", icon: "fa-user-group", badge: "delete" },
+        { key: "MemberKick", label: "Kick Member", icon: "fa-user-group", badge: "delete" },
+        { key: "MemberBan", label: "Ban Member", icon: "fa-user-group", badge: "delete" },
+        { key: "MemberUnban", label: "Unban Member", icon: "fa-user-group", badge: "create" },
+        { key: "MemberRoleUpdate", label: "Update Member Roles", icon: "fa-user-group", badge: "update" },
+        { key: "MemberMute", label: "Mute Member", icon: "fa-microphone-slash", badge: "delete" },
+        { key: "MemberUnmute", label: "Unmute Member", icon: "fa-microphone", badge: "create" },
+        { key: "MemberVoiceDisconnect", label: "Disconnect Member", icon: "fa-user-group", badge: "delete" }
+    ];
+    var BADGES = { create: "fa-plus", update: "fa-rotate", delete: "fa-minus" };
 
     var entries = [];
     var members = [];
     var opened = false;
     var loading = false;
     var finished = false;
-    var queued = "";
+    var queued = false;
+    var filters = { user: "", kind: "" };
+    var combos = [];
 
     function element(tag, className, text) {
         var node = document.createElement(tag);
@@ -69,115 +57,259 @@
         return node;
     }
 
-    function ago(value) {
-        var seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
-        if (seconds < 60) return "just now";
-        var minutes = Math.floor(seconds / 60);
-        if (minutes < 60) return minutes + (minutes === 1 ? " minute ago" : " minutes ago");
-        var hours = Math.floor(minutes / 60);
-        if (hours < 24) return hours + (hours === 1 ? " hour ago" : " hours ago");
-        var days = Math.floor(hours / 24);
-        if (days < 30) return days + (days === 1 ? " day ago" : " days ago");
-        var months = Math.floor(days / 30);
-        if (months < 12) return months + (months === 1 ? " month ago" : " months ago");
-        var years = Math.floor(days / 365);
-        return years + (years === 1 ? " year ago" : " years ago");
+    function kindOf(key) {
+        for (var i = 0; i < KINDS.length; i++) if (KINDS[i].key === key) return KINDS[i];
+        return KINDS[0];
     }
 
-    function sentence(entry) {
+    function iconNode(kind) {
+        var holder = element("span", "audit-glyph");
+        holder.appendChild(element("i", "fa-solid " + kind.icon));
+        if (kind.badge) {
+            var badge = element("span", "audit-badge is-" + kind.badge);
+            badge.appendChild(element("i", "fa-solid " + BADGES[kind.badge]));
+            holder.appendChild(badge);
+        }
+        return holder;
+    }
+
+    function stamp(value) {
+        var date = new Date(value);
+        var now = new Date();
+        var time = date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        var sameDay = function (a, b) { return a.toDateString() === b.toDateString(); };
+        if (sameDay(date, now)) return "Today at " + time;
+        var yesterday = new Date(now.getTime() - 86400000);
+        if (sameDay(date, yesterday)) return "Yesterday at " + time;
+        return date.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" });
+    }
+
+    function headline(entry) {
+        var line = element("span", "audit-title");
+        function part(text) { line.appendChild(document.createTextNode(text)); }
+        function bold(text) { line.appendChild(element("strong", "", text)); }
+        part(entry.actorUserName + " ");
         var who = entry.targetName || "";
         switch (entry.action) {
-            case "ServerUpdate": return entry.details === "Created the server" ? "created the server" : "updated the server";
-            case "InviteUpdate": return "changed the invite link";
-            case "ChannelCreate": return "created the channel " + who;
-            case "ChannelUpdate": return "updated the channel " + who;
-            case "ChannelDelete": return "deleted the channel " + who;
-            case "CategoryCreate": return "created the category " + who;
-            case "CategoryUpdate": return "updated the category " + who;
-            case "CategoryDelete": return "deleted the category " + who;
-            case "RoleCreate": return "created the role " + who;
-            case "RoleUpdate": return "updated the role " + who;
-            case "RoleDelete": return "deleted the role " + who;
-            case "MemberJoin": return "joined the server";
-            case "MemberLeave": return "left the server";
-            case "MemberKick": return "kicked " + who;
-            case "MemberBan": return "banned " + who;
-            case "MemberUnban": return "unbanned " + who;
-            case "MemberRoleUpdate": return "updated the roles of " + who;
-            case "MemberMute": return "muted " + who + " in voice";
-            case "MemberUnmute": return "unmuted " + who + " in voice";
-            case "MemberVoiceDisconnect": return "disconnected " + who + " from voice";
-            default: return entry.action;
+            case "ServerUpdate":
+                if (entry.details === "Created the server") { part("created "); bold(who); }
+                else { part("made changes to "); bold(who); }
+                break;
+            case "InviteUpdate": part("changed the invite link of "); bold(who); break;
+            case "ChannelCreate": part("created a channel "); bold(who); break;
+            case "ChannelUpdate": part("updated the channel "); bold(who); break;
+            case "ChannelDelete": part("deleted the channel "); bold(who); break;
+            case "CategoryCreate": part("created a category "); bold(who); break;
+            case "CategoryUpdate": part("updated the category "); bold(who); break;
+            case "CategoryDelete": part("deleted the category "); bold(who); break;
+            case "RoleCreate": part("created the role "); bold(who); break;
+            case "RoleUpdate": part("updated the role "); bold(who); break;
+            case "RoleDelete": part("deleted the role "); bold(who); break;
+            case "MemberJoin": part("joined the server"); break;
+            case "MemberLeave": part("left the server"); break;
+            case "MemberKick": part("kicked "); bold(who); break;
+            case "MemberBan": part("banned "); bold(who); break;
+            case "MemberUnban": part("unbanned "); bold(who); break;
+            case "MemberRoleUpdate": part("updated roles for "); bold(who); break;
+            case "MemberMute": part("muted "); bold(who); break;
+            case "MemberUnmute": part("unmuted "); bold(who); break;
+            case "MemberVoiceDisconnect": part("disconnected "); bold(who); break;
+            default: part(entry.action);
         }
+        return line;
     }
 
-    function row(entry) {
-        var item = element("div", "audit-row");
-        var icon = element("span", "audit-icon " + (TONES[entry.action] || ""));
-        icon.appendChild(element("i", "fa-solid " + (ICONS[entry.action] || "fa-circle-info")));
-        item.appendChild(icon);
-        var body = element("div", "audit-body");
-        var line = element("p", "audit-line");
+    function card(entry) {
+        var wrap = element("div", "audit-card");
+        wrap.setAttribute("data-id", entry.id);
+        var head = element("button", "audit-head-row");
+        head.type = "button";
+        head.setAttribute("aria-expanded", "false");
+        head.appendChild(iconNode(kindOf(entry.action)));
         var photo = document.createElement("img");
+        photo.className = "audit-avatar";
         photo.alt = "";
         photo.src = entry.actorAvatarUrl || DEFAULT_AVATAR;
-        line.appendChild(photo);
-        line.appendChild(element("strong", "", entry.actorDisplayName));
-        line.appendChild(document.createTextNode(" " + sentence(entry)));
-        body.appendChild(line);
+        head.appendChild(photo);
+        var copy = element("span", "audit-copy");
+        copy.appendChild(headline(entry));
+        var time = element("small", "audit-stamp", stamp(entry.createdAt));
+        time.title = new Date(entry.createdAt).toLocaleString();
+        copy.appendChild(time);
+        head.appendChild(copy);
+        head.appendChild(element("i", "fa-solid fa-chevron-right audit-chevron"));
+        wrap.appendChild(head);
+
         var quiet = ["RoleCreate", "RoleDelete", "MemberLeave"].indexOf(entry.action) !== -1 || entry.details === "Created the server";
         var details = quiet ? [] : String(entry.details || "").split("; ").filter(Boolean);
+        var body = element("div", "audit-detail");
         if (details.length) {
             var notes = element("ul", "audit-notes");
             details.forEach(function (text) { notes.appendChild(element("li", "", text)); });
             body.appendChild(notes);
         }
-        item.appendChild(body);
-        var time = element("time", "audit-time", ago(entry.createdAt));
-        time.title = new Date(entry.createdAt).toLocaleString();
-        item.appendChild(time);
-        return item;
+        body.appendChild(element("p", "audit-meta", "Done by " + entry.actorDisplayName + " on " + new Date(entry.createdAt).toLocaleString()));
+        wrap.appendChild(body);
+
+        head.addEventListener("click", function () {
+            var openNow = !wrap.classList.contains("open");
+            wrap.classList.toggle("open", openNow);
+            head.setAttribute("aria-expanded", openNow ? "true" : "false");
+        });
+        return wrap;
     }
 
-    function render() {
+    function render(expanded) {
         list.textContent = "";
-        entries.forEach(function (entry) { list.appendChild(row(entry)); });
+        entries.forEach(function (entry) {
+            var node = card(entry);
+            if (expanded && expanded.indexOf(String(entry.id)) !== -1) {
+                node.classList.add("open");
+                node.firstChild.setAttribute("aria-expanded", "true");
+            }
+            list.appendChild(node);
+        });
         if (emptyNote) emptyNote.hidden = entries.length > 0;
         if (moreButton) moreButton.hidden = finished || entries.length === 0;
     }
 
+    function Combo(host, label, onPick) {
+        var root = element("div", "audit-combo");
+        var field = element("div", "audit-combo-field");
+        var lead = element("span", "audit-combo-lead");
+        var input = document.createElement("input");
+        input.type = "text";
+        input.spellcheck = false;
+        input.autocomplete = "off";
+        input.setAttribute("aria-label", label);
+        var caret = element("i", "fa-solid fa-chevron-down audit-combo-caret");
+        field.appendChild(lead);
+        field.appendChild(input);
+        field.appendChild(caret);
+        var menu = element("div", "audit-combo-menu");
+        menu.hidden = true;
+        root.appendChild(field);
+        root.appendChild(menu);
+        host.appendChild(root);
+
+        var items = [];
+        var current = { key: "", label: "" };
+
+        function paintLead(item) {
+            lead.textContent = "";
+            if (item && item.node) lead.appendChild(item.node());
+        }
+
+        function close() {
+            menu.hidden = true;
+            root.classList.remove("open");
+            input.value = current.label;
+        }
+
+        function draw(text) {
+            menu.textContent = "";
+            var needle = text.trim().toLowerCase();
+            items.filter(function (item) { return !needle || item.label.toLowerCase().indexOf(needle) !== -1; }).forEach(function (item) {
+                var row = element("button", "audit-combo-item" + (item.key === current.key ? " on" : ""));
+                row.type = "button";
+                if (item.node) row.appendChild(item.node());
+                row.appendChild(element("span", "", item.label));
+                row.addEventListener("mousedown", function (event) {
+                    event.preventDefault();
+                    current = item;
+                    paintLead(item);
+                    close();
+                    input.blur();
+                    onPick(item.key);
+                });
+                menu.appendChild(row);
+            });
+        }
+
+        input.addEventListener("focus", function () {
+            input.select();
+            draw("");
+            menu.hidden = false;
+            root.classList.add("open");
+        });
+        input.addEventListener("input", function () {
+            draw(input.value);
+            menu.hidden = false;
+            root.classList.add("open");
+        });
+        input.addEventListener("blur", close);
+        input.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                event.stopPropagation();
+                close();
+                input.blur();
+            }
+        });
+        caret.addEventListener("mousedown", function (event) {
+            event.preventDefault();
+            if (menu.hidden) input.focus();
+            else input.blur();
+        });
+
+        return {
+            set: function (next, selectedKey) {
+                items = next;
+                current = items.filter(function (item) { return item.key === selectedKey; })[0] || items[0];
+                paintLead(current);
+                if (document.activeElement !== input) input.value = current.label;
+            }
+        };
+    }
+
+    function peopleNode(avatar) {
+        return function () {
+            var photo = document.createElement("img");
+            photo.className = "audit-combo-avatar";
+            photo.alt = "";
+            photo.src = avatar || DEFAULT_AVATAR;
+            return photo;
+        };
+    }
+
+    function buildCombos() {
+        var heads = document.querySelectorAll(".audit-filter");
+        if (heads.length < 2 || combos.length) return;
+        [userSelect, actionSelect].forEach(function (select) {
+            if (select) select.hidden = true;
+        });
+        var userCombo = new Combo(heads[0], "Filter by User", function (key) {
+            filters.user = key;
+            load(false);
+        });
+        var actionCombo = new Combo(heads[1], "Filter by Action", function (key) {
+            filters.kind = key;
+            load(false);
+        });
+        actionCombo.set(KINDS.map(function (kind) {
+            return { key: kind.key, label: kind.label, node: function () { return iconNode(kind); } };
+        }), "");
+        userCombo.set([{ key: "", label: "All Users", node: function () { return iconNode({ icon: "fa-users" }); } }], "");
+        combos = [userCombo, actionCombo];
+    }
+
     function paintUsers() {
-        if (!userFilter) return;
-        var current = userFilter.value;
+        if (!combos.length) return;
         var seen = {};
-        var people = [];
-        members.forEach(function (member) {
-            seen[member.id] = true;
-            people.push({ id: member.id, name: member.displayName });
-        });
-        entries.forEach(function (entry) {
-            if (seen[entry.actorId]) return;
-            seen[entry.actorId] = true;
-            people.push({ id: entry.actorId, name: entry.actorDisplayName });
-        });
-        userFilter.textContent = "";
-        var all = document.createElement("option");
-        all.value = "";
-        all.textContent = "All Users";
-        userFilter.appendChild(all);
-        people.forEach(function (person) {
-            var option = document.createElement("option");
-            option.value = person.id;
-            option.textContent = person.name;
-            userFilter.appendChild(option);
-        });
-        userFilter.value = current;
+        var people = [{ key: "", label: "All Users", node: function () { return iconNode({ icon: "fa-users" }); } }];
+        function add(id, name, avatar) {
+            if (seen[id]) return;
+            seen[id] = true;
+            people.push({ key: id, label: name, node: peopleNode(avatar) });
+        }
+        members.forEach(function (member) { add(member.id, member.displayName, member.avatarUrl); });
+        entries.forEach(function (entry) { add(entry.actorId, entry.actorDisplayName, entry.actorAvatarUrl); });
+        combos[0].set(people, filters.user);
     }
 
     function query(before) {
         var parts = ["id=" + encodeURIComponent(serverId), "take=" + PAGE];
-        if (userFilter && userFilter.value) parts.push("actorId=" + encodeURIComponent(userFilter.value));
-        if (actionFilter && actionFilter.value) parts.push("kind=" + encodeURIComponent(actionFilter.value));
+        if (filters.user) parts.push("actorId=" + encodeURIComponent(filters.user));
+        if (filters.kind) parts.push("kind=" + encodeURIComponent(filters.kind));
         if (before) parts.push("beforeId=" + before);
         return "/Server/Audit?" + parts.join("&");
     }
@@ -191,21 +323,22 @@
 
     function load(more) {
         if (loading) {
-            queued = more ? queued : "fresh";
+            if (!more) queued = true;
             return;
         }
         loading = true;
         var before = more && entries.length ? entries[entries.length - 1].id : 0;
         fetchJson(query(before)).then(function (page) {
             page = Array.isArray(page) ? page : [];
+            var expanded = [].map.call(list.querySelectorAll(".audit-card.open"), function (node) { return node.getAttribute("data-id"); });
             entries = more ? entries.concat(page) : page;
             finished = page.length < PAGE;
             paintUsers();
-            render();
+            render(expanded);
         }).catch(function () {}).then(function () {
             loading = false;
             if (queued) {
-                queued = "";
+                queued = false;
                 load(false);
             }
         });
@@ -220,6 +353,7 @@
 
     function open() {
         opened = true;
+        buildCombos();
         loadMembers();
         load(false);
     }
@@ -231,8 +365,6 @@
     }
 
     if (nav) nav.addEventListener("click", open);
-    if (userFilter) userFilter.addEventListener("change", function () { load(false); });
-    if (actionFilter) actionFilter.addEventListener("change", function () { load(false); });
     if (moreButton) moreButton.addEventListener("click", function () { load(true); });
 
     document.addEventListener("discode-server-audit-changed", function (event) {
@@ -246,6 +378,9 @@
             window.clearInterval(tick);
             return;
         }
-        if (entries.length && panel && !panel.hidden) render();
+        if (entries.length && panel && !panel.hidden) {
+            var expanded = [].map.call(list.querySelectorAll(".audit-card.open"), function (node) { return node.getAttribute("data-id"); });
+            render(expanded);
+        }
     }, 60000);
 })();
