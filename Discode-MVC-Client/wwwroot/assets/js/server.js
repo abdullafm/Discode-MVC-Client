@@ -263,23 +263,9 @@
                 if (buttons[i].getAttribute("data-kind") === "voice") buttons[i].setAttribute("data-join", channel.canJoin ? "1" : "0");
             }
         }
-        var oldVoiceMembersLength = voiceMembers.length;
-        voiceMembers = server.voice && server.voice.members ? server.voice.members : [];
         serverMembers = server.members || server.people || [];
         serverCreator = creatorKey(server.createdBy || server.creator || server.ownerId || (server.owner && server.owner !== true ? server.owner : ""));
         paintServerMembers();
-        if (voiceMembers.length > oldVoiceMembersLength && joinedVoice) {
-            joinVoiceSound.currentTime = 0;
-            joinVoiceSound.play().catch(function() {});
-        }
-        voiceFeeds.camera = feedUrl(server.voice && server.voice.camera, "camera");
-        voiceFeeds.screen = feedUrl(server.voice && server.voice.screen, "screen");
-        joinedVoice = null;
-        if (server.voice && server.voice.channel) {
-            for (var j = 0; j < buttons.length; j++) {
-                if (buttons[j].getAttribute("data-kind") === "voice" && channelTitle(buttons[j]) === server.voice.channel) joinedVoice = buttons[j];
-            }
-        }
     }
 
     function messageList(payload) {
@@ -353,16 +339,7 @@
         var me = meProfile();
         var buttons = channelList.querySelectorAll(".server-channel[data-kind='voice']");
         for (var i = 0; i < buttons.length; i++) {
-            var slot = voiceSlot(buttons[i]);
-            var here = buttons[i] === joinedVoice;
-            buttons[i].classList.toggle("joined", here);
-            if (!slot) continue;
-            slot.hidden = !here;
-            if (!here) continue;
-            var photo = slot.querySelector("img");
-            var who = slot.querySelector("strong");
-            if (photo) photo.src = me.photo;
-            if (who) who.textContent = me.name;
+            buttons[i].classList.toggle("joined", buttons[i] === joinedVoice);
         }
         var face = document.getElementById("server-voice-face");
         var person = document.getElementById("server-voice-person");
@@ -380,13 +357,10 @@
         if (lobby) lobby.hidden = inside;
         if (call) call.hidden = !inside;
         if (dock) dock.hidden = !inside;
-        if (bar) bar.hidden = !joinedVoice;
+        var linked = window.discodeVoice ? window.discodeVoice.current() : null;
+        if (bar) bar.hidden = !joinedVoice && !linked;
         if (side) side.classList.toggle("voice-on", !!joinedVoice);
-        if (where && joinedVoice) {
-            var serverTitle = document.getElementById("server-title");
-            var server = serverTitle && serverTitle.textContent.trim() ? serverTitle.textContent.trim() : "Server";
-            where.textContent = channelTitle(joinedVoice) + " / " + server;
-        }
+        if (where && linked) where.textContent = linked.channelName + " / " + linked.serverName;
         if (voiceStatus) {
             if (blocked) voiceStatus.textContent = "You can't join this voice channel.";
             else voiceStatus.textContent = "Voice room";
@@ -427,6 +401,7 @@
     }
 
     function memberInVoice(member) {
+        if (member.id && window.discodeVoice && window.discodeVoice.has(member.id)) return true;
         if (member.self && joinedVoice) return true;
         if (member.voice === true || member.inVoice === true) return true;
         if (member.voiceChannel || member.channel) return true;
@@ -1000,33 +975,43 @@
             paintVoice();
             return;
         }
-        if (joinedVoice !== button) {
-            joinedVoice = button;
-            voiceStarted = Date.now();
-            clearInterval(voiceClock);
-            voiceClock = setInterval(tickVoiceClock, 1000);
-            var freshPeople = voiceSlot(button);
-            var freshInvite = freshPeople && freshPeople.querySelector(".server-voice-invite");
-            if (freshInvite) freshInvite.hidden = false;
-            joinVoiceSound.currentTime = 0;
-            joinVoiceSound.play().catch(function() {});
+        if (joinedVoice === button) {
+            paintVoice();
+            return;
         }
-        paintVoice();
-        fetch(serverApi("/voice"), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ channel: channelTitle(button) })
-        }).catch(function () {});
+        if (window.discodeVoice) window.discodeVoice.join(button.getAttribute("data-id"));
     }
 
-    function leaveVoice() {
-        joinedVoice = null;
-        clearInterval(voiceClock);
-        voiceClock = 0;
+    function syncJoinedVoice() {
+        var current = window.discodeVoice ? window.discodeVoice.here() : null;
+        var next = null;
+        if (current) {
+            var buttons = channelList ? channelList.querySelectorAll(".server-channel[data-kind='voice']") : [];
+            for (var i = 0; i < buttons.length; i++) {
+                if (Number(buttons[i].getAttribute("data-id")) === current.channelId) next = buttons[i];
+            }
+        }
+        var changed = next !== joinedVoice;
+        joinedVoice = next;
+        if (!next) {
+            clearInterval(voiceClock);
+            voiceClock = 0;
+        } else if (changed || !voiceClock) {
+            voiceStarted = Date.parse(current.joinedAt) || Date.now();
+            clearInterval(voiceClock);
+            voiceClock = setInterval(tickVoiceClock, 1000);
+        }
         paintVoice();
+    }
+
+    document.addEventListener("discode-voice-updated", syncJoinedVoice);
+    document.addEventListener("discode-voice-updated", function () { paintServerMembers(); });
+    document.addEventListener("discode-server-channels-rendered", syncJoinedVoice);
+
+    function leaveVoice() {
         if (typeof stopVoiceMedia === "function") stopVoiceMedia();
         if (typeof setVoiceFull === "function") setVoiceFull(false);
-        fetch(serverApi("/voice"), { method: "DELETE" }).catch(function () {});
+        if (window.discodeVoice) window.discodeVoice.leave();
     }
 
     window.discodeServerFlash = function (text) { flash(text); };
@@ -2505,11 +2490,7 @@
             tile.classList.toggle("is-muted", anyMuted);
             tile.classList.toggle("is-deafened", deafened);
         }
-        var users = document.querySelectorAll(".server-voice-user");
-        for (var u = 0; u < users.length; u++) {
-            users[u].classList.toggle("is-muted", anyMuted);
-            users[u].classList.toggle("is-deafened", deafened);
-        }
+        if (window.discodeVoice) window.discodeVoice.sync(muted, deafened);
     }
     var toggleMic = window.mic;
     window.mic = function () {

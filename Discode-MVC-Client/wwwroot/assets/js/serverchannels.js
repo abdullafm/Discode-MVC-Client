@@ -112,6 +112,7 @@
                 if (!target && button.getAttribute("data-kind") !== "voice") target = button;
             });
         }
+        window.setTimeout(function () { document.dispatchEvent(new CustomEvent("discode-server-channels-rendered")); }, 0);
         return target;
     }
 
