@@ -6523,3 +6523,63 @@ html.theme-dark .members-ctx .row-menu-danger i {
 html.theme-dark .server-voice-count {
     color: #949ba4;
 }
+
+@media (min-width: 901px) {
+    .server-voice .server-voice-call,
+    .server-voice.is-full .server-voice-call {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-content: center;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .server-voice .server-voice-call .server-voice-tile,
+    .server-voice.is-full .server-voice-call .server-voice-tile {
+        flex: 0 0 auto;
+        width: var(--tile-w, 320px);
+        height: var(--tile-h, 180px);
+        max-width: none;
+        min-height: 0;
+    }
+}
+
+.server-voice-tile img {
+    width: auto;
+    height: 42%;
+    min-height: 48px;
+    aspect-ratio: 1;
+}
+
+.server-voice-tile::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    pointer-events: none;
+    z-index: 4;
+    transition: border-color 0.12s ease;
+}
+
+.server-voice-tile.is-speaking {
+    box-shadow: none;
+}
+
+.server-voice-tile.is-speaking::after {
+    border-color: #23a559;
+}
+
+.server-voice-tile p {
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.6);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.server-voice:has(#server-voice-call:not([hidden])) .server-voice-tile p {
+    opacity: 1;
+}

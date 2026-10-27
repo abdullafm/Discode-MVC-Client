@@ -144,6 +144,39 @@
             tile.querySelector("p").textContent = user.displayName;
         });
         call.classList.toggle("has-peers", group.length > 1);
+        layoutTiles();
+    }
+
+    function layoutTiles() {
+        var call = document.getElementById("server-voice-call");
+        if (!call || call.hidden) return;
+        var tiles = call.querySelectorAll(".server-voice-tile").length;
+        if (!tiles) return;
+        var style = window.getComputedStyle(call);
+        var gap = 8;
+        var width = call.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        var height = call.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+        if (width <= 0 || height <= 0) return;
+        var best = { w: 0, h: 0 };
+        for (var cols = 1; cols <= tiles; cols++) {
+            var rows = Math.ceil(tiles / cols);
+            var w = (width - gap * (cols - 1)) / cols;
+            var h = w * 9 / 16;
+            var room = (height - gap * (rows - 1)) / rows;
+            if (h > room) {
+                h = room;
+                w = h * 16 / 9;
+            }
+            if (w > best.w) best = { w: w, h: h };
+        }
+        call.style.setProperty("--tile-w", Math.floor(Math.min(best.w, 1100)) + "px");
+        call.style.setProperty("--tile-h", Math.floor(Math.min(best.w, 1100) * 9 / 16) + "px");
+    }
+
+    window.addEventListener("resize", layoutTiles);
+    if (window.ResizeObserver) {
+        var watch = document.getElementById("server-voice-call");
+        if (watch) new ResizeObserver(layoutTiles).observe(watch);
     }
 
     function tick() {
