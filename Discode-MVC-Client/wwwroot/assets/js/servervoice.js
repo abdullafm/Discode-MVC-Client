@@ -10,7 +10,7 @@
     var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
     var joinSound = new Audio("/assets/css/audio/join-voice.mp3");
     var leaveSound = new Audio("/assets/css/audio/leave-voice.mp3");
-    var state = { channels: {}, current: null };
+    var state = { channels: {}, started: {}, current: null };
     var known = "";
     var sent = { muted: false, deafened: false };
     var loading = false;
@@ -146,6 +146,24 @@
         call.classList.toggle("has-peers", group.length > 1);
     }
 
+    function tick() {
+        [].forEach.call(list.querySelectorAll(".server-channel[data-kind='voice']"), function (button) {
+            var live = button.querySelector(".server-voice-live");
+            if (!live) return;
+            var id = Number(button.getAttribute("data-id"));
+            var occupied = (state.channels[id] || []).length > 0 && state.started[id];
+            live.hidden = !occupied;
+            if (!occupied) return;
+            var seconds = Math.max(0, Math.floor((Date.now() - state.started[id]) / 1000));
+            var hours = Math.floor(seconds / 3600);
+            var minutes = Math.floor((seconds % 3600) / 60);
+            var rest = seconds % 60;
+            live.textContent = (hours ? hours + ":" + (minutes < 10 ? "0" : "") : "") + minutes + ":" + (rest < 10 ? "0" : "") + rest;
+        });
+    }
+
+    window.setInterval(tick, 1000);
+
     function paint() {
         var here = mine();
         [].forEach.call(list.querySelectorAll(".server-channel[data-kind='voice']"), function (button) {
@@ -179,14 +197,17 @@
             if (invite) invite.hidden = !inside;
             slot.hidden = users.length === 0;
         });
+        tick();
         paintTiles();
         document.dispatchEvent(new CustomEvent("discode-voice-painted"));
     }
 
     function apply(payload) {
         state.channels = {};
+        state.started = {};
         (payload.channels || []).forEach(function (group) {
             state.channels[group.channelId] = group.users || [];
+            state.started[group.channelId] = Date.parse(group.startedAt) || Date.now();
         });
         state.current = payload.current || null;
     }

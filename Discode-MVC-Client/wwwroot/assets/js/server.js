@@ -322,16 +322,6 @@
     }
 
     function tickVoiceClock() {
-        var marks = channelList ? channelList.querySelectorAll(".server-voice-live") : [];
-        for (var i = 0; i < marks.length; i++) marks[i].hidden = true;
-        if (!joinedVoice) return;
-        var live = joinedVoice.querySelector(".server-voice-live");
-        if (!live) return;
-        var seconds = Math.max(0, Math.floor((Date.now() - voiceStarted) / 1000));
-        var minutes = Math.floor(seconds / 60);
-        var rest = seconds % 60;
-        live.hidden = false;
-        live.textContent = minutes + ":" + (rest < 10 ? "0" : "") + rest;
     }
 
     function paintVoice() {
