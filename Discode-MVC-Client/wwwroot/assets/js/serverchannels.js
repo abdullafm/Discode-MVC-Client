@@ -31,6 +31,7 @@
         button.setAttribute("data-id", channel.id);
         button.setAttribute("data-view", channel.isPrivate ? "0" : "1");
         button.setAttribute("data-readonly", channel.isReadOnly ? "1" : "0");
+        button.setAttribute("data-limit", channel.userLimit || 0);
         button.querySelector(".server-channel-name").textContent = channel.name;
         var lock = button.querySelector(".server-channel-lock");
         if (lock) lock.hidden = !channel.isPrivate && channel.kind !== "announce";
@@ -180,7 +181,8 @@
                 name: options.name,
                 kind: options.kind,
                 categoryId: options.categoryId ? Number(options.categoryId) : null,
-                isPrivate: !!options.isPrivate
+                isPrivate: !!options.isPrivate,
+                userLimit: Number(options.userLimit) || 0
             }).then(function (channel) {
                 return reload(channel.id).then(function () { return channel; });
             });
@@ -203,6 +205,7 @@
                 channelId: Number(options.id),
                 name: options.name,
                 syncWithCategory: options.syncWithCategory === undefined ? null : options.syncWithCategory,
+                userLimit: options.userLimit === undefined ? null : options.userLimit,
                 overwrites: options.overwrites || null
             }).then(function (channel) {
                 return reload().then(function () { return channel; });

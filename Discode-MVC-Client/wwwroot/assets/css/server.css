@@ -6499,3 +6499,27 @@ html.theme-dark .members-ctx .row-menu-danger,
 html.theme-dark .members-ctx .row-menu-danger i {
     color: #f23f42 !important;
 }
+
+.server-voice-count {
+    margin-left: auto;
+    color: #80848e;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.server-voice-count + .server-voice-live {
+    margin-left: 6px;
+}
+
+.server-voice-user.is-speaking img,
+.server-voice-tile.is-speaking {
+    box-shadow: 0 0 0 2px #23a559;
+}
+
+.server-voice-tile.is-peer {
+    position: relative;
+}
+
+html.theme-dark .server-voice-count {
+    color: #949ba4;
+}

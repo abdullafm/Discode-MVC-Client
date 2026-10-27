@@ -6,6 +6,7 @@ namespace Discode_MVC_Client.ViewModels.Servers
         public int ChannelId { get; set; }
         public string Name { get; set; } = string.Empty;
         public bool? SyncWithCategory { get; set; }
+        public int? UserLimit { get; set; }
         public List<ServerOverwriteInputUIVM>? Overwrites { get; set; }
     }
 }

@@ -64,7 +64,8 @@ namespace Discode_MVC_Client.Controllers
                 name = model.Name ?? string.Empty,
                 kind = model.Kind,
                 categoryId = model.CategoryId,
-                isPrivate = model.IsPrivate
+                isPrivate = model.IsPrivate,
+                userLimit = model.UserLimit
             }));
         }
 
@@ -87,6 +88,7 @@ namespace Discode_MVC_Client.Controllers
             {
                 name = model.Name ?? string.Empty,
                 syncWithCategory = model.SyncWithCategory,
+                userLimit = model.UserLimit,
                 overwrites = model.Overwrites
             }));
         }

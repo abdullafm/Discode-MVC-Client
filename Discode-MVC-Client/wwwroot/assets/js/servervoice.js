@@ -90,13 +90,23 @@
 
     function tileNode(user) {
         var tile = document.createElement("div");
-        tile.className = "server-voice-tile is-peer" + (user.isMuted ? " is-muted" : "") + (user.isDeafened ? " is-deafened" : "");
+        tile.className = "server-voice-tile is-peer";
         tile.setAttribute("data-user", user.userId);
+        var screen = document.createElement("video");
+        screen.className = "server-voice-screen";
+        screen.autoplay = true;
+        screen.muted = true;
+        screen.setAttribute("playsinline", "");
+        var cam = document.createElement("video");
+        cam.className = "server-voice-cam-video";
+        cam.autoplay = true;
+        cam.muted = true;
+        cam.setAttribute("playsinline", "");
         var photo = document.createElement("img");
         photo.alt = "";
-        photo.src = user.avatarUrl || DEFAULT_AVATAR;
         var name = document.createElement("p");
-        name.textContent = user.displayName;
+        tile.appendChild(screen);
+        tile.appendChild(cam);
         tile.appendChild(photo);
         tile.appendChild(name);
         return tile;
@@ -105,18 +115,33 @@
     function paintTiles() {
         var call = document.getElementById("server-voice-call");
         if (!call) return;
-        [].forEach.call(call.querySelectorAll(".server-voice-tile.is-peer"), function (node) { node.remove(); });
         var here = mine();
-        if (!here) return;
-        var me = document.getElementById("server-voice-tile");
-        var group = state.channels[here.channelId] || [];
+        var group = here ? (state.channels[here.channelId] || []) : [];
+        var wanted = {};
+        group.forEach(function (user) {
+            if (!user.isSelf) wanted[user.userId] = user;
+        });
+        [].forEach.call(call.querySelectorAll(".server-voice-tile.is-peer"), function (node) {
+            if (!wanted[node.getAttribute("data-user")]) node.remove();
+        });
         var self = group.filter(function (user) { return user.isSelf; })[0];
+        var me = document.getElementById("server-voice-tile");
         if (me && self) {
+            me.setAttribute("data-user", self.userId);
             me.classList.toggle("is-muted", self.isMuted);
             me.classList.toggle("is-deafened", self.isDeafened);
         }
-        group.forEach(function (user) {
-            if (!user.isSelf) call.appendChild(tileNode(user));
+        Object.keys(wanted).forEach(function (id) {
+            var user = wanted[id];
+            var tile = call.querySelector('.server-voice-tile.is-peer[data-user="' + id + '"]');
+            if (!tile) {
+                tile = tileNode(user);
+                call.appendChild(tile);
+            }
+            tile.classList.toggle("is-muted", user.isMuted);
+            tile.classList.toggle("is-deafened", user.isDeafened);
+            tile.querySelector("img").src = user.avatarUrl || DEFAULT_AVATAR;
+            tile.querySelector("p").textContent = user.displayName;
         });
         call.classList.toggle("has-peers", group.length > 1);
     }
@@ -129,6 +154,19 @@
             var slot = row.nextElementSibling;
             var inside = !!here && here.channelId === id;
             button.classList.toggle("joined", inside);
+            var limit = Number(button.getAttribute("data-limit")) || 0;
+            var count = button.querySelector(".server-voice-count");
+            if (limit > 0) {
+                if (!count) {
+                    count = document.createElement("span");
+                    count.className = "server-voice-count";
+                    var anchor = button.querySelector(".server-voice-live");
+                    button.insertBefore(count, anchor);
+                }
+                count.textContent = ((state.channels[id] || []).length) + "/" + limit;
+            } else if (count) {
+                count.remove();
+            }
             if (!slot || !slot.classList.contains("server-voice-people")) return;
             [].forEach.call(slot.querySelectorAll(".server-voice-user"), function (node) { node.remove(); });
             var users = state.channels[id] || [];
@@ -142,6 +180,7 @@
             slot.hidden = users.length === 0;
         });
         paintTiles();
+        document.dispatchEvent(new CustomEvent("discode-voice-painted"));
     }
 
     function apply(payload) {
@@ -196,6 +235,7 @@
         var current = audio();
         return request("/ServerVoice/Join", "POST", { serverId: serverId, channelId: Number(channelId), isMuted: current.muted || current.deafened, isDeafened: current.deafened }).then(function () {
             play(joinSound);
+            document.dispatchEvent(new CustomEvent("discode-voice-audio", { detail: { muted: current.muted, deafened: current.deafened } }));
             return load();
         }).catch(function (error) {
             if (window.discodeServerFlash) window.discodeServerFlash(error.message);
@@ -210,6 +250,7 @@
     }
 
     function sync(muted, deafened) {
+        document.dispatchEvent(new CustomEvent("discode-voice-audio", { detail: { muted: muted, deafened: deafened } }));
         if (!state.current) return;
         var silent = muted || deafened;
         if (sent.muted === silent && sent.deafened === deafened) return;
@@ -233,6 +274,13 @@
         reload: load,
         current: function () { return state.current; },
         here: mine,
+        roster: function () {
+            var here = mine();
+            if (!here) return null;
+            var users = state.channels[here.channelId] || [];
+            var self = users.filter(function (user) { return user.isSelf; })[0];
+            return { channelId: here.channelId, selfId: self ? self.userId : "", users: users };
+        },
         has: function (userId) {
             return Object.keys(state.channels).some(function (id) {
                 return state.channels[id].some(function (user) { return user.userId === userId; });

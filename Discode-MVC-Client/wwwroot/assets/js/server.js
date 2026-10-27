@@ -1351,6 +1351,10 @@
         var picked = document.querySelector('#channel-types input:checked');
         var kind = picked ? picked.value : "text";
         if (channelNameIcon) channelNameIcon.className = "fa-solid " + (channelKinds[kind] || "fa-hashtag");
+        var limitWrap = document.getElementById("channel-limit-wrap");
+        var limitLabel = document.getElementById("channel-limit-label");
+        if (limitWrap) limitWrap.hidden = kind !== "voice";
+        if (limitLabel) limitLabel.hidden = kind !== "voice";
     }
 
     function syncChannelName() {
@@ -1416,6 +1420,8 @@
         var radios = document.querySelectorAll('#channel-types input');
         for (var i = 0; i < radios.length; i++) radios[i].checked = radios[i].value === "text";
         if (channelPrivate) channelPrivate.checked = false;
+        var limitInput = document.getElementById("channel-limit");
+        if (limitInput) limitInput.value = "0";
         if (channelName) channelName.value = "new-channel";
         syncChannelKind();
         syncChannelName();
@@ -1468,7 +1474,8 @@
                     name: channelName ? channelName.value : "",
                     kind: kind,
                     categoryId: chosen ? chosen.getAttribute("data-id") : null,
-                    isPrivate: !!(channelPrivate && channelPrivate.checked)
+                    isPrivate: !!(channelPrivate && channelPrivate.checked),
+                    userLimit: kind === "voice" ? Number((document.getElementById("channel-limit") || {}).value) || 0 : 0
                 }).then(function () {
                     closeChannelModal();
                     channelConfirm.disabled = false;
@@ -1560,6 +1567,12 @@
         if (channelEditName) channelEditName.value = name;
         if (channelEditIcon) channelEditIcon.className = "fa-solid " + (channelKinds[kind] || "fa-hashtag");
         if (channelEditSub) channelEditSub.textContent = (voiceRoom ? "" : "#") + name;
+        var editLimit = document.getElementById("channel-edit-limit");
+        var editLimitWrap = document.getElementById("channel-edit-limit-wrap");
+        var editLimitLabel = document.getElementById("channel-edit-limit-label");
+        if (editLimit) editLimit.value = channel.getAttribute("data-limit") || "0";
+        if (editLimitWrap) editLimitWrap.hidden = !voiceRoom;
+        if (editLimitLabel) editLimitLabel.hidden = !voiceRoom;
         if (channelPerms.view) channelPerms.view.checked = permOn(channel, "data-view");
         if (channelPerms.send) channelPerms.send.checked = permOn(channel, "data-send");
         if (channelPerms.manage) channelPerms.manage.checked = permOn(channel, "data-manage");
@@ -1732,6 +1745,7 @@
                     id: channel.getAttribute("data-id"),
                     name: channelEditName.value,
                     syncWithCategory: collected.sync,
+                    userLimit: kind === "voice" ? Number((document.getElementById("channel-edit-limit") || {}).value) || 0 : undefined,
                     overwrites: collected.overwrites
                 }).then(function () {
                     closeChannelEdit();
@@ -2553,43 +2567,26 @@
             voiceScreen.classList.toggle("is-on", screenOn);
             voiceScreen.setAttribute("aria-pressed", screenOn ? "true" : "false");
         }
-        setFeedVideo(camVideo, voiceFeeds.camera);
-        setFeedVideo(screenVideo, voiceFeeds.screen);
     }
 
     function setVoiceFeed(kind, on) {
-        var key = kind === "screen" ? "screen" : "camera";
-        if (!on) {
-            voiceFeeds[key] = "";
-            syncVoiceFeeds();
-            fetch(serverApi("/voice/" + key), { method: "DELETE" }).catch(function () {});
-            return;
-        }
-        fetch(serverApi("/voice/" + key), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ channel: joinedVoice ? channelTitle(joinedVoice) : "" })
-        }).then(function (response) {
-            if (!response.ok) throw new Error(key);
-            return response.json();
-        }).then(function (payload) {
-            var url = feedUrl(payload, key);
-            if (!url) throw new Error(key);
-            voiceFeeds[key] = url;
-            syncVoiceFeeds();
-        }).catch(function () {
-            voiceFeeds[key] = "";
-            syncVoiceFeeds();
-        });
+        if (!window.discodeVoiceRtc) return;
+        if (kind === "screen") window.discodeVoiceRtc.setScreen(on);
+        else window.discodeVoiceRtc.setCamera(on);
     }
 
     function stopVoiceMedia() {
         voiceFeeds.camera = "";
         voiceFeeds.screen = "";
         syncVoiceFeeds();
-        fetch(serverApi("/voice/camera"), { method: "DELETE" }).catch(function () {});
-        fetch(serverApi("/voice/screen"), { method: "DELETE" }).catch(function () {});
     }
+
+    document.addEventListener("discode-voice-media", function () {
+        var live = window.discodeVoiceRtc ? window.discodeVoiceRtc.media() : { camera: false, screen: false };
+        voiceFeeds.camera = live.camera ? "on" : "";
+        voiceFeeds.screen = live.screen ? "on" : "";
+        syncVoiceFeeds();
+    });
 
     if (voiceCam) {
         voiceCam.addEventListener("click", function () {

@@ -217,6 +217,11 @@
                     <i class="fa-solid fa-folder"></i>
                     <select id="channel-category-pick"></select>
                 </div>
+                <label class="channel-kicker" id="channel-limit-label" for="channel-limit" hidden>User Limit</label>
+                <div class="channel-name" id="channel-limit-wrap" hidden>
+                    <i class="fa-solid fa-user-group"></i>
+                    <input id="channel-limit" type="number" min="0" max="99" value="0" placeholder="No limit" autocomplete="off">
+                </div>
                 <div class="channel-private">
                     <i class="fa-solid fa-lock"></i>
                     <span><strong>Private Channel</strong><small>Only selected members and roles will be able to view
@@ -244,6 +249,11 @@
                 <div class="channel-name">
                     <i class="fa-solid fa-hashtag" id="channel-edit-icon"></i>
                     <input id="channel-edit-name" type="text" maxlength="100" autocomplete="off">
+                </div>
+                <label class="channel-kicker" id="channel-edit-limit-label" for="channel-edit-limit" hidden>User Limit</label>
+                <div class="channel-name" id="channel-edit-limit-wrap" hidden>
+                    <i class="fa-solid fa-user-group"></i>
+                    <input id="channel-edit-limit" type="number" min="0" max="99" value="0" placeholder="No limit" autocomplete="off">
                 </div>
                 <div class="ow-host" id="channel-overwrites"></div>
                 <div class="channel-actions">
@@ -925,6 +935,7 @@
         </div>
         <script src="~/assets/js/serverchannels.js" asp-append-version="true"></script>
         <script src="~/assets/js/servervoice.js" asp-append-version="true"></script>
+        <script src="~/assets/js/servervoicertc.js" asp-append-version="true"></script>
         <script src="~/assets/js/serveroverwrites.js" asp-append-version="true"></script>
         <script src="~/assets/js/groupparts.js" asp-append-version="true"></script>
         <script src="~/assets/js/serverchat.js" asp-append-version="true"></script>

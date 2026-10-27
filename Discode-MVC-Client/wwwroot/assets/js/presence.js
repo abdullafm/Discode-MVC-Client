@@ -339,6 +339,10 @@
                     document.dispatchEvent(new CustomEvent("discode-server-audit-changed", { detail: data }));
                 });
 
+                connection.on("ServerVoiceSignal", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-voice-signal", { detail: data }));
+                });
+
                 connection.on("ServerVoiceChanged", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-server-voice-changed", { detail: data }));
                 });
