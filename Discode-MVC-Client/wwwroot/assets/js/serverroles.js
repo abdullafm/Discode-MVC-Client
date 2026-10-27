@@ -23,7 +23,8 @@
         "Speak": 4096,
         "Mute Members": 8192,
         "Kick Members": 16384,
-        "Ban Members": 32768
+        "Ban Members": 32768,
+        "Timeout Members": 65536
     };
     var COLORS = {
         gray: "#80848e",
@@ -87,7 +88,8 @@
     }
 
     function canEdit() {
-        return can(4);
+        var role = selected();
+        return can(4) && (!role || role.isEveryone || role.canManage !== false);
     }
 
     function selected() {
@@ -186,6 +188,22 @@
             dot.style.background = colorOf(role.color);
             row.appendChild(dot);
             row.appendChild(element("span", "role-label", role.name));
+            if (role.canManage !== false && can(4)) {
+                var moves = element("span", "role-moves");
+                var up = element("span", "role-move", "");
+                up.setAttribute("data-move", "up");
+                up.setAttribute("data-id", role.id);
+                up.setAttribute("aria-label", "Move up");
+                up.innerHTML = "<i class=\"fa-solid fa-chevron-up\"></i>";
+                var down = element("span", "role-move", "");
+                down.setAttribute("data-move", "down");
+                down.setAttribute("data-id", role.id);
+                down.setAttribute("aria-label", "Move down");
+                down.innerHTML = "<i class=\"fa-solid fa-chevron-down\"></i>";
+                moves.appendChild(up);
+                moves.appendChild(down);
+                row.appendChild(moves);
+            }
             list.appendChild(row);
         });
     }
@@ -211,7 +229,7 @@
             separate.disabled = !editable;
         }
         if (deleteButton) deleteButton.disabled = role.isEveryone || !editable;
-        if (createButton) createButton.hidden = !editable;
+        if (createButton) createButton.hidden = !can(4);
         paintToggles(draft.permissions);
         if (addOpen) addOpen.hidden = role.isEveryone || !editable;
     }
@@ -556,6 +574,23 @@
         });
     }
 
+    function moveRole(id, direction) {
+        var order = roles.filter(function (role) { return !role.isEveryone; });
+        var at = -1;
+        for (var i = 0; i < order.length; i++) if (order[i].id === id) at = i;
+        var to = direction === "up" ? at - 1 : at + 1;
+        if (at < 0 || to < 0 || to >= order.length) return;
+        if (order[to].canManage === false) return;
+        var swapped = order[at];
+        order[at] = order[to];
+        order[to] = swapped;
+        request("/ServerRole/Reorder", { serverId: Number(serverId), roleIds: order.map(function (role) { return role.id; }) }).then(function () {
+            return loadRoles(true);
+        }).catch(function (error) {
+            if (window.discodeServerFlash) window.discodeServerFlash(error.message);
+        });
+    }
+
     function expose() {
         window.discodeServerRoles = { roles: roles, perms: perms, canManage: canEdit(), toggle: toggle };
         document.dispatchEvent(new CustomEvent("discode-roles-ready"));
@@ -607,6 +642,12 @@
             [].forEach.call(group ? group.querySelectorAll("input[type=checkbox]") : [], function (box) { box.checked = false; });
             draft.permissions = permsFromToggles();
             markDirty();
+            return;
+        }
+        var mover = event.target.closest("[data-move]");
+        if (mover && list && list.contains(mover)) {
+            event.stopPropagation();
+            moveRole(Number(mover.getAttribute("data-id")), mover.getAttribute("data-move"));
             return;
         }
         var row = event.target.closest(".role-row");

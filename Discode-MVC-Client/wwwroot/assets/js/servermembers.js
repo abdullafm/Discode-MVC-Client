@@ -96,6 +96,19 @@
             reason.autocomplete = "off";
             form.appendChild(reason);
         }
+        var duration = null;
+        if (options.duration) {
+            form.appendChild(element("label", "", "Duration"));
+            duration = document.createElement("select");
+            [[1, "60 secs"], [5, "5 mins"], [10, "10 mins"], [60, "1 hour"], [1440, "1 day"], [10080, "1 week"]].forEach(function (choice) {
+                var opt = document.createElement("option");
+                opt.value = choice[0];
+                opt.textContent = choice[1];
+                duration.appendChild(opt);
+            });
+            duration.value = "10";
+            form.appendChild(duration);
+        }
         var problem = element("p", "confirm-error");
         problem.hidden = true;
         form.appendChild(problem);
@@ -127,7 +140,7 @@
                 method: "POST",
                 credentials: "same-origin",
                 headers: { "Content-Type": "application/json", "RequestVerificationToken": tokenValue(), "X-Requested-With": "XMLHttpRequest" },
-                body: JSON.stringify({ serverId: Number(serverId), userId: options.member.id, reason: reason ? reason.value.trim() : "" })
+                body: JSON.stringify({ serverId: Number(serverId), userId: options.member.id, reason: reason ? reason.value.trim() : "", minutes: duration ? Number(duration.value) : 0 })
             }).then(function (response) {
                 return response.json().catch(function () { return {}; }).then(function (data) {
                     if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Something went wrong.");
@@ -141,6 +154,26 @@
             });
         });
     }
+
+    function postJson(url, body) {
+        return fetch(url, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "RequestVerificationToken": tokenValue(), "X-Requested-With": "XMLHttpRequest" },
+            body: JSON.stringify(body)
+        }).then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (data) {
+                if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Something went wrong.");
+                return data;
+            });
+        });
+    }
+
+    window.discodeMemberMenu = {
+        open: function (member, x, y) {
+            openMenu(member, { getBoundingClientRect: function () { return { left: x, right: x, top: y, bottom: y }; } });
+        }
+    };
 
     function openMenu(member, anchor) {
         if (!menu) {
@@ -174,11 +207,70 @@
                 else window.location.href = url;
             });
         }
+        add("Mention", function () {
+            document.dispatchEvent(new CustomEvent("discode-mention-member", { detail: { name: member.userName } }));
+        });
         add("Copy User ID", function () {
             if (navigator.clipboard) navigator.clipboard.writeText(member.id).catch(function () {});
         });
         var perms = window.discodeServerRoles ? Number(window.discodeServerRoles.perms) || 0 : 0;
-        if (!member.isSelf && !member.isOwner) {
+        var manageable = ((window.discodeServerRoles && window.discodeServerRoles.roles) || []).filter(function (role) { return !role.isEveryone && role.canManage !== false; });
+        if ((perms & 4) === 4 && manageable.length && !member.isOwner) {
+            var rolesItem = document.createElement("li");
+            var rolesButton = document.createElement("button");
+            rolesButton.type = "button";
+            rolesButton.appendChild(element("span", "row-menu-label", "Roles"));
+            rolesButton.appendChild(element("i", "fa-solid fa-chevron-down"));
+            rolesItem.appendChild(rolesButton);
+            var sub = element("ul", "ctx-sub");
+            sub.hidden = true;
+            manageable.forEach(function (role) {
+                var has = (member.roles || []).some(function (held) { return held.id === role.id; });
+                var line = document.createElement("li");
+                var pick = document.createElement("button");
+                pick.type = "button";
+                pick.className = "ctx-role-row" + (has ? " on" : "");
+                pick.appendChild(element("i", "fa-solid fa-check"));
+                pick.appendChild(element("span", "row-menu-label", role.name));
+                pick.addEventListener("click", function () {
+                    closeMenu();
+                    if (window.discodeServerRoles && window.discodeServerRoles.toggle) {
+                        window.discodeServerRoles.toggle(role.id, member.id, has).catch(function (error) {
+                            if (window.discodeServerFlash) window.discodeServerFlash(error.message);
+                        });
+                    }
+                });
+                line.appendChild(pick);
+                sub.appendChild(line);
+            });
+            rolesButton.addEventListener("click", function (event) {
+                event.stopPropagation();
+                sub.hidden = !sub.hidden;
+            });
+            list.appendChild(rolesItem);
+            list.appendChild(sub);
+        }
+        if (!member.isSelf && !member.isOwner && member.canModerate) {
+            if ((perms & 65536) === 65536) {
+                if (member.timeoutUntil) {
+                    add("Remove Timeout from " + member.displayName, function () {
+                        postJson("/Server/Timeout", { serverId: Number(serverId), userId: member.id, minutes: 0 }).then(load).catch(function (error) {
+                            if (window.discodeServerFlash) window.discodeServerFlash(error.message);
+                        });
+                    });
+                } else {
+                    add("Timeout " + member.displayName, function () {
+                        confirmAction({
+                            title: "Timeout " + member.displayName,
+                            text: "They won't be able to send messages or react until the timeout ends.",
+                            confirm: "Timeout",
+                            url: "/Server/Timeout",
+                            duration: true,
+                            member: member
+                        });
+                    }, true);
+                }
+            }
             if ((perms & 16384) === 16384) {
                 add("Kick " + member.displayName, function () {
                     confirmAction({

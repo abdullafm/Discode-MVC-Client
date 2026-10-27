@@ -6416,3 +6416,74 @@ html.theme-dark body .channel-menu button.is-danger {
 html.theme-dark body .channel-menu button.is-danger:hover {
     color: #fff !important;
 }
+
+.role-row {
+    position: relative;
+}
+
+.role-moves {
+    display: none;
+    margin-left: auto;
+    gap: 2px;
+}
+
+.role-row:hover .role-moves,
+.role-row.on .role-moves {
+    display: inline-flex;
+}
+
+.role-move {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    color: #80848e;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.role-move:hover {
+    background: rgba(116, 127, 141, 0.25);
+    color: inherit;
+}
+
+.members-ctx .row-menu-danger:hover {
+    background: #da373c;
+    color: #fff;
+}
+
+.members-ctx .ctx-role-row i {
+    width: 14px;
+    margin-right: 6px;
+    visibility: hidden;
+}
+
+.members-ctx .ctx-role-row.on i {
+    visibility: visible;
+}
+
+.members-ctx .ctx-sub {
+    padding-left: 12px;
+}
+
+.members-ctx .ctx-sub[hidden] {
+    display: none;
+}
+
+.server-delete-card select {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 10px;
+    border: 1px solid #c4c9ce;
+    border-radius: 4px;
+    background: #fff;
+    color: inherit;
+    font: inherit;
+}
+
+html.theme-dark .server-delete-card select {
+    background: #1e1f22;
+    border-color: #1e1f22;
+    color: #f2f3f5;
+}

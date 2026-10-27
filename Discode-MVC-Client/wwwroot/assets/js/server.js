@@ -123,6 +123,21 @@
     }
 
     document.addEventListener("discode-server-updated", refreshMembers);
+    var memberListNode = document.getElementById("server-member-list");
+    if (memberListNode) {
+        memberListNode.addEventListener("contextmenu", function (event) {
+            var button = event.target.closest(".server-member");
+            if (!button || !window.discodeMemberMenu) return;
+            var id = button.getAttribute("data-id");
+            var found = null;
+            for (var i = 0; i < serverMembers.length; i++) {
+                if (serverMembers[i] && serverMembers[i].id === id) found = serverMembers[i];
+            }
+            if (!found) return;
+            event.preventDefault();
+            window.discodeMemberMenu.open(found, event.clientX, event.clientY);
+        });
+    }
     document.addEventListener("discode-profile-changed", function () { refreshMembers(null); });
     document.addEventListener("discode-server-roles-changed", function () { refreshMembers(null); });
     document.addEventListener("discode-roles-ready", function () {
@@ -685,7 +700,7 @@
     function serverRoleChoices() {
         var state = window.discodeServerRoles;
         if (!state || !Array.isArray(state.roles)) return [];
-        return state.roles.filter(function (role) { return !role.isEveryone; });
+        return state.roles.filter(function (role) { return !role.isEveryone && role.canManage !== false; });
     }
 
     function closeMemberMenus() {

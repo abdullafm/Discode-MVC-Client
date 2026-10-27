@@ -48,6 +48,13 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> Reorder([FromBody] ReorderServerRolesUIVM model)
+        {
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/roles/order", new { roleIds = model.RoleIds }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> Delete([FromBody] DeleteServerRoleUIVM model)
         {
             return Forward(client => client.DeleteAsync($"api/server/{model.ServerId}/roles/{model.RoleId}"));

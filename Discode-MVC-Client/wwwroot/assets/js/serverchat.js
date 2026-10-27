@@ -323,6 +323,13 @@
 
     document.addEventListener("discode-roles-ready", paintAccess);
 
+    document.addEventListener("discode-mention-member", function (event) {
+        var name = event.detail && event.detail.name;
+        if (!name || compose.hidden || chat.hidden) return;
+        input.focus();
+        document.execCommand("insertText", false, "@" + name + " ");
+    });
+
     var current = document.querySelector("#server-channel-list .server-channel.on");
     if (current && current.getAttribute("data-kind") !== "voice") window.discodeServerChat.open(current);
 })();

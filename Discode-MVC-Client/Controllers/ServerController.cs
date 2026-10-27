@@ -183,6 +183,13 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> Timeout([FromBody] TimeoutServerMemberUIVM model)
+        {
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/members/{Uri.EscapeDataString(model.UserId ?? string.Empty)}/timeout", new { minutes = model.Minutes }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> Kick([FromBody] ServerMemberActionUIVM model)
         {
             return Forward(client => client.DeleteAsync($"api/server/{model.ServerId}/members/{Uri.EscapeDataString(model.UserId ?? string.Empty)}"));

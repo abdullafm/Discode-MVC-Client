@@ -132,9 +132,12 @@
         return fetchData().then(function (next) {
             var pick = wanted;
             wanted = 0;
+            var panel = document.getElementById("server-settings");
+            var settingsOpen = !!panel && !panel.hidden;
             var target = render(next, pick);
             if (target) {
-                if (window.discodeSelectChannel) window.discodeSelectChannel(target, true);
+                if (settingsOpen) target.classList.add("on");
+                else if (window.discodeSelectChannel) window.discodeSelectChannel(target, true);
                 else target.classList.add("on");
             }
         }).catch(function () {}).then(function () {
