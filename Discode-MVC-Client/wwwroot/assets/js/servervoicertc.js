@@ -318,22 +318,56 @@
         }
     }
 
+    function screenTile(owner, stream) {
+        var id = owner.getAttribute("data-user");
+        var tile = document.querySelector('.server-voice-tile.is-screen[data-for="' + id + '"]');
+        if (!tile) {
+            tile = document.createElement("div");
+            tile.className = "server-voice-tile is-screen";
+            tile.setAttribute("data-for", id);
+            var video = document.createElement("video");
+            video.className = "server-voice-screen";
+            video.autoplay = true;
+            video.muted = true;
+            video.setAttribute("playsinline", "");
+            var badge = document.createElement("span");
+            badge.className = "server-voice-badge";
+            badge.textContent = "LIVE";
+            tile.appendChild(video);
+            tile.appendChild(badge);
+            tile.appendChild(document.createElement("p"));
+            owner.insertAdjacentElement("afterend", tile);
+        }
+        var label = owner.querySelector("p");
+        tile.querySelector("p").textContent = label ? label.textContent : "";
+        setVideo(tile.querySelector("video"), stream);
+    }
+
     function attach() {
+        var wanted = {};
         var ownTile = document.getElementById("server-voice-tile");
         if (ownTile) {
             ownTile.classList.toggle("has-cam", media.camera);
-            ownTile.classList.toggle("has-screen", media.screen);
             setVideo(document.getElementById("server-voice-cam-video"), media.camera ? cameraStream : null);
             setVideo(document.getElementById("server-voice-screen-video"), media.screen ? screenStream : null);
+            if (media.screen && screenStream && ownTile.getAttribute("data-user")) {
+                wanted[ownTile.getAttribute("data-user")] = true;
+                screenTile(ownTile, screenStream);
+            }
         }
         [].forEach.call(document.querySelectorAll(".server-voice-tile.is-peer"), function (tile) {
             var peer = peers[tile.getAttribute("data-user")];
             var cam = !!peer && peer.state.camera && !!peer.camStream;
             var screen = !!peer && peer.state.screen && !!peer.screenStream;
             tile.classList.toggle("has-cam", cam);
-            tile.classList.toggle("has-screen", screen);
             setVideo(tile.querySelector(".server-voice-cam-video"), cam ? peer.camStream : null);
-            setVideo(tile.querySelector(".server-voice-screen"), screen ? peer.screenStream : null);
+            if (screen) {
+                wanted[tile.getAttribute("data-user")] = true;
+                screenTile(tile, peer.screenStream);
+            }
+        });
+        [].forEach.call(document.querySelectorAll(".server-voice-tile.is-screen"), function (tile) {
+            if (!wanted[tile.getAttribute("data-for")]) tile.remove();
         });
         paintSpeaking();
         document.dispatchEvent(new CustomEvent("discode-voice-media"));

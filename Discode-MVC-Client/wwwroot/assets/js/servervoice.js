@@ -124,6 +124,10 @@
         [].forEach.call(call.querySelectorAll(".server-voice-tile.is-peer"), function (node) {
             if (!wanted[node.getAttribute("data-user")]) node.remove();
         });
+        [].forEach.call(call.querySelectorAll(".server-voice-tile.is-screen"), function (node) {
+            var owner = node.getAttribute("data-for");
+            if (!call.querySelector('.server-voice-tile:not(.is-screen)[data-user="' + owner + '"]')) node.remove();
+        });
         var self = group.filter(function (user) { return user.isSelf; })[0];
         var me = document.getElementById("server-voice-tile");
         if (me && self) {
@@ -174,6 +178,7 @@
     }
 
     window.addEventListener("resize", layoutTiles);
+    document.addEventListener("discode-voice-media", layoutTiles);
     if (window.ResizeObserver) {
         var watch = document.getElementById("server-voice-call");
         if (watch) new ResizeObserver(layoutTiles).observe(watch);
