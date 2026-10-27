@@ -6487,3 +6487,15 @@ html.theme-dark .server-delete-card select {
     border-color: #1e1f22;
     color: #f2f3f5;
 }
+.members-ctx .row-menu-danger:hover,
+.members-ctx .row-menu-danger:hover i,
+html.theme-dark .members-ctx .row-menu-danger:hover,
+html.theme-dark .members-ctx .row-menu-danger:hover i {
+    background: #da373c !important;
+    color: #fff !important;
+}
+
+html.theme-dark .members-ctx .row-menu-danger,
+html.theme-dark .members-ctx .row-menu-danger i {
+    color: #f23f42 !important;
+}
