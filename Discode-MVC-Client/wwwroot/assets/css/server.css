@@ -6403,3 +6403,16 @@ html.theme-dark .ow-tri button + button {
     font-size: 15px;
     line-height: 1.4;
 }
+.channel-menu button.is-danger:hover,
+html.theme-dark body .channel-menu button.is-danger:hover {
+    background: #da373c !important;
+    color: #fff !important;
+}
+
+html.theme-dark body .channel-menu button.is-danger {
+    color: #f23f42 !important;
+}
+
+html.theme-dark body .channel-menu button.is-danger:hover {
+    color: #fff !important;
+}
