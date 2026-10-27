@@ -75,6 +75,23 @@
         card.appendChild(body);
     }
 
+    function paintBanned(card) {
+        card.textContent = "";
+        card._info = null;
+        card.classList.add("is-banned");
+        var row = card.closest(".dm-msg");
+        if (row && row.getAttribute("data-mine") === "1") card.appendChild(element("p", "dm-invite-banned-head", "You sent an invite, but..."));
+        var line = element("div", "dm-invite-banned");
+        var mark = element("span", "dm-invite-banned-icon");
+        mark.appendChild(element("i", "fa-solid fa-envelope"));
+        line.appendChild(mark);
+        var copy = element("div", "dm-invite-banned-copy");
+        copy.appendChild(element("strong", "", "Invalid Invite"));
+        copy.appendChild(element("small", "", "The user is banned from this guild."));
+        line.appendChild(copy);
+        card.appendChild(line);
+    }
+
     function paintInvalid(card) {
         if (card.getAttribute("data-strict") !== "1") {
             if (card.parentNode) card.parentNode.removeChild(card);
@@ -94,8 +111,9 @@
             if (!response.ok) throw new Error("invite");
             return response.json();
         }).then(function (info) {
-            card.classList.remove("is-invalid");
-            paint(card, info);
+            card.classList.remove("is-invalid", "is-banned");
+            if (info.isBanned) paintBanned(card);
+            else paint(card, info);
         }).catch(function () {
             paintInvalid(card);
         });

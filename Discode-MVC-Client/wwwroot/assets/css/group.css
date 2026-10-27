@@ -1790,3 +1790,56 @@ html.theme-dark .dm-invite-banner[data-banner="gray"] {
 html.theme-dark body .dm-invite-about {
     color: #b5bac1 !important;
 }
+.dm-invite-card.is-banned {
+    padding: 14px 16px 16px;
+}
+
+.dm-invite-banned-head {
+    margin: 0 0 12px;
+    color: #5c5e66;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.dm-invite-banned {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.dm-invite-banned-icon {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    background: rgba(218, 55, 60, 0.14);
+    color: #da373c;
+    font-size: 22px;
+}
+
+.dm-invite-banned-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dm-invite-banned-copy strong {
+    color: #da373c;
+    font-size: 16px;
+}
+
+.dm-invite-banned-copy small {
+    color: #5c5e66;
+    font-size: 14px;
+}
+
+html.theme-dark body .dm-invite-banned-head,
+html.theme-dark body .dm-invite-banned-copy small {
+    color: #b5bac1 !important;
+}
+
+html.theme-dark body .dm-invite-banned-copy strong {
+    color: #f23f42 !important;
+}
