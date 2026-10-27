@@ -95,6 +95,14 @@
         });
         var buttons = list.querySelectorAll(".server-channel");
         if (empty) empty.hidden = buttons.length > 0;
+        var emptyTitle = document.getElementById("server-chat-empty-title");
+        var emptyText = document.getElementById("server-chat-empty-text");
+        var noText = ![].some.call(buttons, function (button) { return button.getAttribute("data-kind") !== "voice"; });
+        if (emptyTitle) emptyTitle.textContent = noText ? "No Text Channels" : "Select a channel.";
+        if (emptyText) {
+            emptyText.hidden = !noText;
+            emptyText.textContent = noText ? "You find yourself in a strange place. You don't have access to any text channels, or there are none in this server." : "";
+        }
         var target = null;
         [].forEach.call(buttons, function (button) {
             if (selectedId && button.getAttribute("data-id") === String(selectedId)) target = button;

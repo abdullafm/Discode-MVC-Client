@@ -6387,3 +6387,19 @@ html.theme-dark .ow-tri,
 html.theme-dark .ow-tri button + button {
     border-color: #4e5058;
 }
+.server-room-empty-copy {
+    max-width: 440px;
+    text-align: center;
+}
+
+.server-room-empty-copy h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.server-room-empty-copy p {
+    margin: 8px 0 0;
+    font-size: 15px;
+    line-height: 1.4;
+}
