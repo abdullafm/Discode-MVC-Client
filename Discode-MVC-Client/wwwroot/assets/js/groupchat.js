@@ -295,6 +295,20 @@
         });
     }
 
+
+    function repaintSenders(list) {
+        list.forEach(function (message) {
+            var row = box.querySelector('[data-id="' + message.id + '"]');
+            if (!row) return;
+            var face = row.querySelector(".dm-msg-avatar");
+            var photo = message.senderAvatarUrl || DEFAULT_AVATAR;
+            if (face && face.getAttribute("src") !== photo) face.src = photo;
+            var who = row.querySelector(".dm-msg-head strong");
+            var name = message.senderDisplayName || message.senderUserName;
+            if (who && who.textContent !== name) who.textContent = name;
+        });
+    }
+
     function loadOlder() {
         if (loadingOlder || !hasMore || !loaded.length) return;
         var first = loaded.reduce(function (lowest, message) { return message.id < lowest ? message.id : lowest; }, loaded[0].id);
@@ -381,6 +395,12 @@
         event.preventDefault();
         joinCall(false, Number(link.closest(".group-call-row").getAttribute("data-call")));
     });
+    document.addEventListener("discode-profile-changed", function () {
+        request("/Group/Messages?id=" + groupId).then(function (list) {
+            if (Array.isArray(list)) repaintSenders(list);
+        }).catch(function () {});
+    });
+
     document.addEventListener("discode-gcall-state", updateBanner);
     document.addEventListener("discode-gcall-idle", function (event) {
         if (event.detail && event.detail.groupId === groupId) showIdleNote();

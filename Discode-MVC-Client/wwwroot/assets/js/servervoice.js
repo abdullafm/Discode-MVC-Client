@@ -343,6 +343,8 @@
         push(now.muted, now.deafened);
     });
 
+    document.addEventListener("discode-profile-changed", load);
+
     document.addEventListener("discode-server-voice-changed", function (event) {
         var detail = event.detail || {};
         if (!detail.serverId || Number(detail.serverId) === serverId) load();

@@ -141,6 +141,8 @@
         if (isConnected()) onConnected(true);
     });
 
+    var profileTimer = 0;
+
     function refreshFriends() {
         document.dispatchEvent(new CustomEvent("discode-friends-changed"));
         if (!window.discodeFriends) return;
@@ -177,6 +179,8 @@
 
                 connection.on("ProfileChanged", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-profile-changed", { detail: { userId: data.userId } }));
+                    window.clearTimeout(profileTimer);
+                    profileTimer = window.setTimeout(refreshFriends, 300);
                 });
 
                 connection.on("FriendsChanged", refreshFriends);

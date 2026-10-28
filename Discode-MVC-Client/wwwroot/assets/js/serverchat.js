@@ -164,6 +164,20 @@
         });
     }
 
+
+    function repaintSenders(list) {
+        list.forEach(function (message) {
+            var row = box.querySelector('[data-id="' + message.id + '"]');
+            if (!row) return;
+            var face = row.querySelector(".dm-msg-avatar");
+            var photo = message.senderAvatarUrl || DEFAULT_AVATAR;
+            if (face && face.getAttribute("src") !== photo) face.src = photo;
+            var who = row.querySelector(".dm-msg-head strong");
+            var name = message.senderDisplayName || message.senderUserName;
+            if (who && who.textContent !== name) who.textContent = name;
+        });
+    }
+
     function loadOlder() {
         if (loadingOlder || !hasMore || !loaded.length) return;
         var first = loaded.reduce(function (lowest, message) { return message.id < lowest ? message.id : lowest; }, loaded[0].id);
@@ -322,6 +336,14 @@
     });
 
     document.addEventListener("discode-roles-ready", paintAccess);
+
+    document.addEventListener("discode-profile-changed", function () {
+        if (!channelId || scroller.hidden) return;
+        var mine = generation;
+        request(path("List") + "?serverId=" + serverId + "&channelId=" + channelId).then(function (list) {
+            if (mine === generation && Array.isArray(list)) repaintSenders(list);
+        }).catch(function () {});
+    });
 
     document.addEventListener("discode-mention-member", function (event) {
         var name = event.detail && event.detail.name;
