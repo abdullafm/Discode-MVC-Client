@@ -6547,8 +6547,7 @@ html.theme-dark .server-voice-count {
 
 .server-voice-tile img {
     width: auto;
-    height: 42%;
-    min-height: 48px;
+    height: clamp(48px, 40%, 100px);
     aspect-ratio: 1;
 }
 
@@ -6638,7 +6637,11 @@ html.theme-dark .voice-cam-icon {
     color: #b5bac1;
 }
 
-.server-voice-user.is-camera .voice-cam-icon {
+.voice-user-media .voice-cam-icon {
+    display: none;
+}
+
+.server-voice-user.is-camera .voice-user-media .voice-cam-icon {
     display: inline-block;
 }
 
