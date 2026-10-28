@@ -6669,3 +6669,31 @@ html.theme-dark .voice-cam-icon {
 .server-voice-tile:not(.is-peer) .server-voice-cam-video {
     transform: scaleX(-1);
 }
+
+.server-voice-user {
+    min-height: 28px;
+}
+
+.server-voice-user img {
+    width: 24px;
+    height: 24px;
+}
+
+.server-voice-user strong {
+    color: #5c5e66;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+html.theme-dark .server-voice-user strong {
+    color: #949ba4;
+}
+
+.server-voice-user.is-speaking strong {
+    color: #060607;
+    font-weight: 600;
+}
+
+html.theme-dark .server-voice-user.is-speaking strong {
+    color: #f2f3f5;
+}
