@@ -2545,7 +2545,6 @@
         var camOn = !!voiceFeeds.camera;
         var screenOn = !!voiceFeeds.screen;
         voiceTile.classList.toggle("has-cam", camOn);
-        voiceTile.classList.toggle("has-screen", screenOn);
         if (voiceCam) {
             voiceCam.classList.toggle("is-off", !camOn);
             voiceCam.setAttribute("aria-pressed", camOn ? "true" : "false");
