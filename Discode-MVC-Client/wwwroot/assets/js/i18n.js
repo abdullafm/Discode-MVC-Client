@@ -106,6 +106,9 @@
             "Back": "Geri",
             "Copy": "Kopyala",
             "Copy Username": "Kullanıcı Adını Kopyala",
+            "Copy User ID": "Kullanıcı Kimliğini Kopyala",
+            "Copy Server ID": "Sunucu Kimliğini Kopyala",
+            "Copy Message ID": "Mesaj Kimliğini Kopyala",
 
             // Direct Messages & Group
             "New Message": "Yeni Mesaj",
@@ -419,6 +422,9 @@
             "Back": "Geri",
             "Copy": "Kopyala",
             "Copy Username": "İstifadəçi Adını Kopyala",
+            "Copy User ID": "İstifadəçi ID-sini Kopyala",
+            "Copy Server ID": "Server ID-sini Kopyala",
+            "Copy Message ID": "Mesaj ID-sini Kopyala",
 
             // Direct Messages & Group
             "New Message": "Yeni Mesaj",

@@ -299,6 +299,7 @@ function dmBuildCallRow(message, stamp) {
     var row = document.createElement("div");
     row.className = "dm-msg dm-call-msg";
     row.setAttribute("data-id", String(message.id));
+    row.setAttribute("data-public-id", message.publicId || "");
     row.setAttribute("data-sender", message.senderUserName);
     row.setAttribute("data-time", String(stamp));
     row.setAttribute("data-mine", message.mine ? "1" : "0");
@@ -347,6 +348,7 @@ function appendMessage(message, forceScroll) {
     var row = document.createElement("div");
     row.className = "dm-msg" + (compact ? " compact" : "") + (message.replyTo ? " has-reply" : "") + (message.undelivered ? " is-undelivered" : "");
     row.setAttribute("data-id", String(message.id));
+    row.setAttribute("data-public-id", message.publicId || "");
     row.setAttribute("data-sender", message.senderUserName);
     row.setAttribute("data-time", String(stamp));
     row.setAttribute("data-mine", message.mine ? "1" : "0");
@@ -2221,6 +2223,7 @@ function bindDmMessages() {
         }
         else if (action === "delete") dmDeleteMessage(row);
         else if (action === "copy-text") dmCopy(dmMessageText(row));
+        else if (action === "copy-id") dmCopy(row.getAttribute("data-public-id") || "");
         else if (action === "reaction") dmOpenPicker(row.querySelector('[data-act="picker"]') || row, "reaction", row);
     });
 

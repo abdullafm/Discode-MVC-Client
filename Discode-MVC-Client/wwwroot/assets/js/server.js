@@ -490,6 +490,7 @@
                     statusText: me.statusText || raw.statusText || raw.customStatus || raw.activity || "",
                     creator: raw.creator === true || raw.createdServer === true || raw.owner === true || raw.isOwner === true,
                     id: raw.id || raw.userId || "",
+                    publicId: raw.publicId || "",
                     roles: raw.roles || [],
                     self: true,
                     voice: raw.voice,
@@ -514,6 +515,7 @@
                 statusText: people[p].statusText || people[p].customStatus || people[p].activity || "",
                 self: people[p].self === true,
                 id: people[p].id || people[p].userId || "",
+                publicId: people[p].publicId || "",
                 roles: people[p].roles || [],
                 handle: people[p].username || people[p].userName || people[p].handle || "",
                 about: people[p].about || people[p].bio || ""
@@ -543,6 +545,7 @@
                 button.setAttribute("data-status", item.status);
                 button.setAttribute("data-name", item.name);
                 if (item.id) button.setAttribute("data-id", item.id);
+                if (item.publicId) button.setAttribute("data-public-id", item.publicId);
                 if (item.self) button.setAttribute("data-self", "1");
                 if (item.handle) button.setAttribute("data-handle", item.handle);
                 if (item.bio) button.setAttribute("data-bio", item.bio);
@@ -769,6 +772,7 @@
         memberPop.setAttribute("data-self", self ? "1" : "0");
         memberPop.setAttribute("data-name", name);
         memberPop.setAttribute("data-handle", handle);
+        memberPop.setAttribute("data-public-id", button.getAttribute("data-public-id") || "");
         var face = document.getElementById("member-pop-photo");
         if (face) face.src = photo ? photo.getAttribute("src") : "/assets/img/img-icon-profile.jpeg";
         var title = document.getElementById("member-pop-name");
@@ -877,6 +881,10 @@
             var button = event.target.closest("button");
             if (!button) return;
             event.stopPropagation();
+            if (button.getAttribute("data-pop-action") === "copy-id") {
+                var publicId = memberPop.getAttribute("data-public-id") || "";
+                if (publicId && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(publicId);
+            }
             if (button.getAttribute("data-pop-action") === "copy") {
                 var handle = document.getElementById("member-pop-handle");
                 var value = handle ? handle.textContent : "";

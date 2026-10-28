@@ -1077,6 +1077,9 @@ function bindMenu() {
         else if (action === "delete") deleteMessage(row);
         else if (action === "copy-text") {
             if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(messageText(row)).catch(function () {});
+        } else if (action === "copy-id") {
+            var publicId = row.getAttribute("data-public-id") || "";
+            if (publicId && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(publicId).catch(function () {});
         } else if (action === "reaction") openReactionPanel(row.querySelector('[data-act="picker"]') || row, row);
     });
     document.addEventListener("click", function (event) {

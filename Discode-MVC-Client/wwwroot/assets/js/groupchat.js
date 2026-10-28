@@ -257,6 +257,7 @@
             window.GroupParts.decorate(row, body, message);
         }
         row.setAttribute("data-id", String(message.id));
+        row.setAttribute("data-public-id", message.publicId || "");
         row.setAttribute("data-time", String(when));
         box.appendChild(row);
         if (force || atBottom || message.senderUserName === meName) scroller.scrollTop = scroller.scrollHeight;

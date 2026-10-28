@@ -211,7 +211,7 @@
             document.dispatchEvent(new CustomEvent("discode-mention-member", { detail: { name: member.userName } }));
         });
         add("Copy User ID", function () {
-            if (navigator.clipboard) navigator.clipboard.writeText(member.id).catch(function () {});
+            if (navigator.clipboard) navigator.clipboard.writeText(member.publicId || member.id).catch(function () {});
         });
         var perms = window.discodeServerRoles ? Number(window.discodeServerRoles.perms) || 0 : 0;
         var manageable = ((window.discodeServerRoles && window.discodeServerRoles.roles) || []).filter(function (role) { return !role.isEveryone && role.canManage !== false; });
