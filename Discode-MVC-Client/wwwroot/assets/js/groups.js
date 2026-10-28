@@ -910,6 +910,10 @@ document.addEventListener("visibilitychange", function () {
             return response.json();
         }).then(function (servers) {
             while (list.firstChild) list.removeChild(list.firstChild);
+            window.discodeServerPrefs = {};
+            (servers || []).forEach(function (server) {
+                window.discodeServerPrefs[server.id] = { muted: !!server.muted, notify: server.notificationLevel || "mentions" };
+            });
             if (!servers || !servers.length) return;
             servers.forEach(addChip);
         }).catch(function () {});

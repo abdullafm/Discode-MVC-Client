@@ -297,6 +297,9 @@
     });
 
     window.discodeServerChat = {
+        watching: function (sentServer, sentChannel) {
+            return !chat.hidden && !scroller.hidden && sentServer === serverId && sentChannel === channelId;
+        },
         open: function (button) {
             var id = Number(button.getAttribute("data-id")) || 0;
             if (!id) {

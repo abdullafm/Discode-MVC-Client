@@ -120,6 +120,23 @@
         if (!watching) playNotifySound();
     }
 
+    function soundForServerMessage(data) {
+        var message = data && data.message;
+        if (!message || isIgnored(message.senderUserName)) return;
+        var field = document.getElementById("Update_UserName");
+        var me = field ? field.value.trim() : "";
+        if (!me || message.senderUserName === me) return;
+        var prefs = (window.discodeServerPrefs || {})[data.serverId];
+        if (!prefs || prefs.muted || prefs.notify === "nothing") return;
+        if (prefs.notify !== "all") {
+            var text = String(message.text || "").toLowerCase();
+            if (text.indexOf("@" + me.toLowerCase()) === -1 && !/@(everyone|here)\b/.test(text)) return;
+        }
+        var chat = window.discodeServerChat;
+        var watching = document.visibilityState === "visible" && chat && chat.watching && chat.watching(data.serverId, data.channelId);
+        if (!watching) playNotifySound();
+    }
+
     function onConnected(pageSwap) {
         window.discodeLive = true;
         if (pageSwap !== true) {
@@ -316,6 +333,7 @@
                 });
 
                 connection.on("ServerMessage", function (data) {
+                    soundForServerMessage(data);
                     document.dispatchEvent(new CustomEvent("discode-server-message", { detail: data }));
                 });
 
