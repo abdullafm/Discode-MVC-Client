@@ -6609,6 +6609,7 @@ html.theme-dark .server-voice-count {
 
 .voice-user-media {
     margin-left: auto;
+    margin-right: 8px;
     display: none;
     align-items: center;
     gap: 8px;
@@ -6627,8 +6628,14 @@ html.theme-dark .server-voice-count {
 
 .voice-cam-icon {
     display: none;
-    font-size: 14px;
-    color: #80848e;
+    width: 20px;
+    font-size: 18px;
+    text-align: center;
+    color: #5c5e66;
+}
+
+html.theme-dark .voice-cam-icon {
+    color: #b5bac1;
 }
 
 .server-voice-user.is-camera .voice-cam-icon {
