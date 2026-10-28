@@ -48,7 +48,9 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.PutAsJsonAsync("api/voice", new
             {
                 isMuted = model?.IsMuted ?? false,
-                isDeafened = model?.IsDeafened ?? false
+                isDeafened = model?.IsDeafened ?? false,
+                isCameraOn = model?.IsCameraOn ?? false,
+                isStreaming = model?.IsStreaming ?? false
             }));
         }
 

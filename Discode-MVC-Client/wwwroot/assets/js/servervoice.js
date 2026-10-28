@@ -12,7 +12,7 @@
     var leaveSound = new Audio("/assets/css/audio/leave-voice.mp3");
     var state = { channels: {}, started: {}, current: null };
     var known = "";
-    var sent = { muted: false, deafened: false };
+    var sent = { muted: false, deafened: false, camera: false, screen: false };
     var loading = false;
     var again = false;
 
@@ -60,7 +60,7 @@
 
     function userNode(user) {
         var row = document.createElement("div");
-        row.className = "server-voice-user" + (user.isMuted ? " is-muted" : "") + (user.isDeafened ? " is-deafened" : "");
+        row.className = "server-voice-user" + (user.isMuted ? " is-muted" : "") + (user.isDeafened ? " is-deafened" : "") + (user.isCameraOn ? " is-camera" : "") + (user.isStreaming ? " is-streaming" : "");
         row.setAttribute("data-user", user.userId);
         var photo = document.createElement("img");
         photo.alt = "";
@@ -83,7 +83,18 @@
         icons.appendChild(mic);
         icons.appendChild(deaf);
         row.appendChild(photo);
+        var live = document.createElement("span");
+        live.className = "voice-user-media";
+        var cam = document.createElement("i");
+        cam.className = "fa-solid fa-video voice-cam-icon";
+        cam.setAttribute("aria-hidden", "true");
+        var badge = document.createElement("em");
+        badge.className = "voice-live-badge";
+        badge.textContent = "LIVE";
+        live.appendChild(cam);
+        live.appendChild(badge);
         row.appendChild(text);
+        row.appendChild(live);
         row.appendChild(icons);
         return row;
     }
@@ -278,6 +289,8 @@
             if (state.current) {
                 sent.muted = state.current.isMuted;
                 sent.deafened = state.current.isDeafened;
+                sent.camera = !!state.current.isCameraOn;
+                sent.screen = !!state.current.isStreaming;
             }
             paint();
             document.dispatchEvent(new CustomEvent("discode-voice-updated"));
@@ -308,15 +321,27 @@
         });
     }
 
-    function sync(muted, deafened) {
-        document.dispatchEvent(new CustomEvent("discode-voice-audio", { detail: { muted: muted, deafened: deafened } }));
+    function push(muted, deafened) {
         if (!state.current) return;
+        var live = window.discodeVoiceRtc ? window.discodeVoiceRtc.media() : { camera: false, screen: false };
         var silent = muted || deafened;
-        if (sent.muted === silent && sent.deafened === deafened) return;
+        if (sent.muted === silent && sent.deafened === deafened && sent.camera === live.camera && sent.screen === live.screen) return;
         sent.muted = silent;
         sent.deafened = deafened;
-        request("/ServerVoice/Update", "POST", { isMuted: silent, isDeafened: deafened }).catch(function () {});
+        sent.camera = live.camera;
+        sent.screen = live.screen;
+        request("/ServerVoice/Update", "POST", { isMuted: silent, isDeafened: deafened, isCameraOn: live.camera, isStreaming: live.screen }).catch(function () {});
     }
+
+    function sync(muted, deafened) {
+        document.dispatchEvent(new CustomEvent("discode-voice-audio", { detail: { muted: muted, deafened: deafened } }));
+        push(muted, deafened);
+    }
+
+    document.addEventListener("discode-voice-media", function () {
+        var now = audio();
+        push(now.muted, now.deafened);
+    });
 
     document.addEventListener("discode-server-voice-changed", function (event) {
         var detail = event.detail || {};

@@ -359,8 +359,13 @@
             var peer = peers[tile.getAttribute("data-user")];
             var cam = !!peer && peer.state.camera && !!peer.camStream;
             var screen = !!peer && peer.state.screen && !!peer.screenStream;
-            tile.classList.toggle("has-cam", cam);
-            setVideo(tile.querySelector(".server-voice-cam-video"), cam ? peer.camStream : null);
+            var camVideo = tile.querySelector(".server-voice-cam-video");
+            setVideo(camVideo, cam ? peer.camStream : null);
+            if (!camVideo.getAttribute("data-watch")) {
+                camVideo.setAttribute("data-watch", "1");
+                camVideo.addEventListener("loadeddata", attach);
+            }
+            tile.classList.toggle("has-cam", cam && camVideo.readyState >= 2);
             if (screen) {
                 wanted[tile.getAttribute("data-user")] = true;
                 screenTile(tile, peer.screenStream);

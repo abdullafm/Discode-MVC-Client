@@ -6606,3 +6606,56 @@ html.theme-dark .server-voice-count {
     font-weight: 700;
     letter-spacing: 0.4px;
 }
+
+.voice-user-media {
+    margin-left: auto;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+}
+
+.server-voice-user.is-camera .voice-user-media,
+.server-voice-user.is-streaming .voice-user-media {
+    display: flex;
+}
+
+.server-voice-user.is-camera .voice-user-icons,
+.server-voice-user.is-streaming .voice-user-icons {
+    margin-left: 0;
+}
+
+.voice-cam-icon {
+    display: none;
+    font-size: 14px;
+    color: #80848e;
+}
+
+.server-voice-user.is-camera .voice-cam-icon {
+    display: inline-block;
+}
+
+.voice-live-badge {
+    display: none;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: #f23f42;
+    color: #fff;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.server-voice-user.is-streaming .voice-live-badge {
+    display: inline-block;
+}
+
+.server-voice-cam-video {
+    object-fit: contain;
+    transform: none;
+}
+
+.server-voice-tile:not(.is-peer) .server-voice-cam-video {
+    transform: scaleX(-1);
+}
