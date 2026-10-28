@@ -85,6 +85,11 @@
         return have === 0 ? true : (have & needed) === needed;
     }
 
+    function canPoll() {
+        var have = perms();
+        return have !== 0 && (have & 131072) === 131072;
+    }
+
     function lastRow() {
         var last = box.lastElementChild;
         while (last && !last.hasAttribute("data-id")) last = last.previousElementSibling;
@@ -240,11 +245,21 @@
         return request(path("Delete"), "POST", ref);
     }
 
+    function createPoll(poll) {
+        return request(path("CreatePoll"), "POST", Object.assign({ serverId: serverId, channelId: channelId }, poll));
+    }
+
+    function votePoll(messageId, optionIds) {
+        return request(path("VotePoll"), "POST", { serverId: serverId, channelId: channelId, messageId: messageId, optionIds: optionIds });
+    }
+
     var context = {
         box: box,
         input: input,
         compose: compose,
         request: request,
+        createPoll: createPoll,
+        votePoll: votePoll,
         showError: showError,
         append: append,
         call: call,
@@ -257,6 +272,8 @@
     function paintAccess() {
         context.canDeleteAny = (perms() & 512) === 512;
         var allowed = canSend();
+        var pollItem = document.querySelector('#group-attach-menu [data-act="poll"]');
+        if (pollItem) pollItem.hidden = !canPoll();
         compose.hidden = !channelId || !allowed;
         if (lockNote) lockNote.hidden = !channelId || allowed;
         if (placeholder) placeholder.textContent = "Message " + (channelKind === "announce" ? "" : "#") + channelName;

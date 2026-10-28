@@ -56,6 +56,32 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}/messages/{model.MessageId}/reactions", new { emoji = model.Emoji ?? string.Empty }));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> CreatePoll([FromBody] CreateServerPollUIVM model)
+        {
+            if (model is null || model.ServerId <= 0 || model.ChannelId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Channel not found." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}/messages/polls", new
+            {
+                question = model.Question ?? string.Empty,
+                allowMultiple = model.AllowMultiple,
+                durationHours = model.DurationHours,
+                options = (model.Options ?? new List<CreatePollOptionUIVM>()).Select(o => new { text = o.Text ?? string.Empty, emoji = o.Emoji ?? string.Empty })
+            }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> VotePoll([FromBody] VoteServerPollUIVM model)
+        {
+            if (model is null || model.ServerId <= 0 || model.ChannelId <= 0 || model.MessageId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Poll not found." } }));
+
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}/messages/{model.MessageId}/poll-votes", new { optionIds = model.OptionIds ?? new List<int>() }));
+        }
+
         private async Task<IActionResult> Forward(Func<HttpClient, Task<HttpResponseMessage>> send)
         {
             try

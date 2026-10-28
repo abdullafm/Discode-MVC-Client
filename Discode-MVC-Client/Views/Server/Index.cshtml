@@ -56,6 +56,7 @@
                 <input type="file" id="group-file" multiple hidden>
                 <div class="dm-attach-menu" id="group-attach-menu" role="menu" hidden>
                     <button type="button" role="menuitem" data-act="upload"><i class="fa-solid fa-file-arrow-up"></i><span>Upload a File</span></button>
+                    <button type="button" role="menuitem" data-act="poll" hidden><i class="fa-solid fa-square-poll-horizontal"></i><span>Create Poll</span></button>
                 </div>
                 <div class="dm-input-wrap">
                     <span class="dm-placeholder" id="group-placeholder" aria-hidden="true">Message</span>
@@ -616,6 +617,17 @@
 <span class="perm-switch">
     <input type="checkbox" role="switch"
            aria-label="Mention @@everyone">
+</span>
+</label>
+<label class="perm-row">
+    <span class="perm-copy">
+        <strong>Create Polls</strong><small>
+        Allows members to create polls in text channels. Only the server owner and roles with this permission can post a poll.
+    </small>
+</span>
+<span class="perm-switch">
+    <input type="checkbox" role="switch"
+           aria-label="Create Polls">
 </span>
 </label>
 </div>

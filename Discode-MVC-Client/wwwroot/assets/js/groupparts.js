@@ -461,7 +461,9 @@ function pollSend(card, optionIds) {
     if (card._busy) return;
     card._busy = true;
     var row = card.closest(".dm-msg");
-    ctx.request("/Group/VotePoll", "POST", { id: ctx.groupId, messageId: Number(row.getAttribute("data-id")), optionIds: optionIds }).then(function (message) {
+    var messageId = Number(row.getAttribute("data-id"));
+    var voting = ctx.votePoll ? ctx.votePoll(messageId, optionIds) : ctx.request("/Group/VotePoll", "POST", { id: ctx.groupId, messageId: messageId, optionIds: optionIds });
+    voting.then(function (message) {
         card._poll = message.poll;
         card._results = false;
         card._selected = [];
@@ -860,13 +862,14 @@ function bindPoll() {
         fail("");
         var post = document.getElementById("group-poll-post");
         post.disabled = true;
-        ctx.request("/Group/CreatePoll", "POST", {
-            id: ctx.groupId,
+        var poll = {
             question: question.value.trim(),
             allowMultiple: document.getElementById("group-poll-multiple").checked,
             durationHours: Number(document.getElementById("group-poll-duration").value),
             options: options
-        }).then(function (sent) {
+        };
+        var creating = ctx.createPoll ? ctx.createPoll(poll) : ctx.request("/Group/CreatePoll", "POST", Object.assign({ id: ctx.groupId }, poll));
+        creating.then(function (sent) {
             ctx.append(sent, true);
             close();
         }).catch(function (error) {

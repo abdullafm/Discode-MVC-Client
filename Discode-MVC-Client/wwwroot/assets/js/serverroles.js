@@ -24,7 +24,8 @@
         "Mute Members": 8192,
         "Kick Members": 16384,
         "Ban Members": 32768,
-        "Timeout Members": 65536
+        "Timeout Members": 65536,
+        "Create Polls": 131072
     };
     var COLORS = {
         gray: "#80848e",

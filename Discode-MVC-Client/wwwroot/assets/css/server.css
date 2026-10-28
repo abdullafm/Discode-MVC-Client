@@ -6713,3 +6713,7 @@ html.theme-dark .server-voice-user.is-speaking strong {
     opacity: 0.6;
     cursor: default;
 }
+
+.dm-attach-menu button[hidden] {
+    display: none;
+}
