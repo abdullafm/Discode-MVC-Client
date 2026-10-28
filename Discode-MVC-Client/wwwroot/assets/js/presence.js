@@ -49,6 +49,8 @@
     var lastSoundAt = 0;
 
     function playNotifySound() {
+        var panel = document.getElementById("user-panel");
+        if (panel && panel.getAttribute("data-status") === "dnd") return;
         var now = Date.now();
         if (now - lastSoundAt < 600) return;
         lastSoundAt = now;
