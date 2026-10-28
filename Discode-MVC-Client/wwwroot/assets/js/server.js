@@ -2083,14 +2083,102 @@
         }
         if (inviteCopy) inviteCopy.textContent = "Copy";
         if (inviteLink && currentServer && currentServer.inviteCode) inviteLink.value = window.location.origin + "/" + currentServer.inviteCode;
-        var members = document.querySelectorAll("#server-member-list .server-member-name");
-        var taken = [];
-        for (var i = 0; i < members.length; i++) taken.push(members[i].textContent.trim());
-        var rows = document.querySelectorAll("#invite-list .invite-row");
-        for (var j = 0; j < rows.length; j++) rows[j].hidden = taken.indexOf(rows[j].getAttribute("data-friend")) !== -1;
+        loadInviteFriends();
         closeMenu();
         closeChannelMenu();
         inviteModal.hidden = false;
+    }
+
+    var inviteList = document.getElementById("invite-list");
+    var inviteSearch = document.getElementById("invite-search");
+
+    function inviteUrl() {
+        return currentServer && currentServer.inviteCode ? window.location.origin + "/" + currentServer.inviteCode : "";
+    }
+
+    function inviteRow(friend) {
+        var row = document.createElement("div");
+        row.className = "invite-row";
+        row.setAttribute("data-friend", friend.name);
+        row.setAttribute("data-user", friend.userName);
+        var photo = document.createElement("img");
+        photo.alt = "";
+        photo.src = friend.avatarUrl || "/assets/img/img-icon-profile.jpeg";
+        var text = document.createElement("span");
+        var name = document.createElement("strong");
+        name.textContent = friend.name;
+        var handle = document.createElement("small");
+        handle.textContent = friend.userName;
+        text.appendChild(name);
+        text.appendChild(handle);
+        var send = document.createElement("button");
+        send.type = "button";
+        send.className = "invite-send";
+        send.textContent = "Invite";
+        row.appendChild(photo);
+        row.appendChild(text);
+        row.appendChild(send);
+        return row;
+    }
+
+    function filterInviteRows() {
+        if (!inviteList) return;
+        var term = inviteSearch ? inviteSearch.value.trim().toLowerCase() : "";
+        var rows = inviteList.querySelectorAll(".invite-row");
+        var shown = 0;
+        for (var i = 0; i < rows.length; i++) {
+            var hit = !term || rows[i].getAttribute("data-friend").toLowerCase().indexOf(term) !== -1 || rows[i].getAttribute("data-user").toLowerCase().indexOf(term) !== -1;
+            rows[i].hidden = !hit;
+            if (hit) shown++;
+        }
+        var empty = inviteList.querySelector(".invite-empty");
+        if (empty) empty.hidden = shown > 0;
+    }
+
+    function loadInviteFriends() {
+        if (!inviteList) return;
+        if (inviteSearch) inviteSearch.value = "";
+        inviteList.textContent = "";
+        fetch("/Server/InviteFriends", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            return response.ok ? response.json() : [];
+        }).catch(function () {
+            return [];
+        }).then(function (friends) {
+            var members = document.querySelectorAll("#server-member-list .server-member-name");
+            var taken = [];
+            for (var i = 0; i < members.length; i++) taken.push(members[i].textContent.trim());
+            inviteList.textContent = "";
+            friends.filter(function (friend) { return taken.indexOf(friend.name) === -1; }).forEach(function (friend) {
+                inviteList.appendChild(inviteRow(friend));
+            });
+            var empty = document.createElement("p");
+            empty.className = "invite-empty";
+            empty.textContent = "No friends to invite.";
+            empty.hidden = !!inviteList.querySelector(".invite-row");
+            inviteList.appendChild(empty);
+        });
+    }
+
+    function sendInvite(button) {
+        var row = button.closest(".invite-row");
+        var link = inviteUrl();
+        if (!row || !link || button.disabled) return;
+        button.disabled = true;
+        button.textContent = "Sending";
+        var field = document.querySelector("input[name='__RequestVerificationToken']");
+        fetch("/Dm/Send", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "RequestVerificationToken": field ? field.value : "", "X-Requested-With": "XMLHttpRequest" },
+            body: JSON.stringify({ userName: row.getAttribute("data-user"), text: link })
+        }).then(function (response) {
+            if (!response.ok) throw new Error("failed");
+            button.classList.add("on");
+            button.textContent = "Invited";
+        }).catch(function () {
+            button.disabled = false;
+            button.textContent = "Retry";
+        });
     }
 
     function closeInviteModal() {
@@ -2101,10 +2189,9 @@
         inviteModal.addEventListener("click", function (event) {
             if (event.target === inviteModal) closeInviteModal();
             var send = event.target.closest(".invite-send");
-            if (!send || send.classList.contains("on")) return;
-            send.classList.add("on");
-            send.textContent = "Invited";
+            if (send && !send.classList.contains("on")) sendInvite(send);
         });
+        if (inviteSearch) inviteSearch.addEventListener("input", filterInviteRows);
     }
     if (inviteCopy && inviteLink) {
         inviteCopy.addEventListener("click", function () {

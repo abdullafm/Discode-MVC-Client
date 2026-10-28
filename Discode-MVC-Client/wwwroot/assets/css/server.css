@@ -6697,3 +6697,19 @@ html.theme-dark .server-voice-user strong {
 html.theme-dark .server-voice-user.is-speaking strong {
     color: #f2f3f5;
 }
+
+.invite-empty {
+    margin: 16px 0;
+    color: #80848e;
+    font-size: 14px;
+    text-align: center;
+}
+
+.invite-empty[hidden] {
+    display: none;
+}
+
+.invite-send:disabled:not(.on) {
+    opacity: 0.6;
+    cursor: default;
+}

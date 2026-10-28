@@ -1,4 +1,5 @@
 ﻿using Discode_MVC_Client.ViewModels.Account;
+using Discode_MVC_Client.ViewModels.Friends;
 using Discode_MVC_Client.ViewModels.Home;
 using Discode_MVC_Client.ViewModels.Servers;
 using Microsoft.AspNetCore.Authorization;
@@ -18,6 +19,24 @@ namespace Discode_MVC_Client.Controllers
         {
             _httpClientFactory = httpClientFactory;
             _environment = environment;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> InviteFriends()
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var friends = await client.GetFromJsonAsync<List<FriendRequestUIVM>>("api/friend") ?? new List<FriendRequestUIVM>();
+                return Ok(friends
+                    .OrderBy(friend => friend.Name, StringComparer.OrdinalIgnoreCase)
+                    .Select(friend => new InviteFriendUIVM { Name = friend.Name, UserName = friend.UserName, AvatarUrl = friend.AvatarUrl })
+                    .ToList());
+            }
+            catch (HttpRequestException)
+            {
+                return Ok(new List<InviteFriendUIVM>());
+            }
         }
 
         public async Task<IActionResult> Index(int id = 0)
