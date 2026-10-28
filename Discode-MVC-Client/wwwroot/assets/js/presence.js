@@ -49,8 +49,6 @@
     var lastSoundAt = 0;
 
     function playNotifySound() {
-        var panel = document.getElementById("user-panel");
-        if (panel && panel.getAttribute("data-status") === "dnd") return;
         var now = Date.now();
         if (now - lastSoundAt < 600) return;
         lastSoundAt = now;
@@ -62,6 +60,12 @@
     }
 
     window.discodeNotifySound = playNotifySound;
+
+    function playMessageSound() {
+        var panel = document.getElementById("user-panel");
+        if (panel && panel.getAttribute("data-status") === "dnd") return;
+        playNotifySound();
+    }
 
     var knownUnread = null;
 
@@ -109,7 +113,7 @@
         if (!message || message.mine || message.undelivered || message.isCall) return;
         if (isIgnored(message.senderUserName)) return;
         var watching = document.visibilityState === "visible" && window.discodeOpenDm && conversation && conversation.userName === window.discodeOpenDm;
-        if (!watching) playNotifySound();
+        if (!watching) playMessageSound();
     }
 
     function soundForGroupMessage(data) {
@@ -119,7 +123,7 @@
         if (field && message.senderUserName === field.value.trim()) return;
         var chat = document.getElementById("group-chat");
         var watching = document.visibilityState === "visible" && chat && Number(chat.getAttribute("data-group-id")) === data.groupId;
-        if (!watching) playNotifySound();
+        if (!watching) playMessageSound();
     }
 
     function soundForServerMessage(data) {
@@ -136,7 +140,7 @@
         }
         var chat = window.discodeServerChat;
         var watching = document.visibilityState === "visible" && chat && chat.watching && chat.watching(data.serverId, data.channelId);
-        if (!watching) playNotifySound();
+        if (!watching) playMessageSound();
     }
 
     function onConnected(pageSwap) {
