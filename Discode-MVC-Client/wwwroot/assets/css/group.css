@@ -1843,3 +1843,74 @@ html.theme-dark body .dm-invite-banned-copy small {
 html.theme-dark body .dm-invite-banned-copy strong {
     color: #f23f42 !important;
 }
+
+/* Server ikonu: hover adi ve @everyone / @here sayaci */
+.server-chip {
+    position: relative;
+    overflow: visible;
+}
+
+.server-chip .server-chip-icon {
+    border-radius: 50%;
+}
+
+.server-badge {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border: 3px solid #e3e5e8;
+    border-radius: 9px;
+    background: #f23f43;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 12px;
+    text-align: center;
+    pointer-events: none;
+}
+
+.server-badge[hidden] {
+    display: none;
+}
+
+html.theme-dark .server-badge {
+    border-color: #1e1f22;
+}
+
+.server-tip {
+    position: fixed;
+    z-index: 900;
+    transform: translateY(-50%);
+    max-width: 260px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: #111214;
+    color: #f2f3f5;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+}
+
+.server-tip[hidden] {
+    display: none;
+}
+
+.server-tip::before {
+    content: "";
+    position: absolute;
+    left: -5px;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    background: #111214;
+    transform: translateY(-50%) rotate(45deg);
+}

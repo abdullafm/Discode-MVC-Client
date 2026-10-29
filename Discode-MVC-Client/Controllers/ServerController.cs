@@ -357,6 +357,16 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> ReadMentions([FromBody] ReadServerMentionsUIVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Server not found." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/server/{model.Id}/mentions/read", new { }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> Leave([FromBody] LeaveServerUIVM model)
         {
             if (model is null || model.Id <= 0)

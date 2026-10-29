@@ -158,6 +158,11 @@
         return "/ServerMessage/" + suffix;
     }
 
+    function markMentionsRead() {
+        if (document.visibilityState !== "visible") return;
+        request("/Server/ReadMentions", "POST", { id: serverId }).catch(function () {});
+    }
+
     function loadMessages(mine) {
         return request(path("List") + "?serverId=" + serverId + "&channelId=" + channelId).then(function (list) {
             if (mine !== generation) return;
@@ -165,6 +170,7 @@
             hasMore = loaded.length >= PAGE_SIZE;
             renderAll();
             scroller.scrollTop = scroller.scrollHeight;
+            markMentionsRead();
         }).catch(function (error) {
             if (mine === generation) showError(error.message);
         });
@@ -337,6 +343,13 @@
             loadMessages(generation);
         }
     };
+
+    document.addEventListener("discode-server-mentions", function (event) {
+        var data = event.detail || {};
+        if (data.serverId !== serverId || !(data.count > 0)) return;
+        if (data.channelId !== channelId || chat.hidden || scroller.hidden) return;
+        markMentionsRead();
+    });
 
     document.addEventListener("discode-server-message", function (event) {
         var data = event.detail || {};

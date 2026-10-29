@@ -196,6 +196,10 @@
                     applyPresence(data);
                 });
 
+                connection.on("ServerMentions", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-mentions", { detail: data }));
+                });
+
                 connection.on("DiscoverServer", function (server) {
                     document.dispatchEvent(new CustomEvent("discode-discover-server", { detail: server }));
                 });

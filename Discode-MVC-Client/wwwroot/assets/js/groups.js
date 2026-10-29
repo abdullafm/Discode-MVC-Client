@@ -827,6 +827,46 @@ document.addEventListener("visibilitychange", function () {
     var joinError = document.getElementById("server-join-error");
     var pendingTemplate = "own";
 
+    var serverTip = null;
+
+    function showServerTip(button, name) {
+        if (!serverTip) {
+            serverTip = document.createElement("div");
+            serverTip.className = "server-tip";
+            serverTip.setAttribute("role", "tooltip");
+            serverTip.hidden = true;
+            document.body.appendChild(serverTip);
+        }
+        serverTip.textContent = name;
+        serverTip.hidden = false;
+        var rect = button.getBoundingClientRect();
+        serverTip.style.left = Math.round(rect.right + 14) + "px";
+        serverTip.style.top = Math.round(rect.top + rect.height / 2) + "px";
+    }
+
+    function hideServerTip() {
+        if (serverTip) serverTip.hidden = true;
+    }
+
+    function paintBadge(button, count) {
+        var badge = button.querySelector(".server-badge");
+        if (!badge) return;
+        var value = Number(count) || 0;
+        badge.textContent = value > 99 ? "99+" : String(value);
+        badge.hidden = value <= 0;
+    }
+
+    window.discodeSetServerMentions = function (serverId, count) {
+        var chips = list.querySelectorAll(".server-chip[data-id=\"" + String(serverId) + "\"]");
+        for (var i = 0; i < chips.length; i++) paintBadge(chips[i], count);
+    };
+
+    document.addEventListener("discode-server-mentions", function (event) {
+        var detail = event.detail || {};
+        if (detail.serverId == null) return;
+        window.discodeSetServerMentions(detail.serverId, detail.count);
+    });
+
     function addChip(server) {
         var button = chip.content.firstElementChild.cloneNode(true);
         button._server = server;
@@ -840,15 +880,24 @@ document.addEventListener("visibilitychange", function () {
         } else {
             button.textContent = name.trim().charAt(0).toUpperCase();
         }
-        button.title = name;
         button.setAttribute("aria-label", name);
         if (server && server.id != null) button.setAttribute("data-id", server.id);
+        var badge = document.createElement("span");
+        badge.className = "server-badge";
+        button.appendChild(badge);
+        paintBadge(button, server && server.mentionCount);
+        button.addEventListener("mouseenter", function () { showServerTip(button, name); });
+        button.addEventListener("focus", function () { showServerTip(button, name); });
+        button.addEventListener("mouseleave", hideServerTip);
+        button.addEventListener("contextmenu", hideServerTip);
+        button.addEventListener("blur", hideServerTip);
         var current = "";
         if (window.location.pathname.toLowerCase().indexOf("/server") === 0) {
             current = new URLSearchParams(window.location.search).get("id") || "";
         }
         if (current && server && String(server.id) === String(current)) button.classList.add("on");
         button.addEventListener("click", function () {
+            hideServerTip();
             var id = button.getAttribute("data-id");
             if (!id) return;
             if (window.discodeGo) window.discodeGo("/Server/Index?id=" + encodeURIComponent(id));
