@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="~/assets/css/dm.css" asp-append-version="true">
     <link rel="stylesheet" href="~/assets/css/group.css" asp-append-version="true">
     <link rel="stylesheet" href="~/assets/css/report.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/assets/css/discover.css" asp-append-version="true">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
           integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
           crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -36,8 +37,8 @@
                     <i class="fa-solid fa-plus" aria-hidden="true"></i>
                 </button>
                 <hr>
-                <a class="server-action" href="./discover.html" aria-label="Discover"><i class="fa-solid fa-compass"></i></a>
-                <a class="server-action" href="./discover.html" aria-label="Discover"><i class="fa-solid fa-server"></i></a>
+                <a class="server-action" href="@Url.Action("Index", "Discover")" aria-label="Discover"><i class="fa-solid fa-compass"></i></a>
+                <a class="server-action" href="@Url.Action("Index", "Discover")" aria-label="Discover"><i class="fa-solid fa-server"></i></a>
             </nav>
         </div>
         <aside class="conversation-sidebar server-channels" id="conversations">
@@ -914,6 +915,7 @@
         <script src="~/assets/js/serveroverwrites.js" asp-append-version="true"></script>
         <script src="~/assets/js/groupparts.js" asp-append-version="true"></script>
         <script src="~/assets/js/serverchat.js" asp-append-version="true"></script>
+        <script src="~/assets/js/discover.js" asp-append-version="true"></script>
         <script src="~/assets/js/groups.js" asp-append-version="true"></script>
         <script src="~/assets/js/groupmenu.js" asp-append-version="true"></script>
         <script src="~/assets/js/profile.js" asp-append-version="true"></script>

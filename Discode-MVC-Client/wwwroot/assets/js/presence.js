@@ -196,6 +196,14 @@
                     applyPresence(data);
                 });
 
+                connection.on("DiscoverServer", function (server) {
+                    document.dispatchEvent(new CustomEvent("discode-discover-server", { detail: server }));
+                });
+
+                connection.on("DiscoverServerRemoved", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-discover-removed", { detail: data }));
+                });
+
                 connection.on("StatusChanged", function (status) {
                     document.dispatchEvent(new CustomEvent("discode-status-set", { detail: { status: status } }));
                 });

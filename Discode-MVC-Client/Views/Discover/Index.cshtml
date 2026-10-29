@@ -1,0 +1,39 @@
+﻿@model HomeUIVM
+@{
+    Layout = "_ServerLayout";
+}
+<main class="discover-view show-main">
+    <section id="discover-phone-categories" aria-label="Discover categories">
+        <div class="discover-phone-cats">
+            <button type="button" class="discover-cat on" data-cat="home">Home</button>
+            <button type="button" class="discover-cat" data-cat="gaming">Gaming</button>
+            <button type="button" class="discover-cat" data-cat="music">Music</button>
+            <button type="button" class="discover-cat" data-cat="education">Education</button>
+            <button type="button" class="discover-cat" data-cat="science">Science &amp; Tech</button>
+            <button type="button" class="discover-cat" data-cat="entertainment">Entertainment</button>
+            <button type="button" class="discover-cat" data-cat="hubs">Student Hubs</button>
+        </div>
+    </section>
+    <section id="discover-scroll">
+        <div class="discover-scroll">
+            <section id="discover-banner">
+                <div class="discover-banner">
+                    <h1>Find your community on Discord</h1>
+                    <p>From gaming, to music, to learning, there's a place for you.</p>
+                    <label class="discover-search">
+                        <input type="text" id="discover-search-input" placeholder="Explore communities" aria-label="Explore communities" autocomplete="off">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </label>
+                </div>
+            </section>
+            <section id="discover-featured">
+                <div class="discover-featured">
+                    <h2>Communities</h2>
+                    <div class="discover-grid" id="discover-grid"></div>
+                    <p class="discover-empty" id="discover-empty" hidden>No communities yet.</p>
+                    <p class="discover-more">There are more communities out there.<br>Try searching for them.</p>
+                </div>
+            </section>
+        </div>
+    </section>
+</main>
