@@ -1,5 +1,6 @@
 ﻿using Discode_MVC_Client.ViewModels.Account;
 using Discode_MVC_Client.ViewModels.Home;
+using Discode_MVC_Client.ViewModels.Discover;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -58,12 +59,12 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> List(string? search)
+        public async Task<IActionResult> List([FromQuery] DiscoverSearchUIVM model)
         {
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                var response = await client.GetAsync("api/server/discover" + (string.IsNullOrWhiteSpace(search) ? string.Empty : "?search=" + Uri.EscapeDataString(search.Trim())));
+                var response = await client.GetAsync("api/discover" + (string.IsNullOrWhiteSpace(model?.Search) ? string.Empty : "?search=" + Uri.EscapeDataString(model.Search.Trim())));
                 var payload = await response.Content.ReadAsStringAsync();
                 return new ContentResult
                 {
