@@ -65,17 +65,27 @@ namespace Discode_MVC_Client.Controllers
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
                 var response = await client.GetAsync("api/discover" + (string.IsNullOrWhiteSpace(model?.Search) ? string.Empty : "?search=" + Uri.EscapeDataString(model.Search.Trim())));
-                var payload = await response.Content.ReadAsStringAsync();
-                return new ContentResult
+                if (!response.IsSuccessStatusCode)
                 {
-                    StatusCode = (int)response.StatusCode,
-                    Content = string.IsNullOrWhiteSpace(payload) ? "[]" : payload,
-                    ContentType = "application/json"
-                };
+                    var payload = await response.Content.ReadAsStringAsync();
+                    return new ContentResult
+                    {
+                        StatusCode = (int)response.StatusCode,
+                        Content = string.IsNullOrWhiteSpace(payload) ? "{}" : payload,
+                        ContentType = "application/json"
+                    };
+                }
+
+                var servers = await response.Content.ReadFromJsonAsync<List<DiscoverServerUIVM>>() ?? new List<DiscoverServerUIVM>();
+                return Ok(servers);
             }
             catch (HttpRequestException)
             {
                 return StatusCode(503, new { errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+            }
+            catch (JsonException)
+            {
+                return Ok(new List<DiscoverServerUIVM>());
             }
         }
     }
