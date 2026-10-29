@@ -1928,6 +1928,8 @@ function dmShowMenu(row) {
     var mine = row.getAttribute("data-mine") === "1";
     var gated = menu.querySelectorAll("[data-own-only]");
     for (var i = 0; i < gated.length; i++) gated[i].hidden = !mine;
+    var others = menu.querySelectorAll("[data-other-only]");
+    for (var o = 0; o < others.length; o++) others[o].hidden = mine;
     menu.setAttribute("data-row", row.getAttribute("data-id"));
     var pin = menu.querySelector('[data-menu="pin"] span');
     if (pin) pin.textContent = row.getAttribute("data-pinned") === "1" ? "Unpin Message" : "Pin Message";
@@ -2224,6 +2226,7 @@ function bindDmMessages() {
         else if (action === "delete") dmDeleteMessage(row);
         else if (action === "copy-text") dmCopy(dmMessageText(row));
         else if (action === "copy-id") dmCopy(row.getAttribute("data-public-id") || "");
+        else if (action === "report") { if (window.discodeReport) window.discodeReport({ type: "DirectMessage", id: row.getAttribute("data-id"), label: "message" }); }
         else if (action === "reaction") dmOpenPicker(row.querySelector('[data-act="picker"]') || row, "reaction", row);
     });
 

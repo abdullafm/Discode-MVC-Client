@@ -77,6 +77,7 @@
         addItem("friend", "fa-user-minus", "Remove Friend");
         addItem("ignore", "fa-eye-slash", "Ignore");
         addItem("block", "fa-ban", "Block", true);
+        addItem("report", "fa-flag", "Report User", true);
         document.body.appendChild(menu);
         menu.addEventListener("click", onChoose);
     }
@@ -114,6 +115,7 @@
         show("friend", !self && current.relation === "friend");
         show("ignore", !self);
         show("block", !self && !!current.relation);
+        show("report", !self);
         var ignored = !!(window.discodeIgnored || {})[current.user.toLowerCase()];
         items.ignore.text.textContent = ignored ? "Unignore" : "Ignore";
         items.ignore.glyph.className = "fa-solid " + (ignored ? "fa-eye" : "fa-eye-slash");
@@ -198,6 +200,7 @@
         else if (action === "ignore") post("/Home/IgnoreUser", { userName: target.user }).catch(function (error) { note(error.message); });
         else if (action === "block" && target.relation === "blocked" && target.blockId) post("/Friend/Unblock?id=" + target.blockId).catch(function (error) { note(error.message); });
         else if (action === "block") post("/Friend/Block?userName=" + encodeURIComponent(target.user)).catch(function (error) { note(error.message); });
+        else if (action === "report" && window.discodeReport) window.discodeReport({ type: "User", id: target.user, label: "user" });
     }
 
     build();

@@ -517,11 +517,22 @@ function renderFeed() {
         if (scope) scope.hidden = post.visibility !== "friends";
         var menu = card.querySelector(".post-author .item-menu");
         if (menu) {
-            menu.hidden = !mine;
+            menu.hidden = false;
+            var reportPost = menu.querySelector("[data-report-post]");
+            if (reportPost) {
+                reportPost.setAttribute("data-report-post", post.id);
+                reportPost.hidden = mine;
+            }
             var remove = menu.querySelector("[data-delete-post]");
-            if (remove) remove.setAttribute("data-delete-post", post.id);
+            if (remove) {
+                remove.setAttribute("data-delete-post", post.id);
+                remove.hidden = !mine;
+            }
             var editPost = menu.querySelector("[data-edit-post]");
-            if (editPost) editPost.setAttribute("data-edit-post", post.id);
+            if (editPost) {
+                editPost.setAttribute("data-edit-post", post.id);
+                editPost.hidden = !mine;
+            }
         }
         var body = card.querySelector(".post-text");
         if (body) {
@@ -582,11 +593,17 @@ function renderFeed() {
             var commentMenu = item.querySelector(".item-menu");
             var canDelete = mine || comment.author === ME;
             if (commentMenu) {
-                commentMenu.hidden = !canDelete;
+                commentMenu.hidden = false;
+                var reportComment = commentMenu.querySelector("[data-report-comment]");
+                if (reportComment) {
+                    reportComment.setAttribute("data-report-comment", comment.id);
+                    reportComment.hidden = comment.author === ME;
+                }
                 var drop = commentMenu.querySelector("[data-delete-comment]");
                 if (drop) {
                     drop.setAttribute("data-delete-comment", comment.id);
                     drop.setAttribute("data-post", post.id);
+                    drop.hidden = !canDelete;
                 }
                 var editComment = commentMenu.querySelector("[data-edit-comment]");
                 if (editComment) {
@@ -949,7 +966,11 @@ function paintStory() {
     document.getElementById("story-time").textContent = timeAgo(story.createdAt);
     document.getElementById("story-photo").src = story.image;
     document.getElementById("story-caption").textContent = story.text || "";
-    document.getElementById("story-menu").hidden = group.author !== ME;
+    var ownStory = group.author === ME;
+    document.getElementById("story-menu").hidden = story.id == null && !ownStory;
+    document.getElementById("story-views-btn").hidden = !ownStory;
+    document.getElementById("story-delete-btn").hidden = !ownStory;
+    document.getElementById("story-report-btn").hidden = ownStory;
     document.getElementById("story-views-label").textContent = story.views ? "Views (" + story.views + ")" : "Views";
     document.getElementById("story-reply").hidden = group.author === ME;
     document.getElementById("story-reply-input").value = "";
@@ -1808,6 +1829,22 @@ document.getElementById("story-menu").addEventListener("click", function () {
     }
 });
 
+document.getElementById("story-report-btn").addEventListener("click", function () {
+    var group = storyGroups[storyCursor];
+    if (!group || group.author === ME) return;
+    var story = group.items[storyIndex];
+    if (!story || story.id == null || !window.discodeReport) return;
+    document.getElementById("story-delete").hidden = true;
+    clearTimeout(storyTimer);
+    document.addEventListener("discode-report-closed", function resume() {
+        document.removeEventListener("discode-report-closed", resume);
+        if (document.getElementById("story-viewer").hidden) return;
+        document.getElementById("story-progress").classList.remove("paused");
+        storyTimer = setTimeout(nextStory, STORY_MS);
+    });
+    window.discodeReport({ type: "Story", id: story.id, label: "story" });
+});
+
 document.getElementById("story-delete-btn").addEventListener("click", function () {
     var group = storyGroups[storyCursor];
     if (!group || group.author !== ME) return;
@@ -2150,6 +2187,21 @@ document.querySelector(".social-view").addEventListener("click", function (event
         var opening = pop.hidden;
         closeDeleteMenus();
         pop.hidden = !opening;
+        return;
+    }
+
+    var reportPostButton = event.target.closest("[data-report-post]");
+    if (reportPostButton) {
+        closeDeleteMenus();
+        if (window.discodeReport) window.discodeReport({ type: "Post", id: reportPostButton.getAttribute("data-report-post"), label: "post" });
+        return;
+    }
+
+    var reportCommentButton = event.target.closest("[data-report-comment]");
+    if (reportCommentButton) {
+        closeDeleteMenus();
+        var reportIsReply = !!reportCommentButton.closest(".comment.is-reply");
+        if (window.discodeReport) window.discodeReport({ type: "Comment", id: reportCommentButton.getAttribute("data-report-comment"), label: reportIsReply ? "reply" : "comment" });
         return;
     }
 

@@ -266,7 +266,8 @@
         call: call,
         dropZone: chat,
         noForward: true,
-        canDeleteAny: false
+        canDeleteAny: false,
+        reportType: "ServerMessage"
     };
     window.GroupParts.init(context);
 

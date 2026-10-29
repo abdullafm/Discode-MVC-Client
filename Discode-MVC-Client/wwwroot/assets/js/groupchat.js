@@ -94,6 +94,8 @@
         var list = document.getElementById("group-member-list");
         list.textContent = "";
         var iAmOwner = group.ownerUserName === meName;
+        var reportButton = document.getElementById("group-report");
+        if (reportButton) reportButton.hidden = iAmOwner;
         group.members.forEach(function (member) {
             var row = document.createElement("div");
             row.className = "group-member";
@@ -462,6 +464,10 @@
                 showError(error.message);
             });
         });
+    });
+
+    document.getElementById("group-report").addEventListener("click", function () {
+        if (window.discodeReport) window.discodeReport({ type: "Group", id: groupId, label: "group" });
     });
 
     document.getElementById("group-leave").addEventListener("click", function () {

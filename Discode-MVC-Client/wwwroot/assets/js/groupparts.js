@@ -1031,6 +1031,8 @@ function showMenu(row) {
     var mine = row.getAttribute("data-mine") === "1" || !!ctx.canDeleteAny;
     var gated = menu.querySelectorAll("[data-own-only]");
     for (var i = 0; i < gated.length; i++) gated[i].hidden = !mine;
+    var others = menu.querySelectorAll("[data-other-only]");
+    for (var o = 0; o < others.length; o++) others[o].hidden = row.getAttribute("data-mine") === "1";
     menu.setAttribute("data-row", row.getAttribute("data-id"));
     menu.hidden = false;
     return menu;
@@ -1077,6 +1079,8 @@ function bindMenu() {
         else if (action === "delete") deleteMessage(row);
         else if (action === "copy-text") {
             if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(messageText(row)).catch(function () {});
+        } else if (action === "report") {
+            if (window.discodeReport) window.discodeReport({ type: ctx.reportType || "GroupMessage", id: row.getAttribute("data-id"), label: "message" });
         } else if (action === "copy-id") {
             var publicId = row.getAttribute("data-public-id") || "";
             if (publicId && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(publicId).catch(function () {});

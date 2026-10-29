@@ -103,6 +103,7 @@
         <section id="group-members"><div class="group-members">
             <h2>Members — <span id="group-count">@group.MemberCount</span></h2>
             <div id="group-member-list"></div>
+            <button type="button" id="group-report" class="group-leave menu-report"><i class="fa-solid fa-flag"></i> Report Group</button>
             <button type="button" id="group-leave" class="group-leave"><i class="fa-solid fa-right-from-bracket"></i> Leave Group</button>
         </div></section>
     }
@@ -190,6 +191,7 @@
         <hr>
         <button type="button" role="menuitem" data-menu="copy-text"><i class="fa-solid fa-copy"></i><span>Copy Text</span></button>
         <button type="button" role="menuitem" data-menu="copy-id"><i class="fa-solid fa-fingerprint"></i><span>Copy Message ID</span></button>
+        <button type="button" role="menuitem" class="is-danger" data-menu="report" data-other-only><i class="fa-solid fa-flag"></i><span>Report Message</span></button>
         <hr data-own-only>
         <button type="button" role="menuitem" class="is-danger" data-menu="delete" data-own-only><i class="fa-solid fa-trash-can"></i><span>Delete Message</span></button>
     </div>

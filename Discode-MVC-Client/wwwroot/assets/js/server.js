@@ -773,6 +773,8 @@
         memberPop.setAttribute("data-name", name);
         memberPop.setAttribute("data-handle", handle);
         memberPop.setAttribute("data-public-id", button.getAttribute("data-public-id") || "");
+        var reportPop = document.querySelector("[data-pop-action=\"report\"]");
+        if (reportPop) reportPop.hidden = self;
         var face = document.getElementById("member-pop-photo");
         if (face) face.src = photo ? photo.getAttribute("src") : "/assets/img/img-icon-profile.jpeg";
         var title = document.getElementById("member-pop-name");
@@ -881,6 +883,10 @@
             var button = event.target.closest("button");
             if (!button) return;
             event.stopPropagation();
+            if (button.getAttribute("data-pop-action") === "report") {
+                var reportHandle = memberPop.getAttribute("data-handle") || "";
+                if (reportHandle && window.discodeReport) window.discodeReport({ type: "User", id: reportHandle, label: "user" });
+            }
             if (button.getAttribute("data-pop-action") === "copy-id") {
                 var publicId = memberPop.getAttribute("data-public-id") || "";
                 if (publicId && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(publicId);

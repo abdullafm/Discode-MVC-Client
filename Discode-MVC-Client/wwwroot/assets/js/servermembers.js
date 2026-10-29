@@ -213,6 +213,11 @@
         add("Copy User ID", function () {
             if (navigator.clipboard) navigator.clipboard.writeText(member.publicId || member.id).catch(function () {});
         });
+        if (!member.isSelf) {
+            add("Report User", function () {
+                if (window.discodeReport) window.discodeReport({ type: "User", id: member.id, label: "user" });
+            });
+        }
         var perms = window.discodeServerRoles ? Number(window.discodeServerRoles.perms) || 0 : 0;
         var manageable = ((window.discodeServerRoles && window.discodeServerRoles.roles) || []).filter(function (role) { return !role.isEveryone && role.canManage !== false; });
         if ((perms & 4) === 4 && manageable.length && !member.isOwner) {

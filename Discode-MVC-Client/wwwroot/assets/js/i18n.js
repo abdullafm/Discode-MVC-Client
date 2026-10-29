@@ -109,6 +109,11 @@
             "Copy User ID": "Kullanıcı Kimliğini Kopyala",
             "Copy Server ID": "Sunucu Kimliğini Kopyala",
             "Copy Message ID": "Mesaj Kimliğini Kopyala",
+            "Report Message": "Mesajı Bildir",
+            "Report Server": "Sunucuyu Bildir",
+            "Report Group": "Grubu Bildir",
+            "Report User": "Kullanıcıyı Bildir",
+            "Report": "Bildir",
 
             // Direct Messages & Group
             "New Message": "Yeni Mesaj",
@@ -425,6 +430,11 @@
             "Copy User ID": "İstifadəçi ID-sini Kopyala",
             "Copy Server ID": "Server ID-sini Kopyala",
             "Copy Message ID": "Mesaj ID-sini Kopyala",
+            "Report Message": "Mesajı Şikayət Et",
+            "Report Server": "Serveri Şikayət Et",
+            "Report Group": "Qrupu Şikayət Et",
+            "Report User": "İstifadəçini Şikayət Et",
+            "Report": "Şikayət Et",
 
             // Direct Messages & Group
             "New Message": "Yeni Mesaj",

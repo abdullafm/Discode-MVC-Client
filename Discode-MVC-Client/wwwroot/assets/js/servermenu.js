@@ -230,6 +230,7 @@
         });
         if (!owner) {
             items.push({ line: true });
+            items.push({ label: "Report Server", danger: true, onClick: function () { if (window.discodeReport) window.discodeReport({ type: "Server", id: server.id, label: "server" }); } });
             items.push({ label: "Leave Server", danger: true, onClick: function () { perform(server, "leave"); } });
         }
         return items;
