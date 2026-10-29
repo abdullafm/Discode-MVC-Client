@@ -94,8 +94,6 @@
         var list = document.getElementById("group-member-list");
         list.textContent = "";
         var iAmOwner = group.ownerUserName === meName;
-        var reportButton = document.getElementById("group-report");
-        if (reportButton) reportButton.hidden = iAmOwner;
         group.members.forEach(function (member) {
             var row = document.createElement("div");
             row.className = "group-member";
@@ -461,20 +459,6 @@
         var name = kick.getAttribute("data-kick");
         askConfirm("Remove " + name, "Are you sure you want to remove " + name + " from the group?", "Remove", function () {
             request("/Group/RemoveMember", "POST", { id: groupId, userName: name }).catch(function (error) {
-                showError(error.message);
-            });
-        });
-    });
-
-    document.getElementById("group-report").addEventListener("click", function () {
-        if (window.discodeReport) window.discodeReport({ type: "Group", id: groupId, label: "group" });
-    });
-
-    document.getElementById("group-leave").addEventListener("click", function () {
-        askConfirm("Leave Group", "Are you sure you want to leave " + group.name + "? You will not be able to rejoin unless a member invites you again.", "Leave Group", function () {
-            request("/Group/Leave", "POST", { id: groupId }).then(function () {
-                window.discodeGo("/Home/Index");
-            }).catch(function (error) {
                 showError(error.message);
             });
         });

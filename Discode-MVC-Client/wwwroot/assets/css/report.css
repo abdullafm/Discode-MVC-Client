@@ -84,28 +84,3 @@
 .menu-report {
     color: #da373c;
 }
-
-#group-report {
-    margin: 8px 8px 0;
-    height: 36px;
-    border: 0;
-    border-radius: 4px;
-    background: #e9e9ea;
-    color: #f23f43 !important;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-#group-report:hover {
-    background: #dfe0e3;
-}
-
-#group-report[hidden] {
-    display: none;
-}
