@@ -1101,6 +1101,13 @@
 
     if (channelList) {
         channelList.addEventListener("click", function (event) {
+            var inviteButton = event.target.closest(".server-channel-invite");
+            if (inviteButton) {
+                var inviteRow = inviteButton.closest(".server-channel-row");
+                var channelNameNode = inviteRow ? inviteRow.querySelector(".server-channel-name") : null;
+                openInviteModal(channelNameNode ? channelNameNode.textContent.trim() : "");
+                return;
+            }
             var edit = event.target.closest("[data-edit-channel]");
             if (edit) {
                 var row = edit.closest(".server-channel-row");
@@ -2032,7 +2039,7 @@
         }, true);
         channelList.addEventListener("pointerdown", function (event) {
             if (!isOwner || event.button !== 0) return;
-            if (event.target.closest(".server-channel-edit, .server-channel-delete, .server-category-add, .server-category-delete, .server-voice-invite, .server-voice-invite-open, .server-voice-invite-close")) return;
+            if (event.target.closest(".server-channel-edit, .server-channel-invite, .server-channel-delete, .server-category-add, .server-category-delete, .server-voice-invite, .server-voice-invite-open, .server-voice-invite-close")) return;
             var head = event.target.closest(".server-category-name");
             var row = head ? null : event.target.closest(".server-channel-row");
             var category = head ? head.closest(".server-category") : null;
@@ -2088,12 +2095,12 @@
     var inviteLink = document.getElementById("invite-link");
     var inviteCopy = document.getElementById("invite-copy");
 
-    function openInviteModal() {
+    function openInviteModal(roomName) {
         if (!inviteModal) return;
         if (inviteName && serverTitle) inviteName.textContent = serverTitle.textContent.trim() || "Server";
         if (inviteRoom) {
             var room = document.querySelector("#server-channel-list .server-channel:not([hidden]) .server-channel-name");
-            inviteRoom.textContent = room ? "#" + room.textContent.trim() : "the server";
+            inviteRoom.textContent = roomName ? roomName : room ? "#" + room.textContent.trim() : "the server";
         }
         if (inviteCopy) inviteCopy.textContent = "Copy";
         if (inviteLink && currentServer && currentServer.inviteCode) inviteLink.value = window.location.origin + "/" + currentServer.inviteCode;

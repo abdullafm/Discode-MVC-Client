@@ -42,6 +42,8 @@
             button.setAttribute("data-send", channel.kind === "announce" || channel.isReadOnly ? "0" : "1");
             var people = frag.querySelector(".server-voice-people");
             if (people) people.remove();
+            var invite = frag.querySelector(".server-channel-invite");
+            if (invite) invite.remove();
         }
         var editable = !!window.discodeCanManage;
         [].forEach.call(frag.querySelectorAll("[data-edit-channel], [data-delete-channel]"), function (node) { node.hidden = !editable; });
