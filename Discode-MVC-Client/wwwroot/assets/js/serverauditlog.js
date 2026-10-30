@@ -32,6 +32,7 @@
         { key: "MemberJoin", label: "Member Join", icon: "fa-user-group", badge: "create" },
         { key: "MemberLeave", label: "Member Leave", icon: "fa-user-group", badge: "delete" },
         { key: "MemberKick", label: "Kick Member", icon: "fa-user-group", badge: "delete" },
+        { key: "MemberPrune", label: "Prune Members", icon: "fa-user-group", badge: "delete" },
         { key: "MemberBan", label: "Ban Member", icon: "fa-user-group", badge: "delete" },
         { key: "MemberUnban", label: "Unban Member", icon: "fa-user-group", badge: "create" },
         { key: "MemberRoleUpdate", label: "Update Member Roles", icon: "fa-user-group", badge: "update" },
@@ -108,6 +109,7 @@
             case "MemberJoin": part("joined the server"); break;
             case "MemberLeave": part("left the server"); break;
             case "MemberKick": part("kicked "); bold(who); break;
+            case "MemberPrune": part("pruned inactive members"); break;
             case "MemberBan": part("banned "); bold(who); break;
             case "MemberUnban": part("unbanned "); bold(who); break;
             case "MemberRoleUpdate": part("updated roles for "); bold(who); break;

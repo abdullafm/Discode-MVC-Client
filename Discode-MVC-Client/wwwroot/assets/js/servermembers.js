@@ -417,6 +417,145 @@
         }).catch(function () {});
     }
 
+    var pruneButton = document.querySelector(".members-prune");
+    var pruneModal = null;
+    var pruneDays = 7;
+    var pruneBusy = false;
+
+    function canPrune() {
+        var perms = window.discodeServerRoles ? Number(window.discodeServerRoles.perms) || 0 : 0;
+        return (perms & 16384) === 16384;
+    }
+
+    function paintPruneButton() {
+        if (pruneButton) pruneButton.hidden = !canPrune();
+    }
+
+    function pruneError(text) {
+        var box = pruneModal.querySelector(".report-error");
+        box.textContent = text || "";
+    }
+
+    function paintPruneCount(value) {
+        var line = pruneModal.querySelector(".prune-count");
+        var go = pruneModal.querySelector(".prune-go");
+        if (value == null) {
+            line.textContent = "Counting inactive members...";
+            go.disabled = true;
+            return;
+        }
+        line.textContent = value === 0
+            ? "No one would be removed."
+            : value + (value === 1 ? " member" : " members") + " will be removed.";
+        go.disabled = value === 0;
+    }
+
+    function loadPruneCount() {
+        paintPruneCount(null);
+        pruneError("");
+        var days = pruneDays;
+        fetch("/Server/PrunePreview?id=" + encodeURIComponent(serverId) + "&days=" + days, {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        }).then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (data) {
+                if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Could not count members.");
+                return data;
+            });
+        }).then(function (data) {
+            if (days !== pruneDays) return;
+            paintPruneCount(Number(data.count) || 0);
+        }).catch(function (error) {
+            pruneModal.querySelector(".prune-count").textContent = "";
+            pruneError(error.message);
+        });
+    }
+
+    function buildPruneModal() {
+        pruneModal = element("div", "dm-modal prune-modal");
+        pruneModal.hidden = true;
+        pruneModal.setAttribute("role", "dialog");
+        pruneModal.setAttribute("aria-modal", "true");
+        var backdrop = element("div", "dm-modal-backdrop");
+        var card = element("div", "dm-modal-card");
+        var close = element("button", "dm-modal-x");
+        close.type = "button";
+        close.setAttribute("aria-label", "Close");
+        close.appendChild(element("i", "fa-solid fa-xmark"));
+        card.appendChild(close);
+        card.appendChild(element("h2", "", "Prune Members"));
+        card.appendChild(element("p", "dm-modal-text", "Remove members who have no roles and have not sent a message in this server for the chosen period."));
+        var choices = element("div", "prune-days");
+        [1, 7, 14, 30].forEach(function (days) {
+            var label = element("label", "prune-day");
+            var radio = document.createElement("input");
+            radio.type = "radio";
+            radio.name = "prune-days";
+            radio.value = String(days);
+            radio.checked = days === pruneDays;
+            radio.addEventListener("change", function () {
+                pruneDays = days;
+                loadPruneCount();
+            });
+            label.appendChild(radio);
+            label.appendChild(element("span", "", days === 1 ? "1 day" : days + " days"));
+            choices.appendChild(label);
+        });
+        card.appendChild(choices);
+        card.appendChild(element("p", "prune-count"));
+        card.appendChild(element("p", "report-error"));
+        var actions = element("div", "dm-modal-actions");
+        var cancel = element("button", "dm-modal-cancel", "Cancel");
+        cancel.type = "button";
+        var go = element("button", "report-submit prune-go", "Prune");
+        go.type = "button";
+        actions.appendChild(cancel);
+        actions.appendChild(go);
+        card.appendChild(actions);
+        pruneModal.appendChild(backdrop);
+        pruneModal.appendChild(card);
+        document.body.appendChild(pruneModal);
+
+        function dismiss() {
+            pruneModal.hidden = true;
+        }
+        backdrop.addEventListener("click", dismiss);
+        close.addEventListener("click", dismiss);
+        cancel.addEventListener("click", dismiss);
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !pruneModal.hidden) dismiss();
+        });
+        go.addEventListener("click", function () {
+            if (pruneBusy) return;
+            pruneBusy = true;
+            go.disabled = true;
+            pruneError("");
+            postJson("/Server/Prune", { id: Number(serverId), days: pruneDays }).then(function (data) {
+                dismiss();
+                var removed = Number(data.count) || 0;
+                if (window.discodeNotice) window.discodeNotice(removed + (removed === 1 ? " member was" : " members were") + " pruned.");
+                load();
+            }).catch(function (error) {
+                pruneError(error.message);
+                go.disabled = false;
+            }).then(function () {
+                pruneBusy = false;
+            });
+        });
+    }
+
+    if (pruneButton) {
+        paintPruneButton();
+        document.addEventListener("discode-roles-ready", paintPruneButton);
+        pruneButton.addEventListener("click", function () {
+            if (!canPrune()) return;
+            if (!pruneModal) buildPruneModal();
+            pruneError("");
+            pruneModal.hidden = false;
+            loadPruneCount();
+        });
+    }
+
     if (searchInput) {
         searchInput.addEventListener("input", function () {
             query = searchInput.value;

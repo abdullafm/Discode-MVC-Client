@@ -355,6 +355,25 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.PutAsJsonAsync("api/server/order", new { serverIds = model?.ServerIds ?? new List<int>() }));
         }
 
+        [HttpGet]
+        public Task<IActionResult> PrunePreview([FromQuery] PruneServerUIVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Server not found." } }));
+
+            return Forward(client => client.GetAsync($"api/server/{model.Id}/prune?days={model.Days}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Prune([FromBody] PruneServerUIVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Server not found." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/server/{model.Id}/prune", new { days = model.Days }));
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public Task<IActionResult> ReadMentions([FromBody] ReadServerMentionsUIVM model)

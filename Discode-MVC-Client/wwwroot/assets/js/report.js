@@ -173,6 +173,8 @@
         }, 2200);
     }
 
+    window.discodeNotice = copyNotice;
+
     function copyFallback(value) {
         var area = document.createElement("textarea");
         area.value = value;
