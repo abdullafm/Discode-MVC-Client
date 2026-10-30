@@ -493,6 +493,15 @@ document.addEventListener("visibilitychange", function () {
         if (kind === "ring" && live && window.discodeCalls) window.discodeCalls.start(user, !!live.video).catch(function () {});
         if (kind === "stopring" && live && window.discodePresence) window.discodePresence.invoke("EndCall", live.callId, true).catch(function () {});
         if (kind === "pin") togglePin(name);
+        if (kind === "close") {
+            var rows = document.querySelectorAll(".friend-list [data-dm]");
+            for (var r = 0; r < rows.length; r++) {
+                if (rows[r].getAttribute("data-dm") !== user) continue;
+                var closeIcon = rows[r].querySelector(":scope > i.fa-xmark");
+                if (closeIcon) closeIcon.click();
+                break;
+            }
+        }
         if (kind === "profile" && typeof openUserProfile === "function") openUserProfile(user, photo);
     });
 
