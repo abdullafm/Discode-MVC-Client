@@ -274,11 +274,11 @@
             </form>
         </div>
     </section>
-    <section id="dm-profile">
+    <section id="dm-profile" data-public-id="@(chat?.PublicId)">
         <div class="dm-profile">
             <div class="dm-banner">
                 <button type="button" id="dm-profile-close" aria-label="Friend options" aria-haspopup="menu" title="@(chat is null ? "" : chat.IsFriend ? "Friends" : "Not friends")"><i class="fa-solid @(chat is not null && chat.IsFriend ? "fa-user-check" : "fa-user")"></i></button>
-                <button type="button" aria-label="More"><i class="fa-solid fa-ellipsis"></i></button>
+                <button type="button" id="dm-profile-more" aria-label="More" aria-haspopup="menu"><i class="fa-solid fa-ellipsis"></i></button>
             </div>
             <div id="dm-profile-info">
                 <partial name="_DmProfileInfo" model="chat.ToDmProfile(Model.UtcOffsetMinutes)" />

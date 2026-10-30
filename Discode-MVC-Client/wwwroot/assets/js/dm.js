@@ -1465,75 +1465,139 @@ function setDmProfile(open, instant) {
     }
 }
 
-var dmFriendMenu = null;
+var dmDropdown = null;
 
-function dmCloseFriendMenu() {
-    if (dmFriendMenu) dmFriendMenu.hidden = true;
+function dmCloseDropdown() {
+    if (dmDropdown) dmDropdown.hidden = true;
 }
 
-function dmFriendRequestId() {
-    var input = document.querySelector('#dm-relation form[action$="/Friend/Remove"] input[name="id"]');
+function dmDropdownEntry(label, icon, danger, onClick) {
+    var item = document.createElement("li");
+    var button = document.createElement("button");
+    button.type = "button";
+    if (danger) button.className = "row-menu-danger";
+    var glyph = document.createElement("i");
+    glyph.className = "fa-solid " + icon;
+    var text = document.createElement("span");
+    text.className = "row-menu-label";
+    text.textContent = label;
+    button.appendChild(glyph);
+    button.appendChild(text);
+    button.addEventListener("click", function () {
+        dmCloseDropdown();
+        onClick();
+    });
+    item.appendChild(button);
+    return item;
+}
+
+function dmToggleDropdown(button, entries) {
+    if (dmDropdown && !dmDropdown.hidden && dmDropdown.getAttribute("data-owner") === button.id) {
+        dmCloseDropdown();
+        return;
+    }
+    if (!entries.length) return;
+    if (!dmDropdown) {
+        dmDropdown = document.createElement("div");
+        dmDropdown.className = "row-menu dm-friend-menu";
+        dmDropdown.hidden = true;
+        dmDropdown.appendChild(document.createElement("ul"));
+        document.body.appendChild(dmDropdown);
+        document.addEventListener("click", function (event) {
+            if (dmDropdown.hidden) return;
+            if (dmDropdown.contains(event.target) || event.target.closest("#dm-profile-close, #dm-profile-more")) return;
+            dmCloseDropdown();
+        });
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") dmCloseDropdown();
+        });
+        window.addEventListener("scroll", dmCloseDropdown, true);
+        window.addEventListener("resize", dmCloseDropdown);
+    }
+    var holder = dmDropdown.firstChild;
+    holder.textContent = "";
+    entries.forEach(function (entry) { holder.appendChild(entry); });
+    dmDropdown.setAttribute("data-owner", button.id);
+    dmDropdown.hidden = false;
+    var rect = button.getBoundingClientRect();
+    var width = dmDropdown.offsetWidth;
+    dmDropdown.style.left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8)) + "px";
+    dmDropdown.style.top = Math.round(rect.bottom + 6) + "px";
+}
+
+function dmRelationState() {
+    var marker = document.querySelector("#dm-relation [data-relation]");
+    return marker ? marker.getAttribute("data-relation") : "";
+}
+
+function dmRelationInput(action) {
+    var input = document.querySelector('#dm-relation form[action$="/Friend/' + action + '"] input[name="id"]');
     return input ? input.value : "";
 }
 
+function dmAfterRelationChange() {
+    dmRefreshRelation();
+    dmRefreshProfile();
+}
+
 function dmRemoveFriend() {
-    var id = dmFriendRequestId();
+    var id = dmRelationInput("Remove");
     if (!id || !window.discodeFriends || !window.discodeFriends.post) return;
     window.discodeFriends.post("Remove", { id: id }).then(function (response) {
-        if (response.ok) {
-            dmRefreshRelation();
-            dmRefreshProfile();
-        }
+        if (response.ok) dmAfterRelationChange();
+    }).catch(function () {});
+}
+
+function dmToggleBlock() {
+    if (!window.discodeFriends || !window.discodeFriends.post || !dmPartner) return;
+    var blocked = dmRelationState() === "blocked";
+    var request = blocked
+        ? window.discodeFriends.post("Unblock", { id: dmRelationInput("Unblock") })
+        : window.discodeFriends.post("Block", { userName: dmPartner.userName });
+    request.then(function (response) {
+        if (response.ok) dmAfterRelationChange();
+    }).catch(function () {});
+}
+
+function dmToggleIgnore() {
+    if (!dmPartner) return;
+    var field = document.querySelector("input[name='__RequestVerificationToken']");
+    fetch("/Home/IgnoreUser", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+            "Content-Type": "application/json",
+            "RequestVerificationToken": field ? field.value : "",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: JSON.stringify({ userName: dmPartner.userName })
     }).catch(function () {});
 }
 
 function dmToggleFriendMenu(button) {
-    if (dmFriendMenu && !dmFriendMenu.hidden) {
-        dmCloseFriendMenu();
+    if (dmRelationState() !== "friend") {
+        dmCloseDropdown();
         return;
     }
-    var marker = document.querySelector("#dm-relation [data-relation]");
-    if (!marker || marker.getAttribute("data-relation") !== "friend") return;
-    if (!dmFriendMenu) {
-        dmFriendMenu = document.createElement("div");
-        dmFriendMenu.className = "row-menu dm-friend-menu";
-        dmFriendMenu.hidden = true;
-        var list = document.createElement("ul");
-        var item = document.createElement("li");
-        var remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "row-menu-danger";
-        var glyph = document.createElement("i");
-        glyph.className = "fa-solid fa-user-minus";
-        var label = document.createElement("span");
-        label.className = "row-menu-label";
-        label.textContent = "Remove Friend";
-        remove.appendChild(glyph);
-        remove.appendChild(label);
-        remove.addEventListener("click", function () {
-            dmCloseFriendMenu();
-            dmRemoveFriend();
-        });
-        item.appendChild(remove);
-        list.appendChild(item);
-        dmFriendMenu.appendChild(list);
-        document.body.appendChild(dmFriendMenu);
-        document.addEventListener("click", function (event) {
-            if (dmFriendMenu.hidden) return;
-            if (dmFriendMenu.contains(event.target) || event.target.closest("#dm-profile-close")) return;
-            dmCloseFriendMenu();
-        });
-        document.addEventListener("keydown", function (event) {
-            if (event.key === "Escape") dmCloseFriendMenu();
-        });
-        window.addEventListener("scroll", dmCloseFriendMenu, true);
-        window.addEventListener("resize", dmCloseFriendMenu);
-    }
-    dmFriendMenu.hidden = false;
-    var rect = button.getBoundingClientRect();
-    var width = dmFriendMenu.offsetWidth;
-    dmFriendMenu.style.left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8)) + "px";
-    dmFriendMenu.style.top = Math.round(rect.bottom + 6) + "px";
+    dmToggleDropdown(button, [dmDropdownEntry("Remove Friend", "fa-user-minus", true, dmRemoveFriend)]);
+}
+
+function dmToggleMoreMenu(button) {
+    if (!dmPartner) return;
+    var profile = document.getElementById("dm-profile");
+    var publicId = profile ? profile.getAttribute("data-public-id") || "" : "";
+    var ignored = !!(window.discodeIgnored || {})[String(dmPartner.userName).toLowerCase()];
+    var blocked = dmRelationState() === "blocked";
+    var entries = [];
+    entries.push(dmDropdownEntry("Copy User ID", "fa-fingerprint", false, function () {
+        window.discodeCopy(publicId, "User ID");
+    }));
+    entries.push(dmDropdownEntry(ignored ? "Unignore" : "Ignore", ignored ? "fa-eye" : "fa-eye-slash", false, dmToggleIgnore));
+    entries.push(dmDropdownEntry(blocked ? "Unblock" : "Block", blocked ? "fa-circle-check" : "fa-ban", !blocked, dmToggleBlock));
+    entries.push(dmDropdownEntry("Report User", "fa-flag", true, function () {
+        if (window.discodeReport) window.discodeReport({ type: "User", id: dmPartner.userName, label: "user" });
+    }));
+    dmToggleDropdown(button, entries);
 }
 
 function bindDmCompose() {
@@ -1545,6 +1609,14 @@ function bindDmCompose() {
         event.stopPropagation();
         dmToggleFriendMenu(event.currentTarget);
     });
+
+    var more = document.getElementById("dm-profile-more");
+    if (more) {
+        more.addEventListener("click", function (event) {
+            event.stopPropagation();
+            dmToggleMoreMenu(event.currentTarget);
+        });
+    }
 
     document.getElementById("dm-compose").addEventListener("submit", function (event) {
         event.preventDefault();
@@ -1935,7 +2007,7 @@ function dmClosePicker() {
     closeEmojiPanel();
 }
 
-function dmOpenPicker(anchor, mode, row) {
+function dmOpenPicker(anchor, mode, row, flyout) {
     var panel = document.getElementById("emoji-panel");
     if (!panel.hidden && dmPicker.mode === mode && dmPicker.row === row) {
         dmClosePicker();
@@ -1961,9 +2033,16 @@ function dmOpenPicker(anchor, mode, row) {
     panel.style.position = "fixed";
     panel.style.right = "auto";
     panel.style.bottom = "auto";
-    var rect = anchor.getBoundingClientRect();
     var width = panel.offsetWidth || 340;
     var height = panel.offsetHeight || 300;
+    if (flyout) {
+        var flyLeft = flyout.menu.right + 6;
+        if (flyLeft + width > window.innerWidth - 8) flyLeft = flyout.menu.left - width - 6;
+        panel.style.left = Math.max(8, flyLeft) + "px";
+        panel.style.top = Math.max(8, Math.min(flyout.item.top - 8, window.innerHeight - height - 8)) + "px";
+        return;
+    }
+    var rect = anchor.getBoundingClientRect();
     var left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
     var top = rect.top - height - 8;
     if (top < 8) top = Math.min(rect.bottom + 8, window.innerHeight - height - 8);
@@ -2285,6 +2364,7 @@ function bindDmMessages() {
         if (!item) return;
         var row = box.querySelector('.dm-msg[data-id="' + menu.getAttribute("data-row") + '"]');
         var action = item.getAttribute("data-menu");
+        var flyout = { menu: menu.getBoundingClientRect(), item: item.getBoundingClientRect() };
         dmCloseMenu();
         if (!row) return;
         if (item.getAttribute("data-act") === "react") dmReact(row, item.textContent.trim());
@@ -2299,7 +2379,7 @@ function bindDmMessages() {
         else if (action === "copy-text") dmCopy(dmMessageText(row));
         else if (action === "copy-id") window.discodeCopy(row.getAttribute("data-public-id") || "", "Message ID");
         else if (action === "report") { if (window.discodeReport) window.discodeReport({ type: "DirectMessage", id: row.getAttribute("data-id"), label: "message" }); }
-        else if (action === "reaction") dmOpenPicker(row.querySelector('[data-act="picker"]') || row, "reaction", row);
+        else if (action === "reaction") dmOpenPicker(row.querySelector('[data-act="picker"]') || row, "reaction", row, flyout);
     });
 
     panel.addEventListener("click", function (event) {

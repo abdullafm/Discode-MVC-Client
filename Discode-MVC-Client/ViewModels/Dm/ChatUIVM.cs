@@ -3,6 +3,7 @@ namespace Discode_MVC_Client.ViewModels.Dm
     public class ChatUIVM
     {
         public string UserId { get; set; } = string.Empty;
+        public string PublicId { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
         public string AvatarUrl { get; set; } = string.Empty;

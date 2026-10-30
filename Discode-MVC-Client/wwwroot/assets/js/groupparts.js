@@ -598,7 +598,7 @@ function openInputPanel(button) {
     panel.style.top = (buttonBox.top - boxRect.top - panel.offsetHeight - 8) + "px";
 }
 
-function openReactionPanel(anchor, row) {
+function openReactionPanel(anchor, row, flyout) {
     var panel = emojiPanel();
     if (!panel.hidden && picker.row === row) {
         closePanel();
@@ -611,9 +611,16 @@ function openReactionPanel(anchor, row) {
     panel.style.position = "fixed";
     panel.style.right = "auto";
     panel.style.bottom = "auto";
-    var rect = anchor.getBoundingClientRect();
     var width = panel.offsetWidth || 340;
     var height = panel.offsetHeight || 300;
+    if (flyout) {
+        var flyLeft = flyout.menu.right + 6;
+        if (flyLeft + width > window.innerWidth - 8) flyLeft = flyout.menu.left - width - 6;
+        panel.style.left = Math.max(8, flyLeft) + "px";
+        panel.style.top = Math.max(8, Math.min(flyout.item.top - 8, window.innerHeight - height - 8)) + "px";
+        return;
+    }
+    var rect = anchor.getBoundingClientRect();
     var left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
     var top = rect.top - height - 8;
     if (top < 8) top = Math.min(rect.bottom + 8, window.innerHeight - height - 8);
@@ -1071,6 +1078,7 @@ function bindMenu() {
         if (!item) return;
         var row = ctx.box.querySelector('.dm-msg[data-id="' + menu.getAttribute("data-row") + '"]');
         var action = item.getAttribute("data-menu");
+        var flyout = { menu: menu.getBoundingClientRect(), item: item.getBoundingClientRect() };
         closeMenu();
         if (!row) return;
         if (item.getAttribute("data-act") === "react") react(row, item.textContent.trim());
@@ -1083,7 +1091,7 @@ function bindMenu() {
             if (window.discodeReport) window.discodeReport({ type: ctx.reportType || "GroupMessage", id: row.getAttribute("data-id"), label: "message" });
         } else if (action === "copy-id") {
             window.discodeCopy(row.getAttribute("data-public-id") || "", "Message ID");
-        } else if (action === "reaction") openReactionPanel(row.querySelector('[data-act="picker"]') || row, row);
+        } else if (action === "reaction") openReactionPanel(row.querySelector('[data-act="picker"]') || row, row, flyout);
     });
     document.addEventListener("click", function (event) {
         if (!menu.hidden && !event.target.closest("#group-msg-menu, .dm-msg-tools")) closeMenu();
