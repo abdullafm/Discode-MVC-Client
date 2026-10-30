@@ -160,7 +160,7 @@
         items.push({ label: "Mark As Read", disabled: true });
         items.push({ line: true });
         items.push({ label: "Invite to Server", onClick: function () { perform(server, "invite"); } });
-        items.push({ label: "Copy Server ID", onClick: function () { if (server.publicId && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(server.publicId).catch(function () {}); } });
+        items.push({ label: "Copy Server ID", onClick: function () { window.discodeCopy(server.publicId, "Server ID"); } });
         items.push({ line: true });
         if (muted) {
             items.push({ label: "Unmute Server", onClick: function () { savePref(server, { muteMinutes: 0 }); notice("Server unmuted."); } });

@@ -889,7 +889,7 @@
             }
             if (button.getAttribute("data-pop-action") === "copy-id") {
                 var publicId = memberPop.getAttribute("data-public-id") || "";
-                if (publicId && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(publicId);
+                window.discodeCopy(publicId, "User ID");
             }
             if (button.getAttribute("data-pop-action") === "copy") {
                 var handle = document.getElementById("member-pop-handle");

@@ -211,7 +211,7 @@
             document.dispatchEvent(new CustomEvent("discode-mention-member", { detail: { name: member.userName } }));
         });
         add("Copy User ID", function () {
-            if (navigator.clipboard) navigator.clipboard.writeText(member.publicId || member.id).catch(function () {});
+            window.discodeCopy(member.publicId || member.id, "User ID");
         });
         if (!member.isSelf) {
             add("Report User", function () {

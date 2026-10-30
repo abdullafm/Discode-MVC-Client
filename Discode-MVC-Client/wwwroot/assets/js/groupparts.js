@@ -1082,8 +1082,7 @@ function bindMenu() {
         } else if (action === "report") {
             if (window.discodeReport) window.discodeReport({ type: ctx.reportType || "GroupMessage", id: row.getAttribute("data-id"), label: "message" });
         } else if (action === "copy-id") {
-            var publicId = row.getAttribute("data-public-id") || "";
-            if (publicId && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(publicId).catch(function () {});
+            window.discodeCopy(row.getAttribute("data-public-id") || "", "Message ID");
         } else if (action === "reaction") openReactionPanel(row.querySelector('[data-act="picker"]') || row, row);
     });
     document.addEventListener("click", function (event) {

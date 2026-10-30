@@ -2225,7 +2225,7 @@ function bindDmMessages() {
         }
         else if (action === "delete") dmDeleteMessage(row);
         else if (action === "copy-text") dmCopy(dmMessageText(row));
-        else if (action === "copy-id") dmCopy(row.getAttribute("data-public-id") || "");
+        else if (action === "copy-id") window.discodeCopy(row.getAttribute("data-public-id") || "", "Message ID");
         else if (action === "report") { if (window.discodeReport) window.discodeReport({ type: "DirectMessage", id: row.getAttribute("data-id"), label: "message" }); }
         else if (action === "reaction") dmOpenPicker(row.querySelector('[data-act="picker"]') || row, "reaction", row);
     });

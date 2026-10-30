@@ -163,4 +163,50 @@
         setDone(false);
         modal.hidden = false;
     };
+
+    function copyNotice(text) {
+        var note = element("div", "server-menu-notice", text);
+        document.body.appendChild(note);
+        window.setTimeout(function () {
+            if (window.discodeDismiss) window.discodeDismiss(note);
+            else if (note.parentNode) note.parentNode.removeChild(note);
+        }, 2200);
+    }
+
+    function copyFallback(value) {
+        var area = document.createElement("textarea");
+        area.value = value;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        var done = false;
+        try {
+            done = document.execCommand("copy");
+        } catch (error) {}
+        area.remove();
+        return done;
+    }
+
+    window.discodeCopy = function (value, label) {
+        var text = String(value == null ? "" : value);
+        var name = label || "Text";
+        if (!text) {
+            copyNotice("There is no " + name + " to copy.");
+            return;
+        }
+        function done() {
+            copyNotice(name + " copied to the clipboard.");
+        }
+        function failed() {
+            if (copyFallback(text)) done();
+            else copyNotice("Could not copy the " + name + ".");
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, failed);
+        } else {
+            failed();
+        }
+    };
 })();
