@@ -5963,7 +5963,7 @@ html.theme-dark .friend-filter-glide {
 
 @container friends-bar (min-width: 641px) {
     html.theme-dark .friend-filters .friend-filter-menu button.active {
-        background: transparent !important;
+        background: #3f4248 !important;
     }
 }
 
