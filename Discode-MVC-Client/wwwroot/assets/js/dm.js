@@ -1465,13 +1465,83 @@ function setDmProfile(open, instant) {
     }
 }
 
+var dmFriendMenu = null;
+
+function dmCloseFriendMenu() {
+    if (dmFriendMenu) dmFriendMenu.hidden = true;
+}
+
+function dmFriendRequestId() {
+    var input = document.querySelector('#dm-relation form[action$="/Friend/Remove"] input[name="id"]');
+    return input ? input.value : "";
+}
+
+function dmRemoveFriend() {
+    var id = dmFriendRequestId();
+    if (!id || !window.discodeFriends || !window.discodeFriends.post) return;
+    window.discodeFriends.post("Remove", { id: id }).then(function (response) {
+        if (response.ok) {
+            dmRefreshRelation();
+            dmRefreshProfile();
+        }
+    }).catch(function () {});
+}
+
+function dmToggleFriendMenu(button) {
+    if (dmFriendMenu && !dmFriendMenu.hidden) {
+        dmCloseFriendMenu();
+        return;
+    }
+    var marker = document.querySelector("#dm-relation [data-relation]");
+    if (!marker || marker.getAttribute("data-relation") !== "friend") return;
+    if (!dmFriendMenu) {
+        dmFriendMenu = document.createElement("div");
+        dmFriendMenu.className = "row-menu dm-friend-menu";
+        dmFriendMenu.hidden = true;
+        var list = document.createElement("ul");
+        var item = document.createElement("li");
+        var remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "row-menu-danger";
+        var glyph = document.createElement("i");
+        glyph.className = "fa-solid fa-user-minus";
+        var label = document.createElement("span");
+        label.className = "row-menu-label";
+        label.textContent = "Remove Friend";
+        remove.appendChild(glyph);
+        remove.appendChild(label);
+        remove.addEventListener("click", function () {
+            dmCloseFriendMenu();
+            dmRemoveFriend();
+        });
+        item.appendChild(remove);
+        list.appendChild(item);
+        dmFriendMenu.appendChild(list);
+        document.body.appendChild(dmFriendMenu);
+        document.addEventListener("click", function (event) {
+            if (dmFriendMenu.hidden) return;
+            if (dmFriendMenu.contains(event.target) || event.target.closest("#dm-profile-close")) return;
+            dmCloseFriendMenu();
+        });
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") dmCloseFriendMenu();
+        });
+    }
+    dmFriendMenu.hidden = false;
+    var rect = button.getBoundingClientRect();
+    var width = dmFriendMenu.offsetWidth;
+    dmFriendMenu.style.left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8)) + "px";
+    dmFriendMenu.style.top = Math.round(rect.bottom + 6) + "px";
+}
+
 function bindDmCompose() {
     document.getElementById("dm-profile-toggle").addEventListener("click", function () {
         setDmProfile(document.getElementById("dm-profile").classList.contains("is-collapsed"));
     });
 
-    document.getElementById("dm-profile-close").addEventListener("click", function () {
-        setDmProfile(false);
+    document.getElementById("dm-profile-close").addEventListener("click", function (event) {
+        event.stopPropagation();
+        dmToggleFriendMenu(event.currentTarget);
     });
 
     document.getElementById("dm-compose").addEventListener("submit", function (event) {
