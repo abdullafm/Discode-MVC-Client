@@ -2007,7 +2007,7 @@ function dmClosePicker() {
     closeEmojiPanel();
 }
 
-function dmOpenPicker(anchor, mode, row, flyout) {
+function dmOpenPicker(anchor, mode, row) {
     var panel = document.getElementById("emoji-panel");
     if (!panel.hidden && dmPicker.mode === mode && dmPicker.row === row) {
         dmClosePicker();
@@ -2035,14 +2035,8 @@ function dmOpenPicker(anchor, mode, row, flyout) {
     panel.style.bottom = "auto";
     var width = panel.offsetWidth || 340;
     var height = panel.offsetHeight || 300;
-    if (flyout) {
-        var flyLeft = flyout.menu.right + 6;
-        if (flyLeft + width > window.innerWidth - 8) flyLeft = flyout.menu.left - width - 6;
-        panel.style.left = Math.max(8, flyLeft) + "px";
-        panel.style.top = Math.max(8, Math.min(flyout.item.top - 8, window.innerHeight - height - 8)) + "px";
-        return;
-    }
-    var rect = anchor.getBoundingClientRect();
+    var fixed = mode === "reaction" ? document.getElementById("dm-emoji") : null;
+    var rect = (fixed && fixed.offsetParent ? fixed : anchor).getBoundingClientRect();
     var left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
     var top = rect.top - height - 8;
     if (top < 8) top = Math.min(rect.bottom + 8, window.innerHeight - height - 8);
@@ -2364,7 +2358,6 @@ function bindDmMessages() {
         if (!item) return;
         var row = box.querySelector('.dm-msg[data-id="' + menu.getAttribute("data-row") + '"]');
         var action = item.getAttribute("data-menu");
-        var flyout = { menu: menu.getBoundingClientRect(), item: item.getBoundingClientRect() };
         dmCloseMenu();
         if (!row) return;
         if (item.getAttribute("data-act") === "react") dmReact(row, item.textContent.trim());
@@ -2379,7 +2372,7 @@ function bindDmMessages() {
         else if (action === "copy-text") dmCopy(dmMessageText(row));
         else if (action === "copy-id") window.discodeCopy(row.getAttribute("data-public-id") || "", "Message ID");
         else if (action === "report") { if (window.discodeReport) window.discodeReport({ type: "DirectMessage", id: row.getAttribute("data-id"), label: "message" }); }
-        else if (action === "reaction") dmOpenPicker(row.querySelector('[data-act="picker"]') || row, "reaction", row, flyout);
+        else if (action === "reaction") dmOpenPicker(row.querySelector('[data-act="picker"]') || row, "reaction", row);
     });
 
     panel.addEventListener("click", function (event) {
