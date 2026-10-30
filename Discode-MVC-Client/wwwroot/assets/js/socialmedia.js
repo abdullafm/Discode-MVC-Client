@@ -229,7 +229,7 @@ function initial(name) {
 }
 
 var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
-var feeds = { explore: [], friends: [] };
+var feeds = { explore: [], friends: [], mine: [] };
 
 function csrfToken() {
     var input = document.querySelector("input[name='__RequestVerificationToken']");
@@ -334,14 +334,20 @@ function clearField(box) {
     box.setAttribute("data-empty", "1");
 }
 
-var feedRequest = { explore: 0, friends: 0 };
+var feedRequest = { explore: 0, friends: 0, mine: 0 };
+
+function feedKey(view) {
+    return view === "compose" ? "mine" : view;
+}
 
 function loadFeed(view) {
+    view = feedKey(view);
     var request = ++feedRequest[view];
-    return requestJson(view === "friends" ? "/Home/FriendsPosts" : "/Home/ExplorePosts").then(function (list) {
+    var url = view === "friends" ? "/Home/FriendsPosts" : view === "mine" ? "/Home/UserPosts?name=" + encodeURIComponent(ME) : "/Home/ExplorePosts";
+    return requestJson(url).then(function (list) {
         if (request !== feedRequest[view]) return;
         feeds[view] = mapPosts(Array.isArray(list) ? list : []);
-        if (currentView === view) renderFeed();
+        if (feedKey(currentView) === view) renderFeed();
     }).catch(function () {});
 }
 
@@ -363,7 +369,7 @@ function showView(view) {
         refreshStories();
     }
     if ((view === "live" || view === "explore") && window.discodeLiveRefresh) window.discodeLiveRefresh();
-    if (view === "explore" || view === "friends") {
+    if (view === "explore" || view === "friends" || view === "compose") {
         renderFeed();
         loadFeed(view);
     }
@@ -491,9 +497,10 @@ function showReplyChip(card, post) {
 
 function renderFeed() {
     closeEmojiPanel();
-    var view = currentView === "friends" ? "friends" : "explore";
-    var list = document.getElementById(view === "friends" ? "friends-list" : "explore-list");
-    var empty = document.getElementById(view === "friends" ? "friends-empty" : "explore-empty");
+    var view = currentView === "friends" ? "friends" : currentView === "compose" ? "mine" : "explore";
+    var list = document.getElementById(view + "-list");
+    var empty = document.getElementById(view + "-empty");
+    if (!list) return;
     var posts = feeds[view];
     var draft = captureDraft(list);
     while (list.firstChild) list.removeChild(list.firstChild);
@@ -2307,7 +2314,7 @@ document.querySelector(".social-view").addEventListener("click", function (event
 });
 
 document.addEventListener("discode-posts-changed", function () {
-    if (currentView === "explore" || currentView === "friends") loadFeed(currentView);
+    if (currentView === "explore" || currentView === "friends" || currentView === "compose") loadFeed(currentView);
 });
 
 var logoutBtn = document.getElementById("me-logout");
