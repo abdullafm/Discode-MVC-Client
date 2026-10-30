@@ -194,6 +194,7 @@
     listen(document, "click", function (event) {
         if (event.defaultPrevented || event.button !== 0) return;
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        if (event.target.closest && event.target.closest("[data-dm] > i.fa-xmark")) return;
         var link = event.target.closest && event.target.closest("a[href]");
         if (!link || link.target && link.target !== "_self") return;
         var url;
