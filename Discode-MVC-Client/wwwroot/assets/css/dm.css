@@ -3931,3 +3931,14 @@ html.theme-dark .msg-search-item:hover {
 .msg-search-panel .msg-search-item strong {
     margin-right: 0;
 }
+
+.dm-friend-menu {
+    width: auto;
+    min-width: 168px;
+    max-width: calc(100vw - 16px);
+    z-index: 130;
+}
+
+.dm-friend-menu button {
+    white-space: nowrap;
+}

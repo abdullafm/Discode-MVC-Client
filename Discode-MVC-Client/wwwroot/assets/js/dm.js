@@ -1526,6 +1526,8 @@ function dmToggleFriendMenu(button) {
         document.addEventListener("keydown", function (event) {
             if (event.key === "Escape") dmCloseFriendMenu();
         });
+        window.addEventListener("scroll", dmCloseFriendMenu, true);
+        window.addEventListener("resize", dmCloseFriendMenu);
     }
     dmFriendMenu.hidden = false;
     var rect = button.getBoundingClientRect();
