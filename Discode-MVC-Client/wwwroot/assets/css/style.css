@@ -3554,40 +3554,6 @@ body .conversation-sidebar .direct-messages h2 .dm-new {
     transform-origin: top left;
 }
 
-
-@media (prefers-reduced-motion: reduce) {
-    .friend-filter-glide,
-    body .friends-view .friends-header .friend-filters button,
-    .me-pop,
-    .me-profile,
-    .new-msg,
-    .settings,
-    .name-modal,
-    .server-modal,
-    .group-edit-modal,
-    .channel-modal,
-    .server-delete-modal,
-    .set-status,
-    .story-viewer,
-    .story-editor,
-    .me-status-menu,
-    .emoji-panel,
-    #emoji-panel,
-    .row-menu,
-    .me-profile-card,
-    .new-msg-card,
-    .settings-card,
-    .name-modal-card,
-    .server-modal-card,
-    .group-edit-card,
-    .channel-card,
-    .server-delete-card,
-    .set-status-card,
-    .story-frame {
-        transition: none;
-    }
-}
-
 .me-pop[hidden],
 .me-status-menu[hidden],
 .me-profile[hidden] {
@@ -7009,21 +6975,6 @@ body.call-resizing {
     color: #23a559;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .call-stage,
-    .call-resize,
-    .call-cam-video,
-    .call-screen-video,
-    .call-person,
-    .call-mute,
-    #dm-profile,
-    #group-members,
-    .dm-profile,
-    .group-members {
-        transition: none;
-    }
-}
-
 .call-caret {
     width: 22px;
     color: #b5bac1;
@@ -7862,18 +7813,6 @@ a.notify-content {
     100% { transform: scale(1) rotate(360deg); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .mini-profile,
-    .live-dock,
-    .mention-popup,
-    .watch-guest-request,
-    .watch-guest-note,
-    .watch-msg,
-    .post-repost.reposted i {
-        animation: none;
-    }
-}
-
 .is-tab-in {
     animation: pop-fade-in 0.22s ease both;
 }
@@ -7888,18 +7827,6 @@ main {
 .row-menu-sub.open,
 .row-menu-branch:hover > .row-menu-sub {
     animation: pop-in 0.18s ease both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .is-tab-in,
-    main,
-    .stream-menu,
-    .story-notice,
-    .call-dock-card,
-    .row-menu-sub.open,
-    .row-menu-branch:hover > .row-menu-sub {
-        animation: none;
-    }
 }
 
 .server-ctx {
@@ -8135,4 +8062,51 @@ html.theme-dark .online-row:hover .request-decline:hover,
 html.theme-dark .online-row:hover .blocked-unblock:hover {
     background: #da373c !important;
     color: #ffffff !important;
+}
+
+/* ===== Hover animasyonlari: renk, kenar, golge ve acilis gecisleri yumusak olsun ===== */
+*,
+*::before,
+*::after {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow, text-decoration-color;
+    transition-duration: 0.18s;
+    transition-timing-function: ease;
+}
+
+a,
+button:not(.dm-wave),
+label,
+summary,
+input,
+select,
+textarea,
+li,
+[role="button"],
+[role="menuitem"],
+[role="tab"] {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow, text-decoration-color, opacity, transform;
+}
+
+@keyframes hover-reveal {
+    from {
+        opacity: 0;
+        transform: translateY(2px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.dm-msg:hover .dm-msg-tools,
+.dm-msg:focus-within .dm-msg-tools,
+.server-channel-row:hover .server-channel-edit,
+.server-channel-row:focus-within .server-channel-edit,
+.server-channel-row:hover .server-channel-invite,
+.server-channel-row:focus-within .server-channel-invite,
+.friend-list .friend-item:hover > i,
+.friend-list .friend-item.pinned:hover > .row-pin,
+.me-bio-form:focus-within #me-bio-emoji {
+    animation: hover-reveal 0.16s ease both;
 }

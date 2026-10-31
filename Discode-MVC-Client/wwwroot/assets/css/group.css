@@ -449,14 +449,6 @@ section#group-members.no-motion .group-members {
     transition: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    section#group-members:not([hidden]),
-    section#group-members.is-collapsed,
-    .group-members {
-        transition: none;
-    }
-}
-
 .group-members h2 {
     padding: 8px 8px 4px;
     color: #4d5058;
@@ -1725,12 +1717,6 @@ html.theme-dark body .dm-invite-body.is-plain {
 html.theme-dark body .dm-invite-go,
 html.theme-dark body .dm-invite-go.is-join {
     color: #ffffff !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .dm-invite-card {
-        animation: none;
-    }
 }
 
 .dm-invite-banner[data-banner="pink"],

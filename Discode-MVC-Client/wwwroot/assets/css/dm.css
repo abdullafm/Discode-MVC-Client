@@ -546,14 +546,6 @@ section#dm-profile.no-motion .dm-profile {
     transition: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    section#dm-profile:not([hidden]),
-    section#dm-profile.is-collapsed,
-    .dm-profile {
-        transition: none;
-    }
-}
-
 .dm-banner {
     height: 120px;
     background: linear-gradient(160deg, #5865f2 0%, #8ea1ff 100%);
