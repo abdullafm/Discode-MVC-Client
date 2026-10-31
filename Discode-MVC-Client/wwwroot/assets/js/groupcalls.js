@@ -1172,6 +1172,17 @@
         if (!document.hidden) refreshActive();
     });
 
+    document.addEventListener("discode-profile-changed", function () {
+        if (!window.discodePresence) return;
+        invoke("GetGroupCalls").then(function (list) {
+            var next = {};
+            (list || []).forEach(function (dto) { next[dto.groupId] = dto; });
+            active = next;
+            if (call && next[call.groupId] && next[call.groupId].callId === call.callId) call = next[call.groupId];
+            render();
+        }).catch(function () {});
+    });
+
     var sideWatcher = null;
     var sideHits = [];
 

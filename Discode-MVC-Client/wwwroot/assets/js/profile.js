@@ -697,7 +697,10 @@
     }
 
     document.addEventListener("discode-posts-changed", function () {
-        if (!profile.classList.contains("d-none")) renderMyPosts();
+        if (profile.classList.contains("d-none")) return;
+        renderMyPosts();
+        var repostsTab = profile.querySelector(".me-tabs button[data-tab='reposts']");
+        if (repostsTab && repostsTab.classList.contains("on")) renderReposts();
     });
 
     document.addEventListener("discode-user-presence", function (event) {
