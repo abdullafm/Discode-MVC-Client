@@ -4,12 +4,13 @@
     var DICT = {};
     var cache = {};
     var current = "en";
-    var LANGS = ["en", "tr", "az"];
+    var LANGS = ["en", "tr", "az", "ru"];
 
     var FLAG_MAP = {
         "en": { flag: "us", native: "English", sub: "English" },
         "tr": { flag: "tr", native: "Türkçe", sub: "Turkish" },
-        "az": { flag: "az", native: "Azərbaycan", sub: "Azerbaijan" }
+        "az": { flag: "az", native: "Azərbaycan", sub: "Azerbaijan" },
+        "ru": { flag: "ru", native: "Русский", sub: "Russian" }
     };
 
     function getSavedLang() {
@@ -212,7 +213,7 @@
             var btn = e.target.closest("button");
             if (!btn) return;
             var flag = btn.getAttribute("data-flag");
-            var code = flag === "tr" ? "tr" : (flag === "az" ? "az" : "en");
+            var code = flag === "tr" ? "tr" : (flag === "az" ? "az" : (flag === "ru" ? "ru" : "en"));
             setListOpen(false);
             applyLanguage(code, true);
         });
