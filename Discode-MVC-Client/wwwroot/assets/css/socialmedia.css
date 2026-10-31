@@ -5423,3 +5423,221 @@ html:not(.theme-dark) .live-source-card.active,
     background: #f23f43;
     opacity: 0.4;
 }
+
+/* ===== Canli yayim pencere: video merkezli, sade ve muasir gorunus ===== */
+.watch-dialog {
+    width: min(1280px, 96vw);
+    height: min(88vh, 760px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    background: #111214;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+}
+
+.watch-stage {
+    background: #000;
+}
+
+.watch-top {
+    padding: 18px 20px 48px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.32) 60%, transparent 100%);
+}
+
+.watch-host {
+    gap: 12px;
+}
+
+.watch-host img {
+    width: 42px;
+    height: 42px;
+    box-shadow: 0 0 0 2px #111214, 0 0 0 4px #f23f43;
+}
+
+.watch-host strong {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.watch-host p {
+    margin-top: 2px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.watch-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+}
+
+.watch-live-badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffffff;
+    animation: live-dot-blink 1.4s ease-in-out infinite;
+}
+
+.watch-top-right {
+    gap: 8px;
+}
+
+.watch-viewers {
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    font-size: 13px;
+}
+
+.watch-icon-btn {
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    font-size: 14px;
+    transition: background-color 0.16s ease, transform 0.16s ease;
+}
+
+.watch-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.24);
+}
+
+.watch-icon-btn:active {
+    transform: scale(0.94);
+}
+
+.watch-end {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: #f23f43;
+    transition: background-color 0.16s ease, transform 0.16s ease;
+}
+
+.watch-end:hover {
+    background: #d93438;
+}
+
+.watch-end:active {
+    transform: scale(0.96);
+}
+
+.watch-controls {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    gap: 10px;
+    padding: 56px 20px 18px;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 60%, transparent 100%);
+    pointer-events: none;
+}
+
+.watch-controls > * {
+    pointer-events: auto;
+}
+
+.watch-heart {
+    width: 46px;
+    height: 46px;
+    border: 1px solid rgba(242, 63, 67, 0.35);
+    background: rgba(242, 63, 67, 0.18);
+    color: #ff4d5a;
+    font-size: 20px;
+    backdrop-filter: blur(10px);
+    transition: background-color 0.16s ease, transform 0.12s ease;
+}
+
+.watch-heart:hover {
+    background: rgba(242, 63, 67, 0.3);
+}
+
+.watch-stage .ig-floating-hearts-zone {
+    bottom: 80px;
+    right: 18px;
+}
+
+.watch-chat {
+    width: 340px;
+    background: #17181a;
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.watch-chat header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 20px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.watch-chat-feed {
+    padding: 14px 18px;
+    gap: 12px;
+}
+
+.watch-msg img {
+    width: 30px;
+    height: 30px;
+}
+
+.watch-msg strong {
+    font-size: 12px;
+    font-weight: 700;
+    color: #aeb4bd;
+}
+
+.watch-msg p {
+    margin-top: 2px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.watch-chat-form {
+    align-items: center;
+    padding: 14px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.watch-chat-form input {
+    height: 42px;
+    padding: 0 16px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.07);
+    font-size: 14px;
+    transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+
+.watch-chat-form input:focus {
+    border-color: rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.watch-chat-form button {
+    flex: none;
+    width: 42px;
+    height: 42px;
+    background: #f23f43;
+    transition: background-color 0.16s ease, transform 0.16s ease;
+}
+
+.watch-chat-form button:hover {
+    background: #d93438;
+}
+
+.watch-chat-form button:active {
+    transform: scale(0.94);
+}
