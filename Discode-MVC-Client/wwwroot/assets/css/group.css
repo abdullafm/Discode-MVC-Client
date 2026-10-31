@@ -1848,10 +1848,17 @@ html.theme-dark body .dm-invite-banned-copy strong {
 .server-chip {
     position: relative;
     overflow: visible;
+    transition: border-radius 0.3s ease-in-out;
 }
 
-.server-chip .server-chip-icon {
-    border-radius: 50%;
+.server-chip:hover,
+.server-chip.on {
+    border-radius: 15px;
+}
+
+.server-chip .server-chip-icon,
+.server-nav .server-chip .server-chip-icon:hover {
+    border-radius: inherit;
 }
 
 .server-badge {
