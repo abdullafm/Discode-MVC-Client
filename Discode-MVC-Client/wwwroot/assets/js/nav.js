@@ -43,22 +43,32 @@
         return new URL(link.getAttribute("href"), location.href).href;
     }
 
-    function syncStyles(doc) {
+    function loadStyles(doc) {
         var next = [].slice.call(doc.querySelectorAll("link[rel='stylesheet']"));
-        var nextHrefs = next.map(sheetHref);
-        var current = [].slice.call(document.querySelectorAll("link[rel='stylesheet']"));
-        current.forEach(function (link) {
-            var href = sheetHref(link);
-            if (nextHrefs.indexOf(href) === -1) link.parentNode.removeChild(link);
-        });
         var have = [].slice.call(document.querySelectorAll("link[rel='stylesheet']")).map(sheetHref);
+        var waits = [];
         next.forEach(function (link) {
             var href = sheetHref(link);
             if (have.indexOf(href) !== -1) return;
-            var copy = document.createElement("link");
-            copy.rel = "stylesheet";
-            copy.href = href;
-            document.head.appendChild(copy);
+            have.push(href);
+            waits.push(new Promise(function (resolve) {
+                var copy = document.createElement("link");
+                copy.rel = "stylesheet";
+                copy.href = href;
+                copy.onload = resolve;
+                copy.onerror = resolve;
+                document.head.appendChild(copy);
+            }));
+        });
+        if (!waits.length) return Promise.resolve();
+        var limit = new Promise(function (resolve) { setTimeout(resolve, 4000); });
+        return Promise.race([Promise.all(waits), limit]);
+    }
+
+    function dropStyles(doc) {
+        var nextHrefs = [].slice.call(doc.querySelectorAll("link[rel='stylesheet']")).map(sheetHref);
+        [].slice.call(document.querySelectorAll("link[rel='stylesheet']")).forEach(function (link) {
+            if (nextHrefs.indexOf(sheetHref(link)) === -1 && link.parentNode) link.parentNode.removeChild(link);
         });
     }
 
@@ -138,6 +148,8 @@
         }).then(function (html) {
             if (!hasLayout(html)) throw new Error("nav");
             var doc = new DOMParser().parseFromString(html, "text/html");
+            return loadStyles(doc).then(function () { return doc; });
+        }).then(function (doc) {
             if (mode === "replace") history.replaceState({ discode: 1 }, "", path);
             else if (mode === "push") history.pushState({ discode: 1 }, "", path);
             var splash = /\/(login|register)\.html$/i.test(shown) && /\/index\.html$/i.test(path);
@@ -148,7 +160,7 @@
             else document.documentElement.classList.remove("show-loader");
             shown = path;
             document.title = doc.title;
-            syncStyles(doc);
+            dropStyles(doc);
             dropPageListeners();
             window.onload = null;
             window.discodeOpenDm = "";

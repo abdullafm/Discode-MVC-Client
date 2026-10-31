@@ -5640,11 +5640,18 @@ html.theme-dark .friend-item.active:hover > p {
 }
 
 html.theme-dark .shortcut-list > li:nth-child(3) .shortcut-item,
-html.theme-dark .shortcut-list > li:nth-child(3) .shortcut-item:hover {
+html.theme-dark .shortcut-list > li:nth-child(3) .shortcut-item:hover,
+html.theme-dark .shortcut-list > li:nth-child(3) .shortcut-item.active {
     background-image: linear-gradient(90deg, rgba(43, 45, 49, 0.94) 0%, rgba(43, 45, 49, 0.62) 52%, rgba(43, 45, 49, 0.12) 100%), url("../img/bg-img%20list.png") !important;
-    background-position: right;
-    background-size: cover;
-    background-color: transparent;
+    background-position: right !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+}
+
+html.theme-dark .shortcut-list > li:nth-child(3) .shortcut-item:hover,
+html.theme-dark .shortcut-list > li:nth-child(3) .shortcut-item.active {
+    background-image: linear-gradient(90deg, rgba(60, 63, 69, 0.92) 0%, rgba(60, 63, 69, 0.58) 52%, rgba(60, 63, 69, 0.08) 100%), url("../img/bg-img%20list.png") !important;
 }
 
 html.theme-dark .shortcut-item.active {
@@ -5749,6 +5756,9 @@ html.theme-dark .dm-search,
 html.theme-dark .sidebar-search input {
     background: var(--d-rail) !important;
     border-radius: 4px;
+}
+
+html.theme-dark .dm-search {
     height: 28px;
 }
 
