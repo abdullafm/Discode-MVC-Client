@@ -30,6 +30,25 @@
         return video;
     }
 
+    function makeTicker(tick, ms) {
+        try {
+            var source = "var t=setInterval(function(){postMessage(0)}," + ms + ");onmessage=function(e){if(e.data==='stop'){clearInterval(t);close()}}";
+            var url = URL.createObjectURL(new Blob([source], { type: "text/javascript" }));
+            var worker = new Worker(url);
+            worker.onmessage = function () { tick(); };
+            return {
+                stop: function () {
+                    worker.postMessage("stop");
+                    worker.terminate();
+                    URL.revokeObjectURL(url);
+                }
+            };
+        } catch (error) {
+            var id = setInterval(tick, ms);
+            return { stop: function () { clearInterval(id); } };
+        }
+    }
+
     function byId(id) {
         return document.getElementById(id);
     }
@@ -402,10 +421,26 @@
         }, 2200);
     }
 
-    function setWait(text) {
+    function setWait(text, info) {
         var wait = byId("live-watch-wait");
         wait.hidden = !text;
         byId("live-watch-wait-text").textContent = text || "";
+        var icon = wait.querySelector("i");
+        if (icon) icon.className = info ? "fa-solid fa-tower-broadcast" : "fa-solid fa-circle-notch fa-spin";
+    }
+
+    function showHostPreview() {
+        var session = hostState.current;
+        if (!session) return;
+        var video = byId("live-stream-video");
+        if (session.sharesScreen) {
+            video.srcObject = null;
+            setWait("You are live and sharing your screen. The preview is hidden so the stream does not repeat itself.", true);
+            return;
+        }
+        video.srcObject = session.stream;
+        video.play().catch(function () {});
+        setWait("");
     }
 
     function showWatchDialog(stream, mine) {
@@ -525,8 +560,7 @@
         if (stream.isMine) {
             if (hostState.current && hostState.current.streamId === stream.id) {
                 showWatchDialog(stream, true);
-                byId("live-stream-video").srcObject = hostState.current.stream;
-                byId("live-stream-video").play().catch(function () {});
+                showHostPreview();
             }
             return;
         }
@@ -775,8 +809,9 @@
             if (!sender.track || sender.track.kind !== "video") return;
             var params = sender.getParameters();
             if (!params.encodings || !params.encodings.length) params.encodings = [{}];
-            params.encodings[0].maxBitrate = 3000000;
-            params.degradationPreference = "maintain-resolution";
+            params.encodings[0].maxBitrate = sender.track.contentHint === "detail" ? 4000000 : 3000000;
+            params.encodings[0].maxFramerate = 30;
+            params.degradationPreference = "balanced";
             sender.setParameters(params).catch(function () {});
         });
     }
@@ -1257,9 +1292,9 @@
 
     function ensureDrawing() {
         var active = !!(capture.camera || capture.screen);
-        if (active && !capture.timer) capture.timer = setInterval(drawFrame, DRAW_MS);
+        if (active && !capture.timer) capture.timer = makeTicker(drawFrame, DRAW_MS);
         if (!active && capture.timer) {
-            clearInterval(capture.timer);
+            capture.timer.stop();
             capture.timer = 0;
             drawFrame();
         }
@@ -1363,8 +1398,7 @@
         if (window.discodeLiveDock) window.discodeLiveDock.close();
         if (hostState.current) {
             showWatchDialog(hostState.current.info, true);
-            byId("live-stream-video").srcObject = hostState.current.stream;
-            byId("live-stream-video").play().catch(function () {});
+            showHostPreview();
             return;
         }
         byId("live-create-modal").hidden = false;
@@ -1394,6 +1428,13 @@
     /* ---------------- Go Live: broadcast ---------------- */
 
     function buildOutputStream() {
+        var single = [capture.camera, capture.screen].filter(Boolean);
+        if (single.length === 1) {
+            var direct = new MediaStream(single[0].getTracks());
+            var videoTrack = direct.getVideoTracks()[0];
+            if (videoTrack && "contentHint" in videoTrack) videoTrack.contentHint = single[0] === capture.screen ? "detail" : "motion";
+            return { stream: direct, mixer: null, direct: true };
+        }
         var output = canvas.captureStream(30);
         var audioStreams = [capture.camera, capture.screen].filter(function (stream) {
             return stream && stream.getAudioTracks().length;
@@ -1421,16 +1462,19 @@
 
         var out = buildOutputStream();
         hub("StartLive", { title: title, category: category }).then(function (stream) {
-            hostState.current = { streamId: stream.id, stream: out.stream, mixer: out.mixer, peers: {}, info: stream, thumbnail: "", snapshotTimer: 0, sources: [capture.camera, capture.screen].filter(Boolean), discard: function () { try { discardCapture(); } catch (error) {} } };
+            hostState.current = { streamId: stream.id, stream: out.stream, mixer: out.mixer, peers: {}, info: stream, thumbnail: "", snapshotTimer: 0, sharesScreen: !!capture.screen, direct: !!out.direct, sources: [capture.camera, capture.screen].filter(Boolean), discard: function () { try { discardCapture(); } catch (error) {} } };
             scheduleSnapshot(5000);
             byId("live-create-modal").hidden = true;
             showWatchDialog(stream, true);
-            var video = byId("live-stream-video");
-            video.srcObject = out.stream;
-            video.play().catch(function () {});
+            showHostPreview();
+            if (out.direct) {
+                out.stream.getVideoTracks()[0].addEventListener("ended", function () {
+                    if (hostState.current && hostState.current.stream === out.stream) endBroadcast();
+                });
+            }
             refreshLive();
         }).catch(function (err) {
-            stopTracks(out.stream);
+            if (!out.direct) stopTracks(out.stream);
             if (out.mixer) out.mixer.close();
             refreshSourceUi(hubMessage(err));
         });
