@@ -456,11 +456,3 @@ document.addEventListener("click", function (event) {
     if (panel) panel.hidden = true;
 });
 
-var logoutBtn = document.getElementById("me-logout");
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", function () {
-        if (confirm("Are you sure you want to log out?")) {
-            window.location.href = "./login.html";
-        }
-    });
-}

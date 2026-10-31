@@ -168,16 +168,6 @@
         profile.classList.remove("d-none");
     });
 
-    var logoutBtn = document.getElementById("me-logout");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", function () {
-            if (confirm("Are you sure you want to log out?")) {
-                var form = document.getElementById("logout-form");
-                if (form) form.submit();
-                else window.location.href = "/Account/Login";
-            }
-        });
-    }
 
     var settingsMe = document.querySelector(".settings-me");
     if (settingsMe) {

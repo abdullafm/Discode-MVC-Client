@@ -312,3 +312,14 @@ window.discodeReel = function (url) {
     }
     return reel;
 };
+
+if (!window.discodeLogoutBound) {
+    window.discodeLogoutBound = true;
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest("#me-logout")) return;
+        if (!window.confirm("Are you sure you want to log out?")) return;
+        var form = document.getElementById("logout-form");
+        if (form) form.submit();
+        else window.location.href = "/Account/Login";
+    });
+}

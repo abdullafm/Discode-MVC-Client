@@ -59,11 +59,3 @@ document.addEventListener("DOMContentLoaded", function () {
     updateMicHeadphoneIcon();
 });
 
-var logoutBtn = document.getElementById("me-logout");
-if (logoutBtn) {
-    logoutBtn.addEventListener("click", function () {
-        if (confirm("Are you sure you want to log out?")) {
-            window.location.href = "./login.html";
-        }
-    });
-}
