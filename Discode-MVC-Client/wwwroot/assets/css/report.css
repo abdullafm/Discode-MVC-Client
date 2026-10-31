@@ -193,3 +193,27 @@
     opacity: 1;
     transform: scale(1);
 }
+
+/* Baskasinin profil penceresinde avatar: ustunde boyutme ikonu */
+#me-profile.visitor-view .me-profile-avatar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    color: #ffffff;
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", sans-serif;
+    font-size: 24px;
+    font-weight: 900;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.16s ease;
+}
+
+#me-profile.visitor-view .me-profile-avatar:hover::after {
+    opacity: 1;
+}

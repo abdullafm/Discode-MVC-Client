@@ -235,9 +235,11 @@
                     if (type === "click") closeZoom();
                 });
             });
-            document.addEventListener("keydown", function (event) {
-                if (event.key === "Escape") closeZoom();
-            });
+            window.addEventListener("keydown", function (event) {
+                if (event.key !== "Escape" || !zoomLayer || zoomLayer.hidden || !zoomLayer.classList.contains("is-open")) return;
+                event.stopPropagation();
+                closeZoom();
+            }, true);
         }
         zoomLayer.querySelector("img").src = source;
         zoomLayer.hidden = false;
@@ -247,7 +249,7 @@
     };
 
     document.addEventListener("click", function (event) {
-        var avatar = event.target.closest && event.target.closest("#me-pop .me-avatar img");
+        var avatar = event.target.closest && event.target.closest("#me-pop .me-avatar img, #me-profile.visitor-view .me-profile-avatar img");
         if (!avatar) return;
         window.discodeZoomImage(avatar.currentSrc || avatar.src);
     });
