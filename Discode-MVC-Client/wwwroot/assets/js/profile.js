@@ -558,7 +558,7 @@
 
     function applyOwnPhoto(src) {
         ownPhoto = src;
-        var faces = document.querySelectorAll("#user-panel .avatar img, #server-voice-face, #me-pop .me-avatar img, #me-profile .me-profile-avatar img, .set-status-person > img, .settings-me img, #dm-messages .dm-msg[data-mine=\"1\"] .dm-msg-avatar");
+        var faces = document.querySelectorAll("#user-panel .avatar img, #server-voice-face, #call-avatar, .call-phone-faces img, #me-pop .me-avatar img, #me-profile .me-profile-avatar img, .set-status-person > img, .settings-me img, #dm-messages .dm-msg[data-mine=\"1\"] .dm-msg-avatar");
         for (var i = 0; i < faces.length; i++) faces[i].src = src;
     }
 

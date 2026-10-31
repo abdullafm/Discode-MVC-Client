@@ -1180,6 +1180,8 @@ function dmSyncPartnerMessages() {
         if (who && name && name.textContent) who.textContent = name.textContent;
     }
     if (title && name && name.textContent) title.textContent = name.textContent;
+    var peerFace = document.getElementById("call-peer-avatar");
+    if (peerFace && avatar) peerFace.src = avatar.getAttribute("src");
 }
 
 function dmPaintRelation(relation) {
