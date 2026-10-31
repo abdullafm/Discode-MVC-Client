@@ -128,3 +128,45 @@
     opacity: 0.5;
     cursor: default;
 }
+
+/* Profil sekline basanda boyuk gorunus */
+#me-pop .me-avatar img {
+    cursor: zoom-in;
+}
+
+.zoom-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0);
+    cursor: zoom-out;
+    transition: background-color 0.22s ease, backdrop-filter 0.22s ease;
+}
+
+.zoom-layer[hidden] {
+    display: none;
+}
+
+.zoom-layer.is-open {
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(6px);
+}
+
+.zoom-image {
+    width: min(72vmin, 540px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    transform: scale(0.55);
+    transition: transform 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.15), opacity 0.2s ease;
+}
+
+.zoom-layer.is-open .zoom-image {
+    opacity: 1;
+    transform: scale(1);
+}

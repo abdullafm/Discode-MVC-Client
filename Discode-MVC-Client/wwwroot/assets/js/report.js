@@ -211,4 +211,44 @@
             failed();
         }
     };
+
+    var zoomLayer = null;
+
+    function closeZoom() {
+        if (!zoomLayer || zoomLayer.hidden) return;
+        zoomLayer.classList.remove("is-open");
+        window.setTimeout(function () {
+            if (zoomLayer && !zoomLayer.classList.contains("is-open")) zoomLayer.hidden = true;
+        }, 220);
+    }
+
+    window.discodeZoomImage = function (source) {
+        if (!source) return;
+        if (!zoomLayer) {
+            zoomLayer = element("div", "zoom-layer");
+            zoomLayer.hidden = true;
+            zoomLayer.appendChild(element("img", "zoom-image"));
+            document.body.appendChild(zoomLayer);
+            ["click", "mousedown"].forEach(function (type) {
+                zoomLayer.addEventListener(type, function (event) {
+                    event.stopPropagation();
+                    if (type === "click") closeZoom();
+                });
+            });
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape") closeZoom();
+            });
+        }
+        zoomLayer.querySelector("img").src = source;
+        zoomLayer.hidden = false;
+        window.requestAnimationFrame(function () {
+            window.requestAnimationFrame(function () { zoomLayer.classList.add("is-open"); });
+        });
+    };
+
+    document.addEventListener("click", function (event) {
+        var avatar = event.target.closest && event.target.closest("#me-pop .me-avatar img");
+        if (!avatar) return;
+        window.discodeZoomImage(avatar.currentSrc || avatar.src);
+    });
 })();
