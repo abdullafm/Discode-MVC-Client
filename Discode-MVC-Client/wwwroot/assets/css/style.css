@@ -8120,3 +8120,18 @@ li,
 .me-bio-form:focus-within #me-bio-emoji {
     animation: hover-reveal 0.16s ease both;
 }
+
+/* Zeng, ses ve canli yayim panelleri yavas deyil, tez acilsin */
+.call-stage,
+.call-person,
+.call-screen-video,
+.call-face,
+.call-face.is-peer,
+.call-face:not(.is-peer),
+.call-mute,
+.server-voice-tile img,
+.server-voice-cam-video,
+.watch-join,
+.live-drawer {
+    transition-duration: 0.16s !important;
+}
