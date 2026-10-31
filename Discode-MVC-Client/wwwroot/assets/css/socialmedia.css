@@ -5079,3 +5079,10 @@ html.theme-dark .post-composer {
 .post-name .post-scope[hidden] {
     display: none;
 }
+
+/* Gizlenen menyu dugmeleri display qaydalari ile yeniden gorunmesin */
+.delete-pop button[hidden],
+.delete-pop [data-edit-post][hidden],
+.delete-pop [data-edit-comment][hidden] {
+    display: none !important;
+}
