@@ -40,7 +40,7 @@
                 <a class="server-action" href="@Url.Action("Index", "Discover")" aria-label="Discover"><i class="fa-solid fa-compass"></i></a>
                 @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
                 {
-                    <a class="server-action" href="@Url.Action("Index", "Discover")" aria-label="Discover"><i class="fa-solid fa-server"></i></a>
+                    <a class="server-action" href="@Url.Action("Index", "Home", new { area = "Admin" })" aria-label="Admin"><i class="fa-solid fa-server"></i></a>
                 }
             </nav>
         </div>

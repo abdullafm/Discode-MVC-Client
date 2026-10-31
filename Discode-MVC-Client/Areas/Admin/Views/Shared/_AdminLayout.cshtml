@@ -1,3 +1,8 @@
+@{
+    var profile = ViewData["AdminProfile"] as ProfileUIVM ?? new ProfileUIVM();
+    var avatar = string.IsNullOrWhiteSpace(profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : profile.AvatarUrl;
+    var role = User.IsInRole("SuperAdmin") ? "SuperAdmin" : "Admin";
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,19 +15,50 @@
     <link rel="stylesheet" href="~/assets/css/admin-area.css" asp-append-version="true">
 </head>
 <body>
+    <nav class="adm-rail" aria-label="Servers">
+        <a class="adm-rail-home" href="@Url.Action("Index", "Home", new { area = "" })" aria-label="Home"><i class="fa-brands fa-discord"></i></a>
+        <hr>
+        <div class="adm-rail-servers" id="adm-servers"></div>
+        <a class="adm-rail-btn" href="@Url.Action("Index", "Home", new { area = "" })" aria-label="Add a Server"><i class="fa-solid fa-plus"></i></a>
+        <hr>
+        <a class="adm-rail-btn" href="@Url.Action("Index", "Discover", new { area = "" })" aria-label="Discover"><i class="fa-solid fa-compass"></i></a>
+        <a class="adm-rail-btn on" href="@Url.Action("Index", "Home", new { area = "Admin" })" aria-label="Admin"><i class="fa-solid fa-server"></i></a>
+    </nav>
+
     <aside class="adm-side">
-        <a class="adm-brand" href="@Url.Action("Index", "Home", new { area = "Admin" })"><i class="fa-brands fa-discord"></i> Admin</a>
-        <nav>
+        <div class="adm-side-head">
+            <a class="adm-brand" href="@Url.Action("Index", "Home", new { area = "Admin" })">Admin Panel</a>
+        </div>
+        <nav class="adm-nav">
             <a class="on" href="@Url.Action("Index", "Home", new { area = "Admin" })"><i class="fa-solid fa-chart-simple"></i> Overview</a>
         </nav>
-        <a class="adm-back" href="@Url.Action("Index", "Home", new { area = "" })"><i class="fa-solid fa-arrow-left"></i> Back to Discode</a>
+        <div class="adm-user">
+            <div class="adm-user-id">
+                <span class="adm-avatar"><img src="@avatar" alt=""></span>
+                <span class="adm-user-text">
+                    <strong>@profile.DisplayName</strong>
+                    <small>@role</small>
+                </span>
+            </div>
+            <div class="adm-user-tools">
+                <button type="button" aria-label="Microphone"><i class="fa-solid fa-microphone"></i></button>
+                <button type="button" aria-label="Headphones"><i class="fa-solid fa-headphones"></i></button>
+                <a href="@Url.Action("Index", "Home", new { area = "" })" aria-label="Settings"><i class="fa-solid fa-gear"></i></a>
+            </div>
+        </div>
     </aside>
-    <main class="adm-main">
+
+    <div class="adm-content">
         <header class="adm-top">
             <h1>@ViewData["Title"]</h1>
-            <span class="adm-role">@(User.IsInRole("SuperAdmin") ? "SuperAdmin" : "Admin")</span>
+            <span class="adm-role">@role</span>
         </header>
-        @RenderBody()
-    </main>
+        <main class="adm-main">
+            @RenderBody()
+        </main>
+        <footer class="adm-footer">Discode Admin &middot; signed in as @profile.UserName</footer>
+    </div>
+
+    <script src="~/assets/js/admin-area.js" asp-append-version="true"></script>
 </body>
 </html>
