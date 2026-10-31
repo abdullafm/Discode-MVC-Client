@@ -5,6 +5,7 @@ var STORE_KEY = "discode-social";
 var ME = (document.querySelector(".social-view") || document.body).getAttribute("data-username") || "Anonymou5";
 var currentView = "explore";
 var pendingImage = "";
+var pendingVideo = null;
 var openCommentPost = null;
 
 window.onload = function () {
@@ -395,11 +396,20 @@ function readImage(file, done) {
 
 function clearPhoto() {
     pendingImage = "";
+    pendingVideo = null;
     document.getElementById("post-image").value = "";
     var preview = document.getElementById("photo-preview");
     var image = document.getElementById("photo-preview-img");
+    var clip = document.getElementById("photo-preview-video");
     preview.hidden = true;
     if (image) image.removeAttribute("src");
+    if (clip) {
+        clip.pause();
+        if (clip.src) URL.revokeObjectURL(clip.src);
+        clip.removeAttribute("src");
+        clip.hidden = true;
+    }
+    if (image) image.hidden = false;
 }
 
 function setPersonFace(img, letter, name, avatarUrl) {
@@ -503,9 +513,16 @@ function renderFeed() {
     if (!list) return;
     var posts = feeds[view];
     var draft = captureDraft(list);
+    var scroller = scrollParent(list);
+    var keepTop = scroller ? scroller.scrollTop : 0;
+    var keepHeight = list.offsetHeight;
+    if (keepHeight) list.style.minHeight = keepHeight + "px";
     while (list.firstChild) list.removeChild(list.firstChild);
     if (empty) empty.hidden = posts.length > 0;
-    if (!posts.length) return;
+    if (!posts.length) {
+        list.style.minHeight = "";
+        return;
+    }
     var postTpl = document.getElementById("post-card");
     var commentTpl = document.getElementById("comment-card");
     posts.forEach(function (post) {
@@ -551,8 +568,13 @@ function renderFeed() {
         var photo = card.querySelector(".post-photo");
         if (photo) {
             var showPhoto = post.image && post.image.indexOf("/uploads/posts/") === 0;
-            photo.hidden = !showPhoto;
-            if (showPhoto) photo.src = post.image;
+            if (showPhoto && window.discodeIsVideo(post.image)) {
+                photo.hidden = true;
+                photo.parentNode.insertBefore(window.discodeReel(post.image), photo);
+            } else {
+                photo.hidden = !showPhoto;
+                if (showPhoto) photo.src = post.image;
+            }
         }
         var like = card.querySelector("[data-like-post]");
         if (like) {
@@ -629,6 +651,16 @@ function renderFeed() {
         list.appendChild(card);
     });
     restoreDraft(list, draft);
+    list.style.minHeight = "";
+    if (scroller) scroller.scrollTop = keepTop;
+}
+
+function scrollParent(node) {
+    for (var el = node.parentElement; el; el = el.parentElement) {
+        var overflow = getComputedStyle(el).overflowY;
+        if ((overflow === "auto" || overflow === "scroll") && el.scrollHeight > el.clientHeight) return el;
+    }
+    return null;
 }
 
 function appendEditedTag(element) {
@@ -717,7 +749,24 @@ function showPostError(message) {
     el.hidden = !message;
 }
 
+function uploadPostVideo() {
+    var data = new FormData();
+    data.append("file", pendingVideo, pendingVideo.name || "post.mp4");
+    return fetch("/Home/UploadPostVideo", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "RequestVerificationToken": csrfToken(), "X-Requested-With": "XMLHttpRequest" },
+        body: data
+    }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (result) {
+            if (!response.ok) throw readError(response, result);
+            return result.imageUrl;
+        });
+    });
+}
+
 function uploadPostImage() {
+    if (pendingVideo) return uploadPostVideo();
     if (!pendingImage) return Promise.resolve("");
     return fetch(pendingImage).then(function (response) { return response.blob(); }).then(function (blob) {
         var data = new FormData();
@@ -740,7 +789,7 @@ document.getElementById("post-composer").addEventListener("submit", function (ev
     event.preventDefault();
     var textBox = document.getElementById("post-text");
     var text = fieldValue(textBox).trim();
-    if (!text && !pendingImage) return;
+    if (!text && !pendingImage && !pendingVideo) return;
 
     var submit = event.target.querySelector("button[type=submit]");
     if (submit) submit.disabled = true;
@@ -1909,7 +1958,29 @@ document.querySelector(".social-rail").addEventListener("click", function (event
 document.getElementById("post-image").addEventListener("change", function () {
     var file = this.files && this.files[0];
     if (!file) return;
+    if (file.type.indexOf("video/") === 0) {
+        if (file.size > 40000000) {
+            showPostError("The video can be at most 40 MB.");
+            this.value = "";
+            return;
+        }
+        showPostError("");
+        clearPhoto();
+        pendingVideo = file;
+        var clip = document.getElementById("photo-preview-video");
+        var still = document.getElementById("photo-preview-img");
+        if (still) still.hidden = true;
+        clip.src = URL.createObjectURL(file);
+        clip.hidden = false;
+        document.getElementById("photo-preview").hidden = false;
+        return;
+    }
     readImage(file, function (url) {
+        pendingVideo = null;
+        var clip = document.getElementById("photo-preview-video");
+        if (clip) clip.hidden = true;
+        var still = document.getElementById("photo-preview-img");
+        if (still) still.hidden = false;
         pendingImage = url;
         var preview = document.getElementById("photo-preview");
         preview.hidden = false;

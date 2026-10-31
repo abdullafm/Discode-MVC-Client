@@ -234,8 +234,13 @@
                 var text = card.querySelector("p");
                 var when = card.querySelector("time");
                 if (image) {
-                    image.hidden = !post.imageUrl;
-                    if (post.imageUrl) image.src = post.imageUrl;
+                    if (post.imageUrl && window.discodeIsVideo(post.imageUrl)) {
+                        image.hidden = true;
+                        image.parentNode.insertBefore(window.discodeReel(post.imageUrl), image);
+                    } else {
+                        image.hidden = !post.imageUrl;
+                        if (post.imageUrl) image.src = post.imageUrl;
+                    }
                 }
                 if (text) text.textContent = (post.authorDisplayName || post.authorUserName) + ": " + (post.text || "");
                 if (when) when.textContent = formatJoined(postTime(post.createdAt));
@@ -940,8 +945,13 @@
                 var text = card.querySelector("p");
                 var when = card.querySelector("time");
                 if (image) {
-                    image.hidden = !post.imageUrl;
-                    if (post.imageUrl) image.src = post.imageUrl;
+                    if (post.imageUrl && window.discodeIsVideo(post.imageUrl)) {
+                        image.hidden = true;
+                        image.parentNode.insertBefore(window.discodeReel(post.imageUrl), image);
+                    } else {
+                        image.hidden = !post.imageUrl;
+                        if (post.imageUrl) image.src = post.imageUrl;
+                    }
                 }
                 if (text) text.textContent = post.text || "";
                 if (when) when.textContent = formatJoined(postTime(post.createdAt));

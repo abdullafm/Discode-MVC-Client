@@ -62,12 +62,12 @@
                         <div class="composer-fields">
                             <input type="text" name="author" maxlength="32" value="@Model.Profile.UserName" readonly aria-label="Name">
                             <div class="rich-text" id="post-text" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="What's happening?" data-maxlength="500" data-empty="1"></div>
-                            <div class="photo-preview" id="photo-preview" hidden><img id="photo-preview-img" alt=""><button type="button" id="photo-remove" aria-label="Remove photo"><i class="fa-solid fa-xmark"></i></button></div>
+                            <div class="photo-preview" id="photo-preview" hidden><img id="photo-preview-img" alt=""><video id="photo-preview-video" muted loop playsinline controls hidden></video><button type="button" id="photo-remove" aria-label="Remove photo"><i class="fa-solid fa-xmark"></i></button></div>
                             <div class="composer-actions">
                                 <div class="composer-tools">
-                                    <label class="tool-btn" title="Photo">
+                                    <label class="tool-btn" title="Photo or video">
                                         <i class="fa-regular fa-image"></i>
-                                        <input type="file" id="post-image" accept="image/*">
+                                        <input type="file" id="post-image" accept="image/*,video/mp4,video/webm,video/quicktime">
                                     </label>
                                     <button class="tool-btn" id="post-emoji" type="button" title="Emoji" aria-label="Emoji">
                                         <i class="fa-regular fa-face-smile"></i>

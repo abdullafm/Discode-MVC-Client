@@ -254,3 +254,61 @@
         window.discodeZoomImage(avatar.currentSrc || avatar.src);
     });
 })();
+
+window.discodeIsVideo = function (url) {
+    return /\.(mp4|webm)(\?|$)/i.test(url || "");
+};
+
+window.discodeReel = function (url) {
+    var reel = document.createElement("div");
+    reel.className = "reel";
+    var video = document.createElement("video");
+    video.src = url;
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "metadata";
+    video.setAttribute("playsinline", "");
+    var mute = document.createElement("button");
+    mute.type = "button";
+    mute.className = "reel-mute";
+    mute.setAttribute("aria-label", "Sound");
+    mute.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+    var pause = document.createElement("span");
+    pause.className = "reel-pause";
+    pause.innerHTML = '<i class="fa-solid fa-play"></i>';
+    reel.appendChild(video);
+    reel.appendChild(pause);
+    reel.appendChild(mute);
+
+    var userPaused = false;
+    video.addEventListener("click", function () {
+        userPaused = !video.paused;
+        if (video.paused) video.play().catch(function () {});
+        else video.pause();
+        reel.classList.toggle("is-paused", video.paused);
+    });
+    mute.addEventListener("click", function () {
+        video.muted = !video.muted;
+        mute.firstChild.className = "fa-solid " + (video.muted ? "fa-volume-xmark" : "fa-volume-high");
+    });
+
+    if ("IntersectionObserver" in window) {
+        var watcher = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (!document.body.contains(video)) {
+                    watcher.disconnect();
+                    return;
+                }
+                if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+                    if (!userPaused) video.play().catch(function () {});
+                } else {
+                    video.pause();
+                }
+                reel.classList.toggle("is-paused", video.paused);
+            });
+        }, { threshold: [0, 0.6, 1] });
+        watcher.observe(video);
+    }
+    return reel;
+};

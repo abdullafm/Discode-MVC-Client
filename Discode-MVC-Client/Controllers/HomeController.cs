@@ -412,6 +412,33 @@ namespace Discode_MVC_Client.Controllers
             return Ok(new { imageUrl = "/uploads/posts/" + fileName });
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(40_000_000)]
+        public IActionResult UploadPostVideo(IFormFile file)
+        {
+            if (file is null || file.Length == 0)
+                return BadRequest(new { errors = new[] { "Choose a video file." } });
+
+            var extension = file.ContentType.ToLowerInvariant() switch
+            {
+                "video/mp4" or "video/quicktime" => ".mp4",
+                "video/webm" => ".webm",
+                _ => null
+            };
+            if (extension is null)
+                return BadRequest(new { errors = new[] { "Choose an MP4 or WebM video." } });
+
+            var folder = Path.Combine(_environment.WebRootPath, "uploads", "posts");
+            Directory.CreateDirectory(folder);
+
+            var fileName = Guid.NewGuid().ToString("N") + extension;
+            using (var stream = System.IO.File.Create(Path.Combine(folder, fileName)))
+                file.CopyTo(stream);
+
+            return Ok(new { imageUrl = "/uploads/posts/" + fileName });
+        }
+
         [HttpGet]
         [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Client)]
         public async Task<IActionResult> Emojis()
