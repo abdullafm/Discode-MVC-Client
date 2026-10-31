@@ -8509,3 +8509,91 @@ html.theme-dark #settings-language .time-format label:has(input:checked) {
 html.theme-dark #settings-language .time-format label:has(input:checked) {
     color: #ffffff !important;
 }
+
+/* ===== Dil secimi: tema secimi kimi kartlar ===== */
+.lang-choices {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 200px));
+}
+
+button.lang-choice {
+    width: 100%;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+button.lang-choice.on {
+    border-color: #5865f2;
+    box-shadow: 0 0 0 4px rgba(88, 101, 242, 0.18);
+}
+
+button.lang-choice.on > span:last-child::after {
+    border-color: #5865f2;
+    background: #5865f2;
+    box-shadow: inset 0 0 0 3px #ffffff;
+}
+
+html.theme-dark button.lang-choice.on > span:last-child::after {
+    box-shadow: inset 0 0 0 3px #313338;
+}
+
+.lang-choice .lang-swatch {
+    display: block;
+    width: 100%;
+    height: 86px;
+    overflow: hidden;
+    border: 1px solid rgba(128, 132, 142, 0.35);
+    border-radius: 9px;
+}
+
+.lang-choice .lang-swatch img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+html #settings-language #lang-select-list.lang-choices {
+    position: static;
+    display: grid;
+    margin: 14px 0 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent !important;
+    box-shadow: none;
+    list-style: none;
+    z-index: auto;
+}
+
+html #settings-language #lang-select-list.lang-choices button.lang-choice {
+    padding: 10px 10px 12px;
+    border: 2px solid rgba(128, 132, 142, 0.3);
+    border-radius: 14px;
+    background: transparent;
+}
+
+html #settings-language #lang-select-list.lang-choices button.lang-choice:hover {
+    background: transparent;
+    border-color: rgba(88, 101, 242, 0.6);
+}
+
+html #settings-language #lang-select-list.lang-choices button.lang-choice.on {
+    border-color: #5865f2;
+    background: transparent;
+}
+
+html.theme-dark #settings-language #lang-select-list.lang-choices button,
+html.theme-dark #settings-language #lang-select-list.lang-choices button span {
+    color: #f2f3f5 !important;
+}
+
+html #settings-language #lang-select-list.lang-choices .lang-flag-unused {
+    display: none;
+}
+
+html #settings-language #lang-select-list.lang-choices button.lang-choice > span:last-child {
+    width: 100%;
+}

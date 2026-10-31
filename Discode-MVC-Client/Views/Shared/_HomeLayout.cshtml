@@ -440,33 +440,19 @@
                             <h2 data-i18n="Language &amp; Time">Language &amp; Time</h2>
                             <h3 data-i18n="Select a Language">Select a Language</h3>
                             <p class="settings-note" data-i18n="Choose the language you want Discord to display.">Choose the language you want Discord to display.</p>
-                            <div class="lang-box">
-                                <label class="lang-field">
-                                    <img class="lang-flag" id="lang-field-flag" src="https://flagcdn.com/w40/us.png"
-                                        alt="">
-                                    <input id="lang-search" type="text" value="English" autocomplete="off">
-                                    <i class="fa-solid fa-chevron-down" id="lang-chevron"></i>
-                                </label>
-                                <ul id="lang-select-list" hidden>
-                                    <li><button type="button" class="on" data-lang="English" data-native="English"
-                                            data-flag="us"><img class="lang-flag" src="https://flagcdn.com/w40/us.png"
-                                                alt=""><span>English</span><span class="lang-en">English</span><i
-                                                class="fa-solid fa-check"></i></button></li>
-                                    <li><button type="button" data-lang="Turkish" data-native="Türkçe"
-                                            data-flag="tr"><img class="lang-flag" src="https://flagcdn.com/w40/tr.png"
-                                                alt=""><span>Türkçe</span><span class="lang-en">Turkish</span><i
-                                                class="fa-solid fa-check"></i></button></li>
-                                    <li><button type="button" data-lang="Azerbaijan" data-native="Azərbaycan"
-                                            data-flag="az"><img class="lang-flag" src="https://flagcdn.com/w40/az.png"
-                                                alt=""><span>Azərbaycan</span><span class="lang-en">Azerbaijan</span><i
-                                                class="fa-solid fa-check"></i></button></li>
-                                </ul>
-                            </div>
-                            <h3 data-i18n="Time format">Time format</h3>
-                            <div class="time-format">
-                                <label><input type="radio" name="time-format" value="auto" checked> Auto</label>
-                                <label><input type="radio" name="time-format" value="12"> 12-hour</label>
-                                <label><input type="radio" name="time-format" value="24"> 24-hour</label>
+                            <div class="theme-choices lang-choices" id="lang-select-list">
+                                <button type="button" class="theme-choice lang-choice on" data-lang="English" data-native="English" data-flag="us">
+                                    <span class="lang-swatch"><img src="https://flagcdn.com/w160/us.png" alt=""></span>
+                                    <span>English</span>
+                                </button>
+                                <button type="button" class="theme-choice lang-choice" data-lang="Turkish" data-native="Türkçe" data-flag="tr">
+                                    <span class="lang-swatch"><img src="https://flagcdn.com/w160/tr.png" alt=""></span>
+                                    <span>Türkçe</span>
+                                </button>
+                                <button type="button" class="theme-choice lang-choice" data-lang="Azerbaijan" data-native="Azərbaycan" data-flag="az">
+                                    <span class="lang-swatch"><img src="https://flagcdn.com/w160/az.png" alt=""></span>
+                                    <span>Azərbaycan</span>
+                                </button>
                             </div>
                         </div>
                     </section>
