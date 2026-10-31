@@ -5046,3 +5046,36 @@ html.theme-dark .post-composer {
     border-radius: 999px;
     font-weight: 700;
 }
+
+/* Post sahibinin adi, yaninda kicik "Friends" nisani, altinda vaxt */
+.post-name {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    grid-template-areas: "name scope ." "time time .";
+    align-items: center;
+    column-gap: 8px;
+    row-gap: 1px;
+}
+
+.post-name strong {
+    grid-area: name;
+}
+
+.post-name time {
+    grid-area: time;
+}
+
+.post-name .post-scope {
+    grid-area: scope;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0;
+    padding: 1px 8px;
+    font-size: 11px;
+    line-height: 16px;
+}
+
+.post-name .post-scope[hidden] {
+    display: none;
+}
