@@ -8597,3 +8597,172 @@ html #settings-language #lang-select-list.lang-choices .lang-flag-unused {
 html #settings-language #lang-select-list.lang-choices button.lang-choice > span:last-child {
     width: 100%;
 }
+
+/* ===== Dil secimi: modern dropdown ===== */
+html #settings-language .lang-picker {
+    position: relative;
+    max-width: 420px;
+    margin-top: 14px;
+}
+
+html #settings-language .lang-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    background: #f2f3f5;
+    color: #060607;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+html #settings-language .lang-trigger:hover {
+    background: #e9eaed;
+}
+
+html #settings-language .lang-picker.open .lang-trigger {
+    border-color: #5865f2;
+    box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.18);
+}
+
+html #settings-language .lang-trigger .lang-flag,
+html #settings-language .lang-opt .lang-flag {
+    width: 30px;
+    height: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14);
+    object-fit: cover;
+    flex: none;
+}
+
+html #settings-language .lang-trigger-name {
+    flex: 1;
+}
+
+html #settings-language .lang-trigger i {
+    color: #80848e;
+    transition: transform 0.22s ease;
+}
+
+html #settings-language .lang-picker.open .lang-trigger i {
+    transform: rotate(180deg);
+}
+
+html #settings-language .lang-menu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+    z-index: 5;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border: 1px solid rgba(128, 132, 142, 0.25);
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.18);
+    transform-origin: top center;
+    animation: lang-menu-in 0.18s ease;
+}
+
+html #settings-language .lang-menu[hidden] {
+    display: none;
+}
+
+@keyframes lang-menu-in {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.97);
+    }
+}
+
+html #settings-language .lang-opt {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: #060607;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.14s ease;
+}
+
+html #settings-language .lang-opt:hover {
+    background: #f2f3f5;
+}
+
+html #settings-language .lang-opt.on {
+    background: rgba(88, 101, 242, 0.12);
+}
+
+html #settings-language .lang-opt-name {
+    flex: 1;
+}
+
+html #settings-language .lang-opt-sub {
+    color: #80848e;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+html #settings-language .lang-opt .fa-check {
+    width: 14px;
+    color: #5865f2;
+    font-size: 13px;
+    visibility: hidden;
+}
+
+html #settings-language .lang-opt.on .fa-check {
+    visibility: visible;
+}
+
+html.theme-dark #settings-language .lang-trigger {
+    background: #1e1f22;
+    color: #f2f3f5;
+}
+
+html.theme-dark #settings-language .lang-trigger:hover {
+    background: #25272b;
+}
+
+html.theme-dark #settings-language .lang-menu {
+    background: #2b2d31;
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+}
+
+html.theme-dark #settings-language .lang-opt {
+    color: #f2f3f5;
+}
+
+html.theme-dark #settings-language .lang-opt:hover {
+    background: #35373c;
+}
+
+html.theme-dark #settings-language .lang-opt.on {
+    background: rgba(88, 101, 242, 0.25);
+}
+
+html.theme-dark #settings-language .lang-trigger,
+html.theme-dark #settings-language .lang-trigger-name {
+    color: #f2f3f5 !important;
+}
+
+html.theme-dark #settings-language .lang-opt .lang-opt-sub {
+    color: #949ba4 !important;
+    font-weight: 500;
+}

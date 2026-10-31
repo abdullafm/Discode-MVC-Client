@@ -140,9 +140,9 @@
         }
 
         // 2. Update search input in settings
-        var langSearch = document.getElementById("lang-search");
-        if (langSearch) {
-            langSearch.value = info.native;
+        var langName = document.getElementById("lang-current-name");
+        if (langName) {
+            langName.textContent = info.native;
         }
 
         // 3. Update active item in settings lang list
@@ -191,41 +191,39 @@
     }
 
     function bindLangControls() {
-        var langSearch = document.getElementById("lang-search");
+        var trigger = document.getElementById("lang-trigger");
         var langList = document.getElementById("lang-select-list");
-        var langBox = langSearch ? langSearch.closest(".lang-box") : null;
-        var langChevron = document.getElementById("lang-chevron");
+        var langBox = document.getElementById("lang-box");
+        if (!trigger || !langList || trigger._bound) return;
+        trigger._bound = true;
 
-        if (langList) {
-            function setListOpen(open) {
-                langList.hidden = !open;
-                if (langBox) langBox.classList.toggle("open", open);
-                if (langChevron) langChevron.className = "fa-solid " + (open ? "fa-chevron-up" : "fa-chevron-down");
-            }
-
-            var langField = langSearch ? langSearch.closest(".lang-field") : null;
-            if (langField) {
-                langField.addEventListener("click", function (e) {
-                    if (langList.contains(e.target)) return;
-                    setListOpen(langList.hidden);
-                });
-            }
-
-            langList.addEventListener("click", function (e) {
-                var btn = e.target.closest("button");
-                if (!btn) return;
-                var flag = btn.getAttribute("data-flag");
-                var code = flag === "tr" ? "tr" : (flag === "az" ? "az" : "en");
-                setListOpen(false);
-                applyLanguage(code, true);
-            });
-
-            document.addEventListener("click", function (e) {
-                if (langBox && !langBox.contains(e.target) && !langList.hidden) {
-                    setListOpen(false);
-                }
-            });
+        function setListOpen(open) {
+            langList.hidden = !open;
+            trigger.setAttribute("aria-expanded", open ? "true" : "false");
+            if (langBox) langBox.classList.toggle("open", open);
         }
+
+        trigger.addEventListener("click", function (e) {
+            e.stopPropagation();
+            setListOpen(langList.hidden);
+        });
+
+        langList.addEventListener("click", function (e) {
+            var btn = e.target.closest("button");
+            if (!btn) return;
+            var flag = btn.getAttribute("data-flag");
+            var code = flag === "tr" ? "tr" : (flag === "az" ? "az" : "en");
+            setListOpen(false);
+            applyLanguage(code, true);
+        });
+
+        document.addEventListener("click", function (e) {
+            if (langBox && !langBox.contains(e.target) && !langList.hidden) setListOpen(false);
+        });
+
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape" && !langList.hidden) setListOpen(false);
+        });
     }
 
     function setupObserver() {

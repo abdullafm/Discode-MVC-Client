@@ -440,18 +440,16 @@
                             <h2 data-i18n="Language &amp; Time">Language &amp; Time</h2>
                             <h3 data-i18n="Select a Language">Select a Language</h3>
                             <p class="settings-note" data-i18n="Choose the language you want Discord to display.">Choose the language you want Discord to display.</p>
-                            <div class="theme-choices lang-choices" id="lang-select-list">
-                                <button type="button" class="theme-choice lang-choice on" data-lang="English" data-native="English" data-flag="us">
-                                    <span class="lang-swatch"><img src="https://flagcdn.com/w160/us.png" alt=""></span>
-                                    <span>English</span>
-                                </button>
-                                <button type="button" class="theme-choice lang-choice" data-lang="Turkish" data-native="Türkçe" data-flag="tr">
-                                    <span class="lang-swatch"><img src="https://flagcdn.com/w160/tr.png" alt=""></span>
-                                    <span>Türkçe</span>
-                                </button>
-                                <button type="button" class="theme-choice lang-choice" data-lang="Azerbaijan" data-native="Azərbaycan" data-flag="az">
-                                    <span class="lang-swatch"><img src="https://flagcdn.com/w160/az.png" alt=""></span>
-                                    <span>Azərbaycan</span>
+                            <div class="lang-picker" id="lang-box">
+                                <button type="button" class="lang-trigger" id="lang-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                    <img class="lang-flag" id="lang-field-flag" src="https://flagcdn.com/w80/us.png" alt="">
+                                    <span class="lang-trigger-name" id="lang-current-name">English</span>
+                                <ul class="lang-menu" id="lang-select-list" role="listbox" hidden>
+                                    <li role="option"><button type="button" class="lang-opt on" data-lang="English" data-native="English" data-flag="us"><img class="lang-flag" src="https://flagcdn.com/w80/us.png" alt=""><span class="lang-opt-name">English</span><span class="lang-opt-sub">English</span><i class="fa-solid fa-check"></i></button></li>
+                                    <li role="option"><button type="button" class="lang-opt" data-lang="Turkish" data-native="Türkçe" data-flag="tr"><img class="lang-flag" src="https://flagcdn.com/w80/tr.png" alt=""><span class="lang-opt-name">Türkçe</span><span class="lang-opt-sub">Turkish</span><i class="fa-solid fa-check"></i></button></li>
+                                    <li role="option"><button type="button" class="lang-opt" data-lang="Azerbaijan" data-native="Azərbaycan" data-flag="az"><img class="lang-flag" src="https://flagcdn.com/w80/az.png" alt=""><span class="lang-opt-name">Azərbaycan</span><span class="lang-opt-sub">Azerbaijan</span><i class="fa-solid fa-check"></i></button></li>
+                                </ul>
+                                    <i class="fa-solid fa-chevron-down" id="lang-chevron"></i>
                                 </button>
                             </div>
                         </div>
