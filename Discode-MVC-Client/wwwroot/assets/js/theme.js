@@ -3,6 +3,21 @@ try {
     if (localStorage.getItem("discode-theme") === "dark") document.documentElement.classList.add("theme-dark");
 } catch (e) {}
 
+window.discodeSetTheme = function (dark) {
+    var root = document.documentElement;
+    function apply() {
+        root.classList.toggle("theme-dark", dark);
+    }
+    if (root.classList.contains("theme-dark") === dark) return;
+    if (document.startViewTransition) {
+        document.startViewTransition(apply);
+        return;
+    }
+    root.classList.add("theme-fade");
+    apply();
+    window.setTimeout(function () { root.classList.remove("theme-fade"); }, 500);
+};
+
 (function () {
     var overlays = ".friend-context, .friend-more, .dm-msg-menu, .dm-attach-menu, .dm-pins-popover, .dm-poll-emojis, .story-tool-menu, .story-edit-panel, .story-delete, .set-emoji, #lang-select-list, .stream-menu, .call-phone-sheet, .dm-wave, .dm-reply-bar, .watch-reply-bar, .me-request, .incoming-call, .call-answer-bar, .sidebar-call, .call-dock, .gcall-pill";
     var tabs = "section[id^='settings-'], section[id^='view-'], section[id^='friends-'], section[id^='server-'], .me-panel, .call-stage, .online-row, .dm-unread, .friend-badge, p.dm-error, p.group-error, p.dm-forward-error, p.dm-poll-error, p.name-modal-error, p.server-modal-error, p.group-edit-error, p.composer-error, .me-private-head, .me-private-note, .me-private-board, .live-hero, .live-chips, .live-section-head, .live-friends-empty, .live-streams-empty, .feed-empty, .me-friends-empty, .me-posts-empty, .new-msg-empty, .new-msg-friend, section#active-now, #me-add, #me-view-bio, #me-view-pronouns, .dm-call-join-wrap, .in-call-label";

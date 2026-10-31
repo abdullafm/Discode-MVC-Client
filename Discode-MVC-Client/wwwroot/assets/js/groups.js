@@ -591,9 +591,10 @@ document.addEventListener("visibilitychange", function () {
     });
 
     var themeKey = "discode-theme";
-    function applyTheme(theme) {
+    function applyTheme(theme, animate) {
         var dark = theme === "dark";
-        document.documentElement.classList.toggle("theme-dark", dark);
+        if (animate && window.discodeSetTheme) window.discodeSetTheme(dark);
+        else document.documentElement.classList.toggle("theme-dark", dark);
         localStorage.setItem(themeKey, dark ? "dark" : "light");
         var radios = document.querySelectorAll('input[name="theme"]');
         for (var i = 0; i < radios.length; i++) radios[i].checked = radios[i].value === (dark ? "dark" : "light");
@@ -601,7 +602,7 @@ document.addEventListener("visibilitychange", function () {
     applyTheme(localStorage.getItem(themeKey) === "dark" ? "dark" : "light");
     settings.addEventListener("change", function (event) {
         if (event.target.name !== "theme") return;
-        applyTheme(event.target.value);
+        applyTheme(event.target.value, true);
     });
 
     var emailToggle = document.getElementById("settings-email-toggle");
