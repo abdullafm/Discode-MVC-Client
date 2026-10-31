@@ -145,6 +145,9 @@
             me.setAttribute("data-user", self.userId);
             me.classList.toggle("is-muted", self.isMuted);
             me.classList.toggle("is-deafened", self.isDeafened);
+            var myFace = me.querySelector("img");
+            var myUrl = self.avatarUrl || DEFAULT_AVATAR;
+            if (myFace && myFace.getAttribute("src") !== myUrl) myFace.src = myUrl;
         }
         Object.keys(wanted).forEach(function (id) {
             var user = wanted[id];
