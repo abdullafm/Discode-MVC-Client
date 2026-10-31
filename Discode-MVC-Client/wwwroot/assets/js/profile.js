@@ -1097,3 +1097,51 @@
         if (!pop.classList.contains("d-none")) place();
     });
 })();
+
+(function () {
+    var control = document.getElementById("account-public");
+    if (!control || control.querySelector(".vis-opt")) return;
+
+    function option(value, icon, label) {
+        var pick = document.createElement("span");
+        pick.className = "vis-opt vis-" + value;
+        pick.setAttribute("data-v", value);
+        var glyph = document.createElement("i");
+        glyph.className = "fa-solid " + icon;
+        var text = document.createElement("span");
+        text.textContent = label;
+        pick.appendChild(glyph);
+        pick.appendChild(text);
+        return pick;
+    }
+
+    control.appendChild(option("public", "fa-earth-americas", "Public"));
+    control.appendChild(option("private", "fa-lock", "Private"));
+
+    var row = control.closest(".notify-row");
+    var title = row ? row.querySelector("strong") : null;
+    var note = row ? row.querySelector("p") : null;
+    if (title) {
+        title.removeAttribute("data-i18n");
+        title.textContent = "Account visibility";
+    }
+
+    function paint() {
+        var isPublic = control.classList.contains("on");
+        control.setAttribute("data-state", isPublic ? "public" : "private");
+        control.setAttribute("aria-label", "Account visibility: " + (isPublic ? "Public" : "Private"));
+        if (note) note.textContent = isPublic
+            ? "Anyone can find you and see your bio, status and posts."
+            : "Only your friends can see your bio, status and posts.";
+    }
+
+    control.addEventListener("click", function (event) {
+        var pick = event.target.closest(".vis-opt");
+        if (!pick) return;
+        var wantPublic = pick.getAttribute("data-v") === "public";
+        if (wantPublic === control.classList.contains("on")) event.stopImmediatePropagation();
+    }, true);
+
+    document.addEventListener("discode-privacy", paint);
+    paint();
+})();

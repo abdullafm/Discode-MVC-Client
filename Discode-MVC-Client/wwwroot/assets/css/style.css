@@ -8135,3 +8135,164 @@ li,
 .live-drawer {
     transition-duration: 0.16s !important;
 }
+
+/* ===== Ayarlar > Account: kartli sade gorunus ve Public / Private secici ===== */
+#settings-account .settings-panel > h2 {
+    margin-bottom: 6px;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+#settings-account .settings-panel > h3 {
+    margin: 30px 0 10px;
+    padding: 0;
+    border: 0;
+    color: #80848e;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+#settings-account .settings-row,
+#settings-account .notify-row {
+    margin-bottom: 8px;
+    padding: 14px 16px;
+    border: 0;
+    border-radius: 12px;
+    background: #f6f7f8;
+}
+
+html.theme-dark #settings-account .settings-row,
+html.theme-dark #settings-account .notify-row {
+    background: #2b2d31;
+}
+
+#settings-account .settings-row span {
+    width: auto;
+    min-width: 120px;
+    font-size: 15px;
+}
+
+#settings-account .settings-row > button {
+    margin-left: auto;
+    padding: 7px 16px;
+    border-radius: 8px;
+    background: rgba(128, 132, 142, 0.2);
+    transition: background-color 0.16s ease;
+}
+
+#settings-account .settings-row > button:hover {
+    background: rgba(128, 132, 142, 0.34);
+}
+
+#settings-account .settings-row b {
+    margin-left: auto;
+}
+
+#settings-account .settings-row b + button {
+    margin-left: 0;
+}
+
+#settings-account .notify-row strong {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+#settings-account .notify-row p {
+    margin-top: 4px;
+    font-size: 13px;
+}
+
+/* Public / Private ikili secici */
+#account-public.notify-switch,
+#account-public.notify-switch.on {
+    display: flex;
+    width: 236px;
+    height: 46px;
+    padding: 4px;
+    border-radius: 12px;
+    background: rgba(128, 132, 142, 0.2);
+}
+
+#account-public.notify-switch::after,
+#account-public.notify-switch.on::after {
+    top: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    height: calc(100% - 8px);
+    border-radius: 9px;
+    background: #ffffff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    transform: translateX(100%);
+    transition: transform 0.24s cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+#account-public.notify-switch.on::after {
+    transform: translateX(0);
+}
+
+html.theme-dark #account-public.notify-switch::after,
+html.theme-dark #account-public.notify-switch.on::after {
+    background: #4a4d55;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+#account-public .vis-opt {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #80848e;
+    font-size: 14px;
+    font-weight: 700;
+    transition: color 0.2s ease;
+}
+
+#account-public .vis-opt i {
+    font-size: 15px;
+}
+
+#account-public.on .vis-public {
+    color: #1f9d55;
+}
+
+#account-public:not(.on) .vis-private {
+    color: #c98400;
+}
+
+html.theme-dark #account-public.on .vis-public {
+    color: #3ddc84;
+}
+
+html.theme-dark #account-public:not(.on) .vis-private {
+    color: #f0b232;
+}
+
+html.theme-dark #settings-account .settings-row > button {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f2f3f5 !important;
+}
+
+html.theme-dark #settings-account .settings-row > button:hover {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+html.theme-dark #account-public.on .vis-public,
+html.theme-dark #account-public.on .vis-public span {
+    color: #3ddc84 !important;
+}
+
+html.theme-dark #account-public:not(.on) .vis-private,
+html.theme-dark #account-public:not(.on) .vis-private span {
+    color: #f0b232 !important;
+}
+
+html.theme-dark #account-public .vis-opt,
+html.theme-dark #account-public .vis-opt span {
+    color: #9aa0aa;
+}
