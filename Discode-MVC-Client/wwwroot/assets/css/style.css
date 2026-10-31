@@ -8124,3 +8124,15 @@ html .theme-choice .theme-swatch.dark {
 html.theme-dark .theme-choice:has(input:checked) > span:last-child::after {
     box-shadow: inset 0 0 0 3px #313338;
 }
+
+/* Dark rejimde Pending dugmeleri: qebul yasil, red qirmizi olsun */
+html.theme-dark .online-row:hover .request-accept:hover {
+    background: #23a559 !important;
+    color: #ffffff !important;
+}
+
+html.theme-dark .online-row:hover .request-decline:hover,
+html.theme-dark .online-row:hover .blocked-unblock:hover {
+    background: #da373c !important;
+    color: #ffffff !important;
+}
