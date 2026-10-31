@@ -8296,3 +8296,50 @@ html.theme-dark #account-public .vis-opt,
 html.theme-dark #account-public .vis-opt span {
     color: #9aa0aa;
 }
+
+/* ===== Profil pəncərəsində Geri / İrəli ===== */
+.me-profile-nav {
+    position: absolute;
+    top: 12px;
+    right: 52px;
+    z-index: 3;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: #f2f3f5;
+    color: #4d5058;
+    cursor: pointer;
+    transition: background-color 0.16s ease, transform 0.16s ease, opacity 0.16s ease;
+}
+
+.me-profile-nav[hidden] {
+    display: none;
+}
+
+#me-profile-back {
+    right: 92px;
+}
+
+#me-profile-forward {
+    right: 52px;
+}
+
+.me-profile-nav:hover:not(:disabled) {
+    background: #e3e5e8;
+    transform: scale(1.08);
+}
+
+.me-profile-nav:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+html.theme-dark .me-profile-nav {
+    background: #2b2d31;
+    color: #dbdee1;
+}
+
+html.theme-dark .me-profile-nav:hover:not(:disabled) {
+    background: #3a3c43;
+}

@@ -1145,3 +1145,74 @@
     document.addEventListener("discode-privacy", paint);
     paint();
 })();
+
+(function () {
+    var profile = document.getElementById("me-profile");
+    var original = window.openUserProfile;
+    if (!profile || typeof original !== "function" || original.discodeHistory) return;
+
+    var trail = [];
+    var at = -1;
+
+    function makeButton(id, icon, label) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.id = id;
+        button.className = "me-profile-nav";
+        button.setAttribute("aria-label", label);
+        button.title = label;
+        button.hidden = true;
+        button.innerHTML = '<i class="fa-solid ' + icon + '"></i>';
+        profile.querySelector(".me-profile-card").appendChild(button);
+        return button;
+    }
+
+    var back = makeButton("me-profile-back", "fa-arrow-left", "Back");
+    var forward = makeButton("me-profile-forward", "fa-arrow-right", "Forward");
+
+    function paint() {
+        var show = trail.length > 1;
+        back.hidden = !show;
+        forward.hidden = !show;
+        back.disabled = at <= 0;
+        forward.disabled = at >= trail.length - 1;
+    }
+
+    function wrapped(name, photo) {
+        var open = !profile.classList.contains("d-none");
+        if (!open) {
+            trail = [];
+            at = -1;
+        }
+        var current = trail[at];
+        var same = current && current.name === name;
+        if (!same) {
+            trail = trail.slice(0, at + 1);
+            trail.push({ name: name, photo: photo });
+            at = trail.length - 1;
+        }
+        original(name, photo);
+        paint();
+    }
+    wrapped.discodeHistory = true;
+    window.openUserProfile = wrapped;
+
+    function go(step) {
+        var next = at + step;
+        if (next < 0 || next >= trail.length) return;
+        at = next;
+        original(trail[at].name, trail[at].photo);
+        paint();
+    }
+
+    back.addEventListener("click", function () { go(-1); });
+    forward.addEventListener("click", function () { go(1); });
+
+    new MutationObserver(function () {
+        if (profile.classList.contains("d-none")) {
+            trail = [];
+            at = -1;
+            paint();
+        }
+    }).observe(profile, { attributes: true, attributeFilter: ["class"] });
+})();
