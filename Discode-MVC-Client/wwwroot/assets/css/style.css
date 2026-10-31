@@ -5578,7 +5578,7 @@ html.theme-dark .friend-item.on p {
 }
 
 html.theme-dark .shortcut-list > li:nth-child(3) .shortcut-item {
-    background-image: none;
+    background-image: linear-gradient(90deg, rgba(43, 45, 49, 0.94) 0%, rgba(43, 45, 49, 0.62) 52%, rgba(43, 45, 49, 0.12) 100%), url("../img/bg-img%20list.png");
 }
 
 html.theme-dark .me-profile-banner,
@@ -5675,7 +5675,9 @@ html.theme-dark .friend-item.active:hover > p {
 
 html.theme-dark .shortcut-list > li:nth-child(3) .shortcut-item,
 html.theme-dark .shortcut-list > li:nth-child(3) .shortcut-item:hover {
-    background-image: none !important;
+    background-image: linear-gradient(90deg, rgba(43, 45, 49, 0.94) 0%, rgba(43, 45, 49, 0.62) 52%, rgba(43, 45, 49, 0.12) 100%), url("../img/bg-img%20list.png") !important;
+    background-position: right;
+    background-size: cover;
     background-color: transparent;
 }
 
