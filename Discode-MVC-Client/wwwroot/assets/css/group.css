@@ -1907,3 +1907,11 @@ html.theme-dark .server-badge {
     background: #111214;
     transform: translateY(-50%) rotate(45deg);
 }
+
+/* Sekil qoyulanda gizlenen qrup ikonu Font Awesome display qaydasi ile geri gelmesin */
+.group-avatar i[hidden],
+.group-mark i[hidden],
+.group-badge i[hidden],
+.group-edit-icon i[hidden] {
+    display: none !important;
+}
