@@ -1,0 +1,10 @@
+@model AdminOverviewVM
+@{
+    ViewData["Title"] = "Overview";
+}
+<section class="adm-cards">
+    <div class="adm-card"><i class="fa-solid fa-users"></i><strong>@Model.Users</strong><span>Users</span></div>
+    <div class="adm-card"><i class="fa-solid fa-server"></i><strong>@Model.Servers</strong><span>Servers</span></div>
+    <div class="adm-card"><i class="fa-solid fa-image"></i><strong>@Model.Posts</strong><span>Posts</span></div>
+    <div class="adm-card warn"><i class="fa-solid fa-flag"></i><strong>@Model.OpenReports</strong><span>Open reports</span></div>
+</section>

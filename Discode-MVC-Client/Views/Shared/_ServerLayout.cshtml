@@ -38,7 +38,10 @@
                 </button>
                 <hr>
                 <a class="server-action" href="@Url.Action("Index", "Discover")" aria-label="Discover"><i class="fa-solid fa-compass"></i></a>
-                <a class="server-action" href="@Url.Action("Index", "Discover")" aria-label="Discover"><i class="fa-solid fa-server"></i></a>
+                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
+                {
+                    <a class="server-action" href="@Url.Action("Index", "Discover")" aria-label="Discover"><i class="fa-solid fa-server"></i></a>
+                }
             </nav>
         </div>
         <aside class="conversation-sidebar server-channels" id="conversations">

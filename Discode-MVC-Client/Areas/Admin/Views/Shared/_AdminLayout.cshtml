@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discode Admin</title>
+    <script src="~/assets/js/theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="~/assets/css/admin-area.css" asp-append-version="true">
+</head>
+<body>
+    <aside class="adm-side">
+        <a class="adm-brand" href="@Url.Action("Index", "Home", new { area = "Admin" })"><i class="fa-brands fa-discord"></i> Admin</a>
+        <nav>
+            <a class="on" href="@Url.Action("Index", "Home", new { area = "Admin" })"><i class="fa-solid fa-chart-simple"></i> Overview</a>
+        </nav>
+        <a class="adm-back" href="@Url.Action("Index", "Home", new { area = "" })"><i class="fa-solid fa-arrow-left"></i> Back to Discode</a>
+    </aside>
+    <main class="adm-main">
+        <header class="adm-top">
+            <h1>@ViewData["Title"]</h1>
+            <span class="adm-role">@(User.IsInRole("SuperAdmin") ? "SuperAdmin" : "Admin")</span>
+        </header>
+        @RenderBody()
+    </main>
+</body>
+</html>

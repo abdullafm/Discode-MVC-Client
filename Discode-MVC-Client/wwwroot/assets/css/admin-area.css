@@ -1,0 +1,164 @@
+:root {
+    --adm-bg: #f2f3f5;
+    --adm-panel: #ffffff;
+    --adm-text: #060607;
+    --adm-muted: #80848e;
+    --adm-line: rgba(128, 132, 142, 0.25);
+}
+
+html.theme-dark {
+    --adm-bg: #1e1f22;
+    --adm-panel: #2b2d31;
+    --adm-text: #f2f3f5;
+    --adm-muted: #949ba4;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    margin: 0;
+    background: var(--adm-bg);
+    color: var(--adm-text);
+    font-family: "Nunito", sans-serif;
+}
+
+.adm-side {
+    width: 240px;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 20px 14px;
+    background: var(--adm-panel);
+    border-right: 1px solid var(--adm-line);
+}
+
+.adm-brand {
+    padding: 4px 10px;
+    color: var(--adm-text);
+    font-size: 20px;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.adm-brand i {
+    margin-right: 6px;
+    color: #5865f2;
+}
+
+.adm-side nav {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.adm-side nav a,
+.adm-back {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    color: var(--adm-muted);
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.adm-side nav a:hover,
+.adm-back:hover {
+    background: rgba(128, 132, 142, 0.16);
+    color: var(--adm-text);
+}
+
+.adm-side nav a.on {
+    background: rgba(88, 101, 242, 0.14);
+    color: #5865f2;
+}
+
+.adm-main {
+    flex: 1;
+    min-width: 0;
+    padding: 24px 32px;
+}
+
+.adm-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.adm-top h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+}
+
+.adm-role {
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: rgba(88, 101, 242, 0.14);
+    color: #5865f2;
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.adm-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.adm-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 20px;
+    border: 1px solid var(--adm-line);
+    border-radius: 16px;
+    background: var(--adm-panel);
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.adm-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
+}
+
+.adm-card i {
+    margin-bottom: 8px;
+    color: #5865f2;
+    font-size: 20px;
+}
+
+.adm-card.warn i {
+    color: #f0b232;
+}
+
+.adm-card strong {
+    font-size: 32px;
+    font-weight: 800;
+}
+
+.adm-card span {
+    color: var(--adm-muted);
+    font-weight: 700;
+}
+
+@media (max-width: 760px) {
+    body {
+        flex-direction: column;
+    }
+
+    .adm-side {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+}
