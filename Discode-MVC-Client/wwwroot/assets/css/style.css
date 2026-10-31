@@ -8766,3 +8766,77 @@ html.theme-dark #settings-language .lang-opt .lang-opt-sub {
     color: #949ba4 !important;
     font-weight: 500;
 }
+
+/* ===== Status ikonlari: her yerde eyni dolu nöqte ===== */
+body .conversation-sidebar .direct-messages .friend-list .friend-item .avatar::after,
+html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend-item .avatar::after,
+html.theme-dark .friend-item .avatar::after {
+    right: -2px;
+    bottom: -1px;
+    width: 10px;
+    height: 10px;
+    border: 0 !important;
+    background-color: #80848e !important;
+    box-shadow: 0 0 0 3px #f2f3f5 !important;
+    transition: box-shadow 0.16s ease, background-color 0.16s ease;
+}
+
+body .conversation-sidebar .direct-messages .friend-list .friend-item[data-presence="online"] .avatar::after,
+html.theme-dark body .friend-item[data-presence="online"] > .avatar::after {
+    background-color: #23a559 !important;
+}
+
+body .conversation-sidebar .direct-messages .friend-list .friend-item[data-presence="idle"] .avatar::after,
+html.theme-dark body .friend-item[data-presence="idle"] > .avatar::after {
+    background-color: #f0b232 !important;
+}
+
+body .conversation-sidebar .direct-messages .friend-list .friend-item[data-presence="dnd"] .avatar::after,
+html.theme-dark body .friend-item[data-presence="dnd"] > .avatar::after {
+    background-color: #f23f43 !important;
+}
+
+body .conversation-sidebar .direct-messages .friend-list .friend-item:hover > .avatar::after {
+    box-shadow: 0 0 0 3px #d8d9dd !important;
+}
+
+body .conversation-sidebar .direct-messages .friend-list .friend-item.active > .avatar::after {
+    box-shadow: 0 0 0 3px #d8d9dd !important;
+}
+
+html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend-item .avatar::after,
+html.theme-dark .friend-item .avatar::after {
+    box-shadow: 0 0 0 3px #2b2d31 !important;
+}
+
+html.theme-dark .friend-item:hover > .avatar::after,
+html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend-item:hover > .avatar::after {
+    box-shadow: 0 0 0 3px #35373c !important;
+}
+
+html.theme-dark .friend-item.active > .avatar::after,
+html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend-item.active > .avatar::after {
+    box-shadow: 0 0 0 3px var(--d-active, #3f4147) !important;
+}
+
+.online-dot.dnd::after {
+    content: none;
+}
+
+.online-dot,
+.dm-status {
+    width: 14px;
+    height: 14px;
+}
+
+html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend-item[data-presence="online"] .avatar::after {
+    background-color: #23a559 !important;
+}
+
+html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend-item[data-presence="idle"] .avatar::after {
+    background-color: #f0b232 !important;
+}
+
+html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend-item[data-presence="dnd"] .avatar::after {
+    background-color: #f23f43 !important;
+}
