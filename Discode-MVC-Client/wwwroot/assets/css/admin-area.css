@@ -1422,3 +1422,33 @@ html.theme-dark .adm-modal-text {
 .adm-zoom-wrap.is-small::after {
     font-size: 13px;
 }
+
+/* ===== Server banneri ===== */
+.adm-banner {
+    position: relative;
+    height: 170px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    border-radius: 16px;
+    background: rgba(128, 132, 142, 0.18);
+}
+
+.adm-banner img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.adm-banner.adm-zoom-wrap::after {
+    border-radius: 16px;
+    font-size: 24px;
+}
+
+.adm-banner + .adm-detail-head {
+    margin-top: 0;
+}
+
+.adm-banner .adm-zoom {
+    border-radius: 0;
+}

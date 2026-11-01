@@ -19,6 +19,13 @@
 }
 else
 {
+    @if (!string.IsNullOrWhiteSpace(Model.BannerUrl))
+    {
+        <div class="adm-banner adm-zoom-wrap is-banner" title="Click to enlarge">
+            <img class="adm-zoom" src="@Model.BannerUrl" alt="@Model.Name banner">
+        </div>
+    }
+
     <div class="adm-detail-head" data-server-id="@Model.Id">
         <div class="adm-person adm-person-big">
             @if (string.IsNullOrWhiteSpace(Model.IconUrl))

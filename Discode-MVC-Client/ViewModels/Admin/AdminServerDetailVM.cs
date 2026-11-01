@@ -6,6 +6,7 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public string PublicId { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string IconUrl { get; set; } = string.Empty;
+        public string BannerUrl { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string InviteCode { get; set; } = string.Empty;
         public string OwnerUserName { get; set; } = string.Empty;
