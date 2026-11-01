@@ -273,18 +273,32 @@ document.addEventListener("submit", function (event) {
         }).catch(function () {});
     }
 
+    function refreshLive() {
+        refreshStats();
+
+        var root = panel && !panel.hidden && lastPanelUrl ? panel : document.querySelector(".admin-body");
+        var url = root === panel ? lastPanelUrl : window.location.href;
+        if (!root) return;
+
+        if (root.querySelector(".adm-detail-head")) refreshDetail(root, url);
+        else if (root.querySelector(".adm-table-wrap")) refreshList(root, url);
+    }
+
     var liveTimer = null;
-    document.addEventListener("discode-admin-changed", function () {
+    function refreshSoon() {
         window.clearTimeout(liveTimer);
-        liveTimer = window.setTimeout(function () {
-            refreshStats();
+        liveTimer = window.setTimeout(refreshLive, 500);
+    }
 
-            var root = panel && !panel.hidden && lastPanelUrl ? panel : document.querySelector(".admin-body");
-            var url = root === panel ? lastPanelUrl : window.location.href;
-            if (!root) return;
+    document.addEventListener("discode-admin-changed", refreshSoon);
 
-            if (root.querySelector(".adm-detail-head")) refreshDetail(root, url);
-            else if (root.querySelector(".adm-table-wrap")) refreshList(root, url);
-        }, 500);
+    // changes that never pass through the API (data edited in the database, missed pushes) are caught here:
+    // when the connection comes back, when the tab is shown again, and every 20 seconds while it is visible
+    document.addEventListener("discode-hub-connected", refreshSoon);
+    document.addEventListener("visibilitychange", function () {
+        if (!document.hidden) refreshSoon();
     });
+    window.setInterval(function () {
+        if (!document.hidden) refreshLive();
+    }, 20000);
 })();
