@@ -1675,3 +1675,21 @@ html.theme-dark .adm-chip.is-timeout {
 .adm-btn.is-outline:hover {
     background: rgba(128, 132, 142, 0.14);
 }
+
+.adm-brand-picked .adm-btn {
+    transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.adm-brand-picked button[type="submit"]:hover {
+    background: #23a55a;
+    border-color: #23a55a;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.adm-brand-picked [data-cancel]:hover {
+    background: #f23f43;
+    border-color: #f23f43;
+    color: #fff;
+    transform: translateY(-1px);
+}
