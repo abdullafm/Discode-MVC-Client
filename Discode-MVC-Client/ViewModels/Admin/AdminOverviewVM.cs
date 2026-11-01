@@ -16,9 +16,6 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public int NewLast30Days { get; set; }
         public int PublicAccounts { get; set; }
         public int PrivateAccounts { get; set; }
-        public int Admins { get; set; }
-        public int SuperAdmins { get; set; }
-        public int Blocks { get; set; }
     }
 
     public class AdminServerStatsVM
@@ -26,7 +23,6 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public int Total { get; set; }
         public int Public { get; set; }
         public int Private { get; set; }
-        public int Memberships { get; set; }
     }
 
     public class AdminBanStatsVM
@@ -42,12 +38,6 @@ namespace Discode_MVC_Client.ViewModels.Admin
     {
         public int Posts { get; set; }
         public int Comments { get; set; }
-        public int Reposts { get; set; }
-        public int Stories { get; set; }
-        public int Groups { get; set; }
-        public int DirectMessages { get; set; }
-        public int GroupMessages { get; set; }
-        public int ServerMessages { get; set; }
     }
 
     public class AdminReportStatsVM

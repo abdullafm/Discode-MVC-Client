@@ -3,19 +3,30 @@
     ViewData["Title"] = "Overview";
     ViewData["Section"] = "overview";
     var view = ViewData["View"] as string ?? string.Empty;
+    if (view == "bans" || view == "reports") view = "moderation";
     var groups = new[]
     {
         (Key: "users", Label: "Users", Icon: "fa-users"),
-        (Key: "bans", Label: "Bans", Icon: "fa-gavel"),
+        (Key: "moderation", Label: "Moderation", Icon: "fa-gavel"),
         (Key: "servers", Label: "Servers", Icon: "fa-server"),
         (Key: "content", Label: "Content", Icon: "fa-image"),
-        (Key: "reports", Label: "Reports", Icon: "fa-flag"),
         (Key: "all", Label: "Show everything", Icon: "fa-list")
     };
     var picked = groups.FirstOrDefault(x => x.Key == view);
     bool Show(string key) => view == "all" || view == key;
     var reasonMax = Model.Reports.TopReasons.Count == 0 ? 1 : Model.Reports.TopReasons.Max(x => x.Count);
 }
+
+<div class="adm-group">
+    <h2><i class="fa-solid fa-bolt"></i> Needs your attention</h2>
+    <div class="adm-cards">
+        <div class="adm-card @(Model.Reports.Open > 0 ? "warn" : "")"><i class="fa-solid fa-flag"></i><strong>@Model.Reports.Open</strong><span>Open reports</span></div>
+        <div class="adm-card @(Model.Bans.BansLast7Days > 0 ? "danger" : "")"><i class="fa-solid fa-ban"></i><strong>@Model.Bans.BansLast7Days</strong><span>Bans in the last 7 days</span></div>
+        <div class="adm-card"><i class="fa-solid fa-hourglass-half"></i><strong>@Model.Bans.ActiveTimeouts</strong><span>Active timeouts</span></div>
+        <div class="adm-card"><i class="fa-solid fa-user-plus"></i><strong>@Model.Users.NewLast7Days</strong><span>New users in 7 days</span></div>
+    </div>
+</div>
+
 <div class="adm-pick-row">
     <div class="adm-picker adm-picker-wide">
         <button type="button" class="adm-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
@@ -49,97 +60,68 @@
     </div>
 </div>
 
-@if (picked.Key is null)
-{
-    <p class="adm-hint">Pick a category above to see its numbers.</p>
-}
-
 @if (Show("users"))
 {
-<div class="adm-group">
-    <h2><i class="fa-solid fa-users"></i> Users</h2>
-    <div class="adm-cards">
-        <div class="adm-card"><i class="fa-solid fa-users"></i><strong>@Model.Users.Total</strong><span>Total users</span></div>
-        <div class="adm-card"><i class="fa-solid fa-user-plus"></i><strong>@Model.Users.NewLast7Days</strong><span>New in 7 days</span></div>
-        <div class="adm-card"><i class="fa-solid fa-calendar"></i><strong>@Model.Users.NewLast30Days</strong><span>New in 30 days</span></div>
-        <div class="adm-card"><i class="fa-solid fa-earth-americas"></i><strong>@Model.Users.PublicAccounts</strong><span>Public accounts</span></div>
-        <div class="adm-card"><i class="fa-solid fa-lock"></i><strong>@Model.Users.PrivateAccounts</strong><span>Private accounts</span></div>
-        <div class="adm-card"><i class="fa-solid fa-user-shield"></i><strong>@Model.Users.Admins</strong><span>Admins</span></div>
-        <div class="adm-card"><i class="fa-solid fa-crown"></i><strong>@Model.Users.SuperAdmins</strong><span>SuperAdmins</span></div>
-        <div class="adm-card"><i class="fa-solid fa-user-slash"></i><strong>@Model.Users.Blocks</strong><span>User blocks</span></div>
+    <div class="adm-group">
+        <h2><i class="fa-solid fa-users"></i> Users</h2>
+        <div class="adm-cards">
+            <div class="adm-card"><i class="fa-solid fa-users"></i><strong>@Model.Users.Total</strong><span>Total users</span></div>
+            <div class="adm-card"><i class="fa-solid fa-calendar"></i><strong>@Model.Users.NewLast30Days</strong><span>New in 30 days</span></div>
+            <div class="adm-card"><i class="fa-solid fa-earth-americas"></i><strong>@Model.Users.PublicAccounts</strong><span>Public accounts</span></div>
+            <div class="adm-card"><i class="fa-solid fa-lock"></i><strong>@Model.Users.PrivateAccounts</strong><span>Private accounts</span></div>
+        </div>
     </div>
-</div>
 }
 
-@if (Show("bans"))
+@if (Show("moderation"))
 {
-<div class="adm-group">
-    <h2><i class="fa-solid fa-gavel"></i> Bans</h2>
-    <div class="adm-cards">
-        <div class="adm-card danger"><i class="fa-solid fa-ban"></i><strong>@Model.Bans.TotalBans</strong><span>Server bans</span></div>
-        <div class="adm-card danger"><i class="fa-solid fa-user-xmark"></i><strong>@Model.Bans.UsersBanned</strong><span>Users banned from a server</span></div>
-        <div class="adm-card danger"><i class="fa-solid fa-server"></i><strong>@Model.Bans.ServersWithBans</strong><span>Servers that banned someone</span></div>
-        <div class="adm-card"><i class="fa-solid fa-clock"></i><strong>@Model.Bans.BansLast7Days</strong><span>Bans in 7 days</span></div>
-        <div class="adm-card"><i class="fa-solid fa-hourglass-half"></i><strong>@Model.Bans.ActiveTimeouts</strong><span>Active timeouts</span></div>
+    <div class="adm-group">
+        <h2><i class="fa-solid fa-gavel"></i> Moderation</h2>
+        <div class="adm-cards">
+            <div class="adm-card danger"><i class="fa-solid fa-user-xmark"></i><strong>@Model.Bans.UsersBanned</strong><span>Users banned from a server</span></div>
+            <div class="adm-card danger"><i class="fa-solid fa-server"></i><strong>@Model.Bans.ServersWithBans</strong><span>Servers that banned someone</span></div>
+            <div class="adm-card"><i class="fa-solid fa-ban"></i><strong>@Model.Bans.TotalBans</strong><span>Total server bans</span></div>
+            <div class="adm-card warn"><i class="fa-solid fa-flag"></i><strong>@Model.Reports.Open</strong><span>Open reports</span></div>
+            <div class="adm-card"><i class="fa-solid fa-circle-check"></i><strong>@Model.Reports.Reviewed</strong><span>Reports reviewed</span></div>
+            <div class="adm-card"><i class="fa-solid fa-circle-xmark"></i><strong>@Model.Reports.Dismissed</strong><span>Reports dismissed</span></div>
+        </div>
+        @if (Model.Reports.TopReasons.Count > 0)
+        {
+            <div class="adm-bars">
+                <h3>Top report reasons</h3>
+                @foreach (var reason in Model.Reports.TopReasons)
+                {
+                    <div class="adm-bar">
+                        <span>@reason.Reason</span>
+                        <div class="adm-bar-track"><div class="adm-bar-fill" style="width:@(reason.Count * 100 / reasonMax)%"></div></div>
+                        <strong>@reason.Count</strong>
+                    </div>
+                }
+            </div>
+        }
+        <p class="adm-note">Platform-wide user or server bans and Nitro purchases are not stored yet, so they are not shown.</p>
     </div>
-    <p class="adm-note">Platform-wide user or server bans and Nitro purchases are not stored yet, so they are not shown.</p>
-</div>
 }
 
 @if (Show("servers"))
 {
-<div class="adm-group">
-    <h2><i class="fa-solid fa-server"></i> Servers</h2>
-    <div class="adm-cards">
-        <div class="adm-card"><i class="fa-solid fa-server"></i><strong>@Model.Servers.Total</strong><span>Total servers</span></div>
-        <div class="adm-card"><i class="fa-solid fa-compass"></i><strong>@Model.Servers.Public</strong><span>Public (in Discover)</span></div>
-        <div class="adm-card"><i class="fa-solid fa-lock"></i><strong>@Model.Servers.Private</strong><span>Private</span></div>
-        <div class="adm-card"><i class="fa-solid fa-people-group"></i><strong>@Model.Servers.Memberships</strong><span>Memberships</span></div>
+    <div class="adm-group">
+        <h2><i class="fa-solid fa-server"></i> Servers</h2>
+        <div class="adm-cards">
+            <div class="adm-card"><i class="fa-solid fa-server"></i><strong>@Model.Servers.Total</strong><span>Total servers</span></div>
+            <div class="adm-card"><i class="fa-solid fa-compass"></i><strong>@Model.Servers.Public</strong><span>Public (in Discover)</span></div>
+            <div class="adm-card"><i class="fa-solid fa-lock"></i><strong>@Model.Servers.Private</strong><span>Private</span></div>
+        </div>
     </div>
-</div>
 }
 
 @if (Show("content"))
 {
-<div class="adm-group">
-    <h2><i class="fa-solid fa-image"></i> Content</h2>
-    <div class="adm-cards">
-        <div class="adm-card"><i class="fa-solid fa-image"></i><strong>@Model.Content.Posts</strong><span>Posts</span></div>
-        <div class="adm-card"><i class="fa-solid fa-comment"></i><strong>@Model.Content.Comments</strong><span>Comments</span></div>
-        <div class="adm-card"><i class="fa-solid fa-retweet"></i><strong>@Model.Content.Reposts</strong><span>Reposts</span></div>
-        <div class="adm-card"><i class="fa-solid fa-circle-play"></i><strong>@Model.Content.Stories</strong><span>Stories</span></div>
-        <div class="adm-card"><i class="fa-solid fa-user-group"></i><strong>@Model.Content.Groups</strong><span>Group chats</span></div>
-        <div class="adm-card"><i class="fa-solid fa-envelope"></i><strong>@Model.Content.DirectMessages</strong><span>Direct messages</span></div>
-        <div class="adm-card"><i class="fa-solid fa-envelopes-bulk"></i><strong>@Model.Content.GroupMessages</strong><span>Group messages</span></div>
-        <div class="adm-card"><i class="fa-solid fa-hashtag"></i><strong>@Model.Content.ServerMessages</strong><span>Server messages</span></div>
-    </div>
-</div>
-}
-
-@if (Show("reports"))
-{
-<div class="adm-group">
-    <h2><i class="fa-solid fa-flag"></i> Reports</h2>
-    <div class="adm-cards">
-        <div class="adm-card"><i class="fa-solid fa-flag"></i><strong>@Model.Reports.Total</strong><span>Total reports</span></div>
-        <div class="adm-card warn"><i class="fa-solid fa-flag"></i><strong>@Model.Reports.Open</strong><span>Open</span></div>
-        <div class="adm-card"><i class="fa-solid fa-circle-check"></i><strong>@Model.Reports.Reviewed</strong><span>Reviewed</span></div>
-        <div class="adm-card"><i class="fa-solid fa-circle-xmark"></i><strong>@Model.Reports.Dismissed</strong><span>Dismissed</span></div>
-    </div>
-    @if (Model.Reports.TopReasons.Count > 0)
-    {
-        <div class="adm-bars">
-            <h3>Top report reasons</h3>
-            @foreach (var reason in Model.Reports.TopReasons)
-            {
-                <div class="adm-bar">
-                    <span>@reason.Reason</span>
-                    <div class="adm-bar-track"><div class="adm-bar-fill" style="width:@(reason.Count * 100 / reasonMax)%"></div></div>
-                    <strong>@reason.Count</strong>
-                </div>
-            }
+    <div class="adm-group">
+        <h2><i class="fa-solid fa-image"></i> Content</h2>
+        <div class="adm-cards">
+            <div class="adm-card"><i class="fa-solid fa-image"></i><strong>@Model.Content.Posts</strong><span>Posts</span></div>
+            <div class="adm-card"><i class="fa-solid fa-comment"></i><strong>@Model.Content.Comments</strong><span>Comments</span></div>
         </div>
-    }
-</div>
+    </div>
 }
-
