@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="~/assets/css/report.css" asp-append-version="true">
     <link rel="stylesheet" href="~/assets/css/discover.css" asp-append-version="true">
     <link rel="stylesheet" href="~/assets/css/admin-area.css" asp-append-version="true">
-    <link rel="shortcut icon" href="~/assets/icons/favicon.ico" type="image/x-icon">
+    @await Component.InvokeAsync("Branding", new { kind = "favicon" })
 </head>
 
 <body>
@@ -36,7 +36,7 @@
     }
     <header class="app-header">
         <div class="home-loader" id="loader" role="status">
-            <i class="fa-brands fa-discord"></i>
+            @await Component.InvokeAsync("Branding", new { kind = "logo" })
             <p class="loader-title">DID YOU KNOW</p>
             <p class="loader-message">
                 <span>
@@ -49,7 +49,7 @@
         </div>
         <div class="server-rail" id="server-rail">
             <nav class="server-nav" aria-label="Servers">
-                <a class="server-home" href="@Url.Action("Index", "Home", new { area = "" })" aria-label="Home"><i class="fa-brands fa-discord" aria-hidden="true"></i></a>
+                <a class="server-home" href="@Url.Action("Index", "Home", new { area = "" })" aria-label="Home">@await Component.InvokeAsync("Branding", new { kind = "logo" })</a>
                 <hr>
                 <div id="server-list"></div>
                 <template id="server-chip"><button type="button" class="server-chip"></button></template>
@@ -69,6 +69,7 @@
                 <a class="discover-cat @(section == "overview" ? "on" : "")" href="@Url.Action("Index", "Home", new { area = "Admin" })"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
                 <a class="discover-cat @(section == "servers" ? "on" : "")" href="@Url.Action("Index", "Servers", new { area = "Admin" })"><i class="fa-solid fa-server"></i> Servers</a>
                 <a class="discover-cat @(section == "users" ? "on" : "")" href="@Url.Action("Index", "Users", new { area = "Admin" })"><i class="fa-solid fa-users"></i> Members</a>
+                <a class="discover-cat @(section == "branding" ? "on" : "")" href="@Url.Action("Index", "Branding", new { area = "Admin" })"><i class="fa-solid fa-image"></i> Logos</a>
                 <a class="discover-cat @(section == "activity" ? "on" : "")" href="@Url.Action("Index", "Activity", new { area = "Admin" })"><i class="fa-solid fa-clock-rotate-left"></i> Activity</a>
             </nav>
             <div class="sidebar-call" id="sidebar-call" hidden>

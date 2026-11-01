@@ -1,0 +1,53 @@
+@using Discode_MVC_Client.Services
+@{
+    ViewData["Title"] = "Logos";
+    ViewData["Section"] = "branding";
+    var branding = (SiteBranding)ViewData["Branding"]!;
+    var slots = new[]
+    {
+        (Key: "logo", Title: "Site logo", Note: "Shown on the home button, the loading screen and the sign in and register pages. A square image looks best.", Url: branding.LogoUrl, Icon: "fa-brands fa-discord"),
+        (Key: "favicon", Title: "Favicon", Note: "The small icon in the browser tab.", Url: branding.FaviconUrl, Icon: "fa-regular fa-window-maximize")
+    };
+}
+@if (TempData["AdminNotice"] is string notice)
+{
+    <p class="adm-notice"><i class="fa-solid fa-circle-check"></i> @notice</p>
+}
+@if (TempData["AdminWarning"] is string warning)
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @warning</p>
+}
+<div class="adm-brand-grid">
+    @foreach (var slot in slots)
+    {
+        <div class="adm-panel">
+            <h3>@slot.Title</h3>
+            <p class="adm-muted">@slot.Note</p>
+            <div class="adm-brand-preview">
+                @if (slot.Url.Length > 0)
+                {
+                    <img src="@slot.Url" alt="@slot.Title">
+                }
+                else
+                {
+                    <i class="@slot.Icon"></i>
+                }
+            </div>
+            <small class="adm-muted">@(slot.Url.Length > 0 ? "Custom image" : "Default")</small>
+
+            <form method="post" enctype="multipart/form-data" asp-area="Admin" asp-controller="Branding" asp-action="Upload">
+                <input type="hidden" name="slot" value="@slot.Key">
+                <input type="file" name="file" class="adm-file" accept="image/*,.ico" required>
+                <button type="submit" class="adm-btn"><i class="fa-solid fa-upload"></i> Upload</button>
+            </form>
+
+            @if (slot.Url.Length > 0)
+            {
+                <form method="post" asp-area="Admin" asp-controller="Branding" asp-action="Reset" data-confirm="The built-in image is shown again everywhere." data-confirm-title="Use the default?" data-confirm-button="Use default" data-confirm-tone="warning" data-confirm-icon="fa-rotate-left">
+                    <input type="hidden" name="slot" value="@slot.Key">
+                    <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-rotate-left"></i> Back to default</button>
+                </form>
+            }
+        </div>
+    }
+</div>

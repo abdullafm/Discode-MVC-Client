@@ -249,3 +249,8 @@ button.login-forgot:hover {
         font-size: 40px;
     }
 }
+
+.background-x img.x-logo {
+    object-fit: contain;
+    opacity: 0.08;
+}

@@ -1590,3 +1590,36 @@ html.theme-dark .adm-chip.is-timeout {
     background: #f0b232;
     color: #1f1500;
 }
+
+/* ===== Logolar ===== */
+.adm-brand-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 18px;
+}
+
+.adm-brand-preview {
+    width: 96px;
+    height: 96px;
+    margin: 14px 0 6px;
+    display: grid;
+    place-items: center;
+    border-radius: 22px;
+    background: rgba(128, 132, 142, 0.14);
+    font-size: 44px;
+    overflow: hidden;
+}
+
+.adm-brand-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.adm-brand-grid form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-top: 14px;
+}

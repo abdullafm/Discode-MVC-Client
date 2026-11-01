@@ -529,3 +529,8 @@
 .register-photo-pick i[hidden] {
     display: none;
 }
+
+.background-x img.x-logo {
+    object-fit: contain;
+    opacity: 0.08;
+}

@@ -8840,3 +8840,15 @@ html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend
 html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend-item[data-presence="dnd"] .avatar::after {
     background-color: #f23f43 !important;
 }
+
+/* ===== Adminin seçdiyi logo ===== */
+.home-loader img.site-logo {
+    width: 60px !important;
+    height: 60px !important;
+    margin-bottom: 30px;
+    animation: spindis .75s infinite;
+}
+
+.server-home img.site-logo {
+    border-radius: 12px;
+}

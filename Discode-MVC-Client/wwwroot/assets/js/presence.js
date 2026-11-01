@@ -252,6 +252,34 @@
                     document.dispatchEvent(new CustomEvent("discode-account-warning", { detail: data }));
                 });
 
+                connection.on("BrandingChanged", function (data) {
+                    var logo = (data && data.logoUrl) || "";
+                    document.querySelectorAll('[data-brand="logo"]').forEach(function (node) {
+                        if (logo) {
+                            if (node.tagName === "IMG") {
+                                node.src = logo;
+                            } else {
+                                var img = document.createElement("img");
+                                img.setAttribute("data-brand", "logo");
+                                img.className = "site-logo";
+                                img.alt = "";
+                                img.src = logo;
+                                img.style.cssText = "width:1em;height:1em;object-fit:contain";
+                                node.replaceWith(img);
+                            }
+                        } else if (node.tagName === "IMG") {
+                            var icon = document.createElement("i");
+                            icon.setAttribute("data-brand", "logo");
+                            icon.className = "fa-brands fa-discord";
+                            icon.setAttribute("aria-hidden", "true");
+                            node.replaceWith(icon);
+                        }
+                    });
+
+                    var fav = document.querySelector('link[data-brand="favicon"]');
+                    if (fav) fav.href = ((data && data.faviconUrl) || "/assets/icons/favicon.ico") + "?v=" + Date.now();
+                });
+
                 connection.on("AccountTimeout", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-account-timeout", { detail: data }));
                 });

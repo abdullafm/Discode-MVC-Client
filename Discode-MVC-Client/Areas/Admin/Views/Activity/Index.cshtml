@@ -5,7 +5,7 @@
     string KindClass(string kind) => kind switch
     {
         "Ban" or "ServerBan" or "Delete" or "ServerDelete" => "is-banned",
-        "Warn" or "ServerWarn" or "Timeout" => "is-timeout",
+        "Warn" or "ServerWarn" or "Timeout" or "BrandingChange" => "is-timeout",
         "Unban" or "ServerUnban" or "ClearTimeout" => "is-public",
         _ => ""
     };
@@ -45,6 +45,10 @@
                         @if (action.TargetType == "User")
                         {
                             <a class="adm-link" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@action.TargetId"><i class="fa-solid fa-user"></i> @action.TargetName</a>
+                        }
+                        else if (action.TargetType == "Site")
+                        {
+                            <span><i class="fa-solid fa-image"></i> @action.TargetName</span>
                         }
                         else
                         {

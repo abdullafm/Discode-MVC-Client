@@ -5,6 +5,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<Discode_MVC_Client.Services.BrandingProvider>();
 builder.Services.AddTransient<BearerTokenHandler>();
 
 builder.Services.AddHttpClient("DiscodeApi", client =>

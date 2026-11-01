@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
           integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
           crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="shortcut icon" href="~/assets/icons/favicon.ico" type="image/x-icon">
+    @await Component.InvokeAsync("Branding", new { kind = "favicon" })
 </head>
 
 <body>
@@ -28,7 +28,7 @@
         <div class="server-rail" id="server-rail">
             <nav class="server-nav" aria-label="Servers">
                 <a class="server-home" asp-action="Index" asp-controller="Home" aria-label="Home">
-                    <i class="fa-brands fa-discord" aria-hidden="true"></i>
+                    @await Component.InvokeAsync("Branding", new { kind = "logo" })
                 </a>
                 <hr>
                 <div id="server-list"></div>
