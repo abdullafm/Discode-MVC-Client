@@ -41,6 +41,22 @@ namespace Discode_MVC_Client.Controllers
 
         public async Task<IActionResult> Index(int id = 0)
         {
+            if (id > 0)
+            {
+                try
+                {
+                    var check = await _httpClientFactory.CreateClient("DiscodeApi").GetAsync($"api/server/{id}");
+                    if (check.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                    {
+                        TempData["Error"] = "This server has been banned by the administrators.";
+                        return RedirectToAction("Index", "Home");
+                    }
+                }
+                catch (HttpRequestException)
+                {
+                }
+            }
+
             ViewData["ServerChannels"] = await LoadChannelsAsync(id);
 
             var displayName = User.Identity?.Name ?? "";

@@ -42,9 +42,9 @@
     </a>
 
     <a class="stat-card" asp-area="Admin" asp-controller="Servers" asp-action="Index" asp-route-filter="banned" data-panel="@Url.Action("Index", "Servers", new { area = "Admin", filter = "banned" })">
-        <div class="stat-head"><span>Servers with bans</span><i class="stat-icon tone-amber fa-solid fa-ban"></i></div>
-        <strong>@Model.Bans.ServersWithBans.ToString("N0")</strong>
-        <small>Servers that banned someone</small>
+        <div class="stat-head"><span>Banned servers</span><i class="stat-icon tone-amber fa-solid fa-ban"></i></div>
+        <strong>@Model.Servers.Banned.ToString("N0")</strong>
+        <small>Blocked by an admin</small>
     </a>
 
     <div class="stat-card">

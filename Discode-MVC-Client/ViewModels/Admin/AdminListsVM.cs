@@ -35,6 +35,7 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public string IconUrl { get; set; } = string.Empty;
         public string OwnerUserName { get; set; } = string.Empty;
         public bool IsPrivate { get; set; }
+        public bool IsBanned { get; set; }
         public DateTime CreatedAt { get; set; }
         public int Members { get; set; }
         public int Bans { get; set; }
@@ -49,6 +50,7 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public string Search { get; set; } = string.Empty;
         public string Filter { get; set; } = string.Empty;
         public string? Error { get; set; }
+        public string? Notice { get; set; }
         public int TotalPages => Math.Max(1, (int)Math.Ceiling(Total / (double)Math.Max(1, PageSize)));
     }
 }

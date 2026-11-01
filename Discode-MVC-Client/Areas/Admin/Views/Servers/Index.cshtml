@@ -3,7 +3,7 @@
     var tabs = new[]
     {
         (Key: "", Label: "All servers"),
-        (Key: "banned", Label: "Servers with bans")
+        (Key: "banned", Label: "Banned servers")
     };
     var current = tabs.First(x => x.Key == Model.Filter);
     ViewData["Title"] = Model.Filter == "" ? "Servers" : current.Label;
@@ -25,6 +25,10 @@
     <span class="adm-count">@Model.Total @(Model.Filter == "" ? ViewData["Title"]?.ToString()?.ToLowerInvariant() : current.Label.ToLowerInvariant())</span>
 </div>
 
+@if (!string.IsNullOrEmpty(Model.Notice))
+{
+    <p class="adm-notice"><i class="fa-solid fa-circle-check"></i> @Model.Notice</p>
+}
 @if (!string.IsNullOrEmpty(Model.Error))
 {
     <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Error</p>
@@ -36,10 +40,11 @@
             <tr>
                 <th>Server</th>
                 <th>Owner</th>
-                <th>Visibility</th>
+                <th>Status</th>
                 <th>Members</th>
-                <th>Bans</th>
+                <th>Member bans</th>
                 <th>Created</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -56,19 +61,26 @@
                             {
                                 <img src="@server.IconUrl" alt="">
                             }
-                            <span><strong>@server.Name</strong><small>#@server.Id</small></span>
+                            <span><strong><a class="adm-link" asp-area="Admin" asp-controller="Servers" asp-action="Details" asp-route-id="@server.Id">@server.Name</a></strong><small>#@server.Id</small></span>
                         </div>
                     </td>
                     <td class="adm-muted">@server.OwnerUserName</td>
-                    <td><span class="adm-chip @(server.IsPrivate ? "is-private" : "is-public")">@(server.IsPrivate ? "Private" : "Public")</span></td>
+                    <td>
+                        @if (server.IsBanned)
+                        {
+                            <span class="adm-chip is-banned">Banned</span>
+                        }
+                        <span class="adm-chip @(server.IsPrivate ? "is-private" : "is-public")">@(server.IsPrivate ? "Private" : "Public")</span>
+                    </td>
                     <td>@server.Members</td>
                     <td><span class="@(server.Bans > 0 ? "adm-bad" : "adm-muted")">@server.Bans</span></td>
                     <td class="adm-muted">@server.CreatedAt.ToString("yyyy-MM-dd")</td>
+                    <td class="adm-actions"><a class="adm-btn is-small" asp-area="Admin" asp-controller="Servers" asp-action="Details" asp-route-id="@server.Id">Detail <i class="fa-solid fa-arrow-right"></i></a></td>
                 </tr>
             }
             @if (Model.Items.Count == 0)
             {
-                <tr><td colspan="6" class="adm-empty">No servers found.</td></tr>
+                <tr><td colspan="7" class="adm-empty">No servers found.</td></tr>
             }
         </tbody>
     </table>

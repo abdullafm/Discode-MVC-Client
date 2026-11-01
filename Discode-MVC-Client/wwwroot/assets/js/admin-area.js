@@ -1,4 +1,12 @@
 "use strict";
+document.addEventListener("submit", function (event) {
+    var message = event.target.getAttribute && event.target.getAttribute("data-confirm");
+    if (message && !window.confirm(message)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    }
+}, true);
+
 (function () {
     var pickers = document.querySelectorAll(".adm-picker");
     if (!pickers.length) return;
@@ -88,6 +96,15 @@
         panel.addEventListener("submit", function (event) {
             event.preventDefault();
             var form = event.target;
+            if ((form.getAttribute("method") || "get").toLowerCase() === "post") {
+                fetch(form.action, { method: "POST", body: new FormData(form), credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+                    return response.text();
+                }).then(function (html) {
+                    panel.innerHTML = html;
+                    panel.hidden = false;
+                }).catch(function () {});
+                return;
+            }
             loadPanel(form.action + "?" + new URLSearchParams(new FormData(form)).toString());
         });
     }
