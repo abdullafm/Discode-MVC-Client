@@ -23,6 +23,7 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public int PageSize { get; set; } = 20;
         public string Search { get; set; } = string.Empty;
         public string Filter { get; set; } = string.Empty;
+        public string? Error { get; set; }
         public int TotalPages => Math.Max(1, (int)Math.Ceiling(Total / (double)Math.Max(1, PageSize)));
     }
 
@@ -47,6 +48,7 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public int PageSize { get; set; } = 20;
         public string Search { get; set; } = string.Empty;
         public string Filter { get; set; } = string.Empty;
+        public string? Error { get; set; }
         public int TotalPages => Math.Max(1, (int)Math.Ceiling(Total / (double)Math.Max(1, PageSize)));
     }
 }

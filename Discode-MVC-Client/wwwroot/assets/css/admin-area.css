@@ -781,3 +781,17 @@ html.theme-dark .adm-tabs a.on {
 .stat-panel[hidden] {
     display: none;
 }
+
+.adm-error {
+    margin: 0 0 14px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: rgba(242, 63, 67, 0.12);
+    color: #e03e3e;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.adm-error i {
+    margin-right: 6px;
+}

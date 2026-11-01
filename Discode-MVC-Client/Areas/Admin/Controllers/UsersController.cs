@@ -31,9 +31,11 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
             }
             catch (HttpRequestException)
             {
+                model.Error = "The members could not be loaded. Restart the API so it runs the latest build, then try again.";
             }
             catch (JsonException)
             {
+                model.Error = "The members could not be read from the API response.";
             }
 
             return Request.Headers.XRequestedWith == "XMLHttpRequest" ? PartialView(model) : View(model);

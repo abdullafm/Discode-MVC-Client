@@ -18,7 +18,8 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
             var model = new AdminServerListVM { Search = term, Filter = kind, Page = Math.Max(1, page) };
             try
             {
-                var url = "api/admin/servers?page=" + model.Page + "&pageSize=" + model.PageSize
+                var url = (term.Length > 0 ? "api/admin/servers/search" : "api/admin/servers")
+                    + "?page=" + model.Page + "&pageSize=" + model.PageSize
                     + (term.Length > 0 ? "&search=" + Uri.EscapeDataString(term) : string.Empty)
                     + (kind == "banned" ? "&bannedOnly=true" : string.Empty);
                 var result = await Api.GetFromJsonAsync<AdminServerListVM>(url);
@@ -30,9 +31,11 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
             }
             catch (HttpRequestException)
             {
+                model.Error = "The servers could not be loaded. Restart the API so it runs the latest build, then try again.";
             }
             catch (JsonException)
             {
+                model.Error = "The servers could not be read from the API response.";
             }
 
             return Request.Headers.XRequestedWith == "XMLHttpRequest" ? PartialView(model) : View(model);

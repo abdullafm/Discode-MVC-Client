@@ -27,6 +27,11 @@
     <span class="adm-count">@Model.Total @(Model.Filter == "" ? ViewData["Title"]?.ToString()?.ToLowerInvariant() : current.Label.ToLowerInvariant())</span>
 </div>
 
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Error</p>
+}
+
 <div class="adm-table-wrap">
     <table class="adm-table">
         <thead>
