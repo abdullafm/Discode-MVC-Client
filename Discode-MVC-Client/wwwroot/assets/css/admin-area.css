@@ -1210,3 +1210,22 @@ html.theme-dark .adm-textarea {
     color: #80848e;
     font-weight: 700;
 }
+
+/* Back to servers: arxa fon yox, yazi boyuyur ve reng deyisir */
+.adm-back-link {
+    padding: 0;
+    border-radius: 0;
+    background: transparent !important;
+    transform-origin: left center;
+    transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.adm-back-link:hover {
+    background: transparent !important;
+    color: #5865f2;
+    transform: scale(1.08);
+}
+
+.adm-back-link:hover i {
+    transform: translateX(-3px);
+}
