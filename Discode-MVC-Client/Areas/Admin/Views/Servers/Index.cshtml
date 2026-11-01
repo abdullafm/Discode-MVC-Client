@@ -22,7 +22,7 @@
         <i class="fa-solid fa-magnifying-glass"></i>
         <input type="search" name="search" value="@Model.Search" placeholder="Search by server or owner name" autocomplete="off">
     </form>
-    <span class="adm-count">@Model.Total @current.Label.ToLowerInvariant()</span>
+    <span class="adm-count">@Model.Total @(Model.Filter == "" ? ViewData["Title"]?.ToString()?.ToLowerInvariant() : current.Label.ToLowerInvariant())</span>
 </div>
 
 <div class="adm-table-wrap">

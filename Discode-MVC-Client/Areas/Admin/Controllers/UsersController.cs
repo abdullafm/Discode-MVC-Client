@@ -36,7 +36,7 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
             {
             }
 
-            return View(model);
+            return Request.Headers.XRequestedWith == "XMLHttpRequest" ? PartialView(model) : View(model);
         }
     }
 }

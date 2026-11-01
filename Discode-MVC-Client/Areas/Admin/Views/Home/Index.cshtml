@@ -4,13 +4,13 @@
     ViewData["Section"] = "overview";
 }
 <div class="stat-grid">
-    <a class="stat-card" asp-area="Admin" asp-controller="Users" asp-action="Index">
+    <a class="stat-card" asp-area="Admin" asp-controller="Users" asp-action="Index" data-panel="@Url.Action("Index", "Users", new { area = "Admin" })">
         <div class="stat-head"><span>Users</span><i class="stat-icon tone-blue fa-solid fa-users"></i></div>
         <strong>@Model.Users.Total.ToString("N0")</strong>
         <small class="tone-green-text">+@Model.Users.NewLast7Days this week</small>
     </a>
 
-    <a class="stat-card" asp-area="Admin" asp-controller="Servers" asp-action="Index">
+    <a class="stat-card" asp-area="Admin" asp-controller="Servers" asp-action="Index" data-panel="@Url.Action("Index", "Servers", new { area = "Admin" })">
         <div class="stat-head"><span>Servers</span><i class="stat-icon tone-green fa-solid fa-server"></i></div>
         <strong>@Model.Servers.Total.ToString("N0")</strong>
         <small>@Model.Servers.Public public &middot; @Model.Servers.Private private</small>
@@ -35,13 +35,13 @@
         <strong id="stat-staff-count">@Model.Users.Admins.ToString("N0")</strong>
     </div>
 
-    <a class="stat-card" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-filter="banned">
+    <a class="stat-card" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-filter="banned" data-panel="@Url.Action("Index", "Users", new { area = "Admin", filter = "banned" })">
         <div class="stat-head"><span>Banned users</span><i class="stat-icon tone-red fa-solid fa-user-xmark"></i></div>
         <strong>@Model.Bans.UsersBanned.ToString("N0")</strong>
         <small>@Model.Bans.TotalBans server bans in total</small>
     </a>
 
-    <a class="stat-card" asp-area="Admin" asp-controller="Servers" asp-action="Index" asp-route-filter="banned">
+    <a class="stat-card" asp-area="Admin" asp-controller="Servers" asp-action="Index" asp-route-filter="banned" data-panel="@Url.Action("Index", "Servers", new { area = "Admin", filter = "banned" })">
         <div class="stat-head"><span>Servers with bans</span><i class="stat-icon tone-amber fa-solid fa-ban"></i></div>
         <strong>@Model.Bans.ServersWithBans.ToString("N0")</strong>
         <small>Servers that banned someone</small>
@@ -53,3 +53,5 @@
         <small class="@(Model.Reports.Open > 0 ? "tone-red-text" : "")">@Model.Reports.Open waiting review</small>
     </div>
 </div>
+
+<div id="stat-panel" class="stat-panel" hidden></div>

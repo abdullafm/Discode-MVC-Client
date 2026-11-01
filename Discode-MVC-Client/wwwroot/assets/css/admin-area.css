@@ -767,3 +767,17 @@ html.theme-dark .adm-tabs a.on {
 .stat-staff {
     cursor: pointer;
 }
+
+.stat-card.on {
+    border-color: #5865f2;
+    box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.18);
+}
+
+.stat-panel {
+    margin-top: 22px;
+    animation: adm-pop 0.18s ease;
+}
+
+.stat-panel[hidden] {
+    display: none;
+}

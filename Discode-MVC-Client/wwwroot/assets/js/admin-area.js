@@ -38,7 +38,61 @@
         if (event.key === "Escape") pickers.forEach(close);
     });
 
-    // Admins / SuperAdmins card: the dropdown swaps the number and the list link
+    // Dashboard: a card loads its list under the cards, the page stays the same
+    var panel = document.getElementById("stat-panel");
+    var activeCard = null;
+    var activeUrl = "";
+
+    function loadPanel(url) {
+        return fetch(url, { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            if (!response.ok) throw new Error("panel");
+            return response.text();
+        }).then(function (html) {
+            panel.innerHTML = html;
+            panel.hidden = false;
+        }).catch(function () {});
+    }
+
+    function openPanel(card, url) {
+        if (!panel) return;
+        if (activeCard === card && activeUrl === url) {
+            card.classList.remove("on");
+            panel.hidden = true;
+            panel.innerHTML = "";
+            activeCard = null;
+            activeUrl = "";
+            return;
+        }
+        if (activeCard) activeCard.classList.remove("on");
+        activeCard = card;
+        activeUrl = url;
+        card.classList.add("on");
+        loadPanel(url);
+    }
+
+    if (panel) {
+        document.querySelectorAll("[data-panel]").forEach(function (card) {
+            card.addEventListener("click", function (event) {
+                event.preventDefault();
+                openPanel(card, card.getAttribute("data-panel"));
+            });
+        });
+
+        panel.addEventListener("click", function (event) {
+            var link = event.target.closest("a[href]");
+            if (!link || link.classList.contains("is-off")) return;
+            event.preventDefault();
+            loadPanel(link.href);
+        });
+
+        panel.addEventListener("submit", function (event) {
+            event.preventDefault();
+            var form = event.target;
+            loadPanel(form.action + "?" + new URLSearchParams(new FormData(form)).toString());
+        });
+    }
+
+    // Admins / SuperAdmins card: the dropdown swaps the number and the list it opens
     var staff = document.getElementById("stat-staff");
     if (staff) {
         var label = document.getElementById("stat-staff-label");
@@ -54,12 +108,16 @@
                 current = key;
                 staff.querySelectorAll("[data-staff]").forEach(function (item) { item.classList.toggle("on", item === option); });
                 pickers.forEach(close);
+                if (activeCard === staff) {
+                    activeUrl = staff.getAttribute("data-" + current + "-url");
+                    loadPanel(activeUrl);
+                }
             });
         });
 
         staff.addEventListener("click", function (event) {
             if (event.target.closest(".adm-picker")) return;
-            window.location.href = staff.getAttribute("data-" + current + "-url");
+            openPanel(staff, staff.getAttribute("data-" + current + "-url"));
         });
     }
 })();
