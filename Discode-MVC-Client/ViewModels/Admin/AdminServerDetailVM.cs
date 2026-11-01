@@ -36,7 +36,7 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public List<AdminServerMemberVM> Items { get; set; } = new();
         public int Total { get; set; }
         public int Page { get; set; } = 1;
-        public int PageSize { get; set; } = 8;
+        public int PageSize { get; set; } = 4;
         public string Search { get; set; } = string.Empty;
         public string? Error { get; set; }
         public int TotalPages => Math.Max(1, (int)Math.Ceiling(Total / (double)Math.Max(1, PageSize)));

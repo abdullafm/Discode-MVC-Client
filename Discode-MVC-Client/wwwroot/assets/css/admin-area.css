@@ -1119,3 +1119,94 @@ html.theme-dark .adm-textarea {
 .adm-members .adm-empty {
     padding: 14px 0;
 }
+
+/* ===== Server detaili: hoverler ve nomreli sehifeler ===== */
+.adm-back-link {
+    padding: 6px 12px 6px 8px;
+    border-radius: 999px;
+    transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.adm-back-link i {
+    transition: transform 0.16s ease;
+}
+
+.adm-back-link:hover {
+    background: rgba(88, 101, 242, 0.14);
+    color: #5865f2;
+}
+
+.adm-back-link:hover i {
+    transform: translateX(-3px);
+}
+
+.adm-metrics div {
+    transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.adm-metrics div:hover {
+    transform: translateY(-2px);
+    border-color: rgba(88, 101, 242, 0.5);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+.adm-person {
+    transition: background-color 0.14s ease;
+}
+
+.adm-mini-members .adm-person {
+    padding: 6px 8px;
+    margin: 0 -8px;
+    border-radius: 10px;
+}
+
+.adm-mini-members .adm-person:hover {
+    background: rgba(128, 132, 142, 0.12);
+}
+
+.adm-numbers {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 14px;
+}
+
+.adm-num,
+.adm-num-step {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 10px;
+    background: rgba(128, 132, 142, 0.16);
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.adm-num:hover,
+.adm-num-step:hover {
+    background: rgba(88, 101, 242, 0.25);
+    transform: translateY(-1px);
+}
+
+.adm-num.on {
+    background: #5865f2;
+    color: #ffffff;
+}
+
+.adm-num-step.is-off {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.adm-num-gap {
+    color: #80848e;
+    font-weight: 700;
+}
