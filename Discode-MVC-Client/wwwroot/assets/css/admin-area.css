@@ -1623,3 +1623,10 @@ html.theme-dark .adm-chip.is-timeout {
     align-items: center;
     margin-top: 14px;
 }
+
+.adm-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    filter: none;
+    transform: none;
+}

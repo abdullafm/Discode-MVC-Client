@@ -41,13 +41,10 @@
                 <button type="submit" class="adm-btn"><i class="fa-solid fa-upload"></i> Upload</button>
             </form>
 
-            @if (slot.Url.Length > 0)
-            {
-                <form method="post" asp-area="Admin" asp-controller="Branding" asp-action="Reset" data-confirm="The built-in image is shown again everywhere." data-confirm-title="Use the default?" data-confirm-button="Use default" data-confirm-tone="warning" data-confirm-icon="fa-rotate-left">
-                    <input type="hidden" name="slot" value="@slot.Key">
-                    <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-rotate-left"></i> Back to default</button>
-                </form>
-            }
+            <form method="post" asp-area="Admin" asp-controller="Branding" asp-action="Reset" data-confirm="The built-in image is shown again everywhere." data-confirm-title="Use the default?" data-confirm-button="Use default" data-confirm-tone="warning" data-confirm-icon="fa-rotate-left">
+                <input type="hidden" name="slot" value="@slot.Key">
+                <button type="submit" class="adm-btn is-danger" disabled="@(slot.Url.Length == 0)" title="@(slot.Url.Length == 0 ? "Already using the default" : "")"><i class="fa-solid fa-rotate-left"></i> Default</button>
+            </form>
         </div>
     }
 </div>
