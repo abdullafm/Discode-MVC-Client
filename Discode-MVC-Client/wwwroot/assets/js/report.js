@@ -416,3 +416,63 @@ window.discodeReel = function (url) {
         else window.location.href = "/Account/Login";
     });
 })();
+
+// Timeout: a modal nobody can close until the timeout is over (the layer lives on <body>, so it survives in-app navigation)
+(function () {
+    function pad(n) { return n < 10 ? "0" + n : String(n); }
+
+    function format(total) {
+        var h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
+        return (h > 0 ? h + ":" + pad(m) : pad(m)) + ":" + pad(s);
+    }
+
+    function hide() {
+        var layer = document.querySelector(".timeout-layer");
+        if (!layer) return;
+        clearInterval(layer._timer);
+        layer.remove();
+        document.documentElement.classList.remove("is-timed-out");
+    }
+
+    function show(data) {
+        if (!data || !data.seconds || data.seconds <= 0) {
+            hide();
+            return;
+        }
+
+        var layer = document.querySelector(".timeout-layer");
+        if (!layer) {
+            layer = document.createElement("div");
+            layer.className = "timeout-layer";
+            layer.setAttribute("tabindex", "-1");
+            layer.innerHTML = '<div class="timeout-card" role="alertdialog" aria-modal="true">' +
+                '<div class="timeout-icon"><i class="fa-solid fa-hourglass-half"></i></div>' +
+                '<h3>You are in timeout</h3>' +
+                '<p class="timeout-reason"></p>' +
+                '<div class="timeout-clock" aria-live="off">--:--</div>' +
+                '<small class="timeout-until"></small>' +
+                '<small class="timeout-note">You cannot use Discode until the timeout is over. This window closes by itself.</small></div>';
+            document.body.appendChild(layer);
+            document.documentElement.classList.add("is-timed-out");
+            layer.addEventListener("keydown", function (event) { event.preventDefault(); event.stopPropagation(); }, true);
+            layer.focus();
+        }
+
+        clearInterval(layer._timer);
+        var endsAt = Date.now() + data.seconds * 1000;
+        layer.querySelector(".timeout-reason").textContent = data.reason || "";
+        layer.querySelector(".timeout-reason").hidden = !data.reason;
+        layer.querySelector(".timeout-until").textContent = "Ends at " + new Date(endsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+        function tick() {
+            var left = Math.max(0, Math.round((endsAt - Date.now()) / 1000));
+            layer.querySelector(".timeout-clock").textContent = format(left);
+            if (left <= 0) hide();
+        }
+
+        tick();
+        layer._timer = setInterval(tick, 1000);
+    }
+
+    document.addEventListener("discode-account-timeout", function (event) { show(event.detail); });
+})();

@@ -469,3 +469,79 @@ html.theme-dark .warn-card {
     background: #2b2d31;
     color: #f2f3f5;
 }
+
+/* ===== Timeout: bağlanmayan pəncərə ===== */
+.timeout-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(4px);
+    outline: none;
+    animation: logout-fade 0.16s ease;
+}
+
+.timeout-card {
+    width: min(420px, calc(100vw - 32px));
+    padding: 28px 26px 22px;
+    border-radius: 20px;
+    background: #ffffff;
+    color: #060607;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    animation: logout-pop 0.2s ease;
+}
+
+.timeout-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 14px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(240, 71, 71, 0.14);
+    color: #f04747;
+    font-size: 24px;
+}
+
+.timeout-card h3 {
+    margin: 0 0 10px;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.timeout-reason {
+    margin: 0 0 12px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(128, 132, 142, 0.14);
+    font-size: 15px;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.timeout-clock {
+    margin: 4px 0 6px;
+    font-size: 44px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 1px;
+}
+
+.timeout-until,
+.timeout-note {
+    display: block;
+    color: #80848e;
+    font-size: 12px;
+}
+
+.timeout-note {
+    margin-top: 14px;
+}
+
+html.theme-dark .timeout-card {
+    background: #2b2d31;
+    color: #f2f3f5;
+}

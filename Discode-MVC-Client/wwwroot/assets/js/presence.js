@@ -252,6 +252,10 @@
                     document.dispatchEvent(new CustomEvent("discode-account-warning", { detail: data }));
                 });
 
+                connection.on("AccountTimeout", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-account-timeout", { detail: data }));
+                });
+
                 connection.on("ForceLogout", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-force-logout", { detail: data }));
                 });
