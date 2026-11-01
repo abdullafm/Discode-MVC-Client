@@ -5,7 +5,7 @@
     string KindClass(string kind) => kind switch
     {
         "Ban" or "ServerBan" or "Delete" or "ServerDelete" => "is-banned",
-        "Warn" or "Timeout" => "is-timeout",
+        "Warn" or "Timeout" or "ChangeRole" => "is-timeout",
         "Unban" or "ServerUnban" or "ClearTimeout" => "is-public",
         _ => ""
     };
@@ -146,6 +146,22 @@ else
 
         <div class="adm-panel adm-actions-panel">
             <h3>Actions</h3>
+            @if (Model.CanChangeRole)
+            {
+                var currentRole = Model.Roles.FirstOrDefault() ?? "Member";
+                <details class="adm-action">
+                    <summary><i class="fa-solid fa-user-shield"></i> Role: @currentRole</summary>
+                    <form method="post" asp-area="Admin" asp-controller="Users" asp-action="ChangeRole" asp-route-id="@Model.Id" data-confirm="They are signed out right now and get the new permissions the next time they sign in." data-confirm-title="Change this role?" data-confirm-button="Change role" data-confirm-tone="warning" data-confirm-icon="fa-user-shield">
+                        <select name="role" class="adm-select">
+                            @foreach (var option in new[] { "Member", "Admin", "SuperAdmin" })
+                            {
+                                <option value="@option" selected="@(option == currentRole)">@option</option>
+                            }
+                        </select>
+                        <button type="submit" class="adm-btn is-amber"><i class="fa-solid fa-user-shield"></i> Change role</button>
+                    </form>
+                </details>
+            }
             @if (Model.IsDeleted)
             {
                 <p class="adm-empty-small">This account was deleted. Nothing more can be done to it.</p>

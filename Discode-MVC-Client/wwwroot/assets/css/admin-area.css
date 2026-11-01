@@ -1630,3 +1630,7 @@ html.theme-dark .adm-chip.is-timeout {
     filter: none;
     transform: none;
 }
+
+.adm-dl + .adm-history {
+    margin-top: 22px;
+}

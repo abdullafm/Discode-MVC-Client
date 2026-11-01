@@ -124,6 +124,13 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> ChangeRole(string id, string? role)
+        {
+            return Moderate(id, "The role was changed. They are signed out so the new role applies.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/role", new { role = role ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(string id, string? reason, string? userName)
         {
             var request = new HttpRequestMessage(HttpMethod.Delete, "api/admin/users/" + id)
