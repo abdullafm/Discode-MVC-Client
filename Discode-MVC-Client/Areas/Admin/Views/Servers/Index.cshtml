@@ -59,7 +59,7 @@
                             }
                             else
                             {
-                                <img class="adm-zoom" src="@server.IconUrl" alt="@server.Name" title="Click to enlarge">
+                                <span class="adm-zoom-wrap is-small"><img class="adm-zoom" src="@server.IconUrl" alt="@server.Name"></span>
                             }
                             <span><strong><a class="adm-link" asp-area="Admin" asp-controller="Servers" asp-action="Details" asp-route-id="@server.Id">@server.Name</a></strong><small>#@server.Id</small></span>
                         </div>

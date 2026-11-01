@@ -165,7 +165,7 @@
     place-items: center;
     background: rgba(0, 0, 0, 0);
     backdrop-filter: blur(0);
-    cursor: zoom-out;
+    cursor: pointer;
     transition: background-color 0.22s ease, backdrop-filter 0.22s ease;
 }
 

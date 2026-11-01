@@ -1402,3 +1402,23 @@ html.theme-dark .adm-modal-text {
 .adm-zoom-wrap:hover::after {
     opacity: 1;
 }
+
+/* kursor zoom deyil, usteleyende sekilin ustunde boyutme ikonu cixir */
+.adm-zoom,
+.adm-zoom-wrap {
+    cursor: pointer;
+}
+
+.adm-table .adm-zoom:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.adm-table .adm-person > .adm-zoom-wrap {
+    width: 36px;
+    height: 36px;
+}
+
+.adm-zoom-wrap.is-small::after {
+    font-size: 13px;
+}
