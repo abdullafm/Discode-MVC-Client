@@ -67,6 +67,8 @@
             <nav class="discover-nav" aria-label="Admin">
                 <h1>Admin Panel</h1>
                 <a class="discover-cat @(section == "overview" ? "on" : "")" href="@Url.Action("Index", "Home", new { area = "Admin" })"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+                <a class="discover-cat @(section == "servers" ? "on" : "")" href="@Url.Action("Index", "Servers", new { area = "Admin" })"><i class="fa-solid fa-server"></i> Servers</a>
+                <a class="discover-cat @(section == "users" ? "on" : "")" href="@Url.Action("Index", "Users", new { area = "Admin" })"><i class="fa-solid fa-users"></i> Members</a>
             </nav>
             <div class="sidebar-call" id="sidebar-call" hidden>
                 <div class="sidebar-call-info">

@@ -2,13 +2,13 @@
 @{
     var tabs = new[]
     {
-        (Key: "", Label: "All users"),
+        (Key: "", Label: "All members"),
         (Key: "admins", Label: "Admins"),
         (Key: "superadmins", Label: "SuperAdmins"),
-        (Key: "banned", Label: "Banned users")
+        (Key: "banned", Label: "Banned members")
     };
     var current = tabs.First(x => x.Key == Model.Filter);
-    ViewData["Title"] = Model.Filter == "" ? "Users" : current.Label;
+    ViewData["Title"] = Model.Filter == "" ? "Members" : current.Label;
     ViewData["Section"] = "users";
 }
 <div class="adm-tabs">
@@ -22,7 +22,7 @@
     <form method="get" class="adm-search" asp-area="Admin" asp-controller="Users" asp-action="Index">
         <input type="hidden" name="filter" value="@Model.Filter">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="search" name="search" value="@Model.Search" placeholder="Search by username, name or email" autocomplete="off">
+        <input type="search" name="search" value="@Model.Search" placeholder="Search members by username, name or email" autocomplete="off">
     </form>
     <span class="adm-count">@Model.Total @(Model.Filter == "" ? ViewData["Title"]?.ToString()?.ToLowerInvariant() : current.Label.ToLowerInvariant())</span>
 </div>
@@ -31,7 +31,7 @@
     <table class="adm-table">
         <thead>
             <tr>
-                <th>User</th>
+                <th>Member</th>
                 <th>Email</th>
                 <th>Roles</th>
                 <th>Account</th>
@@ -65,7 +65,7 @@
             }
             @if (Model.Items.Count == 0)
             {
-                <tr><td colspan="7" class="adm-empty">No users found.</td></tr>
+                <tr><td colspan="7" class="adm-empty">No members found.</td></tr>
             }
         </tbody>
     </table>
