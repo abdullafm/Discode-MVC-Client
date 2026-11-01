@@ -1,26 +1,39 @@
 "use strict";
 (function () {
-    var picker = document.getElementById("adm-picker");
-    if (!picker) return;
-    var trigger = picker.querySelector(".adm-picker-trigger");
-    var menu = picker.querySelector(".adm-picker-menu");
+    var pickers = document.querySelectorAll(".adm-picker");
+    if (!pickers.length) return;
 
-    function setOpen(open) {
-        menu.hidden = !open;
-        picker.classList.toggle("open", open);
-        trigger.setAttribute("aria-expanded", open ? "true" : "false");
+    function close(picker) {
+        var menu = picker.querySelector(".adm-picker-menu");
+        var trigger = picker.querySelector(".adm-picker-trigger");
+        menu.hidden = true;
+        picker.classList.remove("open");
+        trigger.setAttribute("aria-expanded", "false");
     }
 
-    trigger.addEventListener("click", function (event) {
-        event.stopPropagation();
-        setOpen(menu.hidden);
+    pickers.forEach(function (picker) {
+        var trigger = picker.querySelector(".adm-picker-trigger");
+        var menu = picker.querySelector(".adm-picker-menu");
+
+        trigger.addEventListener("click", function (event) {
+            event.stopPropagation();
+            var open = menu.hidden;
+            pickers.forEach(close);
+            if (open) {
+                menu.hidden = false;
+                picker.classList.add("open");
+                trigger.setAttribute("aria-expanded", "true");
+            }
+        });
     });
 
     document.addEventListener("click", function (event) {
-        if (!picker.contains(event.target)) setOpen(false);
+        pickers.forEach(function (picker) {
+            if (!picker.contains(event.target)) close(picker);
+        });
     });
 
     document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") setOpen(false);
+        if (event.key === "Escape") pickers.forEach(close);
     });
 })();

@@ -10,8 +10,9 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
         {
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? view)
         {
+            ViewData["View"] = (view ?? string.Empty).Trim().ToLowerInvariant();
             var overview = new AdminOverviewVM();
             try
             {

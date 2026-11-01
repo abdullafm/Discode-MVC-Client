@@ -2,8 +2,60 @@
 @{
     ViewData["Title"] = "Overview";
     ViewData["Section"] = "overview";
+    var view = ViewData["View"] as string ?? string.Empty;
+    var groups = new[]
+    {
+        (Key: "users", Label: "Users", Icon: "fa-users"),
+        (Key: "bans", Label: "Bans", Icon: "fa-gavel"),
+        (Key: "servers", Label: "Servers", Icon: "fa-server"),
+        (Key: "content", Label: "Content", Icon: "fa-image"),
+        (Key: "reports", Label: "Reports", Icon: "fa-flag"),
+        (Key: "all", Label: "Show everything", Icon: "fa-list")
+    };
+    var picked = groups.FirstOrDefault(x => x.Key == view);
+    bool Show(string key) => view == "all" || view == key;
     var reasonMax = Model.Reports.TopReasons.Count == 0 ? 1 : Model.Reports.TopReasons.Max(x => x.Count);
 }
+<div class="adm-pick-row">
+    <div class="adm-picker adm-picker-wide">
+        <button type="button" class="adm-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
+            @if (picked.Key is null)
+            {
+                <i class="fa-solid fa-table-cells-large"></i>
+                <span class="is-placeholder">Choose a category</span>
+            }
+            else
+            {
+                <i class="fa-solid @picked.Icon"></i>
+                <span>@picked.Label</span>
+            }
+            <i class="fa-solid fa-chevron-down adm-picker-arrow"></i>
+        </button>
+        <ul class="adm-picker-menu" role="listbox" hidden>
+            <li role="option">
+                <a class="@(picked.Key is null ? "on" : "")" href="@Url.Action("Index", "Home", new { area = "Admin" })">
+                    <i class="fa-solid fa-ban"></i><span>None</span><i class="fa-solid fa-check"></i>
+                </a>
+            </li>
+            @foreach (var group in groups)
+            {
+                <li role="option">
+                    <a class="@(group.Key == view ? "on" : "")" href="@Url.Action("Index", "Home", new { area = "Admin", view = group.Key })">
+                        <i class="fa-solid @group.Icon"></i><span>@group.Label</span><i class="fa-solid fa-check"></i>
+                    </a>
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+
+@if (picked.Key is null)
+{
+    <p class="adm-hint">Pick a category above to see its numbers.</p>
+}
+
+@if (Show("users"))
+{
 <div class="adm-group">
     <h2><i class="fa-solid fa-users"></i> Users</h2>
     <div class="adm-cards">
@@ -17,7 +69,10 @@
         <div class="adm-card"><i class="fa-solid fa-user-slash"></i><strong>@Model.Users.Blocks</strong><span>User blocks</span></div>
     </div>
 </div>
+}
 
+@if (Show("bans"))
+{
 <div class="adm-group">
     <h2><i class="fa-solid fa-gavel"></i> Bans</h2>
     <div class="adm-cards">
@@ -29,7 +84,10 @@
     </div>
     <p class="adm-note">Platform-wide user or server bans and Nitro purchases are not stored yet, so they are not shown.</p>
 </div>
+}
 
+@if (Show("servers"))
+{
 <div class="adm-group">
     <h2><i class="fa-solid fa-server"></i> Servers</h2>
     <div class="adm-cards">
@@ -39,7 +97,10 @@
         <div class="adm-card"><i class="fa-solid fa-people-group"></i><strong>@Model.Servers.Memberships</strong><span>Memberships</span></div>
     </div>
 </div>
+}
 
+@if (Show("content"))
+{
 <div class="adm-group">
     <h2><i class="fa-solid fa-image"></i> Content</h2>
     <div class="adm-cards">
@@ -53,7 +114,10 @@
         <div class="adm-card"><i class="fa-solid fa-hashtag"></i><strong>@Model.Content.ServerMessages</strong><span>Server messages</span></div>
     </div>
 </div>
+}
 
+@if (Show("reports"))
+{
 <div class="adm-group">
     <h2><i class="fa-solid fa-flag"></i> Reports</h2>
     <div class="adm-cards">
@@ -77,3 +141,5 @@
         </div>
     }
 </div>
+}
+
