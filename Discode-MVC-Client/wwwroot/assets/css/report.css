@@ -537,3 +537,43 @@ html.theme-dark .timeout-card {
     background: #2b2d31;
     color: #f2f3f5;
 }
+
+.timeout-icon {
+    transition: background-color 0.35s ease, color 0.35s ease;
+}
+
+.timeout-icon.is-done {
+    background: rgba(35, 165, 90, 0.16);
+    color: #23a55a;
+    animation: timeout-flip 0.5s ease;
+}
+
+.timeout-icon.is-done i {
+    animation: timeout-check 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.18s both;
+}
+
+@keyframes timeout-flip {
+    0% { transform: rotate(0) scale(1); }
+    45% { transform: rotate(180deg) scale(0.7); }
+    100% { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes timeout-check {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.timeout-layer.is-leaving {
+    opacity: 0;
+    transition: opacity 0.26s ease;
+}
+
+.timeout-layer.is-leaving .timeout-card {
+    transform: scale(0.96);
+    transition: transform 0.26s ease;
+}
+
+.timeout-until[hidden],
+.timeout-reason[hidden] {
+    display: none;
+}

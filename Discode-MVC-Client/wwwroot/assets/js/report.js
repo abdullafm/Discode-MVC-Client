@@ -419,12 +419,31 @@ window.discodeReel = function (url) {
 
 // Timeout: a modal nobody can close until the timeout is over (the layer lives on <body>, so it survives in-app navigation)
 (function () {
-    function hide() {
-        var layer = document.querySelector(".timeout-layer");
-        if (!layer) return;
+    function close(layer) {
         clearInterval(layer._timer);
         layer.remove();
         document.documentElement.classList.remove("is-timed-out");
+    }
+
+    // The red hourglass turns into a green check, then the window leaves
+    function hide() {
+        var layer = document.querySelector(".timeout-layer");
+        if (!layer || layer._finishing) return;
+        layer._finishing = true;
+        clearInterval(layer._timer);
+
+        var icon = layer.querySelector(".timeout-icon");
+        icon.classList.add("is-done");
+        setTimeout(function () { icon.innerHTML = '<i class="fa-solid fa-check"></i>'; }, 180);
+        layer.querySelector("h3").textContent = "Timeout is over";
+        layer.querySelector(".timeout-reason").hidden = true;
+        layer.querySelector(".timeout-until").hidden = true;
+        layer.querySelector(".timeout-note").textContent = "You can use Discode again.";
+
+        setTimeout(function () {
+            layer.classList.add("is-leaving");
+            setTimeout(function () { close(layer); }, 260);
+        }, 1400);
     }
 
     function show(data) {
@@ -434,6 +453,7 @@ window.discodeReel = function (url) {
         }
 
         var layer = document.querySelector(".timeout-layer");
+        if (layer && layer._finishing) close(layer), layer = null;
         if (!layer) {
             layer = document.createElement("div");
             layer.className = "timeout-layer";
