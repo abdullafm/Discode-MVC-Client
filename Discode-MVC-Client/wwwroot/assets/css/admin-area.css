@@ -1634,3 +1634,44 @@ html.theme-dark .adm-chip.is-timeout {
 .adm-dl + .adm-history {
     margin-top: 22px;
 }
+
+.adm-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.adm-brand-picked {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.adm-brand-picked[hidden],
+.adm-brand-upload [data-pick][hidden] {
+    display: none;
+}
+
+.adm-brand-filename {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #80848e;
+    font-size: 13px;
+}
+
+.adm-btn.is-outline {
+    background: transparent;
+    color: inherit;
+    border: 1px solid rgba(128, 132, 142, 0.5);
+    cursor: pointer;
+}
+
+.adm-btn.is-outline:hover {
+    background: rgba(128, 132, 142, 0.14);
+}
