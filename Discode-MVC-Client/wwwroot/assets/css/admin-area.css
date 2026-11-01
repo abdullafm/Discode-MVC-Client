@@ -181,3 +181,408 @@ html.theme-dark .adm-bars {
     background: #2b2d31;
     border-color: rgba(255, 255, 255, 0.08);
 }
+
+/* ===== Daha yigcam kartlar ===== */
+.adm-group {
+    margin-bottom: 20px;
+}
+
+.adm-group .adm-cards {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+}
+
+.adm-card {
+    padding: 12px 14px;
+    border-radius: 12px;
+}
+
+.adm-card i {
+    margin-bottom: 4px;
+    font-size: 16px;
+}
+
+.adm-card strong {
+    font-size: 22px;
+    line-height: 1.1;
+}
+
+.adm-card span {
+    font-size: 12px;
+}
+
+/* ===== Bolme secici (dropdown) ===== */
+.adm-picker {
+    position: relative;
+    margin: 4px 8px 0;
+}
+
+.adm-picker-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #060607;
+    font: inherit;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, background-color 0.16s ease;
+}
+
+.adm-picker-trigger:hover {
+    background: #f7f7f8;
+}
+
+.adm-picker.open .adm-picker-trigger {
+    border-color: #5865f2;
+    box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.18);
+}
+
+.adm-picker-trigger > i:first-child {
+    width: 18px;
+    color: #5865f2;
+    text-align: center;
+}
+
+.adm-picker-trigger span {
+    flex: 1;
+}
+
+.adm-picker-arrow {
+    color: #80848e;
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+.adm-picker.open .adm-picker-arrow {
+    transform: rotate(180deg);
+}
+
+.adm-picker-menu {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 10;
+    margin: 0;
+    padding: 6px;
+    list-style: none;
+    border: 1px solid rgba(128, 132, 142, 0.25);
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+    animation: adm-pop 0.16s ease;
+}
+
+.adm-picker-menu[hidden] {
+    display: none;
+}
+
+@keyframes adm-pop {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.97);
+    }
+}
+
+.adm-picker-menu a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    color: #060607;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.14s ease;
+}
+
+.adm-picker-menu a:hover {
+    background: #f2f3f5;
+}
+
+.adm-picker-menu a.on {
+    background: rgba(88, 101, 242, 0.12);
+}
+
+.adm-picker-menu a > i:first-child {
+    width: 18px;
+    color: #5865f2;
+    text-align: center;
+}
+
+.adm-picker-menu a span {
+    flex: 1;
+}
+
+.adm-picker-menu a .fa-check {
+    color: #5865f2;
+    font-size: 12px;
+    visibility: hidden;
+}
+
+.adm-picker-menu a.on .fa-check {
+    visibility: visible;
+}
+
+/* ===== Siyahi sehifeleri ===== */
+.adm-list-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.adm-search {
+    position: relative;
+    flex: 1;
+    max-width: 420px;
+}
+
+.adm-search i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    color: #80848e;
+    transform: translateY(-50%);
+}
+
+.adm-search input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    outline: none;
+    background: #ffffff;
+    color: inherit;
+    font: inherit;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.adm-search input:focus {
+    border-color: #5865f2;
+    box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.18);
+}
+
+.adm-count {
+    color: #80848e;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.adm-table-wrap {
+    overflow-x: auto;
+    border: 1px solid rgba(128, 132, 142, 0.25);
+    border-radius: 14px;
+    background: #ffffff;
+}
+
+.adm-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.adm-table th {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(128, 132, 142, 0.25);
+    color: #80848e;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.adm-table td {
+    padding: 11px 16px;
+    border-bottom: 1px solid rgba(128, 132, 142, 0.14);
+    vertical-align: middle;
+}
+
+.adm-table tbody tr {
+    transition: background-color 0.14s ease;
+}
+
+.adm-table tbody tr:hover {
+    background: rgba(128, 132, 142, 0.08);
+}
+
+.adm-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.adm-person {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.adm-person img,
+.adm-letter {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.adm-letter {
+    display: grid;
+    place-items: center;
+    background: #5865f2;
+    color: #ffffff;
+    font-weight: 800;
+}
+
+.adm-person span {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+}
+
+.adm-person small,
+.adm-muted {
+    color: #80848e;
+}
+
+.adm-bad {
+    color: #f23f43;
+    font-weight: 800;
+}
+
+.adm-chip {
+    display: inline-block;
+    margin-right: 4px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(128, 132, 142, 0.18);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.adm-chip.is-public {
+    background: rgba(35, 165, 89, 0.16);
+    color: #1f9d55;
+}
+
+.adm-chip.is-private {
+    background: rgba(240, 178, 50, 0.2);
+    color: #b17800;
+}
+
+.adm-chip.role-superadmin {
+    background: rgba(242, 63, 67, 0.16);
+    color: #d9363a;
+}
+
+.adm-chip.role-admin {
+    background: rgba(88, 101, 242, 0.16);
+    color: #5865f2;
+}
+
+.adm-empty {
+    padding: 28px 16px;
+    color: #80848e;
+    text-align: center;
+}
+
+.adm-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 16px;
+    color: #80848e;
+    font-weight: 700;
+}
+
+.adm-pager a {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #060607;
+    text-decoration: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.16s ease, transform 0.16s ease;
+}
+
+.adm-pager a:hover {
+    background: #5865f2;
+    color: #ffffff;
+    transform: scale(1.08);
+}
+
+.adm-pager a.is-off {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* ===== Dark ===== */
+html.theme-dark .adm-picker-trigger,
+html.theme-dark .adm-search input,
+html.theme-dark .adm-pager a {
+    background: #1e1f22;
+    color: #f2f3f5;
+}
+
+html.theme-dark .adm-picker-trigger:hover {
+    background: #25272b;
+}
+
+html.theme-dark .adm-picker-menu {
+    background: #2b2d31;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.theme-dark .adm-picker-menu a {
+    color: #f2f3f5;
+}
+
+html.theme-dark .adm-picker-menu a:hover {
+    background: #35373c;
+}
+
+html.theme-dark .adm-picker-menu a.on {
+    background: rgba(88, 101, 242, 0.25);
+}
+
+html.theme-dark .adm-table-wrap {
+    background: #2b2d31;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+html.theme-dark .adm-table th,
+html.theme-dark .adm-table td {
+    border-color: rgba(255, 255, 255, 0.07);
+}
+
+html.theme-dark .adm-chip.is-private {
+    color: #f0b232;
+}
+
+html.theme-dark .adm-chip.is-public {
+    color: #3ddc84;
+}
+
+.adm-person > .adm-letter {
+    display: grid;
+    place-items: center;
+    line-height: 1;
+}
+
+html.theme-dark .adm-table strong {
+    color: #f2f3f5;
+}

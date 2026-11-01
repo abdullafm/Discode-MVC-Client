@@ -1,6 +1,14 @@
 @using Discode_MVC_Client.ViewModels.Account
 @{
     var profile = ViewData["AdminProfile"] as ProfileUIVM ?? new ProfileUIVM();
+    var section = ViewData["Section"] as string ?? "overview";
+    var sections = new[]
+    {
+        (Key: "overview", Label: "Overview", Icon: "fa-chart-simple", Controller: "Home"),
+        (Key: "users", Label: "Users", Icon: "fa-users", Controller: "Users"),
+        (Key: "servers", Label: "Servers", Icon: "fa-server", Controller: "Servers")
+    };
+    var current = sections.First(x => x.Key == section);
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -65,7 +73,25 @@
         <aside class="conversation-sidebar" id="conversations">
             <nav class="discover-nav" aria-label="Admin">
                 <h1>Admin Panel</h1>
-                <a class="discover-cat on" href="@Url.Action("Index", "Home", new { area = "Admin" })"><i class="fa-solid fa-chart-simple"></i> Overview</a>
+                <div class="adm-picker" id="adm-picker">
+                    <button type="button" class="adm-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
+                        <i class="fa-solid @current.Icon"></i>
+                        <span>@current.Label</span>
+                        <i class="fa-solid fa-chevron-down adm-picker-arrow"></i>
+                    </button>
+                    <ul class="adm-picker-menu" role="listbox" hidden>
+                        @foreach (var item in sections)
+                        {
+                            <li role="option">
+                                <a class="@(item.Key == section ? "on" : "")" href="@Url.Action("Index", item.Controller, new { area = "Admin" })">
+                                    <i class="fa-solid @item.Icon"></i>
+                                    <span>@item.Label</span>
+                                    <i class="fa-solid fa-check"></i>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </div>
             </nav>
             <div class="sidebar-call" id="sidebar-call" hidden>
                 <div class="sidebar-call-info">
@@ -670,6 +696,7 @@
         <script src="~/assets/js/calls.js" asp-append-version="true"></script>
         <script src="~/assets/js/groupcalls.js" asp-append-version="true"></script>
         <script src="~/assets/js/notifications.js" asp-append-version="true"></script>
+        <script src="~/assets/js/admin-area.js" asp-append-version="true"></script>
         @RenderSection("Scripts", required: false)
     </footer>
 </body>

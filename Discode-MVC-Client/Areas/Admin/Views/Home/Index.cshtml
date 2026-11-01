@@ -1,6 +1,7 @@
 @model AdminOverviewVM
 @{
     ViewData["Title"] = "Overview";
+    ViewData["Section"] = "overview";
     var reasonMax = Model.Reports.TopReasons.Count == 0 ? 1 : Model.Reports.TopReasons.Max(x => x.Count);
 }
 <div class="adm-group">
