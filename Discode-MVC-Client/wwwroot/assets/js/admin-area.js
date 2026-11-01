@@ -1,11 +1,73 @@
 "use strict";
-document.addEventListener("submit", function (event) {
-    var message = event.target.getAttribute && event.target.getAttribute("data-confirm");
-    if (message && !window.confirm(message)) {
+// Confirm dialog for forms with data-confirm (replaces the browser's own dialog)
+(function () {
+    var layer = null;
+    var pending = null;
+
+    function close() {
+        if (layer) layer.hidden = true;
+        pending = null;
+    }
+
+    function open(form) {
+        if (!layer || !document.body.contains(layer)) {
+            layer = document.createElement("div");
+            layer.className = "adm-modal-layer";
+            layer.innerHTML = '<div class="adm-modal" role="alertdialog" aria-modal="true">' +
+                '<div class="adm-modal-icon"><i class="fa-solid"></i></div>' +
+                '<h3 class="adm-modal-title"></h3>' +
+                '<p class="adm-modal-text"></p>' +
+                '<div class="adm-modal-actions">' +
+                '<button type="button" class="adm-modal-cancel">Cancel</button>' +
+                '<button type="button" class="adm-modal-ok"></button>' +
+                '</div></div>';
+            document.body.appendChild(layer);
+            layer.addEventListener("click", function (event) {
+                if (event.target === layer || event.target.closest(".adm-modal-cancel")) {
+                    close();
+                } else if (event.target.closest(".adm-modal-ok")) {
+                    var form = pending;
+                    close();
+                    if (form) {
+                        form.setAttribute("data-confirmed", "1");
+                        if (form.requestSubmit) form.requestSubmit();
+                        else form.submit();
+                    }
+                }
+            });
+        }
+
+        var tone = form.getAttribute("data-confirm-tone") || "danger";
+        var modal = layer.querySelector(".adm-modal");
+        modal.className = "adm-modal is-" + tone;
+        layer.querySelector(".adm-modal-icon i").className = "fa-solid " + (form.getAttribute("data-confirm-icon") || (tone === "success" ? "fa-rotate-left" : "fa-triangle-exclamation"));
+        layer.querySelector(".adm-modal-title").textContent = form.getAttribute("data-confirm-title") || "Are you sure?";
+        layer.querySelector(".adm-modal-text").textContent = form.getAttribute("data-confirm");
+        layer.querySelector(".adm-modal-ok").textContent = form.getAttribute("data-confirm-button") || "Confirm";
+        pending = form;
+        layer.hidden = false;
+        layer.querySelector(".adm-modal-ok").focus();
+    }
+
+    document.addEventListener("submit", function (event) {
+        var form = event.target;
+        if (!form.getAttribute || !form.getAttribute("data-confirm")) return;
+        if (form.getAttribute("data-confirmed") === "1") {
+            form.removeAttribute("data-confirmed");
+            return;
+        }
         event.preventDefault();
         event.stopImmediatePropagation();
-    }
-}, true);
+        open(form);
+    }, true);
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && layer && !layer.hidden) {
+            event.stopImmediatePropagation();
+            close();
+        }
+    }, true);
+})();
 
 (function () {
     // Server detail: search and page through the member list without leaving the page

@@ -1229,3 +1229,126 @@ html.theme-dark .adm-textarea {
 .adm-back-link:hover i {
     transform: translateX(-3px);
 }
+
+/* ===== Tesdiq modali ===== */
+.adm-modal-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(2px);
+    animation: adm-fade 0.16s ease;
+}
+
+.adm-modal-layer[hidden] {
+    display: none;
+}
+
+.adm-modal {
+    width: min(400px, calc(100vw - 32px));
+    padding: 26px 24px 20px;
+    border-radius: 20px;
+    background: #ffffff;
+    color: #060607;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+    animation: adm-modal-in 0.2s ease;
+}
+
+.adm-modal-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 14px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(242, 63, 67, 0.14);
+    color: #f23f43;
+    font-size: 22px;
+}
+
+.adm-modal.is-success .adm-modal-icon {
+    background: rgba(35, 165, 89, 0.16);
+    color: #23a559;
+}
+
+.adm-modal-title {
+    margin: 0 0 8px;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.adm-modal-text {
+    margin: 0 0 22px;
+    color: #4d5058;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.adm-modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.adm-modal-actions button {
+    flex: 1;
+    padding: 11px 16px;
+    border: 0;
+    border-radius: 12px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.adm-modal-cancel {
+    background: rgba(128, 132, 142, 0.18);
+    color: inherit;
+}
+
+.adm-modal-cancel:hover {
+    background: rgba(128, 132, 142, 0.3);
+}
+
+.adm-modal-ok {
+    background: #f23f43;
+    color: #ffffff;
+}
+
+.adm-modal.is-success .adm-modal-ok {
+    background: #23a559;
+}
+
+.adm-modal-ok:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+    filter: brightness(1.08);
+}
+
+.adm-modal-ok:focus-visible,
+.adm-modal-cancel:focus-visible {
+    outline: 3px solid rgba(88, 101, 242, 0.5);
+    outline-offset: 2px;
+}
+
+html.theme-dark .adm-modal {
+    background: #2b2d31;
+    color: #f2f3f5;
+}
+
+html.theme-dark .adm-modal-text {
+    color: #b5bac1;
+}
+
+@keyframes adm-fade {
+    from { opacity: 0; }
+}
+
+@keyframes adm-modal-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.95);
+    }
+}
