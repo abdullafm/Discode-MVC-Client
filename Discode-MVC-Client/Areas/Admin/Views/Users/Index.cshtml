@@ -1,14 +1,30 @@
 @model AdminUserListVM
 @{
-    ViewData["Title"] = "Users";
+    var tabs = new[]
+    {
+        (Key: "", Label: "All users"),
+        (Key: "admins", Label: "Admins"),
+        (Key: "superadmins", Label: "SuperAdmins"),
+        (Key: "banned", Label: "Banned users")
+    };
+    var current = tabs.First(x => x.Key == Model.Filter);
+    ViewData["Title"] = Model.Filter == "" ? "Users" : current.Label;
     ViewData["Section"] = "users";
 }
+<div class="adm-tabs">
+    @foreach (var tab in tabs)
+    {
+        <a class="@(tab.Key == Model.Filter ? "on" : "")" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-filter="@tab.Key">@tab.Label</a>
+    }
+</div>
+
 <div class="adm-list-head">
     <form method="get" class="adm-search" asp-area="Admin" asp-controller="Users" asp-action="Index">
+        <input type="hidden" name="filter" value="@Model.Filter">
         <i class="fa-solid fa-magnifying-glass"></i>
         <input type="search" name="search" value="@Model.Search" placeholder="Search by username, name or email" autocomplete="off">
     </form>
-    <span class="adm-count">@Model.Total users</span>
+    <span class="adm-count">@Model.Total @current.Label.ToLowerInvariant()</span>
 </div>
 
 <div class="adm-table-wrap">
@@ -58,8 +74,8 @@
 @if (Model.TotalPages > 1)
 {
     <div class="adm-pager">
-        <a class="@(Model.Page <= 1 ? "is-off" : "")" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-search="@Model.Search" asp-route-page="@(Model.Page - 1)"><i class="fa-solid fa-chevron-left"></i></a>
+        <a class="@(Model.Page <= 1 ? "is-off" : "")" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-filter="@Model.Filter" asp-route-search="@Model.Search" asp-route-page="@(Model.Page - 1)"><i class="fa-solid fa-chevron-left"></i></a>
         <span>Page @Model.Page / @Model.TotalPages</span>
-        <a class="@(Model.Page >= Model.TotalPages ? "is-off" : "")" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-search="@Model.Search" asp-route-page="@(Model.Page + 1)"><i class="fa-solid fa-chevron-right"></i></a>
+        <a class="@(Model.Page >= Model.TotalPages ? "is-off" : "")" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-filter="@Model.Filter" asp-route-search="@Model.Search" asp-route-page="@(Model.Page + 1)"><i class="fa-solid fa-chevron-right"></i></a>
     </div>
 }

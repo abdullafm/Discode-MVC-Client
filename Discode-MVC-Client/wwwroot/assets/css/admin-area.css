@@ -606,3 +606,160 @@ html.theme-dark .adm-table strong {
     color: #80848e;
     font-size: 14px;
 }
+
+/* ===== Overview: statistika kartlari ===== */
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px 20px;
+    border: 1px solid rgba(128, 132, 142, 0.2);
+    border-radius: 18px;
+    background: #ffffff;
+    color: #1a1b1e;
+    text-decoration: none;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+
+a.stat-card:hover,
+.stat-staff:hover {
+    transform: translateY(-2px);
+    border-color: rgba(88, 101, 242, 0.45);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1);
+}
+
+.stat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: #4d5058;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.stat-icon {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    font-size: 16px;
+}
+
+.tone-blue { background: #eceefd; color: #5865f2; }
+.tone-green { background: #e3f4ea; color: #23a559; }
+.tone-purple { background: #f0e9fb; color: #8a52d8; }
+.tone-red { background: #fde8e8; color: #e03e3e; }
+.tone-amber { background: #fdf0dc; color: #c98400; }
+
+.stat-card strong {
+    margin-top: 8px;
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.stat-card small {
+    color: #80848e;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.stat-card small.tone-green-text { color: #1f9d55; }
+.stat-card small.tone-red-text { color: #e03e3e; }
+
+.stat-link {
+    color: #5865f2;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.stat-link i {
+    margin-left: 4px;
+    font-size: 10px;
+    transition: transform 0.16s ease;
+}
+
+.stat-link:hover i {
+    transform: translateX(3px);
+}
+
+/* kart icindeki mini dropdown */
+.adm-picker-mini {
+    margin: 0;
+    min-width: 150px;
+}
+
+.adm-picker-mini .adm-picker-trigger {
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: rgba(128, 132, 142, 0.12);
+    box-shadow: none;
+    font-size: 14px;
+}
+
+.adm-picker-mini .adm-picker-trigger:hover {
+    background: rgba(128, 132, 142, 0.2);
+}
+
+/* Users / Servers filter tablari */
+.adm-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.adm-tabs a {
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: rgba(128, 132, 142, 0.14);
+    color: #4d5058;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.adm-tabs a:hover {
+    background: rgba(128, 132, 142, 0.24);
+}
+
+.adm-tabs a.on {
+    background: #5865f2;
+    color: #ffffff;
+}
+
+html.theme-dark .stat-card {
+    background: #2b2d31;
+    border-color: rgba(255, 255, 255, 0.08);
+    color: #f2f3f5;
+}
+
+html.theme-dark .stat-head {
+    color: #c4c9d1;
+}
+
+html.theme-dark .tone-blue { background: rgba(88, 101, 242, 0.2); }
+html.theme-dark .tone-green { background: rgba(35, 165, 89, 0.2); }
+html.theme-dark .tone-purple { background: rgba(138, 82, 216, 0.22); }
+html.theme-dark .tone-red { background: rgba(242, 63, 67, 0.2); }
+html.theme-dark .tone-amber { background: rgba(240, 178, 50, 0.2); }
+
+html.theme-dark .adm-tabs a {
+    color: #c4c9d1;
+}
+
+html.theme-dark .adm-tabs a.on {
+    color: #ffffff;
+}

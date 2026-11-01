@@ -2,130 +2,61 @@
 @{
     ViewData["Title"] = "Overview";
     ViewData["Section"] = "overview";
-    var view = ViewData["View"] as string ?? string.Empty;
-    if (view == "bans" || view == "reports") view = "moderation";
-    var groups = new[]
-    {
-        (Key: "attention", Label: "Needs attention", Icon: "fa-bolt"),
-        (Key: "users", Label: "Users", Icon: "fa-users"),
-        (Key: "moderation", Label: "Moderation", Icon: "fa-gavel"),
-        (Key: "servers", Label: "Servers", Icon: "fa-server"),
-        (Key: "content", Label: "Content", Icon: "fa-image"),
-        (Key: "all", Label: "Show everything", Icon: "fa-list")
-    };
-    var picked = groups.FirstOrDefault(x => x.Key == view);
-    bool Show(string key) => view == "all" || view == key;
-    var reasonMax = Model.Reports.TopReasons.Count == 0 ? 1 : Model.Reports.TopReasons.Max(x => x.Count);
 }
+<div class="stat-grid">
+    <a class="stat-card" asp-area="Admin" asp-controller="Users" asp-action="Index">
+        <div class="stat-head"><span>Users</span><i class="stat-icon tone-blue fa-solid fa-users"></i></div>
+        <strong>@Model.Users.Total.ToString("N0")</strong>
+        <small class="tone-green-text">+@Model.Users.NewLast7Days this week</small>
+    </a>
 
-<div class="adm-pick-row">
-    <div class="adm-picker adm-picker-wide">
-        <button type="button" class="adm-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
-            @if (picked.Key is null)
-            {
-                <i class="fa-solid fa-table-cells-large"></i>
-                <span class="is-placeholder">Choose a category</span>
-            }
-            else
-            {
-                <i class="fa-solid @picked.Icon"></i>
-                <span>@picked.Label</span>
-            }
-            <i class="fa-solid fa-chevron-down adm-picker-arrow"></i>
-        </button>
-        <ul class="adm-picker-menu" role="listbox" hidden>
-            <li role="option">
-                <a class="@(picked.Key is null ? "on" : "")" href="@Url.Action("Index", "Home", new { area = "Admin" })">
-                    <i class="fa-solid fa-ban"></i><span>None</span><i class="fa-solid fa-check"></i>
-                </a>
-            </li>
-            @foreach (var group in groups)
-            {
-                <li role="option">
-                    <a class="@(group.Key == view ? "on" : "")" href="@Url.Action("Index", "Home", new { area = "Admin", view = group.Key })">
-                        <i class="fa-solid @group.Icon"></i><span>@group.Label</span><i class="fa-solid fa-check"></i>
-                    </a>
-                </li>
-            }
-        </ul>
+    <a class="stat-card" asp-area="Admin" asp-controller="Servers" asp-action="Index">
+        <div class="stat-head"><span>Servers</span><i class="stat-icon tone-green fa-solid fa-server"></i></div>
+        <strong>@Model.Servers.Total.ToString("N0")</strong>
+        <small>@Model.Servers.Public public &middot; @Model.Servers.Private private</small>
+    </a>
+
+    <div class="stat-card stat-staff" id="stat-staff" data-admins="@Model.Users.Admins" data-superadmins="@Model.Users.SuperAdmins"
+         data-admins-url="@Url.Action("Index", "Users", new { area = "Admin", filter = "admins" })"
+         data-superadmins-url="@Url.Action("Index", "Users", new { area = "Admin", filter = "superadmins" })">
+        <div class="stat-head">
+            <div class="adm-picker adm-picker-mini">
+                <button type="button" class="adm-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
+                    <span id="stat-staff-label">Admins</span>
+                    <i class="fa-solid fa-chevron-down adm-picker-arrow"></i>
+                </button>
+                <ul class="adm-picker-menu" role="listbox" hidden>
+                    <li role="option"><a class="on" href="#" data-staff="admins"><span>Admins</span><i class="fa-solid fa-check"></i></a></li>
+                    <li role="option"><a href="#" data-staff="superadmins"><span>SuperAdmins</span><i class="fa-solid fa-check"></i></a></li>
+                </ul>
+            </div>
+            <i class="stat-icon tone-purple fa-solid fa-user-shield"></i>
+        </div>
+        <strong id="stat-staff-count">@Model.Users.Admins.ToString("N0")</strong>
+        <a class="stat-link" id="stat-staff-link" href="@Url.Action("Index", "Users", new { area = "Admin", filter = "admins" })">View list <i class="fa-solid fa-arrow-right"></i></a>
+    </div>
+
+    <a class="stat-card" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-filter="superadmins">
+        <div class="stat-head"><span>SuperAdmins</span><i class="stat-icon tone-red fa-solid fa-crown"></i></div>
+        <strong>@Model.Users.SuperAdmins.ToString("N0")</strong>
+        <small>Full access accounts</small>
+    </a>
+
+    <a class="stat-card" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-filter="banned">
+        <div class="stat-head"><span>Banned users</span><i class="stat-icon tone-red fa-solid fa-user-xmark"></i></div>
+        <strong>@Model.Bans.UsersBanned.ToString("N0")</strong>
+        <small>@Model.Bans.TotalBans server bans in total</small>
+    </a>
+
+    <a class="stat-card" asp-area="Admin" asp-controller="Servers" asp-action="Index" asp-route-filter="banned">
+        <div class="stat-head"><span>Servers with bans</span><i class="stat-icon tone-amber fa-solid fa-ban"></i></div>
+        <strong>@Model.Bans.ServersWithBans.ToString("N0")</strong>
+        <small>Servers that banned someone</small>
+    </a>
+
+    <div class="stat-card">
+        <div class="stat-head"><span>Reports</span><i class="stat-icon tone-red fa-solid fa-flag"></i></div>
+        <strong>@Model.Reports.Total.ToString("N0")</strong>
+        <small class="@(Model.Reports.Open > 0 ? "tone-red-text" : "")">@Model.Reports.Open waiting review</small>
     </div>
 </div>
-
-@if (Show("attention"))
-{
-    <div class="adm-group">
-        <h2><i class="fa-solid fa-bolt"></i> Needs your attention</h2>
-        <div class="adm-cards">
-            <div class="adm-card @(Model.Reports.Open > 0 ? "warn" : "")"><i class="fa-solid fa-flag"></i><strong>@Model.Reports.Open</strong><span>Open reports</span></div>
-            <div class="adm-card @(Model.Bans.BansLast7Days > 0 ? "danger" : "")"><i class="fa-solid fa-ban"></i><strong>@Model.Bans.BansLast7Days</strong><span>Bans in the last 7 days</span></div>
-            <div class="adm-card"><i class="fa-solid fa-hourglass-half"></i><strong>@Model.Bans.ActiveTimeouts</strong><span>Active timeouts</span></div>
-            <div class="adm-card"><i class="fa-solid fa-user-plus"></i><strong>@Model.Users.NewLast7Days</strong><span>New users in 7 days</span></div>
-        </div>
-    </div>
-}
-
-@if (Show("users"))
-{
-    <div class="adm-group">
-        <h2><i class="fa-solid fa-users"></i> Users</h2>
-        <div class="adm-cards">
-            <div class="adm-card"><i class="fa-solid fa-users"></i><strong>@Model.Users.Total</strong><span>Total users</span></div>
-            <div class="adm-card"><i class="fa-solid fa-calendar"></i><strong>@Model.Users.NewLast30Days</strong><span>New in 30 days</span></div>
-            <div class="adm-card"><i class="fa-solid fa-earth-americas"></i><strong>@Model.Users.PublicAccounts</strong><span>Public accounts</span></div>
-            <div class="adm-card"><i class="fa-solid fa-lock"></i><strong>@Model.Users.PrivateAccounts</strong><span>Private accounts</span></div>
-        </div>
-    </div>
-}
-
-@if (Show("moderation"))
-{
-    <div class="adm-group">
-        <h2><i class="fa-solid fa-gavel"></i> Moderation</h2>
-        <div class="adm-cards">
-            <div class="adm-card danger"><i class="fa-solid fa-user-xmark"></i><strong>@Model.Bans.UsersBanned</strong><span>Users banned from a server</span></div>
-            <div class="adm-card danger"><i class="fa-solid fa-server"></i><strong>@Model.Bans.ServersWithBans</strong><span>Servers that banned someone</span></div>
-            <div class="adm-card"><i class="fa-solid fa-ban"></i><strong>@Model.Bans.TotalBans</strong><span>Total server bans</span></div>
-            <div class="adm-card warn"><i class="fa-solid fa-flag"></i><strong>@Model.Reports.Open</strong><span>Open reports</span></div>
-            <div class="adm-card"><i class="fa-solid fa-circle-check"></i><strong>@Model.Reports.Reviewed</strong><span>Reports reviewed</span></div>
-            <div class="adm-card"><i class="fa-solid fa-circle-xmark"></i><strong>@Model.Reports.Dismissed</strong><span>Reports dismissed</span></div>
-        </div>
-        @if (Model.Reports.TopReasons.Count > 0)
-        {
-            <div class="adm-bars">
-                <h3>Top report reasons</h3>
-                @foreach (var reason in Model.Reports.TopReasons)
-                {
-                    <div class="adm-bar">
-                        <span>@reason.Reason</span>
-                        <div class="adm-bar-track"><div class="adm-bar-fill" style="width:@(reason.Count * 100 / reasonMax)%"></div></div>
-                        <strong>@reason.Count</strong>
-                    </div>
-                }
-            </div>
-        }
-        <p class="adm-note">Platform-wide user or server bans and Nitro purchases are not stored yet, so they are not shown.</p>
-    </div>
-}
-
-@if (Show("servers"))
-{
-    <div class="adm-group">
-        <h2><i class="fa-solid fa-server"></i> Servers</h2>
-        <div class="adm-cards">
-            <div class="adm-card"><i class="fa-solid fa-server"></i><strong>@Model.Servers.Total</strong><span>Total servers</span></div>
-            <div class="adm-card"><i class="fa-solid fa-compass"></i><strong>@Model.Servers.Public</strong><span>Public (in Discover)</span></div>
-            <div class="adm-card"><i class="fa-solid fa-lock"></i><strong>@Model.Servers.Private</strong><span>Private</span></div>
-        </div>
-    </div>
-}
-
-@if (Show("content"))
-{
-    <div class="adm-group">
-        <h2><i class="fa-solid fa-image"></i> Content</h2>
-        <div class="adm-cards">
-            <div class="adm-card"><i class="fa-solid fa-image"></i><strong>@Model.Content.Posts</strong><span>Posts</span></div>
-            <div class="adm-card"><i class="fa-solid fa-comment"></i><strong>@Model.Content.Comments</strong><span>Comments</span></div>
-        </div>
-    </div>
-}

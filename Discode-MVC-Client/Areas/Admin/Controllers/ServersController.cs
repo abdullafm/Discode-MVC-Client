@@ -10,13 +10,17 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
         {
         }
 
-        public async Task<IActionResult> Index(string? search, int page = 1)
+        public async Task<IActionResult> Index(string? search, string? filter, int page = 1)
         {
             var term = (search ?? string.Empty).Trim();
-            var model = new AdminServerListVM { Search = term, Page = Math.Max(1, page) };
+            var kind = (filter ?? string.Empty).Trim().ToLowerInvariant() == "banned" ? "banned" : string.Empty;
+
+            var model = new AdminServerListVM { Search = term, Filter = kind, Page = Math.Max(1, page) };
             try
             {
-                var url = "api/admin/servers?page=" + model.Page + "&pageSize=" + model.PageSize + (term.Length > 0 ? "&search=" + Uri.EscapeDataString(term) : string.Empty);
+                var url = "api/admin/servers?page=" + model.Page + "&pageSize=" + model.PageSize
+                    + (term.Length > 0 ? "&search=" + Uri.EscapeDataString(term) : string.Empty)
+                    + (kind == "banned" ? "&bannedOnly=true" : string.Empty);
                 var result = await Api.GetFromJsonAsync<AdminServerListVM>(url);
                 if (result is not null)
                 {

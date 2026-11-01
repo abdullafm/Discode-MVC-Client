@@ -16,6 +16,8 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public int NewLast30Days { get; set; }
         public int PublicAccounts { get; set; }
         public int PrivateAccounts { get; set; }
+        public int Admins { get; set; }
+        public int SuperAdmins { get; set; }
     }
 
     public class AdminServerStatsVM
