@@ -486,4 +486,11 @@ window.discodeReel = function (url) {
     }
 
     document.addEventListener("discode-account-timeout", function (event) { show(event.detail); });
+
+    // A timeout can also change outside the admin panel: ask the server again every few seconds
+    clearInterval(window.discodeTimeoutSync);
+    window.discodeTimeoutSync = setInterval(function () {
+        if (document.hidden || !window.discodePresence) return;
+        window.discodePresence.invoke("CheckTimeout").catch(function () {});
+    }, 8000);
 })();
