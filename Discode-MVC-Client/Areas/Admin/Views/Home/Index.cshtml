@@ -33,7 +33,6 @@
             <i class="stat-icon tone-purple fa-solid fa-user-shield"></i>
         </div>
         <strong id="stat-staff-count">@Model.Users.Admins.ToString("N0")</strong>
-        <a class="stat-link" id="stat-staff-link" href="@Url.Action("Index", "Users", new { area = "Admin", filter = "admins" })">View list <i class="fa-solid fa-arrow-right"></i></a>
     </div>
 
     <a class="stat-card" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-filter="banned">

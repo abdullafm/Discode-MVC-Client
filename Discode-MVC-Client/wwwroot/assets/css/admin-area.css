@@ -763,3 +763,7 @@ html.theme-dark .adm-tabs a {
 html.theme-dark .adm-tabs a.on {
     color: #ffffff;
 }
+
+.stat-staff {
+    cursor: pointer;
+}

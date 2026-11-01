@@ -43,7 +43,7 @@
     if (staff) {
         var label = document.getElementById("stat-staff-label");
         var count = document.getElementById("stat-staff-count");
-        var link = document.getElementById("stat-staff-link");
+        var current = "admins";
         staff.querySelectorAll("[data-staff]").forEach(function (option) {
             option.addEventListener("click", function (event) {
                 event.preventDefault();
@@ -51,10 +51,15 @@
                 var number = Number(staff.getAttribute("data-" + key));
                 label.textContent = key === "admins" ? "Admins" : "SuperAdmins";
                 count.textContent = number.toLocaleString("en-US");
-                link.setAttribute("href", staff.getAttribute("data-" + key + "-url"));
+                current = key;
                 staff.querySelectorAll("[data-staff]").forEach(function (item) { item.classList.toggle("on", item === option); });
                 pickers.forEach(close);
             });
+        });
+
+        staff.addEventListener("click", function (event) {
+            if (event.target.closest(".adm-picker")) return;
+            window.location.href = staff.getAttribute("data-" + current + "-url");
         });
     }
 })();
