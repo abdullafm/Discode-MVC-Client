@@ -6,6 +6,7 @@
     if (view == "bans" || view == "reports") view = "moderation";
     var groups = new[]
     {
+        (Key: "attention", Label: "Needs attention", Icon: "fa-bolt"),
         (Key: "users", Label: "Users", Icon: "fa-users"),
         (Key: "moderation", Label: "Moderation", Icon: "fa-gavel"),
         (Key: "servers", Label: "Servers", Icon: "fa-server"),
@@ -16,16 +17,6 @@
     bool Show(string key) => view == "all" || view == key;
     var reasonMax = Model.Reports.TopReasons.Count == 0 ? 1 : Model.Reports.TopReasons.Max(x => x.Count);
 }
-
-<div class="adm-group">
-    <h2><i class="fa-solid fa-bolt"></i> Needs your attention</h2>
-    <div class="adm-cards">
-        <div class="adm-card @(Model.Reports.Open > 0 ? "warn" : "")"><i class="fa-solid fa-flag"></i><strong>@Model.Reports.Open</strong><span>Open reports</span></div>
-        <div class="adm-card @(Model.Bans.BansLast7Days > 0 ? "danger" : "")"><i class="fa-solid fa-ban"></i><strong>@Model.Bans.BansLast7Days</strong><span>Bans in the last 7 days</span></div>
-        <div class="adm-card"><i class="fa-solid fa-hourglass-half"></i><strong>@Model.Bans.ActiveTimeouts</strong><span>Active timeouts</span></div>
-        <div class="adm-card"><i class="fa-solid fa-user-plus"></i><strong>@Model.Users.NewLast7Days</strong><span>New users in 7 days</span></div>
-    </div>
-</div>
 
 <div class="adm-pick-row">
     <div class="adm-picker adm-picker-wide">
@@ -59,6 +50,19 @@
         </ul>
     </div>
 </div>
+
+@if (Show("attention"))
+{
+    <div class="adm-group">
+        <h2><i class="fa-solid fa-bolt"></i> Needs your attention</h2>
+        <div class="adm-cards">
+            <div class="adm-card @(Model.Reports.Open > 0 ? "warn" : "")"><i class="fa-solid fa-flag"></i><strong>@Model.Reports.Open</strong><span>Open reports</span></div>
+            <div class="adm-card @(Model.Bans.BansLast7Days > 0 ? "danger" : "")"><i class="fa-solid fa-ban"></i><strong>@Model.Bans.BansLast7Days</strong><span>Bans in the last 7 days</span></div>
+            <div class="adm-card"><i class="fa-solid fa-hourglass-half"></i><strong>@Model.Bans.ActiveTimeouts</strong><span>Active timeouts</span></div>
+            <div class="adm-card"><i class="fa-solid fa-user-plus"></i><strong>@Model.Users.NewLast7Days</strong><span>New users in 7 days</span></div>
+        </div>
+    </div>
+}
 
 @if (Show("users"))
 {
