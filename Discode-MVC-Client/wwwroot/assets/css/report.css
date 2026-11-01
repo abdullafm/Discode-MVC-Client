@@ -522,14 +522,6 @@ html.theme-dark .warn-card {
     word-break: break-word;
 }
 
-.timeout-clock {
-    margin: 4px 0 6px;
-    font-size: 44px;
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 1px;
-}
-
 .timeout-until,
 .timeout-note {
     display: block;

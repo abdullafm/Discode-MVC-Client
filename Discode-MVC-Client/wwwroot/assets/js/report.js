@@ -419,13 +419,6 @@ window.discodeReel = function (url) {
 
 // Timeout: a modal nobody can close until the timeout is over (the layer lives on <body>, so it survives in-app navigation)
 (function () {
-    function pad(n) { return n < 10 ? "0" + n : String(n); }
-
-    function format(total) {
-        var h = Math.floor(total / 3600), m = Math.floor((total % 3600) / 60), s = total % 60;
-        return (h > 0 ? h + ":" + pad(m) : pad(m)) + ":" + pad(s);
-    }
-
     function hide() {
         var layer = document.querySelector(".timeout-layer");
         if (!layer) return;
