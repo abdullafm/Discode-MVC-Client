@@ -1383,7 +1383,7 @@ html.theme-dark .adm-modal-text {
 }
 
 .adm-zoom-wrap::after {
-    content: "00e";
+    content: "\f00e";
     position: absolute;
     inset: 0;
     display: grid;
