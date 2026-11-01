@@ -449,7 +449,6 @@ window.discodeReel = function (url) {
                 '<div class="timeout-icon"><i class="fa-solid fa-hourglass-half"></i></div>' +
                 '<h3>You are in timeout</h3>' +
                 '<p class="timeout-reason"></p>' +
-                '<div class="timeout-clock" aria-live="off">--:--</div>' +
                 '<small class="timeout-until"></small>' +
                 '<small class="timeout-note">You cannot use Discode until the timeout is over. This window closes by itself.</small></div>';
             document.body.appendChild(layer);
@@ -466,7 +465,6 @@ window.discodeReel = function (url) {
 
         function tick() {
             var left = Math.max(0, Math.round((endsAt - Date.now()) / 1000));
-            layer.querySelector(".timeout-clock").textContent = format(left);
             if (left <= 0) hide();
         }
 
