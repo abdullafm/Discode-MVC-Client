@@ -56,7 +56,7 @@ else
     }
 
     <div class="adm-metrics">
-        <div><strong>@Model.Members</strong><span>Members</span></div>
+        <div><strong>@Model.MemberCount</strong><span>Members</span></div>
         <div><strong>@Model.TextChannels</strong><span>Text channels</span></div>
         <div><strong>@Model.VoiceChannels</strong><span>Voice channels</span></div>
         <div><strong>@Model.Roles</strong><span>Roles</span></div>
@@ -74,15 +74,15 @@ else
                 <dt>Description</dt><dd>@(string.IsNullOrWhiteSpace(Model.Description) ? "No description" : Model.Description)</dd>
             </dl>
 
-            <h3>Members</h3>
-            <div class="adm-mini-members">
-                @foreach (var member in Model.RecentMembers)
-                {
-                    <div class="adm-person">
-                        <img src="@(string.IsNullOrWhiteSpace(member.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : member.AvatarUrl)" alt="">
-                        <span><strong>@(string.IsNullOrWhiteSpace(member.DisplayName) ? member.UserName : member.DisplayName)@(member.IsOwner ? " 👑" : "")</strong><small>@member.UserName &middot; joined @member.JoinedAt.ToString("yyyy-MM-dd")</small></span>
-                    </div>
-                }
+            <h3>Members <span class="adm-count-pill">@Model.MemberCount</span></h3>
+            <div class="adm-members" data-url="@Url.Action("Members", "Servers", new { area = "Admin", id = Model.Id })">
+                <label class="adm-search adm-search-small">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="search" class="adm-members-search" placeholder="Search members" autocomplete="off">
+                </label>
+                <div class="adm-members-list">
+                    @await Html.PartialAsync("_Members", Model.Members)
+                </div>
             </div>
         </div>
 

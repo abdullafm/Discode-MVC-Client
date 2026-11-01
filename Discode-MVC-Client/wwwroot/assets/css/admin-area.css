@@ -1068,3 +1068,54 @@ html.theme-dark .adm-textarea {
         grid-template-columns: 1fr;
     }
 }
+
+.adm-count-pill {
+    margin-left: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(128, 132, 142, 0.18);
+    font-size: 11px;
+    letter-spacing: 0;
+}
+
+.adm-search-small {
+    display: block;
+    max-width: none;
+    margin-bottom: 12px;
+}
+
+.adm-search-small input {
+    padding: 8px 12px 8px 36px;
+    font-size: 14px;
+}
+
+.adm-pager-tight {
+    margin-top: 12px;
+}
+
+.adm-pager-tight button {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(128, 132, 142, 0.16);
+    color: inherit;
+    cursor: pointer;
+    transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.adm-pager-tight button:hover {
+    background: #5865f2;
+    color: #ffffff;
+}
+
+.adm-pager-tight button.is-off {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.adm-members .adm-empty {
+    padding: 14px 0;
+}

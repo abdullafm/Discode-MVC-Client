@@ -74,7 +74,42 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
 
             model.Notice = TempData["AdminNotice"] as string;
             model.Warning = TempData["AdminWarning"] as string;
+            if (string.IsNullOrEmpty(model.Error))
+                model.Members = await LoadMembersAsync(id, null, 1);
             return Request.Headers.XRequestedWith == "XMLHttpRequest" ? PartialView(model) : View(model);
+        }
+
+        public async Task<IActionResult> Members(int id, string? search, int page = 1)
+        {
+            return PartialView("_Members", await LoadMembersAsync(id, search, Math.Max(1, page)));
+        }
+
+        private async Task<AdminServerMemberListVM> LoadMembersAsync(int id, string? search, int page)
+        {
+            var term = (search ?? string.Empty).Trim();
+            var model = new AdminServerMemberListVM { ServerId = id, Search = term, Page = page };
+            try
+            {
+                var url = (term.Length > 0 ? "api/admin/servers/" + id + "/members/search" : "api/admin/servers/" + id + "/members")
+                    + "?page=" + page + "&pageSize=" + model.PageSize
+                    + (term.Length > 0 ? "&search=" + Uri.EscapeDataString(term) : string.Empty);
+                var result = await Api.GetFromJsonAsync<AdminServerMemberListVM>(url);
+                if (result is not null)
+                {
+                    model.Items = result.Items;
+                    model.Total = result.Total;
+                }
+            }
+            catch (HttpRequestException)
+            {
+                model.Error = "The members could not be loaded.";
+            }
+            catch (JsonException)
+            {
+                model.Error = "The members could not be read from the API response.";
+            }
+
+            return model;
         }
 
         [HttpPost]

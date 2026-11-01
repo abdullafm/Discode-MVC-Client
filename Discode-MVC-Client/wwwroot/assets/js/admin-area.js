@@ -8,6 +8,35 @@ document.addEventListener("submit", function (event) {
 }, true);
 
 (function () {
+    // Server detail: search and page through the member list without leaving the page
+    function loadMembers(box, search, page) {
+        var list = box.querySelector(".adm-members-list");
+        var url = box.getAttribute("data-url") + "?search=" + encodeURIComponent(search) + "&page=" + page;
+        fetch(url, { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            if (!response.ok) throw new Error("members");
+            return response.text();
+        }).then(function (html) {
+            list.innerHTML = html;
+            box.setAttribute("data-search", search);
+        }).catch(function () {});
+    }
+
+    var memberTimer = null;
+    document.addEventListener("input", function (event) {
+        var field = event.target.closest(".adm-members-search");
+        if (!field) return;
+        var box = field.closest(".adm-members");
+        window.clearTimeout(memberTimer);
+        memberTimer = window.setTimeout(function () { loadMembers(box, field.value.trim(), 1); }, 280);
+    });
+
+    document.addEventListener("click", function (event) {
+        var button = event.target.closest("[data-members-page]");
+        if (!button || button.classList.contains("is-off")) return;
+        var box = button.closest(".adm-members");
+        loadMembers(box, box.getAttribute("data-search") || "", Number(button.getAttribute("data-members-page")));
+    });
+
     var pickers = document.querySelectorAll(".adm-picker");
     if (!pickers.length) return;
 
