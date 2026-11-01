@@ -10,6 +10,24 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
         {
         }
 
+        public async Task<IActionResult> Stats()
+        {
+            try
+            {
+                var overview = await Api.GetFromJsonAsync<AdminOverviewVM>("api/admin/overview");
+                if (overview is not null)
+                    return Json(overview);
+            }
+            catch (HttpRequestException)
+            {
+            }
+            catch (JsonException)
+            {
+            }
+
+            return StatusCode(503);
+        }
+
         public async Task<IActionResult> Index(string? view)
         {
             ViewData["View"] = (view ?? string.Empty).Trim().ToLowerInvariant();

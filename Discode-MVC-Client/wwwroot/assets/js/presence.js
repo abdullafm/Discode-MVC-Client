@@ -248,6 +248,10 @@
                     document.dispatchEvent(new CustomEvent("discode-call-ended", { detail: data }));
                 });
 
+                connection.on("AdminChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-admin-changed", { detail: data }));
+                });
+
                 connection.on("PostsChanged", function () {
                     document.dispatchEvent(new CustomEvent("discode-posts-changed"));
                 });

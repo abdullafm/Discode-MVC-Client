@@ -38,7 +38,9 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
                 model.Error = "The servers could not be read from the API response.";
             }
 
-            model.Notice = TempData["AdminNotice"] as string;
+            if (Request.Headers["X-Admin-Refresh"] != "1")
+                model.Notice = TempData["AdminNotice"] as string;
+
             return Request.Headers.XRequestedWith == "XMLHttpRequest" ? PartialView(model) : View(model);
         }
 
@@ -72,8 +74,12 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
                 model.Error = "The server could not be read from the API response.";
             }
 
-            model.Notice = TempData["AdminNotice"] as string;
-            model.Warning = TempData["AdminWarning"] as string;
+            if (Request.Headers["X-Admin-Refresh"] != "1")
+            {
+                model.Notice = TempData["AdminNotice"] as string;
+                model.Warning = TempData["AdminWarning"] as string;
+            }
+
             if (string.IsNullOrEmpty(model.Error))
                 model.Members = await LoadMembersAsync(id, null, 1);
             return Request.Headers.XRequestedWith == "XMLHttpRequest" ? PartialView(model) : View(model);
