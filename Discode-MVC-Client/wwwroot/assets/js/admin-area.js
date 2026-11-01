@@ -232,7 +232,7 @@ document.addEventListener("submit", function (event) {
         }).catch(function () {});
     }
 
-    function refreshDetail(root, url) {
+    function refreshDetail(root, url, metricsOnly) {
         fetch(url, REFRESH).then(function (response) {
             if (!response.ok) throw new Error("detail");
             return response.text();
@@ -249,6 +249,7 @@ document.addEventListener("submit", function (event) {
             }
 
             swapParts(root, doc, [".adm-metrics", ".adm-detail-chips"]);
+            if (metricsOnly) return;
 
             var oldBanner = root.querySelector(".adm-ban-banner");
             var freshBanner = doc.querySelector(".adm-ban-banner");
@@ -290,7 +291,25 @@ document.addEventListener("submit", function (event) {
         liveTimer = window.setTimeout(refreshLive, 500);
     }
 
-    document.addEventListener("discode-admin-changed", refreshSoon);
+    // channels, roles and messages only move the counters of the open server: refresh just those, right away
+    var counterTimer = null;
+    document.addEventListener("discode-admin-changed", function (event) {
+        var detail = event.detail || {};
+        var topics = detail.topics || [];
+        if (topics.length === 1 && topics[0] === "server-detail") {
+            var root = panel && !panel.hidden && lastPanelUrl ? panel : document.querySelector(".admin-body");
+            var head = root && root.querySelector(".adm-detail-head");
+            if (!head) return;
+            var id = Number(head.getAttribute("data-server-id"));
+            if ((detail.serverIds || []).indexOf(id) === -1) return;
+            window.clearTimeout(counterTimer);
+            counterTimer = window.setTimeout(function () {
+                refreshDetail(root, root === panel ? lastPanelUrl : window.location.href, true);
+            }, 150);
+            return;
+        }
+        refreshSoon();
+    });
 
     // changes that never pass through the API (data edited in the database, missed pushes) are caught here:
     // when the connection comes back, when the tab is shown again, and every 20 seconds while it is visible
