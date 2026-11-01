@@ -313,8 +313,8 @@ window.discodeReel = function (url) {
     return reel;
 };
 
-if (!window.discodeLogoutBound) {
-    window.discodeLogoutBound = true;
+// nav.js removes page listeners on every in-app navigation and runs this file again, so register them every run
+(function () {
 
     // Own confirm dialog: the browser one can be switched off by the page, which made Log out do nothing
     var logoutLayer = null;
@@ -362,4 +362,4 @@ if (!window.discodeLogoutBound) {
             closeLogout();
         }
     }, true);
-}
+})();
