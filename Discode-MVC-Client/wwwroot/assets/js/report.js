@@ -363,3 +363,56 @@ window.discodeReel = function (url) {
         }
     }, true);
 })();
+
+// Admin actions that reach the signed-in user (nav.js re-registers these on every in-app navigation)
+(function () {
+    var queue = [];
+    var layer = null;
+
+    function acknowledge(id) {
+        if (window.discodePresence && id) window.discodePresence.invoke("AcknowledgeWarning", id).catch(function () {});
+    }
+
+    function show() {
+        if (!queue.length) {
+            if (layer) layer.hidden = true;
+            return;
+        }
+
+        var warning = queue[0];
+        if (!layer || !document.body.contains(layer)) {
+            layer = document.createElement("div");
+            layer.className = "warn-layer";
+            layer.innerHTML = '<div class="warn-card" role="alertdialog" aria-modal="true">' +
+                '<div class="warn-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>' +
+                '<h3>Warning from the administrators</h3>' +
+                '<p class="warn-reason"></p>' +
+                '<small class="warn-note">Please follow the rules. Further violations can lead to a timeout or a ban.</small>' +
+                '<button type="button" class="warn-ok">I understand</button></div>';
+            document.body.appendChild(layer);
+            layer.querySelector(".warn-ok").addEventListener("click", function () {
+                var done = queue.shift();
+                if (done) acknowledge(done.id);
+                show();
+            });
+        }
+
+        layer.querySelector(".warn-reason").textContent = warning.reason;
+        layer.hidden = false;
+        layer.querySelector(".warn-ok").focus();
+    }
+
+    document.addEventListener("discode-account-warning", function (event) {
+        var list = Array.isArray(event.detail) ? event.detail : [];
+        list.forEach(function (item) {
+            if (!queue.some(function (known) { return known.id === item.id; })) queue.push(item);
+        });
+        show();
+    });
+
+    document.addEventListener("discode-force-logout", function () {
+        var form = document.getElementById("logout-form");
+        if (form) form.submit();
+        else window.location.href = "/Account/Login";
+    });
+})();

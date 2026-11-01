@@ -310,25 +310,23 @@
                 return;
             }
 
-            swapParts(root, doc, [".adm-metrics", ".adm-detail-chips"]);
+            swapParts(root, doc, [".adm-metrics", ".adm-detail-chips", ".adm-history"]);
             if (metricsOnly) return;
 
-            var oldBanner = root.querySelector(".adm-ban-banner");
-            var freshBanner = doc.querySelector(".adm-ban-banner");
-            if (oldBanner && freshBanner) oldBanner.replaceWith(freshBanner);
-            else if (oldBanner) oldBanner.remove();
-            else if (freshBanner) {
-                var anchor = root.querySelector(".adm-metrics");
-                if (anchor) anchor.parentNode.insertBefore(freshBanner, anchor);
-            }
+            // every banner (ban, timeout) is rebuilt in front of the counters
+            root.querySelectorAll(".adm-ban-banner").forEach(function (node) { node.remove(); });
+            var anchor = root.querySelector(".adm-metrics");
+            doc.querySelectorAll(".adm-ban-banner").forEach(function (node) {
+                if (anchor) anchor.parentNode.insertBefore(node, anchor);
+            });
 
-            // the actions card holds the reason box: leave it alone while somebody is typing
-            var typing = root.querySelector("#ban-reason");
-            var busy = typing && (typing === document.activeElement || typing.value.trim().length > 0);
-            if (!busy) {
-                var oldActions = root.querySelector(".adm-detail-grid > .adm-panel:nth-child(2)");
-                var freshActions = doc.querySelector(".adm-detail-grid > .adm-panel:nth-child(2)");
-                if (oldActions && freshActions) oldActions.replaceWith(freshActions);
+            // the actions card holds forms: leave it alone while somebody is using it
+            var oldActions = root.querySelector(".adm-detail-grid > .adm-panel:nth-child(2)");
+            var freshActions = doc.querySelector(".adm-detail-grid > .adm-panel:nth-child(2)");
+            if (oldActions && freshActions) {
+                var typing = [].some.call(oldActions.querySelectorAll("textarea, input[type=text]"), function (field) { return field.value.trim().length > 0; });
+                var busy = typing || oldActions.querySelector("details[open]") || oldActions.contains(document.activeElement);
+                if (!busy) oldActions.replaceWith(freshActions);
             }
 
             var box = root.querySelector(".adm-members");

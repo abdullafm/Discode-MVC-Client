@@ -9,6 +9,9 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public string Email { get; set; } = string.Empty;
         public string AvatarUrl { get; set; } = string.Empty;
         public bool IsPublic { get; set; }
+        public bool IsBanned { get; set; }
+        public bool TimedOut { get; set; }
+        public bool IsDeleted { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<string> Roles { get; set; } = new();
         public int ServersJoined { get; set; }
@@ -24,6 +27,7 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public string Search { get; set; } = string.Empty;
         public string Filter { get; set; } = string.Empty;
         public string? Error { get; set; }
+        public string? Notice { get; set; }
         public int TotalPages => Math.Max(1, (int)Math.Ceiling(Total / (double)Math.Max(1, PageSize)));
     }
 

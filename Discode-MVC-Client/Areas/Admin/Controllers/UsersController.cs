@@ -40,5 +40,114 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
 
             return Request.Headers.XRequestedWith == "XMLHttpRequest" ? PartialView(model) : View(model);
         }
+
+        public async Task<IActionResult> Details(string id)
+        {
+            var model = new AdminUserDetailVM();
+            try
+            {
+                var response = await Api.GetAsync("api/admin/users/" + Uri.EscapeDataString(id));
+                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    TempData["AdminNotice"] = "That member no longer exists.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    model.Error = "The member could not be loaded.";
+                }
+                else
+                {
+                    model = await response.Content.ReadFromJsonAsync<AdminUserDetailVM>() ?? model;
+                }
+            }
+            catch (HttpRequestException)
+            {
+                model.Error = "The member could not be loaded. Restart the API so it runs the latest build, then try again.";
+            }
+            catch (JsonException)
+            {
+                model.Error = "The member could not be read from the API response.";
+            }
+
+            if (Request.Headers["X-Admin-Refresh"] != "1")
+            {
+                model.Notice = TempData["AdminNotice"] as string;
+                model.Warning = TempData["AdminWarning"] as string;
+            }
+
+            return Request.Headers.XRequestedWith == "XMLHttpRequest" ? PartialView(model) : View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Warn(string id, string? reason)
+        {
+            return Moderate(id, "The warning was sent.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/warn", new { reason = reason ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Timeout(string id, string? reason, int minutes)
+        {
+            return Moderate(id, "The member was timed out.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/timeout", new { reason = reason ?? string.Empty, minutes }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> ClearTimeout(string id)
+        {
+            return Moderate(id, "The timeout was removed.", () => Api.PostAsync("api/admin/users/" + id + "/timeout/clear", null));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Kick(string id, string? reason)
+        {
+            return Moderate(id, "The member was signed out of every device.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/kick", new { reason = reason ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Ban(string id, string? reason, int days)
+        {
+            return Moderate(id, "The member was banned.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/ban", new { reason = reason ?? string.Empty, days }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Unban(string id)
+        {
+            return Moderate(id, "The member was unbanned.", () => Api.PostAsync("api/admin/users/" + id + "/unban", null));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(string id, string? reason, string? userName)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Delete, "api/admin/users/" + id)
+            {
+                Content = JsonContent.Create(new { reason = reason ?? string.Empty, userName = userName ?? string.Empty })
+            };
+            var failure = await ApiCallAsync(() => Api.SendAsync(request));
+            if (failure is null)
+                TempData["AdminNotice"] = "The account was deleted.";
+            else
+                TempData["AdminWarning"] = failure;
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        private async Task<IActionResult> Moderate(string id, string success, Func<Task<HttpResponseMessage>> send)
+        {
+            var failure = await ApiCallAsync(send);
+            if (failure is null)
+                TempData["AdminNotice"] = success;
+            else
+                TempData["AdminWarning"] = failure;
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
     }
 }

@@ -20,6 +20,36 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
 
         protected HttpClient Api => _httpClientFactory.CreateClient("DiscodeApi");
 
+        protected static async Task<string?> ApiCallAsync(Func<Task<HttpResponseMessage>> send)
+        {
+            try
+            {
+                var response = await send();
+                if (response.IsSuccessStatusCode)
+                    return null;
+
+                var body = await response.Content.ReadAsStringAsync();
+                using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(body) ? "{}" : body);
+                if (document.RootElement.ValueKind == JsonValueKind.Object
+                    && document.RootElement.TryGetProperty("errors", out var errors)
+                    && errors.ValueKind == JsonValueKind.Array
+                    && errors.GetArrayLength() > 0)
+                {
+                    return errors[0].GetString();
+                }
+
+                return "That did not work. Try again.";
+            }
+            catch (HttpRequestException)
+            {
+                return "The API is not reachable right now.";
+            }
+            catch (JsonException)
+            {
+                return "That did not work. Try again.";
+            }
+        }
+
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             var displayName = User.Identity?.Name ?? string.Empty;

@@ -384,3 +384,88 @@ html.theme-dark .logout-card p {
         transform: translateY(10px) scale(0.96);
     }
 }
+
+/* ===== Adminlerden xəbərdarlıq ===== */
+.warn-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    animation: logout-fade 0.16s ease;
+}
+
+.warn-layer[hidden] {
+    display: none;
+}
+
+.warn-card {
+    width: min(420px, calc(100vw - 32px));
+    padding: 28px 26px 22px;
+    border-radius: 20px;
+    background: #ffffff;
+    color: #060607;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    animation: logout-pop 0.2s ease;
+}
+
+.warn-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 14px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(240, 178, 50, 0.2);
+    color: #d99a14;
+    font-size: 24px;
+}
+
+.warn-card h3 {
+    margin: 0 0 10px;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.warn-reason {
+    margin: 0 0 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(128, 132, 142, 0.14);
+    font-size: 15px;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.warn-note {
+    display: block;
+    margin-bottom: 18px;
+    color: #80848e;
+    font-size: 12px;
+}
+
+.warn-ok {
+    width: 100%;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 12px;
+    background: #f0b232;
+    color: #1f1500;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.16s ease, filter 0.16s ease;
+}
+
+.warn-ok:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.06);
+}
+
+html.theme-dark .warn-card {
+    background: #2b2d31;
+    color: #f2f3f5;
+}

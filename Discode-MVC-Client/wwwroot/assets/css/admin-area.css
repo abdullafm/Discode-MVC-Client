@@ -1452,3 +1452,141 @@ html.theme-dark .adm-modal-text {
 .adm-banner .adm-zoom {
     border-radius: 0;
 }
+
+/* ===== Uzv detaili: moderasiya ===== */
+.adm-chip.is-timeout {
+    background: rgba(240, 178, 50, 0.2);
+    color: #b17800;
+}
+
+html.theme-dark .adm-chip.is-timeout {
+    color: #f0b232;
+}
+
+.adm-warn {
+    color: #c98400;
+    font-weight: 800;
+}
+
+.adm-ban-banner.is-amber {
+    border-color: rgba(240, 178, 50, 0.4);
+    background: rgba(240, 178, 50, 0.1);
+}
+
+.adm-ban-banner.is-amber > i {
+    color: #f0b232;
+}
+
+.adm-btn.is-amber {
+    background: #f0b232;
+    color: #1f1500;
+}
+
+.adm-empty-small {
+    margin: 6px 0 12px;
+    color: #80848e;
+    font-size: 13px;
+}
+
+.adm-log-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(128, 132, 142, 0.14);
+}
+
+.adm-log-row:last-child {
+    border-bottom: 0;
+}
+
+.adm-log-row > .adm-chip {
+    flex: none;
+    margin-top: 2px;
+}
+
+.adm-log-row strong {
+    display: block;
+    font-size: 14px;
+    word-break: break-word;
+}
+
+.adm-log-row small {
+    color: #80848e;
+    font-size: 12px;
+}
+
+.adm-action {
+    margin-bottom: 10px;
+    border: 1px solid rgba(128, 132, 142, 0.25);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.adm-action summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+    transition: background-color 0.16s ease;
+}
+
+.adm-action summary::-webkit-details-marker {
+    display: none;
+}
+
+.adm-action summary:hover {
+    background: rgba(128, 132, 142, 0.12);
+}
+
+.adm-action[open] summary {
+    background: rgba(88, 101, 242, 0.1);
+}
+
+.adm-action form {
+    padding: 12px 14px 14px;
+}
+
+.adm-action.is-danger summary {
+    color: #f23f43;
+}
+
+.adm-action-row {
+    margin-bottom: 10px;
+}
+
+.adm-select,
+.adm-input {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 9px 12px;
+    border: 1px solid rgba(128, 132, 142, 0.35);
+    border-radius: 10px;
+    outline: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+}
+
+.adm-select option {
+    color: #060607;
+}
+
+.adm-select:focus,
+.adm-input:focus {
+    border-color: #5865f2;
+    box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.18);
+}
+
+.adm-modal.is-warning .adm-modal-icon {
+    background: rgba(240, 178, 50, 0.2);
+    color: #d99a14;
+}
+
+.adm-modal.is-warning .adm-modal-ok {
+    background: #f0b232;
+    color: #1f1500;
+}

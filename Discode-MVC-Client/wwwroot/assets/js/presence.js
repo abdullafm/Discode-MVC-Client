@@ -248,6 +248,14 @@
                     document.dispatchEvent(new CustomEvent("discode-call-ended", { detail: data }));
                 });
 
+                connection.on("AccountWarning", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-account-warning", { detail: data }));
+                });
+
+                connection.on("ForceLogout", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-force-logout", { detail: data }));
+                });
+
                 connection.on("AdminChanged", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-admin-changed", { detail: data }));
                 });

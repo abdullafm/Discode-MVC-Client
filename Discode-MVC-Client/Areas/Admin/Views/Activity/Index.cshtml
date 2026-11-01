@@ -1,0 +1,72 @@
+@model AdminActionListVM
+@{
+    ViewData["Title"] = "Activity";
+    ViewData["Section"] = "activity";
+    string KindClass(string kind) => kind switch
+    {
+        "Ban" or "ServerBan" or "Delete" or "ServerDelete" => "is-banned",
+        "Warn" or "Timeout" => "is-timeout",
+        "Unban" or "ServerUnban" or "ClearTimeout" => "is-public",
+        _ => ""
+    };
+}
+<div class="adm-list-head">
+    <form method="get" class="adm-search" asp-area="Admin" asp-controller="Activity" asp-action="Index">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" name="search" value="@Model.Search" placeholder="Search by admin, target or reason" autocomplete="off">
+    </form>
+    <span class="adm-count">@Model.Total actions</span>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Error</p>
+}
+
+<div class="adm-table-wrap">
+    <table class="adm-table">
+        <thead>
+            <tr>
+                <th>When</th>
+                <th>Admin</th>
+                <th>Action</th>
+                <th>Target</th>
+                <th>Reason</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var action in Model.Items)
+            {
+                <tr>
+                    <td class="adm-muted">@action.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>@action.AdminUserName</td>
+                    <td><span class="adm-chip @KindClass(action.Kind)">@action.Kind</span>@(string.IsNullOrEmpty(action.Details) ? "" : " ")<small class="adm-muted">@action.Details</small></td>
+                    <td>
+                        @if (action.TargetType == "User")
+                        {
+                            <a class="adm-link" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@action.TargetId"><i class="fa-solid fa-user"></i> @action.TargetName</a>
+                        }
+                        else
+                        {
+                            <a class="adm-link" asp-area="Admin" asp-controller="Servers" asp-action="Details" asp-route-id="@action.TargetId"><i class="fa-solid fa-server"></i> @action.TargetName</a>
+                        }
+                    </td>
+                    <td>@action.Reason</td>
+                </tr>
+            }
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="5" class="adm-empty">Nothing has been done yet.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="adm-pager">
+        <a class="@(Model.Page <= 1 ? "is-off" : "")" asp-area="Admin" asp-controller="Activity" asp-action="Index" asp-route-search="@Model.Search" asp-route-page="@(Model.Page - 1)"><i class="fa-solid fa-chevron-left"></i></a>
+        <span>Page @Model.Page / @Model.TotalPages</span>
+        <a class="@(Model.Page >= Model.TotalPages ? "is-off" : "")" asp-area="Admin" asp-controller="Activity" asp-action="Index" asp-route-search="@Model.Search" asp-route-page="@(Model.Page + 1)"><i class="fa-solid fa-chevron-right"></i></a>
+    </div>
+}
