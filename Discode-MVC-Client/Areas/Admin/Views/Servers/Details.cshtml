@@ -95,6 +95,12 @@ else
 
         <div class="adm-panel">
             <h3>Actions</h3>
+            <form method="post" asp-area="Admin" asp-controller="Servers" asp-action="Warn" asp-route-id="@Model.Id" data-confirm="The server owner gets a direct message from Discode with this reason." data-confirm-title="Warn the server owner?" data-confirm-button="Send warning" data-confirm-tone="warning" data-confirm-icon="fa-triangle-exclamation">
+                <label class="adm-label" for="warn-reason">Warn the owner</label>
+                <textarea id="warn-reason" name="reason" class="adm-textarea" maxlength="300" placeholder="What should the owner fix?" required></textarea>
+                <button type="submit" class="adm-btn"><i class="fa-solid fa-triangle-exclamation"></i> Send warning</button>
+            </form>
+
             @if (!Model.IsBanned)
             {
                 <form method="post" asp-area="Admin" asp-controller="Servers" asp-action="Ban" asp-route-id="@Model.Id" data-confirm="Nobody will be able to open this server, and its invite stops working, until you unban it." data-confirm-title="Ban this server?" data-confirm-button="Ban server" data-confirm-tone="danger" data-confirm-icon="fa-ban">

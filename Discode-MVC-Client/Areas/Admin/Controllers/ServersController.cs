@@ -120,6 +120,19 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Warn(int id, string? reason)
+        {
+            var failure = await SendAsync(() => Api.PostAsJsonAsync("api/admin/servers/" + id + "/warn", new { reason = reason ?? string.Empty }));
+            if (failure is null)
+                TempData["AdminNotice"] = "The warning was sent to the server owner as a direct message.";
+            else
+                TempData["AdminWarning"] = failure;
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Ban(int id, string? reason)
         {
             var failure = await SendAsync(() => Api.PostAsJsonAsync("api/admin/servers/" + id + "/ban", new { reason = reason ?? string.Empty }));

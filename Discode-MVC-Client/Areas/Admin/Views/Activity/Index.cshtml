@@ -5,7 +5,7 @@
     string KindClass(string kind) => kind switch
     {
         "Ban" or "ServerBan" or "Delete" or "ServerDelete" => "is-banned",
-        "Warn" or "Timeout" => "is-timeout",
+        "Warn" or "ServerWarn" or "Timeout" => "is-timeout",
         "Unban" or "ServerUnban" or "ClearTimeout" => "is-public",
         _ => ""
     };
