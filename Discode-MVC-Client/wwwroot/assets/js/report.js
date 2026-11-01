@@ -249,7 +249,7 @@
     };
 
     document.addEventListener("click", function (event) {
-        var avatar = event.target.closest && event.target.closest("#me-pop .me-avatar img, #me-profile.visitor-view .me-profile-avatar img");
+        var avatar = event.target.closest && event.target.closest("#me-pop .me-avatar img, #me-profile.visitor-view .me-profile-avatar img, .adm-zoom");
         if (!avatar) return;
         window.discodeZoomImage(avatar.currentSrc || avatar.src);
     });

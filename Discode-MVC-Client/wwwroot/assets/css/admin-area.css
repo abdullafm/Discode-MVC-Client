@@ -1352,3 +1352,53 @@ html.theme-dark .adm-modal-text {
         transform: translateY(12px) scale(0.95);
     }
 }
+
+/* ===== Server sekline basanda boyusun ===== */
+.adm-zoom {
+    cursor: zoom-in;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.adm-table .adm-zoom:hover {
+    transform: scale(1.12);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.adm-person > .adm-zoom-wrap {
+    position: relative;
+    display: block;
+    width: 56px;
+    height: 56px;
+    flex: none;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.adm-zoom-wrap .adm-zoom {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.adm-zoom-wrap::after {
+    content: "00e";
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    color: #ffffff;
+    font-family: "Font Awesome 6 Free";
+    font-size: 18px;
+    font-weight: 900;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.16s ease;
+}
+
+.adm-zoom-wrap:hover::after {
+    opacity: 1;
+}
