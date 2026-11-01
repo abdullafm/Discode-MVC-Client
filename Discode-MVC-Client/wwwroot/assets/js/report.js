@@ -315,11 +315,51 @@ window.discodeReel = function (url) {
 
 if (!window.discodeLogoutBound) {
     window.discodeLogoutBound = true;
-    document.addEventListener("click", function (event) {
-        if (!event.target.closest("#me-logout")) return;
-        if (!window.confirm("Are you sure you want to log out?")) return;
+
+    // Own confirm dialog: the browser one can be switched off by the page, which made Log out do nothing
+    var logoutLayer = null;
+
+    function logoutNow() {
         var form = document.getElementById("logout-form");
         if (form) form.submit();
         else window.location.href = "/Account/Login";
-    });
+    }
+
+    function closeLogout() {
+        if (logoutLayer) logoutLayer.hidden = true;
+    }
+
+    function openLogout() {
+        if (!logoutLayer || !document.body.contains(logoutLayer)) {
+            logoutLayer = document.createElement("div");
+            logoutLayer.className = "logout-layer";
+            logoutLayer.innerHTML = '<div class="logout-card" role="alertdialog" aria-label="Log out">' +
+                '<h3>Log out?</h3><p>Are you sure you want to log out?</p>' +
+                '<div class="logout-actions"><button type="button" class="logout-cancel">Cancel</button>' +
+                '<button type="button" class="logout-confirm">Log out</button></div></div>';
+            document.body.appendChild(logoutLayer);
+            logoutLayer.addEventListener("click", function (event) {
+                if (event.target === logoutLayer || event.target.closest(".logout-cancel")) closeLogout();
+                else if (event.target.closest(".logout-confirm")) logoutNow();
+            });
+        }
+        logoutLayer.hidden = false;
+        var confirmButton = logoutLayer.querySelector(".logout-confirm");
+        if (confirmButton) confirmButton.focus();
+    }
+
+    // capture phase: another handler stopping the click can no longer swallow it
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest("#me-logout")) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        openLogout();
+    }, true);
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && logoutLayer && !logoutLayer.hidden) {
+            event.stopImmediatePropagation();
+            closeLogout();
+        }
+    }, true);
 }

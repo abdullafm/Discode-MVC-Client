@@ -294,3 +294,93 @@
 #photo-preview img[hidden] {
     display: none;
 }
+
+/* ===== Log out tesdiqi ===== */
+.logout-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: grid;
+    place-items: center;
+    background: rgba(0, 0, 0, 0.55);
+    animation: logout-fade 0.16s ease;
+}
+
+.logout-layer[hidden] {
+    display: none;
+}
+
+.logout-card {
+    width: min(360px, calc(100vw - 32px));
+    padding: 22px 22px 18px;
+    border-radius: 16px;
+    background: #ffffff;
+    color: #060607;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    animation: logout-pop 0.18s ease;
+}
+
+.logout-card h3 {
+    margin: 0 0 6px;
+    font-size: 20px;
+}
+
+.logout-card p {
+    margin: 0 0 18px;
+    color: #4d5058;
+}
+
+.logout-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.logout-actions button {
+    padding: 9px 18px;
+    border: 0;
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.16s ease, transform 0.16s ease;
+}
+
+.logout-cancel {
+    background: rgba(128, 132, 142, 0.2);
+    color: inherit;
+}
+
+.logout-cancel:hover {
+    background: rgba(128, 132, 142, 0.32);
+}
+
+.logout-confirm {
+    background: #f23f43;
+    color: #ffffff;
+}
+
+.logout-confirm:hover {
+    background: #d9363a;
+    transform: translateY(-1px);
+}
+
+html.theme-dark .logout-card {
+    background: #2b2d31;
+    color: #f2f3f5;
+}
+
+html.theme-dark .logout-card p {
+    color: #b5bac1;
+}
+
+@keyframes logout-fade {
+    from { opacity: 0; }
+}
+
+@keyframes logout-pop {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.96);
+    }
+}
