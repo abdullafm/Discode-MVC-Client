@@ -56,6 +56,6 @@ function openToggle() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    updateMicHeadphoneIcon();
+    if (typeof updateMicHeadphoneIcon === "function") updateMicHeadphoneIcon();
 });
 

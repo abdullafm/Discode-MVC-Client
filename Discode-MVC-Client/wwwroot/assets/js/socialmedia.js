@@ -63,7 +63,7 @@ function openToggle() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    updateMicHeadphoneIcon();
+    if (typeof updateMicHeadphoneIcon === "function") updateMicHeadphoneIcon();
 });
 
 var STORY_MS = 5000;
@@ -356,6 +356,7 @@ purgeLegacyPosts();
 
 function showView(view) {
     currentView = view;
+    if (!document.getElementById("view-explore")) return;
     document.getElementById("view-explore").hidden = view !== "explore";
     document.getElementById("view-friends").hidden = view !== "friends";
     document.getElementById("view-live").hidden = view !== "live";

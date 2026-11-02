@@ -2,6 +2,19 @@
 var micO = false;
 var headO = false;
 
+// Mikrofon / qulaqlıq ikonlarını cari vəziyyətə uyğun qoyur (səhifə dəyişəndə yenidən çağırılır)
+function updateMicHeadphoneIcon() {
+    var micIcon = document.getElementById("mic");
+    var headIcon = document.getElementById("head");
+    var headBtn = document.getElementById("headp-btn");
+    if (micIcon) micIcon.className = micO ? "fa-solid fa-microphone-slash mute" : "fa-solid fa-microphone";
+    if (headIcon) headIcon.className = headO ? "fa-solid fa-headphones mute" : "fa-solid fa-headphones";
+    if (headBtn) {
+        if (headO) headBtn.setAttribute("data-deafened", "true");
+        else headBtn.removeAttribute("data-deafened");
+    }
+}
+
 function fromLogin() {
     try {
         if (sessionStorage.getItem("discode-splash") === "1") {
