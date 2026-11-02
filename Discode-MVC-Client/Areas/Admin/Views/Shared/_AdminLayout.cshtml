@@ -100,7 +100,16 @@
             </div>
         </aside>
     </header>
-        <main class="discover-view admin-view">
+        <main class="discover-view admin-view show-main">
+            <div class="discover-phone-cats admin-phone-cats" aria-label="Admin sections">
+                <a class="discover-cat @(section == "overview" ? "on" : "")" href="@Url.Action("Index", "Home", new { area = "Admin" })">Dashboard</a>
+                <a class="discover-cat @(section == "servers" ? "on" : "")" href="@Url.Action("Index", "Servers", new { area = "Admin" })">Servers</a>
+                <a class="discover-cat @(section == "users" ? "on" : "")" href="@Url.Action("Index", "Users", new { area = "Admin" })">Members</a>
+                <a class="discover-cat @(section == "live" ? "on" : "")" href="@Url.Action("Index", "Live", new { area = "Admin" })">Live</a>
+                <a class="discover-cat @(section == "reports" ? "on" : "")" href="@Url.Action("Index", "Reports", new { area = "Admin" })">Reports</a>
+                <a class="discover-cat @(section == "branding" ? "on" : "")" href="@Url.Action("Index", "Branding", new { area = "Admin" })">Logos</a>
+                <a class="discover-cat @(section == "activity" ? "on" : "")" href="@Url.Action("Index", "Activity", new { area = "Admin" })">Activity</a>
+            </div>
             <header class="admin-top">
                 <h1>@ViewData["Title"]</h1>
                 <span class="admin-role">@(User.IsInRole("SuperAdmin") ? "SuperAdmin" : "Admin")</span>
