@@ -21,6 +21,7 @@
         "Story" => "Story",
         "Post" => "Post",
         "Comment" => "Comment",
+        "LiveStream" => "Live stream",
         _ => type
     };
     string Article(string type) => type switch
@@ -31,6 +32,7 @@
         "Story" => "The story",
         "Post" => "The post",
         "Comment" => "The comment",
+        "LiveStream" => "The live stream",
         "Group" => "The group",
         _ => "The content"
     };
@@ -40,6 +42,7 @@
         "Server" => "Server name and description at the time of the report",
         "Group" => "Group name at the time of the report",
         "Story" => "Story image at the time of the report",
+        "LiveStream" => "Stream title and category at the time of the report",
         _ => "What was written (saved when the report was sent)"
     };
     bool IsImage(string line) => line.StartsWith("/uploads/") && System.Text.RegularExpressions.Regex.IsMatch(line, @"\.(png|jpe?g|gif|webp)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);

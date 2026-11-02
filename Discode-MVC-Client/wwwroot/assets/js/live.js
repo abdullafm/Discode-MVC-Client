@@ -458,6 +458,7 @@
         byId("live-streamer-avatar").src = stream.hostAvatarUrl || DEFAULT_AVATAR;
         byId("live-viewers-count").textContent = viewerText(stream.viewerCount);
         byId("live-btn-end").hidden = !mine;
+        byId("live-report-btn").hidden = mine;
         byId("live-chat-feed").textContent = "";
         video.muted = mine;
         video.srcObject = null;
@@ -726,6 +727,11 @@
         var stage = byId("live-watch-stage");
         if (document.fullscreenElement) document.exitFullscreen();
         else if (stage.requestFullscreen) stage.requestFullscreen();
+    });
+
+    byId("live-report-btn").addEventListener("click", function () {
+        var id = currentStreamId();
+        if (id && window.discodeReport) window.discodeReport({ type: "LiveStream", id: String(id), label: "live stream" });
     });
 
     byId("live-btn-end").addEventListener("click", function () {
