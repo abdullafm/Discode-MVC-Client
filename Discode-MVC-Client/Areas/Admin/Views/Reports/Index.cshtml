@@ -1,0 +1,157 @@
+@model AdminReportListVM
+@{
+    ViewData["Title"] = "Reports";
+    ViewData["Section"] = "reports";
+    string ReasonLabel(string reason) => System.Text.RegularExpressions.Regex.Replace(reason, "(?<=[a-z])(?=[A-Z])", " ");
+    string TargetLabel(string type) => System.Text.RegularExpressions.Regex.Replace(type, "(?<=[a-z])(?=[A-Z])", " ").ToLowerInvariant();
+    string ReasonClass(string reason) => reason switch
+    {
+        "Violence" or "SelfHarm" or "HateSpeech" or "SexualContent" => "is-banned",
+        "Spam" or "Other" => "",
+        _ => "is-timeout"
+    };
+    bool IsImage(string line) => line.StartsWith("/uploads/") && System.Text.RegularExpressions.Regex.IsMatch(line, @"\.(png|jpe?g|gif|webp)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    var tabs = new[]
+    {
+        (Key: "Open", Label: "Open", Count: Model.OpenCount),
+        (Key: "Reviewed", Label: "Reviewed", Count: Model.ReviewedCount),
+        (Key: "Dismissed", Label: "Dismissed", Count: Model.DismissedCount),
+        (Key: "All", Label: "All", Count: Model.OpenCount + Model.ReviewedCount + Model.DismissedCount)
+    };
+}
+@if (!string.IsNullOrEmpty(Model.Notice))
+{
+    <p class="adm-notice"><i class="fa-solid fa-circle-check"></i> @Model.Notice</p>
+}
+@if (!string.IsNullOrEmpty(Model.Warning))
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Warning</p>
+}
+
+<div class="adm-report-tabs">
+    @foreach (var tab in tabs)
+    {
+        <a class="@(Model.Status == tab.Key ? "on" : "")" asp-area="Admin" asp-controller="Reports" asp-action="Index" asp-route-status="@tab.Key" asp-route-search="@Model.Search">@tab.Label <span>@tab.Count</span></a>
+    }
+</div>
+
+<div class="adm-list-head">
+    <form method="get" class="adm-search" asp-area="Admin" asp-controller="Reports" asp-action="Index">
+        <input type="hidden" name="status" value="@Model.Status">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" name="search" value="@Model.Search" placeholder="Search by reporter, member or text" autocomplete="off">
+    </form>
+    <span class="adm-count">@Model.Total @(Model.Total == 1 ? "report" : "reports")</span>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Error</p>
+}
+
+<div class="adm-table-wrap adm-report-list">
+    @foreach (var report in Model.Items)
+    {
+        <article class="adm-report is-@report.Status.ToLowerInvariant()">
+            <header>
+                <span class="adm-chip @ReasonClass(report.Reason)">@ReasonLabel(report.Reason)</span>
+                <span class="adm-muted">on a @TargetLabel(report.TargetType) &middot; #@report.Id &middot; @report.CreatedAt.ToString("yyyy-MM-dd HH:mm")</span>
+                <span class="adm-chip adm-report-status is-@report.Status.ToLowerInvariant()">@report.Status</span>
+            </header>
+
+            <p class="adm-report-who">
+                @if (!string.IsNullOrEmpty(report.ReporterId))
+                {
+                    <a class="adm-link" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@report.ReporterId"><i class="fa-solid fa-flag"></i> @@@report.ReporterUserName</a>
+                }
+                else
+                {
+                    <span>@@@report.ReporterUserName</span>
+                }
+                reported
+                @if (!string.IsNullOrEmpty(report.OwnerId) && !string.IsNullOrEmpty(report.OwnerUserName))
+                {
+                    <a class="adm-link" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@report.OwnerId"><i class="fa-solid fa-user"></i> @@@report.OwnerUserName</a>
+                    @if (!string.IsNullOrEmpty(report.OwnerDisplayName) && report.OwnerDisplayName != report.OwnerUserName)
+                    {
+                        <span class="adm-muted">(@report.OwnerDisplayName)</span>
+                    }
+                }
+                else
+                {
+                    <span class="adm-muted">an account that no longer exists</span>
+                }
+                @if (report.ServerId is not null && !string.IsNullOrEmpty(report.ServerName))
+                {
+                    <span class="adm-muted">in</span> <a class="adm-link" asp-area="Admin" asp-controller="Servers" asp-action="Details" asp-route-id="@report.ServerId"><i class="fa-solid fa-server"></i> @report.ServerName</a>
+                }
+                else if (!string.IsNullOrEmpty(report.GroupName))
+                {
+                    <span class="adm-muted">in the group</span> <strong>@report.GroupName</strong>
+                }
+            </p>
+
+            @if (!string.IsNullOrWhiteSpace(report.Details))
+            {
+                <blockquote class="adm-report-details"><strong>What they wrote:</strong> @report.Details</blockquote>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(report.Snapshot))
+            {
+                <div class="adm-report-snapshot">
+                    <small>Reported content (saved when the report was sent)</small>
+                    @foreach (var line in report.Snapshot.Split('\n'))
+                    {
+                        if (IsImage(line.Trim()))
+                        {
+                            <a href="@line.Trim()" target="_blank" rel="noopener"><img src="@line.Trim()" alt=""></a>
+                        }
+                        else if (line.Length > 0)
+                        {
+                            <p>@line</p>
+                        }
+                    }
+                </div>
+            }
+
+            <footer>
+                @if (report.Status == "Open")
+                {
+                    <form method="post" asp-area="Admin" asp-controller="Reports" asp-action="SetStatus" asp-route-id="@report.Id">
+                        <input type="hidden" name="status" value="Reviewed"><input type="hidden" name="filter" value="@Model.Status"><input type="hidden" name="search" value="@Model.Search"><input type="hidden" name="page" value="@Model.Page">
+                        <button type="submit" class="adm-btn is-success"><i class="fa-solid fa-check"></i> Mark reviewed</button>
+                    </form>
+                    <form method="post" asp-area="Admin" asp-controller="Reports" asp-action="SetStatus" asp-route-id="@report.Id" data-confirm="Nothing was wrong, so no action is needed." data-confirm-title="Dismiss this report?" data-confirm-button="Dismiss" data-confirm-tone="warning" data-confirm-icon="fa-ban">
+                        <input type="hidden" name="status" value="Dismissed"><input type="hidden" name="filter" value="@Model.Status"><input type="hidden" name="search" value="@Model.Search"><input type="hidden" name="page" value="@Model.Page">
+                        <button type="submit" class="adm-btn is-outline"><i class="fa-solid fa-xmark"></i> Dismiss</button>
+                    </form>
+                    @if (!string.IsNullOrEmpty(report.OwnerId) && !string.IsNullOrEmpty(report.OwnerUserName))
+                    {
+                        <a class="adm-btn is-outline" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@report.OwnerId"><i class="fa-solid fa-gavel"></i> Take action</a>
+                    }
+                }
+                else
+                {
+                    <span class="adm-muted">@report.Status by @@@report.ReviewedBy @(report.ReviewedAt is null ? "" : "· " + report.ReviewedAt.Value.ToString("yyyy-MM-dd HH:mm"))</span>
+                    <form method="post" asp-area="Admin" asp-controller="Reports" asp-action="SetStatus" asp-route-id="@report.Id">
+                        <input type="hidden" name="status" value="Open"><input type="hidden" name="filter" value="@Model.Status"><input type="hidden" name="search" value="@Model.Search"><input type="hidden" name="page" value="@Model.Page">
+                        <button type="submit" class="adm-btn is-outline"><i class="fa-solid fa-rotate-left"></i> Reopen</button>
+                    </form>
+                }
+            </footer>
+        </article>
+    }
+    @if (Model.Items.Count == 0)
+    {
+        <p class="adm-empty">@(Model.Status == "Open" ? "No reports are waiting. Nice and quiet." : "No reports here.")</p>
+    }
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="adm-pager">
+        <a class="@(Model.Page <= 1 ? "is-off" : "")" asp-area="Admin" asp-controller="Reports" asp-action="Index" asp-route-status="@Model.Status" asp-route-search="@Model.Search" asp-route-page="@(Model.Page - 1)"><i class="fa-solid fa-chevron-left"></i></a>
+        <span>Page @Model.Page / @Model.TotalPages</span>
+        <a class="@(Model.Page >= Model.TotalPages ? "is-off" : "")" asp-area="Admin" asp-controller="Reports" asp-action="Index" asp-route-status="@Model.Status" asp-route-search="@Model.Search" asp-route-page="@(Model.Page + 1)"><i class="fa-solid fa-chevron-right"></i></a>
+    </div>
+}

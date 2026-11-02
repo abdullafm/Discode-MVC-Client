@@ -47,11 +47,11 @@
         <small>Blocked by an admin</small>
     </a>
 
-    <div class="stat-card">
+    <a class="stat-card" asp-area="Admin" asp-controller="Reports" asp-action="Index" data-panel="@Url.Action("Index", "Reports", new { area = "Admin" })">
         <div class="stat-head"><span>Reports</span><i class="stat-icon tone-red fa-solid fa-flag"></i></div>
         <strong data-stat="reports">@Model.Reports.Total.ToString("N0")</strong>
         <small class="@(Model.Reports.Open > 0 ? "tone-red-text" : "")" data-stat="reports-note">@Model.Reports.Open waiting review</small>
-    </div>
+    </a>
 </div>
 
 <div id="stat-panel" class="stat-panel" hidden></div>

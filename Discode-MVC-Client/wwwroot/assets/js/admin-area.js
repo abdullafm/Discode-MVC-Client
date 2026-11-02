@@ -290,7 +290,7 @@
         }).then(function (html) {
             var doc = new DOMParser().parseFromString(html, "text/html");
             if (!doc.querySelector(".adm-table-wrap")) return;
-            swapParts(root, doc, [".adm-error", ".adm-table-wrap", ".adm-count", ".adm-pager"]);
+            swapParts(root, doc, [".adm-error", ".adm-report-tabs", ".adm-table-wrap", ".adm-count", ".adm-pager"]);
         }).catch(function () {});
     }
 

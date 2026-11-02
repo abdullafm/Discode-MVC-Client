@@ -1693,3 +1693,130 @@ html.theme-dark .adm-chip.is-timeout {
     color: #fff;
     transform: translateY(-1px);
 }
+
+/* ===== Reportlar ===== */
+.adm-report-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.adm-report-tabs a {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(128, 132, 142, 0.35);
+    color: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    text-decoration: none;
+    transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.adm-report-tabs a span {
+    margin-left: 4px;
+    opacity: 0.65;
+}
+
+.adm-report-tabs a:hover {
+    background: rgba(128, 132, 142, 0.14);
+}
+
+.adm-report-tabs a.on {
+    background: #5865f2;
+    border-color: #5865f2;
+    color: #fff;
+}
+
+.adm-report-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow: visible;
+}
+
+.adm-report {
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(128, 132, 142, 0.28);
+    border-left: 4px solid #f0b232;
+    background: rgba(128, 132, 142, 0.06);
+}
+
+.adm-report.is-reviewed {
+    border-left-color: #23a55a;
+}
+
+.adm-report.is-dismissed {
+    border-left-color: #80848e;
+    opacity: 0.8;
+}
+
+.adm-report header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.adm-report header .adm-report-status {
+    margin-left: auto;
+}
+
+.adm-report-who {
+    margin: 12px 0 8px;
+    line-height: 1.7;
+}
+
+.adm-report-details {
+    margin: 8px 0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(128, 132, 142, 0.14);
+    font-size: 14px;
+    word-break: break-word;
+}
+
+.adm-report-snapshot {
+    margin: 8px 0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px dashed rgba(128, 132, 142, 0.5);
+}
+
+.adm-report-snapshot small {
+    display: block;
+    margin-bottom: 6px;
+    color: #80848e;
+    font-weight: 700;
+}
+
+.adm-report-snapshot p {
+    margin: 0 0 4px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.adm-report-snapshot img {
+    max-width: 260px;
+    max-height: 220px;
+    border-radius: 10px;
+    display: block;
+    margin-top: 6px;
+}
+
+.adm-report footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.adm-report footer form {
+    margin: 0;
+}
+
+.adm-report footer a.adm-btn {
+    text-decoration: none;
+}
