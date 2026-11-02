@@ -2033,3 +2033,41 @@ html.theme-dark .adm-chip.is-timeout {
         flex: 1 1 100%;
     }
 }
+
+/* Telefonda yan panel gizlidir: ayarlara (və çıxışa) bu düymə ilə girilir */
+.admin-phone-settings {
+    display: none;
+}
+
+@media (max-width: 720px) {
+    .admin-top {
+        gap: 8px;
+    }
+
+    .admin-top h1 {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .admin-phone-settings {
+        display: grid;
+        place-items: center;
+        flex: none;
+        width: 36px;
+        height: 36px;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(128, 132, 142, 0.16);
+        color: inherit;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .admin-phone-settings:hover {
+        background: rgba(128, 132, 142, 0.3);
+    }
+}

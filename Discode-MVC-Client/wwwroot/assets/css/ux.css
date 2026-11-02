@@ -226,3 +226,9 @@ details[open] > :not(summary) {
 .notify-switch {
     transition: filter 0.15s ease;
 }
+
+/* ---------- 9) kiçik ekranda pəncərə ekrandan çıxmasın ---------- */
+.dm-modal-card {
+    max-width: calc(100vw - 32px);
+    max-height: calc(100dvh - 32px);
+}

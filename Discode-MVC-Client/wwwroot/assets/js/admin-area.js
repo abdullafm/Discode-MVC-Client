@@ -169,8 +169,20 @@
         activeCard = card;
         activeUrl = url;
         card.classList.add("on");
-        loadPanel(url);
+        loadPanel(url).then(function () {
+            // telefonda siyahı kartların altında açılır: ekran onu göstərmək üçün özü sürüşsün
+            if (window.matchMedia("(max-width: 720px)").matches && !panel.hidden) {
+                panel.scrollIntoView({ behavior: "smooth", block: "start" });
+            }
+        });
     }
+
+    // telefonda bölmə düymələri sürüşür: açıq olanı ortaya gətir ki, haradasan görünsün
+    (function centerActiveChip() {
+        var strip = document.querySelector(".admin-phone-cats");
+        var current = strip && strip.querySelector(".discover-cat.on");
+        if (current) strip.scrollLeft = Math.max(0, current.getBoundingClientRect().left - strip.getBoundingClientRect().left + strip.scrollLeft - (strip.clientWidth - current.offsetWidth) / 2);
+    })();
 
     if (panel) {
         document.querySelectorAll("[data-panel]").forEach(function (card) {

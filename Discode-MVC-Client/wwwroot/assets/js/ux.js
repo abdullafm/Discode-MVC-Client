@@ -145,4 +145,15 @@
             close.click();
         }
     });
+
+    // Telefonda ayarlar tabları sürüşür: seçilən tab görünən yerə gəlsin
+    document.addEventListener("click", function (event) {
+        var tab = event.target.closest && event.target.closest(".settings-nav button");
+        if (!tab || !window.matchMedia("(max-width: 720px)").matches) return;
+        var strip = tab.closest(".settings-tabs");
+        if (strip) {
+            var offset = tab.getBoundingClientRect().left - strip.getBoundingClientRect().left + strip.scrollLeft;
+            strip.scrollTo({ left: Math.max(0, offset - (strip.clientWidth - tab.offsetWidth) / 2), behavior: "smooth" });
+        }
+    });
 })();

@@ -114,6 +114,7 @@
             <header class="admin-top">
                 <h1>@ViewData["Title"]</h1>
                 <span class="admin-role">@(User.IsInRole("SuperAdmin") ? "SuperAdmin" : "Admin")</span>
+                <button type="button" class="admin-phone-settings" aria-label="Settings" onclick="var s = document.getElementById('settings-open'); if (s) s.click();"><i class="fa-solid fa-gear"></i></button>
             </header>
             <div class="admin-body">
                 @RenderBody()
