@@ -156,4 +156,120 @@
             strip.scrollTo({ left: Math.max(0, offset - (strip.clientWidth - tab.offsetWidth) / 2), behavior: "smooth" });
         }
     });
+    // ---------- dar ekranda ayarlar tabları açılan siyahıya (dropdown) çevrilir ----------
+    function buildTabSelect(strip, selector, inside) {
+        if (!strip || strip.getAttribute("data-ux-select")) return;
+        var buttons = [].slice.call(strip.querySelectorAll(selector));
+        if (buttons.length < 2) return;
+        strip.setAttribute("data-ux-select", "1");
+
+        var wrap = document.createElement("div");
+        wrap.className = "ux-select";
+        var trigger = document.createElement("button");
+        trigger.type = "button";
+        trigger.className = "ux-select-btn";
+        trigger.setAttribute("aria-haspopup", "listbox");
+        trigger.setAttribute("aria-expanded", "false");
+        var triggerIcon = document.createElement("span");
+        triggerIcon.className = "ux-select-ico";
+        var triggerLabel = document.createElement("span");
+        triggerLabel.className = "ux-select-label";
+        var chevron = document.createElement("i");
+        chevron.className = "fa-solid fa-chevron-down ux-select-chev";
+        trigger.appendChild(triggerIcon);
+        trigger.appendChild(triggerLabel);
+        trigger.appendChild(chevron);
+
+        var menu = document.createElement("div");
+        menu.className = "ux-select-menu";
+        menu.setAttribute("role", "listbox");
+        menu.hidden = true;
+
+        function labelOfTab(button) {
+            var text = button.querySelector("span:not(.lang-icon)");
+            return ((text || button).textContent || "").replace(/\s+/g, " ").trim();
+        }
+
+        function iconOfTab(button) {
+            var icon = button.querySelector("i, .lang-icon");
+            return icon ? icon.cloneNode(true) : null;
+        }
+
+        function close() {
+            menu.hidden = true;
+            wrap.classList.remove("open");
+            trigger.setAttribute("aria-expanded", "false");
+        }
+
+        var items = buttons.map(function (button) {
+            var item = document.createElement("button");
+            item.type = "button";
+            item.className = "ux-select-item" + (button.classList.contains("server-settings-delete") ? " is-danger" : "");
+            item.setAttribute("role", "option");
+            var itemIcon = iconOfTab(button);
+            if (itemIcon) item.appendChild(itemIcon);
+            var text = document.createElement("span");
+            text.textContent = labelOfTab(button);
+            item.appendChild(text);
+            item.addEventListener("click", function () {
+                close();
+                button.click();
+                refresh();
+            });
+            menu.appendChild(item);
+            return item;
+        });
+
+        function refresh() {
+            var current = buttons.filter(function (button) { return button.classList.contains("on"); })[0] || buttons[0];
+            triggerIcon.innerHTML = "";
+            var currentIcon = iconOfTab(current);
+            if (currentIcon) triggerIcon.appendChild(currentIcon);
+            triggerIcon.hidden = !currentIcon;
+            triggerLabel.textContent = labelOfTab(current);
+            items.forEach(function (item, index) {
+                item.classList.toggle("on", buttons[index] === current);
+                item.setAttribute("aria-selected", buttons[index] === current ? "true" : "false");
+            });
+        }
+
+        trigger.addEventListener("click", function (event) {
+            event.stopPropagation();
+            var open = menu.hidden;
+            menu.hidden = !open;
+            wrap.classList.toggle("open", open);
+            trigger.setAttribute("aria-expanded", open ? "true" : "false");
+        });
+        document.addEventListener("click", function (event) {
+            if (!wrap.contains(event.target)) close();
+        });
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !menu.hidden) {
+                event.stopPropagation();
+                close();
+            }
+        }, true);
+
+        wrap.appendChild(trigger);
+        wrap.appendChild(menu);
+        if (inside) {
+            strip.insertBefore(wrap, strip.firstChild);
+            strip.classList.add("ux-has-select");
+        } else {
+            strip.parentNode.insertBefore(wrap, strip);
+            strip.parentNode.classList.add("ux-has-select");
+        }
+        refresh();
+
+        // tab başqa yerdən dəyişəndə (məsələn kod ilə) yazı da dəyişsin
+        new MutationObserver(refresh).observe(strip, { attributes: true, attributeFilter: ["class"], subtree: true });
+    }
+
+    function buildAllTabSelects() {
+        buildTabSelect(document.querySelector(".settings-nav .settings-tabs"), "button[data-settings-tab]");
+        buildTabSelect(document.querySelector(".server-settings-nav"), "button", true);
+    }
+    buildAllTabSelects();
+    document.addEventListener("DOMContentLoaded", buildAllTabSelects);
 })();
+
