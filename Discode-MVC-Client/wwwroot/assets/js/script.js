@@ -288,6 +288,8 @@ function openToggle() {
             }
             label.textContent = (button.querySelector(".friend-filter-text") || button).textContent.trim();
             syncGlide(button);
+        } else {
+            label.textContent = button.textContent.trim();
         }
 
         var online = document.getElementById("friends-online");

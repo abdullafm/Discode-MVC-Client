@@ -17,6 +17,7 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public string Relation { get; set; } = "none";
         public int? BlockId { get; set; }
         public bool IsPrivate { get; set; }
+        public bool IsSystem { get; set; }
         public int? OngoingCallMessageId { get; set; }
         public List<MessageUIVM> Messages { get; set; } = new List<MessageUIVM>();
     }

@@ -20,7 +20,7 @@
                     <i class="fa-solid fa-at"></i>
                     <h1 id="dm-title">@shownName</h1>
                 </div>
-                <div class="dm-bar-tools">
+                <div class="dm-bar-tools@(chat is not null && chat.IsSystem ? " is-system" : "")">
                     <i class="fa-solid fa-phone" id="dm-call" role="button" tabindex="0" aria-label="Start a call"></i>
                     <i class="fa-solid fa-video" id="dm-video" role="button" tabindex="0" aria-label="Start a video call"></i>
                     <i class="fa-solid fa-thumbtack" id="dm-pins-toggle" role="button" tabindex="0" aria-label="Pinned Messages"></i>
@@ -255,7 +255,11 @@
                 <span>Replying to <strong id="dm-reply-name"></strong></span>
                 <button type="button" id="dm-reply-cancel" aria-label="Cancel reply"><i class="fa-solid fa-circle-xmark"></i></button>
             </div>
-            <form class="dm-compose" id="dm-compose" hidden="@(chat is null)">
+            @if (chat is not null && chat.IsSystem)
+            {
+                <p class="dm-system-note"><i class="fa-solid fa-lock"></i> This is an official Discode account. You cannot reply to it.</p>
+            }
+            <form class="dm-compose" id="dm-compose" hidden="@(chat is null || chat.IsSystem)">
                 <button type="button" id="dm-attach" aria-label="Add"><i class="fa-solid fa-plus"></i></button>
                 <input type="file" id="dm-file" multiple hidden>
                 <div class="dm-attach-menu" id="dm-attach-menu" role="menu" hidden>

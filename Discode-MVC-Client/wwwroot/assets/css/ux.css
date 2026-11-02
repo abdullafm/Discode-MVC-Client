@@ -232,3 +232,121 @@ details[open] > :not(summary) {
     max-width: calc(100vw - 32px);
     max-height: calc(100dvh - 32px);
 }
+
+/* ---------- 10) boş siyahı mətnləri (dostlar) ---------- */
+.friends-hint {
+    display: none;
+    margin: 56px 16px 0;
+    color: #80848e;
+    font-size: 15px;
+    line-height: 1.5;
+    text-align: center;
+    animation: ux-drop var(--ux-base) var(--ux-ease) both;
+}
+
+.friends-hint i {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 38px;
+    opacity: 0.55;
+}
+
+#friends-online:has(.online-row):not(:has(.online-row:not([hidden]))) .friends-hint-wait,
+#friends-online:not(:has(.online-row)) .friends-hint-none,
+#friends-pending:not(:has(.online-row)) .friends-hint-pending,
+#friends-blocked:not(:has(.online-row)) .friends-hint-blocked {
+    display: block;
+}
+
+/* ---------- 11) rəsmi Discode hesabı: zəng və cavab yoxdur ---------- */
+.dm-bar-tools.is-system #dm-call,
+.dm-bar-tools.is-system #dm-video,
+.dm-bar-tools.is-system #dm-add {
+    display: none;
+}
+
+.dm-system-note {
+    margin: 0 16px 16px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: rgba(128, 132, 142, 0.14);
+    color: #80848e;
+    font-size: 14px;
+    text-align: center;
+}
+
+.dm-system-note i {
+    margin-right: 6px;
+}
+
+/* ---------- 12) telefonda başlıq daha az sıxılsın ---------- */
+@media (max-width: 480px) {
+    .group-bar .group-bar-tools button,
+    .group-bar .group-bar-tools > i {
+        width: 36px;
+        height: 36px;
+    }
+
+    .group-bar .group-bar-tools {
+        gap: 4px;
+    }
+
+    .group-bar-name {
+        min-width: 0;
+    }
+}
+
+/* canlı yayın sayğacı: yayın yoxdursa göstərilməsin */
+.explore-live-toggle-count[hidden] {
+    display: none;
+}
+
+/* ---------- 13) server ayarları: telefonda yan menyu üfüqi tablara çevrilir ---------- */
+@media (max-width: 720px) {
+    .server-settings-nav {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        max-height: none;
+        width: calc(100% - 64px);
+        padding: 14px 8px 10px 12px;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .server-settings-nav > p,
+    .server-settings-nav .server-settings-kicker {
+        display: none;
+    }
+
+    .server-settings-nav button {
+        flex: none;
+        width: auto;
+        white-space: nowrap;
+        border-radius: 999px;
+        padding: 8px 14px;
+    }
+
+    .server-settings-nav button.server-settings-delete {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+}
+
+.dm-system-note + .dm-compose {
+    display: none;
+}
+
+.dm-system-note + #dm-compose,
+.dm-system-note ~ #dm-compose {
+    display: none !important;
+}
+
+/* admin: üst-üstə düşən formalar arasında boşluq */
+.adm-panel > form + form,
+.adm-panel > form + .adm-action-row,
+.adm-panel > form + .adm-danger-zone {
+    margin-top: 20px;
+}

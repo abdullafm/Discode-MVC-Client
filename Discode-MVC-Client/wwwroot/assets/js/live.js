@@ -270,7 +270,10 @@
     function renderLive() {
         var list = byId("live-streams-list");
         var badge = byId("live-count-badge");
-        if (badge) badge.textContent = String(liveStreams.length);
+        if (badge) {
+            badge.textContent = String(liveStreams.length);
+            badge.hidden = liveStreams.length === 0;
+        }
         while (list.firstChild) list.removeChild(list.firstChild);
 
         byId("live-streams-empty").hidden = liveStreams.length > 0;

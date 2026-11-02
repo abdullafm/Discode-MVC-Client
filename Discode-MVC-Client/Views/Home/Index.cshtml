@@ -218,6 +218,8 @@
                             </div>
                         }
                     </div>
+                    <p class="friends-hint friends-hint-wait"><i class="fa-solid fa-moon"></i>Nobody is online right now. Pick <strong>All</strong> to see every friend.</p>
+                    <p class="friends-hint friends-hint-none"><i class="fa-solid fa-user-group"></i>You have no friends yet. Use <strong>Add Friend</strong> to find people.</p>
                 </div>
             </section>
             <section id="friends-pending" hidden="@(Model.Tab != "pending")">
@@ -281,6 +283,7 @@
                             </div>
                         }
                     </div>
+                    <p class="friends-hint friends-hint-pending"><i class="fa-solid fa-user-clock"></i>No pending requests.</p>
                 </div>
             </section>
             <section id="friends-blocked" hidden="@(Model.Tab != "blocked")">
@@ -309,6 +312,7 @@
                             </div>
                         }
                     </div>
+                    <p class="friends-hint friends-hint-blocked"><i class="fa-solid fa-ban"></i>You have not blocked anyone.</p>
                 </div>
             </section>
             <section id="friends-add" hidden="@(Model.Tab != "add")">
