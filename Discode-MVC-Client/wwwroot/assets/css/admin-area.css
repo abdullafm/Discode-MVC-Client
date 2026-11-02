@@ -1820,3 +1820,45 @@ html.theme-dark .adm-chip.is-timeout {
 .adm-report footer a.adm-btn {
     text-decoration: none;
 }
+
+.adm-report header h4 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+}
+
+.adm-report-info {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 10px 14px;
+    margin: 14px 0 10px;
+    font-size: 14px;
+}
+
+.adm-report-info dt {
+    color: #80848e;
+    font-weight: 700;
+}
+
+.adm-report-info dd {
+    margin: 0;
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+.adm-report-comment {
+    display: inline-block;
+    margin-left: 6px;
+    font-style: italic;
+}
+
+@media (max-width: 640px) {
+    .adm-report-info {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+
+    .adm-report-info dd {
+        margin-bottom: 8px;
+    }
+}
