@@ -288,6 +288,13 @@
     }
 
     function refreshList(root, url) {
+        // a list that holds forms (the live streams) is left alone while somebody is writing in it
+        var forms = root.querySelector(".adm-live-list");
+        if (forms) {
+            var typing = [].some.call(forms.querySelectorAll("textarea"), function (field) { return field.value.trim().length > 0; });
+            if (typing || forms.querySelector("details[open]")) return;
+        }
+
         fetch(url, REFRESH).then(function (response) {
             if (!response.ok) throw new Error("list");
             return response.text();
@@ -398,6 +405,14 @@
 
     // changes that never pass through the API (data edited in the database, missed pushes) are caught here:
     // when the connection comes back, when the tab is shown again, and every 20 seconds while it is visible
+    // streams start, stop and gain viewers without touching the admin tables
+    function onLiveMoved() {
+        if (document.querySelector(".adm-live-list")) refreshSoon();
+    }
+    document.addEventListener("discode-live-changed", onLiveMoved);
+    document.addEventListener("discode-live-viewers", onLiveMoved);
+    document.addEventListener("discode-live-ended", onLiveMoved);
+
     document.addEventListener("discode-hub-connected", refreshSoon);
     document.addEventListener("visibilitychange", function () {
         if (!document.hidden) refreshSoon();

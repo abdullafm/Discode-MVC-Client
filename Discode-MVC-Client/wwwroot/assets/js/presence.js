@@ -252,6 +252,10 @@
                     document.dispatchEvent(new CustomEvent("discode-account-warning", { detail: data }));
                 });
 
+                connection.on("LiveClosedByAdmin", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-live-closed", { detail: data }));
+                });
+
                 connection.on("BrandingChanged", function (data) {
                     var logo = (data && data.logoUrl) || "";
                     document.querySelectorAll('[data-brand="logo"]').forEach(function (node) {

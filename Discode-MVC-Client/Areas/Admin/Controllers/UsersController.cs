@@ -124,6 +124,20 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> LiveBan(string id, int minutes, string? reason)
+        {
+            return Moderate(id, "They cannot go live anymore. A stream that was running is closed.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/live-ban", new { reason = reason ?? string.Empty, minutes }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> LiveUnban(string id)
+        {
+            return Moderate(id, "They can go live again.", () => Api.PostAsync("api/admin/users/" + id + "/live-unban", null));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> ChangeRole(string id, string? role)
         {
             return Moderate(id, "The role was changed. They are signed out so the new role applies.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/role", new { role = role ?? string.Empty }));

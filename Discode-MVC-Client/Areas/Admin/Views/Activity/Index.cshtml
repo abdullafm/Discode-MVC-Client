@@ -4,9 +4,9 @@
     ViewData["Section"] = "activity";
     string KindClass(string kind) => kind switch
     {
-        "Ban" or "ServerBan" or "Delete" or "ServerDelete" => "is-banned",
+        "Ban" or "ServerBan" or "Delete" or "ServerDelete" or "LiveBan" or "LiveEnd" => "is-banned",
         "Warn" or "ServerWarn" or "Timeout" or "BrandingChange" => "is-timeout",
-        "Unban" or "ServerUnban" or "ClearTimeout" => "is-public",
+        "Unban" or "ServerUnban" or "ClearTimeout" or "LiveUnban" => "is-public",
         _ => ""
     };
 }

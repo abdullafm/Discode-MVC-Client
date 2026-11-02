@@ -494,3 +494,26 @@ window.discodeReel = function (url) {
         window.discodePresence.invoke("CheckTimeout").catch(function () {});
     }, 8000);
 })();
+
+// An admin closed the stream: tell the streamer why
+(function () {
+    document.addEventListener("discode-live-closed", function (event) {
+        var data = event.detail || {};
+        var old = document.querySelector(".warn-layer.is-live-closed");
+        if (old) old.remove();
+
+        var layer = document.createElement("div");
+        layer.className = "warn-layer is-live-closed";
+        layer.innerHTML = '<div class="warn-card" role="alertdialog" aria-modal="true">' +
+            '<div class="warn-icon"><i class="fa-solid fa-tower-broadcast"></i></div>' +
+            '<h3>Your live stream was closed</h3>' +
+            '<p class="warn-reason"></p>' +
+            '<small class="warn-note">The stream was ended by the Discode team. Please follow the rules before you go live again.</small>' +
+            '<button type="button" class="warn-ok">I understand</button></div>';
+        layer.querySelector(".warn-reason").textContent = data.reason || "";
+        layer.querySelector(".warn-reason").hidden = !data.reason;
+        document.body.appendChild(layer);
+        layer.querySelector(".warn-ok").addEventListener("click", function () { layer.remove(); });
+        layer.querySelector(".warn-ok").focus();
+    });
+})();

@@ -4,9 +4,9 @@
     ViewData["Section"] = "users";
     string KindClass(string kind) => kind switch
     {
-        "Ban" or "ServerBan" or "Delete" or "ServerDelete" => "is-banned",
+        "Ban" or "ServerBan" or "Delete" or "ServerDelete" or "LiveBan" or "LiveEnd" => "is-banned",
         "Warn" or "Timeout" or "ChangeRole" => "is-timeout",
-        "Unban" or "ServerUnban" or "ClearTimeout" => "is-public",
+        "Unban" or "ServerUnban" or "ClearTimeout" or "LiveUnban" => "is-public",
         _ => ""
     };
 }
@@ -57,6 +57,10 @@ else
             @if (Model.TimedOut)
             {
                 <span class="adm-chip is-timeout">Timed out</span>
+            }
+            @if (Model.LiveBanned)
+            {
+                <span class="adm-chip is-banned">No live</span>
             }
             <span class="adm-chip @(Model.IsPublic ? "is-public" : "is-private")">@(Model.IsPublic ? "Public" : "Private")</span>
         </div>
@@ -210,6 +214,29 @@ else
                         <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-right-from-bracket"></i> Kick</button>
                     </form>
                 </details>
+
+                @if (Model.LiveBanned)
+                {
+                    <form method="post" asp-area="Admin" asp-controller="Users" asp-action="LiveUnban" asp-route-id="@Model.Id" class="adm-action-row" data-confirm="They can start live streams again." data-confirm-title="Allow live streams again?" data-confirm-button="Allow" data-confirm-tone="success" data-confirm-icon="fa-tower-broadcast">
+                        <button type="submit" class="adm-btn is-success"><i class="fa-solid fa-tower-broadcast"></i> Allow live streams</button>
+                    </form>
+                }
+                else
+                {
+                    <details class="adm-action">
+                        <summary><i class="fa-solid fa-tower-broadcast"></i> Ban from going live</summary>
+                        <form method="post" asp-area="Admin" asp-controller="Users" asp-action="LiveBan" asp-route-id="@Model.Id" data-confirm="A stream that is running is closed and they cannot start another one until the ban ends." data-confirm-title="Ban from going live?" data-confirm-button="Ban" data-confirm-tone="danger" data-confirm-icon="fa-tower-broadcast">
+                            <select name="minutes" class="adm-select">
+                                <option value="60">1 hour</option>
+                                <option value="1440" selected>1 day</option>
+                                <option value="10080">7 days</option>
+                                <option value="0">Permanent</option>
+                            </select>
+                            <textarea name="reason" class="adm-textarea" maxlength="300" placeholder="Why can they not go live?" required></textarea>
+                            <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-tower-broadcast"></i> Ban from going live</button>
+                        </form>
+                    </details>
+                }
 
                 @if (Model.IsBanned)
                 {

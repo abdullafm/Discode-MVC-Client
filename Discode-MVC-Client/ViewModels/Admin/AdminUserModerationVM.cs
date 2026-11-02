@@ -30,6 +30,9 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public bool CanModerate { get; set; }
         public bool CanDelete { get; set; }
         public bool CanChangeRole { get; set; }
+        public bool LiveBanned { get; set; }
+        public DateTime? LiveBannedUntil { get; set; }
+        public string LiveBanReason { get; set; } = string.Empty;
         public List<AdminUserWarningVM> RecentWarnings { get; set; } = new();
         public List<AdminActionVM> History { get; set; } = new();
         public string? Error { get; set; }

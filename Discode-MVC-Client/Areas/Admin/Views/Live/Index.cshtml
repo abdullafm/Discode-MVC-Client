@@ -1,0 +1,103 @@
+@model AdminLiveListVM
+@{
+    ViewData["Title"] = "Live streams";
+    ViewData["Section"] = "live";
+    string Since(DateTime started)
+    {
+        var span = DateTime.UtcNow - started;
+        if (span.TotalMinutes < 1) return "less than a minute";
+        if (span.TotalHours < 1) return (int)span.TotalMinutes + " min";
+        return (int)span.TotalHours + " h " + span.Minutes + " min";
+    }
+}
+@if (!string.IsNullOrEmpty(Model.Notice))
+{
+    <p class="adm-notice"><i class="fa-solid fa-circle-check"></i> @Model.Notice</p>
+}
+@if (!string.IsNullOrEmpty(Model.Warning))
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Warning</p>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Error</p>
+}
+
+<div class="adm-list-head">
+    <span class="adm-muted">Every stream that is live right now, private ones included. This list updates by itself.</span>
+    <span class="adm-count">@Model.Items.Count @(Model.Items.Count == 1 ? "stream" : "streams") live</span>
+</div>
+
+<div class="adm-table-wrap adm-live-list">
+    @foreach (var stream in Model.Items)
+    {
+        <article class="adm-live">
+            <div class="adm-live-thumb">
+                @if (!string.IsNullOrEmpty(stream.ThumbnailUrl))
+                {
+                    <img src="@stream.ThumbnailUrl" alt="">
+                }
+                else if (!string.IsNullOrEmpty(stream.HostAvatarUrl))
+                {
+                    <img class="is-avatar" src="@stream.HostAvatarUrl" alt="">
+                }
+                else
+                {
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                }
+                <span class="adm-live-badge">LIVE</span>
+            </div>
+            <div class="adm-live-body">
+                <h4>@stream.Title</h4>
+                <p class="adm-muted">
+                    <a class="adm-link" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@stream.HostId"><i class="fa-solid fa-user"></i> @@@stream.HostUserName</a>
+                    @if (!string.IsNullOrEmpty(stream.Category))
+                    {
+                        <span>&middot; @stream.Category</span>
+                    }
+                    <span>&middot; <i class="fa-solid fa-eye"></i> @stream.ViewerCount watching</span>
+                    <span>&middot; live for @Since(stream.StartedAt)</span>
+                </p>
+
+                <div class="adm-live-actions">
+                    <a class="adm-btn" href="@Url.Action("Index", "Social", new { area = "", live = stream.Id })" target="_blank" rel="noopener"><i class="fa-solid fa-play"></i> Watch</a>
+
+                    <details class="adm-action">
+                        <summary><i class="fa-solid fa-triangle-exclamation"></i> Warn</summary>
+                        <form method="post" asp-area="Admin" asp-controller="Live" asp-action="Warn" asp-route-id="@stream.Id" data-confirm="The streamer sees the warning right now, on top of the stream, and gets a message from Discode." data-confirm-title="Warn this streamer?" data-confirm-button="Send warning" data-confirm-tone="warning" data-confirm-icon="fa-triangle-exclamation">
+                            <textarea name="reason" class="adm-textarea" maxlength="250" placeholder="What is wrong with the stream?" required></textarea>
+                            <button type="submit" class="adm-btn is-amber"><i class="fa-solid fa-triangle-exclamation"></i> Send warning</button>
+                        </form>
+                    </details>
+
+                    <details class="adm-action">
+                        <summary><i class="fa-solid fa-stop"></i> Close stream</summary>
+                        <form method="post" asp-area="Admin" asp-controller="Live" asp-action="End" asp-route-id="@stream.Id" data-confirm="The stream stops for everybody right now. The streamer can start a new one." data-confirm-title="Close this stream?" data-confirm-button="Close stream" data-confirm-tone="danger" data-confirm-icon="fa-stop">
+                            <textarea name="reason" class="adm-textarea" maxlength="250" placeholder="Why is it being closed?" required></textarea>
+                            <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-stop"></i> Close stream</button>
+                        </form>
+                    </details>
+
+                    <details class="adm-action">
+                        <summary><i class="fa-solid fa-ban"></i> Ban from going live</summary>
+                        <form method="post" asp-area="Admin" asp-controller="Live" asp-action="Ban" data-confirm="The stream is closed now and they cannot start another one until the ban ends." data-confirm-title="Ban from going live?" data-confirm-button="Ban" data-confirm-tone="danger" data-confirm-icon="fa-ban">
+                            <input type="hidden" name="hostId" value="@stream.HostId">
+                            <select name="minutes" class="adm-select">
+                                <option value="60">1 hour</option>
+                                <option value="1440" selected>1 day</option>
+                                <option value="10080">7 days</option>
+                                <option value="0">Permanent</option>
+                            </select>
+                            <textarea name="reason" class="adm-textarea" maxlength="250" placeholder="Why can they not go live?" required></textarea>
+                            <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-ban"></i> Ban from going live</button>
+                        </form>
+                    </details>
+                </div>
+            </div>
+        </article>
+    }
+    @if (Model.Items.Count == 0)
+    {
+        <p class="adm-empty">Nobody is live right now.</p>
+    }
+</div>
