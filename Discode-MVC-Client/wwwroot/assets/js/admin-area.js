@@ -280,6 +280,10 @@
             if (old && fresh) old.replaceWith(fresh);
             else if (old && !fresh) old.remove();
             else if (!old && fresh && selector === ".adm-pager") root.appendChild(fresh);
+            else if (!old && fresh && selector === ".adm-banner") {
+                var head = root.querySelector(".adm-detail-head");
+                if (head) head.parentNode.insertBefore(fresh, head);
+            }
         });
     }
 
@@ -291,6 +295,23 @@
             var doc = new DOMParser().parseFromString(html, "text/html");
             if (!doc.querySelector(".adm-table-wrap")) return;
             swapParts(root, doc, [".adm-error", ".adm-report-tabs", ".adm-table-wrap", ".adm-count", ".adm-pager"]);
+        }).catch(function () {});
+    }
+
+    // the Logos page: swap every card nobody is working on, then wire the new ones
+    function refreshBranding(root, url) {
+        fetch(url, REFRESH).then(function (response) {
+            if (!response.ok) throw new Error("branding");
+            return response.text();
+        }).then(function (html) {
+            var doc = new DOMParser().parseFromString(html, "text/html");
+            var fresh = doc.querySelectorAll(".adm-brand-grid > .adm-panel");
+            root.querySelectorAll(".adm-brand-grid > .adm-panel").forEach(function (card, index) {
+                var picked = card.querySelector("[data-picked]");
+                if (!fresh[index] || (picked && !picked.hidden)) return;
+                card.replaceWith(fresh[index]);
+            });
+            if (window.initBrandForms) window.initBrandForms(root);
         }).catch(function () {});
     }
 
@@ -312,6 +333,9 @@
 
             swapParts(root, doc, [".adm-metrics", ".adm-detail-chips", ".adm-history"]);
             if (metricsOnly) return;
+
+            // who they are (name, photo, bio...) can change too
+            swapParts(root, doc, [".adm-banner", ".adm-person", ".adm-dl"]);
 
             // every banner (ban, timeout) is rebuilt in front of the counters
             root.querySelectorAll(".adm-ban-banner").forEach(function (node) { node.remove(); });
@@ -341,7 +365,8 @@
         var url = root === panel ? lastPanelUrl : window.location.href;
         if (!root) return;
 
-        if (root.querySelector(".adm-detail-head")) refreshDetail(root, url);
+        if (root.querySelector(".adm-brand-grid")) refreshBranding(root, url);
+        else if (root.querySelector(".adm-detail-head")) refreshDetail(root, url);
         else if (root.querySelector(".adm-table-wrap")) refreshList(root, url);
     }
 

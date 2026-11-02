@@ -56,7 +56,10 @@
 
 @section Scripts {
     <script>
-        document.querySelectorAll(".adm-brand-upload").forEach(function (form) {
+        window.initBrandForms = function (scope) {
+        (scope || document).querySelectorAll(".adm-brand-upload").forEach(function (form) {
+            if (form._ready) return;
+            form._ready = true;
             var input = form.querySelector(".adm-file-input");
             var pick = form.querySelector("[data-pick]");
             var picked = form.querySelector("[data-picked]");
@@ -91,5 +94,7 @@
 
             form.querySelector("[data-cancel]").addEventListener("click", reset);
         });
+        };
+        window.initBrandForms(document);
     </script>
 }

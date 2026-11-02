@@ -21,6 +21,11 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
         {
             _branding.Invalidate();
             ViewData["Branding"] = await _branding.GetAsync();
+            if (Request.Headers["X-Admin-Refresh"] == "1")
+            {
+                TempData.Keep();
+            }
+
             return View();
         }
 
