@@ -7761,7 +7761,8 @@ a.notify-content {
     cursor: pointer;
 }
 
-#live-minimize-btn[hidden] {
+#live-minimize-btn[hidden],
+#live-report-btn[hidden] {
     display: none;
 }
 
