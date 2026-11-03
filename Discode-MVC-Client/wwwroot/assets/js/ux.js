@@ -271,5 +271,183 @@
     }
     buildAllTabSelects();
     document.addEventListener("DOMContentLoaded", buildAllTabSelects);
+
+    // ---------- <select> yerinə müasir açılan siyahı (data-modern-select) ----------
+    // Native siyahı brauzerin standart (mavi, kobud) görünüşünü verir. Burada select gizlənir, amma dəyəri, change hadisəsi
+    // və option-ları əvvəlki kimi işləyir: server.js dəyəri kodla qoyanda da yazı yenilənir.
+    function modernSelect(select) {
+        if (!select || select.getAttribute("data-msel")) return;
+        select.setAttribute("data-msel", "1");
+
+        var wrap = document.createElement("div");
+        wrap.className = "msel" + (select.closest(".channel-name") ? "" : " msel-boxed");
+        var trigger = document.createElement("button");
+        trigger.type = "button";
+        trigger.className = "msel-btn";
+        trigger.setAttribute("aria-haspopup", "listbox");
+        trigger.setAttribute("aria-expanded", "false");
+        if (select.getAttribute("aria-label")) trigger.setAttribute("aria-label", select.getAttribute("aria-label"));
+        var label = document.createElement("span");
+        label.className = "msel-label";
+        var chevron = document.createElement("i");
+        chevron.className = "fa-solid fa-chevron-down msel-chev";
+        trigger.appendChild(label);
+        trigger.appendChild(chevron);
+        wrap.appendChild(trigger);
+        select.classList.add("msel-native");
+        select.parentNode.insertBefore(wrap, select.nextSibling);
+
+        var menu = null;
+        var active = -1;
+
+        function options() { return [].slice.call(select.options); }
+
+        function refresh() {
+            var chosen = select.options[select.selectedIndex];
+            label.textContent = chosen ? chosen.textContent : "";
+            wrap.classList.toggle("is-empty", !chosen);
+            trigger.disabled = select.disabled;
+        }
+
+        function place() {
+            if (!menu) return;
+            var box = trigger.getBoundingClientRect();
+            menu.style.width = box.width + "px";
+            menu.style.left = box.left + "px";
+            var height = menu.offsetHeight;
+            var below = window.innerHeight - box.bottom - 12;
+            var flip = height > below && box.top > below;
+            menu.style.top = (flip ? Math.max(8, box.top - height - 6) : box.bottom + 6) + "px";
+            menu.style.maxHeight = Math.max(120, Math.min(260, flip ? box.top - 16 : below)) + "px";
+        }
+
+        function mark(index) {
+            if (!menu) return;
+            var items = menu.querySelectorAll(".msel-item");
+            active = index;
+            [].forEach.call(items, function (item, i) { item.classList.toggle("is-active", i === index); });
+            if (items[index]) items[index].scrollIntoView({ block: "nearest" });
+        }
+
+        function close() {
+            if (!menu) return;
+            var gone = menu;
+            menu = null;
+            wrap.classList.remove("open");
+            trigger.setAttribute("aria-expanded", "false");
+            gone.hidden = true;
+            window.setTimeout(function () { if (gone.parentNode) gone.parentNode.removeChild(gone); }, 220);
+            document.removeEventListener("click", outside, true);
+            document.removeEventListener("keydown", keys, true);
+            window.removeEventListener("resize", close);
+            window.removeEventListener("scroll", scrolled, true);
+        }
+
+        function choose(index) {
+            var option = select.options[index];
+            if (!option) return;
+            var changed = select.selectedIndex !== index;
+            select.selectedIndex = index;
+            refresh();
+            close();
+            trigger.focus();
+            if (changed) select.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+
+        function outside(event) {
+            if (!wrap.contains(event.target) && !(menu && menu.contains(event.target))) close();
+        }
+
+        function scrolled(event) {
+            if (menu && !menu.contains(event.target)) close();
+        }
+
+        function keys(event) {
+            if (!menu) return;
+            var count = options().length;
+            if (event.key === "Escape") {
+                event.stopPropagation();
+                event.preventDefault();
+                close();
+                trigger.focus();
+            } else if (event.key === "ArrowDown") {
+                event.preventDefault();
+                mark(Math.min(count - 1, active + 1));
+            } else if (event.key === "ArrowUp") {
+                event.preventDefault();
+                mark(Math.max(0, active - 1));
+            } else if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                event.stopPropagation();
+                if (active >= 0) choose(active);
+            } else if (event.key === "Tab") {
+                close();
+            }
+        }
+
+        function open() {
+            if (menu || select.disabled || !select.options.length) return;
+            menu = document.createElement("div");
+            menu.className = "msel-menu";
+            menu.setAttribute("role", "listbox");
+            options().forEach(function (option, index) {
+                var item = document.createElement("button");
+                item.type = "button";
+                item.className = "msel-item" + (index === select.selectedIndex ? " on" : "");
+                item.setAttribute("role", "option");
+                item.setAttribute("aria-selected", index === select.selectedIndex ? "true" : "false");
+                var text = document.createElement("span");
+                text.textContent = option.textContent;
+                item.appendChild(text);
+                var tick = document.createElement("i");
+                tick.className = "fa-solid fa-check";
+                item.appendChild(tick);
+                item.addEventListener("click", function () { choose(index); });
+                item.addEventListener("mousemove", function () { if (active !== index) mark(index); });
+                menu.appendChild(item);
+            });
+            menu.hidden = true;
+            document.body.appendChild(menu);
+            place();
+            menu.hidden = false;
+            wrap.classList.add("open");
+            trigger.setAttribute("aria-expanded", "true");
+            mark(Math.max(0, select.selectedIndex));
+            document.addEventListener("click", outside, true);
+            document.addEventListener("keydown", keys, true);
+            window.addEventListener("resize", close);
+            window.addEventListener("scroll", scrolled, true);
+        }
+
+        trigger.addEventListener("click", function (event) {
+            event.preventDefault();
+            if (menu) close();
+            else open();
+        });
+        trigger.addEventListener("keydown", function (event) {
+            if (!menu && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+                event.preventDefault();
+                open();
+            }
+        });
+
+        // option-lar kodla dəyişəndə (kateqoriya siyahısı yenidən doldurulanda) və dəyər kodla qoyulanda yazı yenilənir
+        new MutationObserver(refresh).observe(select, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["disabled"] });
+        var native = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
+        Object.defineProperty(select, "value", {
+            configurable: true,
+            get: function () { return native.get.call(select); },
+            set: function (value) { native.set.call(select, value); refresh(); }
+        });
+        select.addEventListener("change", refresh);
+        refresh();
+    }
+
+    function buildModernSelects() {
+        [].forEach.call(document.querySelectorAll("select[data-modern-select]"), modernSelect);
+    }
+    buildModernSelects();
+    document.addEventListener("DOMContentLoaded", buildModernSelects);
+    document.addEventListener("discode-page-ready", buildModernSelects);
 })();
 
