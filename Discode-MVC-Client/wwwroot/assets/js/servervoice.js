@@ -592,7 +592,8 @@
             } });
         }
 
-        if (!mineSelf && state.canModerate) {
+        if (state.canModerate) {
+            // a moderator may server-mute / deafen themselves too; Disconnect is only for other people
             divider();
             line("Server Mute", { danger: true, checked: !!user.isServerMuted, run: function () {
                 act("/ServerVoice/Moderate", { serverId: serverId, userId: userId, serverMuted: !user.isServerMuted });
@@ -600,9 +601,11 @@
             line("Server Deafen", { danger: true, checked: !!user.isServerDeafened, run: function () {
                 act("/ServerVoice/Moderate", { serverId: serverId, userId: userId, serverDeafened: !user.isServerDeafened });
             } });
-            line("Disconnect", { danger: true, icon: "fa-phone-slash", run: function () {
-                act("/ServerVoice/Disconnect", { serverId: serverId, userId: userId });
-            } });
+            if (!mineSelf) {
+                line("Disconnect", { danger: true, icon: "fa-phone-slash", run: function () {
+                    act("/ServerVoice/Disconnect", { serverId: serverId, userId: userId });
+                } });
+            }
         }
 
         divider();
