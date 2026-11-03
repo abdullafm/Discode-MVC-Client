@@ -862,7 +862,8 @@ html.theme-dark .msel-menu {
     transition: background-color 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
 }
 
-.vm-check i {
+.voice-mod-menu .vm-check i {
+    width: auto;
     font-size: 10px;
     color: #fff;
     opacity: 0;
@@ -880,8 +881,22 @@ html.theme-dark .msel-menu {
     border-color: #da373c;
 }
 
-.vm-check.on i {
+.voice-mod-menu .vm-check.on i {
     opacity: 1;
+}
+
+/* a red (danger) row turns solid red on hover: its box turns white so it stays visible */
+.voice-mod-menu button.is-danger:hover .vm-check {
+    border-color: #fff;
+    opacity: 1;
+}
+
+.voice-mod-menu button.is-danger:hover .vm-check.on {
+    background: #fff;
+}
+
+.voice-mod-menu button.is-danger:hover .vm-check.on i {
+    color: #da373c;
 }
 
 .vm-volume {
