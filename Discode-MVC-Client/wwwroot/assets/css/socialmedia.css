@@ -5641,3 +5641,26 @@ html:not(.theme-dark) .live-source-card.active,
 .watch-chat-form button:active {
     transform: scale(0.94);
 }
+
+/* ===== Şərhlər: düyməyə basanda bölmə açılır / bağlanır ===== */
+.post:not(.comments-open) .comment-list,
+.post:not(.comments-open) .comment-form,
+.post:not(.comments-open) .reply-chip {
+    display: none !important;
+}
+
+.post-actions .comment-open[data-count]:not([data-count="0"])::after {
+    content: attr(data-count);
+    margin-left: 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.post-actions .comment-open {
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.post.comments-open .post-actions .comment-open:first-of-type,
+.post.comments-open .post-actions [data-comment-post] {
+    background: rgba(88, 101, 242, 0.16);
+}

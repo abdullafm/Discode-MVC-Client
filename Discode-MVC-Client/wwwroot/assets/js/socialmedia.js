@@ -305,6 +305,50 @@ function mapPosts(list) {
     });
 }
 
+// Şərh düyməsi: şərhlər və yazı sahəsi birlikdə yumşaq açılır / bağlanır
+function slideBlock(block, opening, done) {
+    if (!block || !block.animate) {
+        if (done) done();
+        return;
+    }
+    var cs = getComputedStyle(block);
+    var height = block.offsetHeight;
+    var margin = cs.marginTop;
+    var shut = { height: "0px", marginTop: "0px", paddingTop: "0px", paddingBottom: "0px", opacity: 0 };
+    var wide = { height: height + "px", marginTop: margin, paddingTop: cs.paddingTop, paddingBottom: cs.paddingBottom, opacity: 1 };
+    var previous = block.style.overflow;
+    block.style.overflow = "hidden";
+    block.style.boxSizing = "border-box";
+    var run = block.animate(opening ? [shut, wide] : [wide, shut], { duration: 240, easing: "cubic-bezier(0.22, 0.8, 0.3, 1)" });
+    run.onfinish = function () {
+        block.style.overflow = previous;
+        block.style.boxSizing = "";
+        if (done) done();
+    };
+}
+
+function setCommentsOpen(card, open) {
+    var form = card.querySelector(".comment-form");
+    var blocks = [card.querySelector(".comment-list"), form].filter(Boolean);
+    if (open) {
+        card.classList.add("comments-open");
+        if (form) form.hidden = false;
+        blocks.forEach(function (block) { slideBlock(block, true); });
+        return;
+    }
+
+    if (!card.classList.contains("comments-open")) return;
+    var left = blocks.length;
+    var finish = function () {
+        left -= 1;
+        if (left > 0) return;
+        card.classList.remove("comments-open");
+        if (form) form.hidden = true;
+    };
+    if (!blocks.length) finish();
+    blocks.forEach(function (block) { slideBlock(block, false, finish); });
+}
+
 function captureDraft(list) {
     if (!openCommentPost) return null;
     var form = list.querySelector('.comment-form[data-post="' + openCommentPost + '"]');
@@ -583,7 +627,10 @@ function renderFeed() {
             setLike(like, post.liked, post.likes || 0);
         }
         var commentOpen = card.querySelector("[data-comment-post]");
-        if (commentOpen) commentOpen.setAttribute("data-comment-post", post.id);
+        if (commentOpen) {
+            commentOpen.setAttribute("data-comment-post", post.id);
+            commentOpen.setAttribute("data-count", String((post.comments || []).length));
+        }
         var repost = card.querySelector("[data-repost-post]");
         if (repost) {
             repost.setAttribute("data-repost-post", post.id);
@@ -648,6 +695,7 @@ function renderFeed() {
             form.setAttribute("data-post", post.id);
             form.hidden = openCommentPost !== post.id;
         }
+        card.classList.toggle("comments-open", openCommentPost === post.id);
         showReplyChip(card, post.id);
         list.appendChild(card);
     });
@@ -2343,6 +2391,7 @@ document.querySelector(".social-view").addEventListener("click", function (event
         var replyPost = replyCard.getAttribute("data-post");
         replyTarget = { post: replyPost, id: replyOpen.getAttribute("data-reply-comment"), author: replyOpen.getAttribute("data-reply-author") };
         openCommentPost = replyPost;
+        replyCard.classList.add("comments-open");
         replyForm.hidden = false;
         showReplyChip(replyCard, replyPost);
         replyForm.querySelector(".rich-text").focus();
@@ -2351,14 +2400,15 @@ document.querySelector(".social-view").addEventListener("click", function (event
     var commentOpen = event.target.closest("[data-comment-post]");
     if (commentOpen) {
         var commentPostId = commentOpen.getAttribute("data-comment-post");
-        var commentForm = commentOpen.closest(".post").querySelector(".comment-form");
-        var opening = commentForm.hidden || openCommentPost !== commentPostId;
-        document.querySelectorAll(".social-view .comment-form").forEach(function (form) {
-            form.hidden = true;
+        var commentCard = commentOpen.closest(".post");
+        var commentForm = commentCard.querySelector(".comment-form");
+        var opening = !commentCard.classList.contains("comments-open");
+        document.querySelectorAll(".social-view .post.comments-open").forEach(function (other) {
+            if (other !== commentCard) setCommentsOpen(other, false);
         });
         openCommentPost = opening ? commentPostId : null;
-        commentForm.hidden = !opening;
-        if (opening) commentForm.querySelector(".rich-text").focus();
+        setCommentsOpen(commentCard, opening);
+        if (opening && commentForm) commentForm.querySelector(".rich-text").focus({ preventScroll: true });
         return;
     }
 
