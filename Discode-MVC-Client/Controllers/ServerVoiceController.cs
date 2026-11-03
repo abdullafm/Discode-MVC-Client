@@ -54,6 +54,31 @@ namespace Discode_MVC_Client.Controllers
             }));
         }
 
+        // a moderator mutes / deafens somebody in voice (the API checks the permission and the role order)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Moderate([FromBody] ModerateServerVoiceUIVM model)
+        {
+            if (model is null || model.ServerId <= 0 || string.IsNullOrWhiteSpace(model.UserId))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Member not found." } }));
+
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/voice/{Uri.EscapeDataString(model.UserId)}/moderation", new
+            {
+                serverMuted = model.ServerMuted,
+                serverDeafened = model.ServerDeafened
+            }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Disconnect([FromBody] DisconnectServerVoiceUIVM model)
+        {
+            if (model is null || model.ServerId <= 0 || string.IsNullOrWhiteSpace(model.UserId))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Member not found." } }));
+
+            return Forward(client => client.DeleteAsync($"api/server/{model.ServerId}/voice/{Uri.EscapeDataString(model.UserId)}"));
+        }
+
         private async Task<IActionResult> Forward(Func<HttpClient, Task<HttpResponseMessage>> send)
         {
             try

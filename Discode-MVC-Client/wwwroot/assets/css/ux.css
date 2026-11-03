@@ -639,3 +639,37 @@ html.theme-dark .voice-global-bar {
         width: auto;
     }
 }
+
+/* ---- voice moderation: server mute / deafen shown in red, right-click menu on a person in a voice channel ---- */
+.voice-mod-menu p {
+    margin: 0;
+    padding: 6px 8px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0.7;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.voice-mod-menu button {
+    justify-content: flex-start !important;
+}
+
+.voice-mod-menu button i {
+    width: 16px;
+    text-align: center;
+}
+
+.server-voice-user.is-server-muted .voice-mute-icon,
+.server-voice-user.is-server-deafened .voice-deaf-icon i,
+.server-voice-tile.is-server-muted p::before,
+.server-voice-tile.is-server-deafened p::before {
+    color: #da373c !important;
+}
+
+.voice-server-muted #mic,
+.voice-server-deafened #mic,
+.voice-server-deafened #head {
+    color: #da373c !important;
+}

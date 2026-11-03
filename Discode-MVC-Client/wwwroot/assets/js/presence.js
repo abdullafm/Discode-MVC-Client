@@ -431,6 +431,10 @@
                     document.dispatchEvent(new CustomEvent("discode-server-voice-signal", { detail: data }));
                 });
 
+                connection.on("ServerVoiceModerated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-voice-moderated", { detail: data }));
+                });
+
                 connection.on("ServerVoiceChanged", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-server-voice-changed", { detail: data }));
                 });

@@ -25,7 +25,8 @@
     var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
     var joinSound = new Audio("/assets/css/audio/join-voice.mp3");
     var leaveSound = new Audio("/assets/css/audio/leave-voice.mp3");
-    var state = { channels: {}, started: {}, current: null, viewId: 0 };
+    var state = { channels: {}, started: {}, current: null, viewId: 0, canModerate: false };
+    var lastFlags = { muted: false, deafened: false };
     var remote = null;
     var known = "";
     var sent = { muted: false, deafened: false, camera: false, screen: false };
@@ -67,11 +68,28 @@
         } catch (e) {}
     }
 
-    function audio() {
+    // what the person chose with their own buttons
+    function localAudio() {
         return {
             muted: typeof micO !== "undefined" && !!micO,
             deafened: typeof headO !== "undefined" && !!headO
         };
+    }
+
+    // a moderator's server mute / deafen always wins over the buttons
+    function serverFlags() {
+        var c = state.current;
+        return { muted: !!(c && (c.isServerMuted || c.isServerDeafened)), deafened: !!(c && c.isServerDeafened) };
+    }
+
+    function effective(muted, deafened) {
+        var f = serverFlags();
+        return { muted: !!muted || f.muted, deafened: !!deafened || f.deafened };
+    }
+
+    function audio() {
+        var local = localAudio();
+        return effective(local.muted, local.deafened);
     }
 
     // səhifədə göstərilən server üçün cari səs otağı
@@ -91,7 +109,7 @@
 
     function userNode(user) {
         var row = document.createElement("div");
-        row.className = "server-voice-user" + (user.isMuted ? " is-muted" : "") + (user.isDeafened ? " is-deafened" : "") + (user.isCameraOn ? " is-camera" : "") + (user.isStreaming ? " is-streaming" : "");
+        row.className = "server-voice-user" + (user.isMuted ? " is-muted" : "") + (user.isDeafened ? " is-deafened" : "") + (user.isServerMuted ? " is-server-muted" : "") + (user.isServerDeafened ? " is-server-deafened" : "") + (user.isCameraOn ? " is-camera" : "") + (user.isStreaming ? " is-streaming" : "");
         row.setAttribute("data-user", user.userId);
         var photo = document.createElement("img");
         photo.alt = "";
@@ -189,6 +207,8 @@
             }
             tile.classList.toggle("is-muted", user.isMuted);
             tile.classList.toggle("is-deafened", user.isDeafened);
+            tile.classList.toggle("is-server-muted", !!user.isServerMuted);
+            tile.classList.toggle("is-server-deafened", !!user.isServerDeafened);
             tile.querySelector("img").src = user.avatarUrl || DEFAULT_AVATAR;
             tile.querySelector("p").textContent = user.displayName;
         });
@@ -307,6 +327,7 @@
             state.started[group.channelId] = Date.parse(group.startedAt) || Date.now();
         });
         state.current = payload.current || null;
+        state.canModerate = !!payload.canModerate;
     }
 
     function announce() {
@@ -356,6 +377,7 @@
                 sent.screen = !!state.current.isStreaming;
             }
             paint();
+            obeyModerator();
             document.dispatchEvent(new CustomEvent("discode-voice-updated"));
         }).catch(function () {}).then(function () {
             loading = false;
@@ -398,8 +420,21 @@
     }
 
     function sync(muted, deafened) {
-        document.dispatchEvent(new CustomEvent("discode-voice-audio", { detail: { muted: muted, deafened: deafened } }));
-        push(muted, deafened);
+        var now = effective(muted, deafened);
+        document.dispatchEvent(new CustomEvent("discode-voice-audio", { detail: { muted: now.muted, deafened: now.deafened } }));
+        push(now.muted, now.deafened);
+    }
+
+    // the room told us a moderator changed our state: apply it to the microphone / speakers now, and show it on the buttons
+    function obeyModerator() {
+        var f = serverFlags();
+        document.body.classList.toggle("voice-server-muted", f.muted && !f.deafened);
+        document.body.classList.toggle("voice-server-deafened", f.deafened);
+        if (f.muted === lastFlags.muted && f.deafened === lastFlags.deafened) return;
+        lastFlags = f;
+        if (!state.current) return;
+        var local = localAudio();
+        sync(local.muted, local.deafened);
     }
 
     document.addEventListener("discode-voice-media", function () {
@@ -423,8 +458,112 @@
     // başqa səhifələrdə mikrofon / qulaqlıq düymələri də otağa bildirilir
     document.addEventListener("discode-mic-changed", function (event) {
         var detail = event.detail || {};
-        if (state.current) sync(!!detail.muted, !!detail.deafened);
+        if (!state.current) return;
+        var f = serverFlags();
+        // trying to unmute / undeafen while a moderator holds it: stays muted, say why
+        if ((f.muted && !detail.muted) || (f.deafened && !detail.deafened)) {
+            tell(f.deafened ? "A moderator deafened you in this server." : "A moderator muted you in this server.");
+        }
+        sync(!!detail.muted, !!detail.deafened);
     });
+
+    function tell(text) {
+        if (window.discodeServerFlash) window.discodeServerFlash(text);
+    }
+
+    // what happened to me: shown as a message; a disconnect also closes my side of the call (the room list no longer has me)
+    document.addEventListener("discode-server-voice-moderated", function (event) {
+        var kind = (event.detail || {}).kind;
+        var text = {
+            muted: "A moderator muted you in this server.",
+            unmuted: "A moderator removed your server mute.",
+            deafened: "A moderator deafened you in this server.",
+            undeafened: "A moderator removed your server deafen.",
+            disconnected: "A moderator disconnected you from voice."
+        }[kind];
+        if (text) tell(text);
+        if (kind === "disconnected") play(leaveSound);
+        load();
+    });
+
+    // ---------- right click on someone in a voice channel: server mute / deafen / disconnect ----------
+    var modMenu = null;
+
+    function closeModMenu() {
+        if (modMenu) modMenu.hidden = true;
+    }
+
+    function findUser(userId) {
+        var found = null;
+        Object.keys(state.channels).forEach(function (id) {
+            (state.channels[id] || []).forEach(function (user) { if (user.userId === userId) found = user; });
+        });
+        return found;
+    }
+
+    function act(url, body) {
+        closeModMenu();
+        return request(url, "POST", body).then(load).catch(function (error) { tell(error.message); });
+    }
+
+    function openModMenu(userId, x, y) {
+        var user = findUser(userId);
+        if (!user || user.isSelf) return;
+        if (!modMenu) {
+            modMenu = document.createElement("div");
+            modMenu.className = "channel-menu voice-mod-menu";
+            modMenu.hidden = true;
+            document.body.appendChild(modMenu);
+        }
+        var serverId = state.viewId;
+        modMenu.innerHTML = "";
+        modMenu.setAttribute("data-user", userId);
+        var title = document.createElement("p");
+        title.textContent = user.displayName;
+        modMenu.appendChild(title);
+        function item(icon, label, danger, run) {
+            var button = document.createElement("button");
+            button.type = "button";
+            if (danger) button.className = "is-danger";
+            var glyph = document.createElement("i");
+            glyph.className = "fa-solid " + icon;
+            button.appendChild(glyph);
+            button.appendChild(document.createTextNode(" " + label));
+            button.addEventListener("click", run);
+            modMenu.appendChild(button);
+        }
+        item(user.isServerMuted ? "fa-microphone" : "fa-microphone-slash", user.isServerMuted ? "Remove Server Mute" : "Server Mute", false, function () {
+            act("/ServerVoice/Moderate", { serverId: serverId, userId: userId, serverMuted: !user.isServerMuted });
+        });
+        item("fa-headphones", user.isServerDeafened ? "Remove Server Deafen" : "Server Deafen", false, function () {
+            act("/ServerVoice/Moderate", { serverId: serverId, userId: userId, serverDeafened: !user.isServerDeafened });
+        });
+        item("fa-phone-slash", "Disconnect", true, function () {
+            act("/ServerVoice/Disconnect", { serverId: serverId, userId: userId });
+        });
+        modMenu.hidden = false;
+        var width = modMenu.offsetWidth, height = modMenu.offsetHeight;
+        modMenu.style.left = Math.max(8, Math.min(x, window.innerWidth - width - 8)) + "px";
+        modMenu.style.top = Math.max(8, Math.min(y, window.innerHeight - height - 8)) + "px";
+    }
+
+    document.addEventListener("contextmenu", function (event) {
+        if (!state.canModerate) return;
+        var row = event.target.closest && event.target.closest(".server-voice-user, .server-voice-tile.is-peer");
+        var userId = row && row.getAttribute("data-user");
+        if (!userId) return;
+        var user = findUser(userId);
+        if (!user || user.isSelf) return;
+        event.preventDefault();
+        openModMenu(userId, event.clientX, event.clientY);
+    });
+    document.addEventListener("click", function (event) {
+        if (modMenu && !modMenu.hidden && !event.target.closest(".voice-mod-menu")) closeModMenu();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") closeModMenu();
+    });
+    window.addEventListener("blur", closeModMenu);
 
     // ---------- "Voice Connected" zolağı: serverdən kənarda da görünür ----------
     function globalBar() {

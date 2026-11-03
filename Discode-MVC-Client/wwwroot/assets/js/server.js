@@ -1255,6 +1255,8 @@
 
     if (canManage && channelSide && channelMenu) {
         channelSide.addEventListener("contextmenu", function (event) {
+            // a person in a voice channel has their own menu (servervoice.js): not the category's
+            if (event.target.closest(".server-voice-user")) return;
             var row = event.target.closest(".server-channel-row");
             var channel = row ? row.querySelector(".server-channel") : null;
             var category = channel ? null : event.target.closest(".server-category");
