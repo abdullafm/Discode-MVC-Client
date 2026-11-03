@@ -871,6 +871,20 @@
                 openMemberPop(button);
             });
         }
+        // profilin şəklinə basanda böyük profil pəncərəsi açılır (qrup və DM-dəki kimi)
+        var popAvatar = document.querySelector("#member-pop .member-pop-avatar");
+        if (popAvatar) {
+            popAvatar.setAttribute("title", "View Full Profile");
+            popAvatar.addEventListener("click", function (event) {
+                event.stopPropagation();
+                var who = (memberPop.getAttribute("data-handle") || "").replace(/^@/, "");
+                var photoNode = document.getElementById("member-pop-photo");
+                var photoUrl = photoNode ? photoNode.getAttribute("src") || "" : "";
+                if (!who || !window.openUserProfile) return;
+                closeMemberPop();
+                window.openUserProfile(who, photoUrl);
+            });
+        }
         document.getElementById("member-pop-more").addEventListener("click", function (event) {
             event.stopPropagation();
             var menu = document.getElementById("member-pop-menu");

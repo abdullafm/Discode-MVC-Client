@@ -512,3 +512,17 @@ details[open] > :not(summary) {
         border-color: #1e1f22;
     }
 }
+
+/* ---------- 15) server üzv kartı: şəkil böyük profili açır ---------- */
+.member-pop-avatar {
+    cursor: pointer;
+}
+
+.member-pop-avatar img {
+    transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.member-pop-avatar:hover img {
+    filter: brightness(1.12);
+    transform: scale(1.03);
+}
