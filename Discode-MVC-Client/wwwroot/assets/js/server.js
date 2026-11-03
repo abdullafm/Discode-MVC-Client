@@ -2807,7 +2807,11 @@
         var closeInvite = event.target.closest(".server-voice-invite-close");
         if (!closeInvite) return false;
         var inviteRow = closeInvite.closest(".server-voice-invite");
-        if (inviteRow) inviteRow.hidden = true;
+        if (inviteRow) {
+            inviteRow.hidden = true;
+            // stays closed while I am in this channel: a mute, an unmute or anyone joining redraws the list but must not bring it back
+            inviteRow.setAttribute("data-dismissed", "1");
+        }
         return true;
     }
     if (channelList) {

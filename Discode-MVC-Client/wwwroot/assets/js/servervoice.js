@@ -300,7 +300,10 @@
                 if (invite) slot.insertBefore(node, invite);
                 else slot.appendChild(node);
             });
-            if (invite) invite.hidden = !inside;
+            if (invite) {
+                if (!inside) invite.removeAttribute("data-dismissed");
+                invite.hidden = !inside || invite.hasAttribute("data-dismissed");
+            }
             slot.hidden = users.length === 0;
         });
         tick();
