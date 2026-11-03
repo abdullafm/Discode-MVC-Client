@@ -1126,7 +1126,11 @@
             if (edit) {
                 var row = edit.closest(".server-channel-row");
                 var target = row ? row.querySelector(".server-channel") : null;
-                if (isOwner && target) openChannelEdit(target);
+                // holding Shift turns the gear into a trash can: delete (with the usual confirmation) instead of edit
+                if (isOwner && target) {
+                    if (event.shiftKey) openRemove("channel", target);
+                    else openChannelEdit(target);
+                }
                 return;
             }
             var removeChannelBtn = event.target.closest("[data-delete-channel]");
@@ -2078,6 +2082,14 @@
             if (ref !== sortDrag.category) sortDrag.category.parentNode.insertBefore(sortDrag.category, ref);
         }
     }
+
+    // Shift held over a channel row: the gear shows as a trash can (see .shift-down in server.css)
+    function setShiftDown(down) {
+        document.body.classList.toggle("shift-down", !!down && isOwner);
+    }
+    document.addEventListener("keydown", function (event) { if (event.key === "Shift") setShiftDown(true); });
+    document.addEventListener("keyup", function (event) { if (event.key === "Shift") setShiftDown(false); });
+    window.addEventListener("blur", function () { setShiftDown(false); });
 
     if (channelList) {
         channelList.addEventListener("click", function (event) {

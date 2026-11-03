@@ -585,6 +585,20 @@ body.is-channel-dragging {
     background: rgba(6, 6, 7, 0.08);
 }
 
+/* Shift held: the gear becomes a red trash can, a click deletes the channel */
+.shift-down .server-channel-edit .fa-gear::before {
+    content: "\f2ed";
+}
+
+.shift-down .server-channel-edit {
+    color: #da373c;
+}
+
+.shift-down .server-channel-edit:hover {
+    color: #fff;
+    background: #da373c;
+}
+
 .server-channel-edit[hidden] {
     display: none !important;
 }
