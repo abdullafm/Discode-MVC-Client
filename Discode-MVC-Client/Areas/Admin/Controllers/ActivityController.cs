@@ -25,9 +25,9 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
                     model.Total = result.Total;
                 }
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
-                model.Error = "The activity could not be loaded. Restart the API so it runs the latest build, then try again.";
+                model.Error = "The activity could not be loaded. Try again in a moment.";
             }
             catch (JsonException)
             {

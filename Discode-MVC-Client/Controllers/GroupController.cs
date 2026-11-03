@@ -33,7 +33,7 @@ namespace Discode_MVC_Client.Controllers
             var (group, status) = await GetAsync<GroupUIVM>("api/group/" + id);
             page.Group = group;
             if (group is null)
-                page.Error = status is null ? "The API is not running. Start Discode-API-FinalProject and try again." : "This group is not available.";
+                page.Error = status is null ? "The service is unavailable right now. Please try again later." : "This group is not available.";
 
             ViewData["Title"] = "Discord | " + (group?.Name ?? "Group");
             return View(page);
@@ -238,9 +238,9 @@ namespace Discode_MVC_Client.Controllers
                     ContentType = "application/json"
                 };
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
-                return StatusCode(503, new { errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+                return StatusCode(503, new { errors = new[] { "The service is unavailable right now. Please try again later." } });
             }
         }
 
@@ -261,9 +261,9 @@ namespace Discode_MVC_Client.Controllers
                     ContentType = "application/json"
                 };
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
-                return StatusCode(503, new { errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+                return StatusCode(503, new { errors = new[] { "The service is unavailable right now. Please try again later." } });
             }
         }
 

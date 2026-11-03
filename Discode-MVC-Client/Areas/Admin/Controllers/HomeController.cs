@@ -18,7 +18,7 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
                 if (overview is not null)
                     return Json(overview);
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
             }
             catch (JsonException)
@@ -36,7 +36,7 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
             {
                 overview = await Api.GetFromJsonAsync<AdminOverviewVM>("api/admin/overview") ?? overview;
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
             }
             catch (JsonException)

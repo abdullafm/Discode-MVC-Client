@@ -102,9 +102,9 @@ namespace Discode_MVC_Client.Controllers
 
                 return Ok(result);
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
-                return StatusCode(503, new UpdateProfileResponseUIVM { Errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+                return StatusCode(503, new UpdateProfileResponseUIVM { Errors = new[] { "The service is unavailable right now. Please try again later." } });
             }
         }
 
@@ -131,9 +131,9 @@ namespace Discode_MVC_Client.Controllers
 
                 return Ok(result);
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
-                return StatusCode(503, new UpdateProfileResponseUIVM { Errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+                return StatusCode(503, new UpdateProfileResponseUIVM { Errors = new[] { "The service is unavailable right now. Please try again later." } });
             }
         }
 
@@ -160,9 +160,9 @@ namespace Discode_MVC_Client.Controllers
 
                 return Ok(result);
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
-                return StatusCode(503, new UpdateProfileResponseUIVM { Errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+                return StatusCode(503, new UpdateProfileResponseUIVM { Errors = new[] { "The service is unavailable right now. Please try again later." } });
             }
         }
 
@@ -197,7 +197,7 @@ namespace Discode_MVC_Client.Controllers
                 var data = await client.GetFromJsonAsync<List<FriendRequestUIVM>>("api/friend");
                 return Ok(data ?? new List<FriendRequestUIVM>());
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
                 return StatusCode(503, Array.Empty<FriendRequestUIVM>());
             }
@@ -256,7 +256,7 @@ namespace Discode_MVC_Client.Controllers
                 var friends = await response.Content.ReadFromJsonAsync<List<FriendRequestUIVM>>();
                 return Ok((friends ?? new List<FriendRequestUIVM>()).Select(f => new { userName = f.UserName, name = f.Name, avatarUrl = f.AvatarUrl, status = f.Status }));
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
                 return StatusCode(503, new { errors = new[] { "Friends are not available." } });
             }
@@ -731,9 +731,9 @@ namespace Discode_MVC_Client.Controllers
                     ContentType = "application/json"
                 };
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
-                return StatusCode(503, new { errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+                return StatusCode(503, new { errors = new[] { "The service is unavailable right now. Please try again later." } });
             }
         }
     }

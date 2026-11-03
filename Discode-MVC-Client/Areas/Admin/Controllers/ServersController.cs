@@ -29,9 +29,9 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
                     model.Total = result.Total;
                 }
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
-                model.Error = "The servers could not be loaded. Restart the API so it runs the latest build, then try again.";
+                model.Error = "The servers could not be loaded. Try again in a moment.";
             }
             catch (JsonException)
             {
@@ -65,9 +65,9 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
                     model = await response.Content.ReadFromJsonAsync<AdminServerDetailVM>() ?? model;
                 }
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
-                model.Error = "The server could not be loaded. Restart the API so it runs the latest build, then try again.";
+                model.Error = "The server could not be loaded. Try again in a moment.";
             }
             catch (JsonException)
             {
@@ -106,7 +106,7 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
                     model.Total = result.Total;
                 }
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
                 model.Error = "The members could not be loaded.";
             }
@@ -192,7 +192,7 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
 
                 return "That did not work. Try again.";
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
                 return "The API is not reachable right now.";
             }

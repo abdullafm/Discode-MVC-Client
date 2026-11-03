@@ -33,7 +33,7 @@ namespace Discode_MVC_Client.Controllers
                     .Select(friend => new InviteFriendUIVM { Name = friend.Name, UserName = friend.UserName, AvatarUrl = friend.AvatarUrl })
                     .ToList());
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
                 return Ok(new List<InviteFriendUIVM>());
             }
@@ -52,7 +52,7 @@ namespace Discode_MVC_Client.Controllers
                         return RedirectToAction("Index", "Home");
                     }
                 }
-                catch (HttpRequestException)
+                catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
                 {
                 }
             }
@@ -74,7 +74,7 @@ namespace Discode_MVC_Client.Controllers
                 if (profile is not null)
                     return View(ToHome(profile));
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
             }
             catch (JsonException)
@@ -424,7 +424,7 @@ namespace Discode_MVC_Client.Controllers
                         return LocalRedirect("/Server/Index?id=" + server.Id);
                 }
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
             }
             catch (JsonException)
@@ -447,7 +447,7 @@ namespace Discode_MVC_Client.Controllers
                 if (response.IsSuccessStatusCode)
                     return await response.Content.ReadAsStringAsync();
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
             }
 
@@ -468,9 +468,9 @@ namespace Discode_MVC_Client.Controllers
                     ContentType = "application/json"
                 };
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
-                return StatusCode(503, new { errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+                return StatusCode(503, new { errors = new[] { "The service is unavailable right now. Please try again later." } });
             }
         }
 

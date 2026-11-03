@@ -98,7 +98,7 @@ namespace Discode_MVC_Client.Controllers
                 foreach (var error in result?.Errors is { Length: > 0 } ? result.Errors : new[] { "Could not create the account. Check the details and try again." })
                     ModelState.AddModelError(string.Empty, error);
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
                 if (savedPhoto is not null && System.IO.File.Exists(savedPhoto))
                     System.IO.File.Delete(savedPhoto);
@@ -164,7 +164,7 @@ namespace Discode_MVC_Client.Controllers
 
                 return RedirectToAction("Index", "Home");
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
                 ModelState.AddModelError(string.Empty, "The service is unavailable right now. Please try again later.");
                 return View(model);
@@ -219,7 +219,7 @@ namespace Discode_MVC_Client.Controllers
                 foreach (var error in result?.Errors is { Length: > 0 } ? result.Errors : new[] { "That code is incorrect." })
                     ModelState.AddModelError(string.Empty, error);
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
                 ModelState.AddModelError(string.Empty, "The service is unavailable right now. Please try again later.");
             }
@@ -249,7 +249,7 @@ namespace Discode_MVC_Client.Controllers
                     foreach (var error in result?.Errors is { Length: > 0 } ? result.Errors : new[] { "Could not resend the code." })
                         ModelState.AddModelError(string.Empty, error);
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
                 ModelState.AddModelError(string.Empty, "The service is unavailable right now. Please try again later.");
             }
@@ -306,7 +306,7 @@ namespace Discode_MVC_Client.Controllers
                 ViewBag.Sent = true;
                 return View(new ForgotPasswordUIVM());
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
                 ModelState.AddModelError(string.Empty, "The service is unavailable right now. Please try again later.");
                 return View(model);
@@ -380,7 +380,7 @@ namespace Discode_MVC_Client.Controllers
                 TempData["AuthEmail"] = model.Email;
                 return RedirectToAction(nameof(Login));
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
                 ModelState.AddModelError(string.Empty, "The service is unavailable right now. Please try again later.");
                 return View(model);

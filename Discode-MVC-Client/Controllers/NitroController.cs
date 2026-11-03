@@ -34,7 +34,7 @@ namespace Discode_MVC_Client.Controllers
                 if (profile is not null)
                     return View(ToHome(profile));
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
             }
             catch (JsonException)

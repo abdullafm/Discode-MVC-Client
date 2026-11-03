@@ -43,7 +43,7 @@ namespace Discode_MVC_Client.Controllers
                 var (chat, chatStatus) = await GetAsync<ChatUIVM>("api/dm/" + Uri.EscapeDataString(page.Name));
                 page.Chat = chat;
                 if (chat is null)
-                    page.Error = chatStatus is null ? "The API is not running. Start Discode-API-FinalProject and try again." : "This conversation is not available.";
+                    page.Error = chatStatus is null ? "The service is unavailable right now. Please try again later." : "This conversation is not available.";
             }
 
             ApplyProfile(page, profile ?? FallbackProfile());
@@ -314,9 +314,9 @@ namespace Discode_MVC_Client.Controllers
                     ContentType = "application/json"
                 };
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
-                return StatusCode(503, new { errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+                return StatusCode(503, new { errors = new[] { "The service is unavailable right now. Please try again later." } });
             }
         }
 

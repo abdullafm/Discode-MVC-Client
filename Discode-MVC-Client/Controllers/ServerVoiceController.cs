@@ -73,9 +73,9 @@ namespace Discode_MVC_Client.Controllers
                     ContentType = "application/json"
                 };
             }
-            catch (HttpRequestException)
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
-                return StatusCode(503, new { errors = new[] { "The API is not running. Start Discode-API-FinalProject and try again." } });
+                return StatusCode(503, new { errors = new[] { "The service is unavailable right now. Please try again later." } });
             }
         }
     }
