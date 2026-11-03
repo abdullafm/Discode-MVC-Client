@@ -915,3 +915,17 @@ html.theme-dark .msel-menu {
     accent-color: #5865f2;
     cursor: pointer;
 }
+
+/* dark theme: every label of the voice user menu is plain white (the danger rows only turn red on hover) */
+html.theme-dark body .voice-mod-menu button,
+html.theme-dark body .voice-mod-menu button.is-danger,
+html.theme-dark body .voice-mod-menu button small,
+html.theme-dark body .voice-mod-menu .vm-volume span,
+html.theme-dark body .voice-mod-menu p {
+    color: #fff !important;
+    opacity: 1;
+}
+
+html.theme-dark body .voice-mod-menu button i {
+    opacity: 1;
+}
