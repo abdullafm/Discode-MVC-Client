@@ -526,3 +526,7 @@ details[open] > :not(summary) {
     filter: brightness(1.12);
     transform: scale(1.03);
 }
+
+#live-preview-toggle[hidden] {
+    display: none;
+}

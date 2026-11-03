@@ -436,15 +436,29 @@
         var session = hostState.current;
         if (!session) return;
         var video = byId("live-stream-video");
-        if (session.sharesScreen) {
+        var toggle = byId("live-preview-toggle");
+        if (toggle) {
+            toggle.hidden = !session.sharesScreen;
+            toggle.title = session.previewHidden ? "Show my preview" : "Hide my preview";
+            toggle.querySelector("i").className = "fa-solid " + (session.previewHidden ? "fa-eye-slash" : "fa-eye");
+        }
+        // ekranı paylaşırkən öz görüntü yenidən yayına düşə bilər (güzgü effekti): istəsən göz düyməsi ilə gizlət
+        if (session.sharesScreen && session.previewHidden) {
             video.srcObject = null;
-            setWait("You are live and sharing your screen. The preview is hidden so the stream does not repeat itself.", true);
+            setWait("Your preview is hidden so the stream does not repeat itself. Press the eye button to see it again.", true);
             return;
         }
         video.srcObject = session.stream;
         video.play().catch(function () {});
         setWait("");
     }
+
+    byId("live-preview-toggle").addEventListener("click", function () {
+        var session = hostState.current;
+        if (!session) return;
+        session.previewHidden = !session.previewHidden;
+        showHostPreview();
+    });
 
     function showWatchDialog(stream, mine) {
         if (mine && window.discodeLiveDock) window.discodeLiveDock.hideHost();
@@ -462,6 +476,7 @@
         byId("live-viewers-count").textContent = viewerText(stream.viewerCount);
         byId("live-btn-end").hidden = !mine;
         byId("live-report-btn").hidden = mine;
+        byId("live-preview-toggle").hidden = true;
         byId("live-chat-feed").textContent = "";
         video.muted = mine;
         video.srcObject = null;
