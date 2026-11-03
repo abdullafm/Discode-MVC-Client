@@ -550,6 +550,29 @@ function showReplyChip(card, post) {
     }
 }
 
+// Feed yenilənəndə dəyişməyən postlar olduğu kimi qalır (şəkil və video yenidən yüklənib qaralmasın)
+function postSignature(post) {
+    return JSON.stringify([
+        post.id, post.author, post.avatar, post.text, post.image, post.visibility, post.edited,
+        (post.comments || []).map(function (c) { return [c.id, c.author, c.avatar, c.text, c.edited, c.parent || c.parentId || null]; })
+    ]);
+}
+
+function refreshPostCounters(card, post) {
+    var like = card.querySelector("[data-like-post]");
+    if (like) setLike(like, post.liked, post.likes || 0);
+    var repost = card.querySelector("[data-repost-post]");
+    if (repost) setRepost(repost, post.reposted, post.reposts || 0);
+    var commentButton = card.querySelector("[data-comment-post]");
+    if (commentButton) commentButton.setAttribute("data-count", String((post.comments || []).length));
+    var when = card.querySelector(".post-name time");
+    if (when) when.textContent = timeAgo(post.createdAt);
+    (post.comments || []).forEach(function (comment) {
+        var heart = card.querySelector('[data-like="' + comment.id + '"]');
+        if (heart) setLike(heart, comment.liked, comment.likes);
+    });
+}
+
 function renderFeed() {
     closeEmojiPanel();
     var view = currentView === "friends" ? "friends" : currentView === "compose" ? "mine" : "explore";
@@ -562,17 +585,46 @@ function renderFeed() {
     var keepTop = scroller ? scroller.scrollTop : 0;
     var keepHeight = list.offsetHeight;
     if (keepHeight) list.style.minHeight = keepHeight + "px";
-    while (list.firstChild) list.removeChild(list.firstChild);
     if (empty) empty.hidden = posts.length > 0;
     if (!posts.length) {
+        while (list.firstChild) list.removeChild(list.firstChild);
         list.style.minHeight = "";
         return;
+    }
+    var oldCards = {};
+    [].forEach.call(list.children, function (node) {
+        var oldId = node.getAttribute && node.getAttribute("data-post");
+        if (oldId && node.classList.contains("post")) oldCards[oldId] = node;
+    });
+    var cursor = list.firstElementChild;
+    var rebuilt = {};
+    var used = {};
+    function place(node) {
+        if (node === cursor) {
+            cursor = cursor.nextElementSibling;
+            return;
+        }
+        list.insertBefore(node, cursor);
     }
     var postTpl = document.getElementById("post-card");
     var commentTpl = document.getElementById("comment-card");
     posts.forEach(function (post) {
         if (!postTpl) return;
+        var signature = postSignature(post);
+        var before = oldCards[post.id];
+        used[post.id] = true;
+        if (before && before._sig === signature) {
+            refreshPostCounters(before, post);
+            var keptForm = before.querySelector(".comment-form");
+            if (keptForm) keptForm.hidden = openCommentPost !== post.id;
+            before.classList.toggle("comments-open", openCommentPost === post.id);
+            showReplyChip(before, post.id);
+            place(before);
+            return;
+        }
         var card = postTpl.content.firstElementChild.cloneNode(true);
+        card._sig = signature;
+        rebuilt[post.id] = true;
         var mine = post.author === ME;
         card.setAttribute("data-post", post.id);
         setPersonFace(card.querySelector(".post-author > img"), card.querySelector(".post-author > .avatar-letter"), post.author, post.avatar || DEFAULT_AVATAR);
@@ -697,9 +749,18 @@ function renderFeed() {
         }
         card.classList.toggle("comments-open", openCommentPost === post.id);
         showReplyChip(card, post.id);
-        list.appendChild(card);
+        if (before) {
+            if (before === cursor) cursor = before.nextElementSibling;
+            if (before.parentNode === list) list.removeChild(before);
+        }
+        place(card);
     });
-    restoreDraft(list, draft);
+    // artıq feeddə olmayan postlar silinir
+    [].slice.call(list.children).forEach(function (node) {
+        var nodeId = node.getAttribute && node.getAttribute("data-post");
+        if (nodeId && !used[nodeId]) list.removeChild(node);
+    });
+    if (draft && rebuilt[draft.post]) restoreDraft(list, draft);
     list.style.minHeight = "";
     if (scroller) scroller.scrollTop = keepTop;
 }
