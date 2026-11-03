@@ -508,7 +508,7 @@
 
     function openModMenu(userId, x, y) {
         var user = findUser(userId);
-        if (!user || user.isSelf) return;
+        if (!user) return;
         if (!modMenu) {
             modMenu = document.createElement("div");
             modMenu.className = "channel-menu voice-mod-menu";
@@ -516,31 +516,101 @@
             document.body.appendChild(modMenu);
         }
         var serverId = state.viewId;
+        var rtc = window.discodeVoiceRtc;
+        var mineSelf = !!user.isSelf;
         modMenu.innerHTML = "";
         modMenu.setAttribute("data-user", userId);
-        var title = document.createElement("p");
-        title.textContent = user.displayName;
-        modMenu.appendChild(title);
-        function item(icon, label, danger, run) {
+
+        function line(label, opts) {
+            opts = opts || {};
             var button = document.createElement("button");
             button.type = "button";
-            if (danger) button.className = "is-danger";
-            var glyph = document.createElement("i");
-            glyph.className = "fa-solid " + icon;
-            button.appendChild(glyph);
-            button.appendChild(document.createTextNode(" " + label));
-            button.addEventListener("click", run);
+            if (opts.danger) button.className = "is-danger";
+            var text = document.createElement("span");
+            text.textContent = label;
+            button.appendChild(text);
+            if (opts.sub) {
+                var sub = document.createElement("small");
+                sub.textContent = opts.sub;
+                text.appendChild(sub);
+            }
+            if (typeof opts.checked === "boolean") {
+                var box = document.createElement("span");
+                box.className = "vm-check" + (opts.checked ? " on" : "");
+                box.innerHTML = '<i class="fa-solid fa-check"></i>';
+                button.appendChild(box);
+            } else if (opts.icon) {
+                var glyph = document.createElement("i");
+                glyph.className = "fa-solid " + opts.icon;
+                button.appendChild(glyph);
+            }
+            button.addEventListener("click", function (event) {
+                event.stopPropagation();
+                opts.run(button);
+            });
             modMenu.appendChild(button);
+            return button;
         }
-        item(user.isServerMuted ? "fa-microphone" : "fa-microphone-slash", user.isServerMuted ? "Remove Server Mute" : "Server Mute", false, function () {
-            act("/ServerVoice/Moderate", { serverId: serverId, userId: userId, serverMuted: !user.isServerMuted });
-        });
-        item("fa-headphones", user.isServerDeafened ? "Remove Server Deafen" : "Server Deafen", false, function () {
-            act("/ServerVoice/Moderate", { serverId: serverId, userId: userId, serverDeafened: !user.isServerDeafened });
-        });
-        item("fa-phone-slash", "Disconnect", true, function () {
-            act("/ServerVoice/Disconnect", { serverId: serverId, userId: userId });
-        });
+        function divider() { modMenu.appendChild(document.createElement("hr")); }
+
+        line("Profile", { run: function () {
+            closeModMenu();
+            if (window.openUserProfile && user.userName) window.openUserProfile(user.userName, user.avatarUrl || "");
+        } });
+        if (!mineSelf && user.userName) {
+            line("Send Message", { run: function () {
+                closeModMenu();
+                var url = "/Dm/Index?name=" + encodeURIComponent(user.userName);
+                if (window.discodeGo) window.discodeGo(url);
+                else window.location.href = url;
+            } });
+        }
+
+        if (!mineSelf && rtc && rtc.getUserAudio) {
+            // heard only by me: never sent to the other person, and not remembered after a reload
+            divider();
+            var prefs = rtc.getUserAudio(userId);
+            var volume = document.createElement("div");
+            volume.className = "vm-volume";
+            var caption = document.createElement("span");
+            caption.textContent = "User Volume";
+            var slider = document.createElement("input");
+            slider.type = "range";
+            slider.min = "0";
+            slider.max = "100";
+            slider.value = String(Math.round(prefs.volume * 100));
+            slider.setAttribute("aria-label", "User Volume");
+            slider.addEventListener("input", function () { rtc.setUserAudio(userId, { volume: Number(slider.value) / 100 }); });
+            volume.appendChild(caption);
+            volume.appendChild(slider);
+            modMenu.appendChild(volume);
+            divider();
+            line("Mute", { checked: prefs.muted, run: function (button) {
+                var next = !rtc.getUserAudio(userId).muted;
+                rtc.setUserAudio(userId, { muted: next });
+                button.querySelector(".vm-check").classList.toggle("on", next);
+            } });
+        }
+
+        if (!mineSelf && state.canModerate) {
+            divider();
+            line("Server Mute", { danger: true, checked: !!user.isServerMuted, run: function () {
+                act("/ServerVoice/Moderate", { serverId: serverId, userId: userId, serverMuted: !user.isServerMuted });
+            } });
+            line("Server Deafen", { danger: true, checked: !!user.isServerDeafened, run: function () {
+                act("/ServerVoice/Moderate", { serverId: serverId, userId: userId, serverDeafened: !user.isServerDeafened });
+            } });
+            line("Disconnect", { danger: true, icon: "fa-phone-slash", run: function () {
+                act("/ServerVoice/Disconnect", { serverId: serverId, userId: userId });
+            } });
+        }
+
+        divider();
+        line("Copy User ID", { icon: "fa-id-badge", run: function () {
+            closeModMenu();
+            try { navigator.clipboard.writeText(userId); } catch (e) {}
+        } });
+
         modMenu.hidden = false;
         var width = modMenu.offsetWidth, height = modMenu.offsetHeight;
         modMenu.style.left = Math.max(8, Math.min(x, window.innerWidth - width - 8)) + "px";
@@ -548,12 +618,9 @@
     }
 
     document.addEventListener("contextmenu", function (event) {
-        if (!state.canModerate) return;
-        var row = event.target.closest && event.target.closest(".server-voice-user, .server-voice-tile.is-peer");
+        var row = event.target.closest && event.target.closest(".server-voice-user, .server-voice-tile.is-peer, .server-voice-tile");
         var userId = row && row.getAttribute("data-user");
-        if (!userId) return;
-        var user = findUser(userId);
-        if (!user || user.isSelf) return;
+        if (!userId || !findUser(userId)) return;
         event.preventDefault();
         openModMenu(userId, event.clientX, event.clientY);
     });

@@ -821,3 +821,82 @@ html.theme-dark .msel-menu {
     color: #f2f3f5;
     border-color: #1e1f22;
 }
+
+/* ---- right click on a person in voice: the Discord-style menu ---- */
+.voice-mod-menu {
+    width: 240px;
+    padding: 6px;
+}
+
+.voice-mod-menu hr {
+    margin: 4px 2px;
+}
+
+.voice-mod-menu button {
+    justify-content: space-between !important;
+    gap: 10px;
+}
+
+.voice-mod-menu button small {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.65;
+}
+
+.voice-mod-menu button i {
+    width: 16px;
+    text-align: center;
+    opacity: 0.8;
+}
+
+.vm-check {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid currentColor;
+    opacity: 0.7;
+    transition: background-color 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+}
+
+.vm-check i {
+    font-size: 10px;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+.vm-check.on {
+    background: #5865f2;
+    border-color: #5865f2;
+    opacity: 1;
+}
+
+.voice-mod-menu button.is-danger .vm-check.on {
+    background: #da373c;
+    border-color: #da373c;
+}
+
+.vm-check.on i {
+    opacity: 1;
+}
+
+.vm-volume {
+    padding: 6px 8px 8px;
+}
+
+.vm-volume span {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.vm-volume input[type="range"] {
+    width: 100%;
+    accent-color: #5865f2;
+    cursor: pointer;
+}

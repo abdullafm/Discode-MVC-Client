@@ -105,12 +105,31 @@
         });
     }
 
+    // what I chose for each person (volume, mute): heard only by me, kept in memory while the page stays open
+    var userAudio = {};
+
+    function getUserAudio(userId) {
+        return userAudio[userId] || { volume: 1, muted: false };
+    }
+
+    function applyPeerAudio(id) {
+        var peer = peers[id];
+        if (!peer || !peer.audio) return;
+        var mine = getUserAudio(id);
+        peer.audio.muted = audioState.deafened || mine.muted;
+        peer.audio.volume = Math.max(0, Math.min(1, mine.volume));
+    }
+
+    function setUserAudio(userId, change) {
+        var now = getUserAudio(userId);
+        userAudio[userId] = { volume: change.volume !== undefined ? change.volume : now.volume, muted: change.muted !== undefined ? change.muted : now.muted };
+        applyPeerAudio(userId);
+    }
+
     function applyAudio() {
         var silent = audioState.muted || audioState.deafened;
         if (localStream) localStream.getAudioTracks().forEach(function (track) { track.enabled = !silent; });
-        Object.keys(peers).forEach(function (id) {
-            if (peers[id].audio) peers[id].audio.muted = audioState.deafened;
-        });
+        Object.keys(peers).forEach(applyPeerAudio);
         if (silent && selfId) markSpeaking(selfId, false);
     }
 
@@ -140,6 +159,7 @@
         peer.audio.autoplay = true;
         peer.audio.hidden = true;
         document.documentElement.appendChild(peer.audio);
+        applyPeerAudio(peer.userId);
         return peer.audio;
     }
 
@@ -521,6 +541,8 @@
     window.discodeVoiceRtc = {
         setCamera: setCamera,
         setScreen: setScreen,
+        getUserAudio: getUserAudio,
+        setUserAudio: setUserAudio,
         media: function () { return { camera: media.camera, screen: media.screen }; }
     };
 
