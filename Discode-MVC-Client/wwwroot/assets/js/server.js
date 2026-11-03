@@ -1666,7 +1666,42 @@
             chat.classList.remove("has-room");
         }
         if (voice) voice.hidden = true;
+        // silinən kanalın mesajları və adı ekranda qalmasın
+        var staleMessages = document.getElementById("server-messages");
+        if (staleMessages) staleMessages.hidden = true;
+        if (roomName) roomName.textContent = "";
+        var staleMark = document.getElementById("server-room-mark");
+        if (staleMark) staleMark.textContent = "";
+        var emptyRoom = document.getElementById("server-chat-empty");
+        if (emptyRoom) emptyRoom.hidden = false;
     }
+
+    // Kanal siyahısı yenilənəndə (məsələn kanal silinəndə, hətta başqası silsə də) açıq otaq hələ də var?
+    function reconcileRoom() {
+        if (!channelList || roomKind === "settings") return;
+        var all = channelList.querySelectorAll(".server-channel");
+        if (!all.length) {
+            if (joinedVoice) leaveVoice();
+            clearRoom();
+            return;
+        }
+
+        if (!currentChannel) return;
+        var openId = currentChannel.getAttribute("data-id");
+        var again = openId ? channelList.querySelector('.server-channel[data-id="' + openId + '"]') : null;
+        if (again) {
+            currentChannel = again;
+            return;
+        }
+        if (channelList.contains(currentChannel)) return;
+
+        currentChannel = null;
+        var next = channelList.querySelector(".server-channel:not([data-kind='voice'])");
+        if (next) selectChannel(next);
+        else clearRoom();
+    }
+
+    document.addEventListener("discode-server-channels-rendered", reconcileRoom);
 
     function detachChannel(channel) {
         if (!channel) return false;
