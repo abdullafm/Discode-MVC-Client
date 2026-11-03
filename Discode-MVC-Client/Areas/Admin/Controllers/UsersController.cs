@@ -82,16 +82,16 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Warn(string id, string? reason)
+        public Task<IActionResult> Warn(string id, [FromForm] WarnUserVM model)
         {
-            return Moderate(id, "The warning was sent.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/warn", new { reason = reason ?? string.Empty }));
+            return Moderate(id, "The warning was sent.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/warn", new { reason = model.Reason ?? string.Empty }));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Timeout(string id, string? reason, int minutes)
+        public Task<IActionResult> Timeout(string id, [FromForm] TimeoutUserVM model)
         {
-            return Moderate(id, "The member was timed out.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/timeout", new { reason = reason ?? string.Empty, minutes }));
+            return Moderate(id, "The member was timed out.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/timeout", new { reason = model.Reason ?? string.Empty, minutes = model.Minutes }));
         }
 
         [HttpPost]
@@ -103,16 +103,16 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Kick(string id, string? reason)
+        public Task<IActionResult> Kick(string id, [FromForm] KickUserVM model)
         {
-            return Moderate(id, "The member was signed out of every device.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/kick", new { reason = reason ?? string.Empty }));
+            return Moderate(id, "The member was signed out of every device.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/kick", new { reason = model.Reason ?? string.Empty }));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> Ban(string id, string? reason, int days)
+        public Task<IActionResult> Ban(string id, [FromForm] BanUserVM model)
         {
-            return Moderate(id, "The member was banned.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/ban", new { reason = reason ?? string.Empty, days }));
+            return Moderate(id, "The member was banned.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/ban", new { reason = model.Reason ?? string.Empty, days = model.Days }));
         }
 
         [HttpPost]
@@ -124,9 +124,9 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> LiveBan(string id, int minutes, string? reason)
+        public Task<IActionResult> LiveBan(string id, [FromForm] LiveBanUserVM model)
         {
-            return Moderate(id, "They cannot go live anymore. A stream that was running is closed.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/live-ban", new { reason = reason ?? string.Empty, minutes }));
+            return Moderate(id, "They cannot go live anymore. A stream that was running is closed.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/live-ban", new { reason = model.Reason ?? string.Empty, minutes = model.Minutes }));
         }
 
         [HttpPost]
@@ -138,18 +138,18 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public Task<IActionResult> ChangeRole(string id, string? role)
+        public Task<IActionResult> ChangeRole(string id, [FromForm] ChangeRoleVM model)
         {
-            return Moderate(id, "The role was changed. They are signed out so the new role applies.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/role", new { role = role ?? string.Empty }));
+            return Moderate(id, "The role was changed. They are signed out so the new role applies.", () => Api.PostAsJsonAsync("api/admin/users/" + id + "/role", new { role = model.Role ?? string.Empty }));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(string id, string? reason, string? userName)
+        public async Task<IActionResult> Delete(string id, [FromForm] DeleteUserVM model)
         {
             var request = new HttpRequestMessage(HttpMethod.Delete, "api/admin/users/" + id)
             {
-                Content = JsonContent.Create(new { reason = reason ?? string.Empty, userName = userName ?? string.Empty })
+                Content = JsonContent.Create(new { reason = model.Reason ?? string.Empty, userName = model.UserName ?? string.Empty })
             };
             var failure = await ApiCallAsync(() => Api.SendAsync(request));
             if (failure is null)
