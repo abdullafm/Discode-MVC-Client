@@ -40,7 +40,7 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
 
                 return "That did not work. Try again.";
             }
-            catch (HttpRequestException)
+            catch (Exception ex) when (ex is HttpRequestException || ex is TaskCanceledException)
             {
                 return "The API is not reachable right now.";
             }
@@ -64,11 +64,9 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
             {
                 profile = await Api.GetFromJsonAsync<ProfileUIVM>("api/account/profile") ?? profile;
             }
-            catch (HttpRequestException)
+            catch (Exception ex) when (ex is HttpRequestException || ex is JsonException || ex is TaskCanceledException)
             {
-            }
-            catch (JsonException)
-            {
+                // the profile only decorates the header, the page still works with what the sign-in cookie knows
             }
 
             ViewData["AdminProfile"] = profile;

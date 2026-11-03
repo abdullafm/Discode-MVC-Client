@@ -31,6 +31,11 @@ namespace Discode_MVC_Client.Controllers
             {
                 return (null, null);
             }
+            catch (TaskCanceledException) when (!HttpContext.RequestAborted.IsCancellationRequested)
+            {
+                // the API did not answer in time: same as unreachable, the page shows its offline state
+                return (null, null);
+            }
             catch (JsonException)
             {
                 return (null, HttpStatusCode.OK);
@@ -45,7 +50,7 @@ namespace Discode_MVC_Client.Controllers
                 if (response.IsSuccessStatusCode) return (true, Array.Empty<string>(), response.StatusCode);
                 return (false, await ReadErrorsAsync(response), response.StatusCode);
             }
-            catch (HttpRequestException)
+            catch (Exception ex) when (ex is HttpRequestException || (ex is TaskCanceledException && !HttpContext.RequestAborted.IsCancellationRequested))
             {
                 return (false, new[] { "The service is unavailable right now. Please try again later." }, null);
             }
@@ -59,7 +64,7 @@ namespace Discode_MVC_Client.Controllers
                 if (response.IsSuccessStatusCode) return (true, Array.Empty<string>(), response.StatusCode);
                 return (false, await ReadErrorsAsync(response), response.StatusCode);
             }
-            catch (HttpRequestException)
+            catch (Exception ex) when (ex is HttpRequestException || (ex is TaskCanceledException && !HttpContext.RequestAborted.IsCancellationRequested))
             {
                 return (false, new[] { "The service is unavailable right now. Please try again later." }, null);
             }

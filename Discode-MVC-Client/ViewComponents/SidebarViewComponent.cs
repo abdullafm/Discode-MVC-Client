@@ -29,11 +29,9 @@ namespace Discode_MVC_Client.ViewComponents
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
                 model.Conversations = await client.GetFromJsonAsync<List<ConversationUIVM>>("api/dm") ?? new List<ConversationUIVM>();
             }
-            catch (HttpRequestException)
+            catch (Exception ex) when (ex is HttpRequestException or System.Text.Json.JsonException or IOException or TaskCanceledException)
             {
-            }
-            catch (System.Text.Json.JsonException)
-            {
+                // runs while the page is being drawn, where no exception filter can help: show an empty list instead of a crashed page
             }
 
             return View(model);

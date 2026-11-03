@@ -34,11 +34,10 @@ namespace Discode_MVC_Client.Services
                 branding = await client.GetFromJsonAsync<SiteBranding>("api/branding") ?? branding;
                 ttl = TimeSpan.FromSeconds(30);
             }
-            catch (HttpRequestException)
+            catch (Exception)
             {
-            }
-            catch (System.Text.Json.JsonException)
-            {
+                // the logos are decoration and every layout asks for them: whatever goes wrong (API down, slow, cut-off or
+                // unreadable answer) the page must still render with the built-in logos, retrying in a few seconds
             }
 
             _cache.Set(CacheKey, branding, ttl);
