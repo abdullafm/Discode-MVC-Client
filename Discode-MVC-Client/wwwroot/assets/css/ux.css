@@ -926,6 +926,6 @@ html.theme-dark body .voice-mod-menu p {
     opacity: 1;
 }
 
-html.theme-dark body .voice-mod-menu button i {
+html.theme-dark body .voice-mod-menu button > i {
     opacity: 1;
 }
