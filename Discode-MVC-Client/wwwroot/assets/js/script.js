@@ -92,6 +92,8 @@ function headp() {
     }
 }
 
+updateMicHeadphoneIcon();
+
 function openToggle() {
     if (!window.matchMedia("(max-width: 720px)").matches) return;
     document.querySelector("main").classList.toggle("show-main");

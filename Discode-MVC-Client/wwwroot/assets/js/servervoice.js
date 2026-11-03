@@ -1,24 +1,44 @@
 (function () {
     "use strict";
 
-    var list = document.getElementById("server-channel-list");
-    if (!list) return;
+    if (window.discodeVoice) return;
 
-    var serverId = Number(new URLSearchParams(window.location.search).get("id")) || 0;
-    if (!serverId) return;
+    // Səs modulu səhifə dəyişəndə də canlı qalır: kanal siyahısı yalnız server səhifəsində var
+    function listEl() {
+        return document.getElementById("server-channel-list");
+    }
+
+    function onServerPage() {
+        return /^\/Server\/Index/i.test(window.location.pathname) && !!listEl();
+    }
+
+    function pageServerId() {
+        return onServerPage() ? (Number(new URLSearchParams(window.location.search).get("id")) || 0) : 0;
+    }
+
+    var voiceServerId = 0;
+
+    function viewServerId() {
+        return pageServerId() || voiceServerId;
+    }
 
     var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
     var joinSound = new Audio("/assets/css/audio/join-voice.mp3");
     var leaveSound = new Audio("/assets/css/audio/leave-voice.mp3");
-    var state = { channels: {}, started: {}, current: null };
+    var state = { channels: {}, started: {}, current: null, viewId: 0 };
+    var remote = null;
     var known = "";
     var sent = { muted: false, deafened: false, camera: false, screen: false };
     var loading = false;
     var again = false;
 
+    var cachedToken = "";
+
+    // anti-forgery token bəzi səhifələrdə (məs. Social) yoxdur: gördüyümüz sonuncunu saxlayırıq
     function token() {
         var field = document.querySelector("input[name='__RequestVerificationToken']");
-        return field ? field.value : "";
+        if (field && field.value) cachedToken = field.value;
+        return cachedToken;
     }
 
     function request(url, method, body) {
@@ -54,8 +74,19 @@
         };
     }
 
+    // səhifədə göstərilən server üçün cari səs otağı
     function mine() {
-        return state.current && state.current.serverId === serverId ? state.current : null;
+        return state.current && state.current.serverId === pageServerId() ? state.current : null;
+    }
+
+    // qoşulduğum otaq harada olursa olsun (başqa səhifədə də)
+    function here() {
+        return state.current || null;
+    }
+
+    function rosterSource() {
+        if (!state.current) return null;
+        return state.viewId === state.current.serverId ? state : remote;
     }
 
     function userNode(user) {
@@ -199,6 +230,8 @@
     }
 
     function tick() {
+        var list = listEl();
+        if (!list) return;
         [].forEach.call(list.querySelectorAll(".server-channel[data-kind='voice']"), function (button) {
             var live = button.querySelector(".server-voice-live");
             if (!live) return;
@@ -218,7 +251,8 @@
 
     function paint() {
         var here = mine();
-        [].forEach.call(list.querySelectorAll(".server-channel[data-kind='voice']"), function (button) {
+        var list = listEl();
+        [].forEach.call(list ? list.querySelectorAll(".server-channel[data-kind='voice']") : [], function (button) {
             var id = Number(button.getAttribute("data-id"));
             var row = button.closest(".server-channel-row") || button;
             var slot = row.nextElementSibling;
@@ -251,10 +285,21 @@
         });
         tick();
         paintTiles();
+        paintGlobalBar();
         document.dispatchEvent(new CustomEvent("discode-voice-painted"));
     }
 
-    function apply(payload) {
+    function shape(payload) {
+        var out = { channels: {}, started: {} };
+        (payload.channels || []).forEach(function (group) {
+            out.channels[group.channelId] = group.users || [];
+            out.started[group.channelId] = Date.parse(group.startedAt) || Date.now();
+        });
+        return out;
+    }
+
+    function apply(payload, viewId) {
+        state.viewId = viewId;
         state.channels = {};
         state.started = {};
         (payload.channels || []).forEach(function (group) {
@@ -265,12 +310,13 @@
     }
 
     function announce() {
-        var here = mine();
-        if (!here) {
+        var current = here();
+        var source = rosterSource();
+        if (!current || !source) {
             known = "";
             return;
         }
-        var ids = (state.channels[here.channelId] || []).map(function (user) { return user.userId; }).sort().join(",");
+        var ids = (source.channels[current.channelId] || []).map(function (user) { return user.userId; }).sort().join(",");
         if (known && known !== ids) {
             var was = known ? known.split(",") : [];
             var now = ids ? ids.split(",") : [];
@@ -281,13 +327,27 @@
     }
 
     function load() {
+        var viewId = viewServerId();
+        if (!viewId) {
+            paintGlobalBar();
+            return Promise.resolve();
+        }
         if (loading) {
             again = true;
             return Promise.resolve();
         }
         loading = true;
-        return request("/ServerVoice/State?serverId=" + serverId).then(function (payload) {
-            apply(payload);
+        return request("/ServerVoice/State?serverId=" + viewId).then(function (payload) {
+            apply(payload, viewId);
+            voiceServerId = state.current ? state.current.serverId : 0;
+            remote = null;
+            if (state.current && state.current.serverId !== viewId) {
+                // başqa serverə baxıram, amma səsdəyəm: öz otağımın siyahısı da lazımdır
+                return request("/ServerVoice/State?serverId=" + state.current.serverId).then(function (other) {
+                    remote = shape(other);
+                }).catch(function () {});
+            }
+        }).then(function () {
             announce();
             if (state.current) {
                 sent.muted = state.current.isMuted;
@@ -308,6 +368,7 @@
 
     function join(channelId) {
         var current = audio();
+        var serverId = pageServerId() || voiceServerId;
         return request("/ServerVoice/Join", "POST", { serverId: serverId, channelId: Number(channelId), isMuted: current.muted || current.deafened, isDeafened: current.deafened }).then(function () {
             play(joinSound);
             document.dispatchEvent(new CustomEvent("discode-voice-audio", { detail: { muted: current.muted, deafened: current.deafened } }));
@@ -350,8 +411,67 @@
 
     document.addEventListener("discode-server-voice-changed", function (event) {
         var detail = event.detail || {};
-        if (!detail.serverId || Number(detail.serverId) === serverId) load();
+        if (!detail.serverId || Number(detail.serverId) === viewServerId() || Number(detail.serverId) === voiceServerId) load();
     });
+
+    // yeni səhifə açılanda (server səhifəsinə qayıdanda) siyahı yenidən çəkilir
+    document.addEventListener("discode-page-ready", function () {
+        load();
+        paintGlobalBar();
+    });
+
+    // başqa səhifələrdə mikrofon / qulaqlıq düymələri də otağa bildirilir
+    document.addEventListener("discode-mic-changed", function (event) {
+        var detail = event.detail || {};
+        if (state.current) sync(!!detail.muted, !!detail.deafened);
+    });
+
+    // ---------- "Voice Connected" zolağı: serverdən kənarda da görünür ----------
+    function globalBar() {
+        var bar = document.getElementById("voice-global-bar");
+        if (bar) return bar;
+        bar = document.createElement("div");
+        bar.id = "voice-global-bar";
+        bar.className = "voice-global-bar";
+        bar.hidden = true;
+        bar.innerHTML = '<button type="button" class="vgb-main" title="Back to the voice channel"><i class="fa-solid fa-signal"></i><span><strong>Voice Connected</strong><small></small></span></button>' +
+            '<button type="button" class="vgb-btn vgb-mic" aria-label="Mute"><i class="fa-solid fa-microphone"></i></button>' +
+            '<button type="button" class="vgb-btn vgb-head" aria-label="Deafen"><i class="fa-solid fa-headphones"></i></button>' +
+            '<button type="button" class="vgb-btn vgb-leave" aria-label="Disconnect"><i class="fa-solid fa-phone-slash"></i></button>';
+        document.documentElement.appendChild(bar);
+        bar.querySelector(".vgb-main").addEventListener("click", function () {
+            if (!state.current) return;
+            var url = "/Server/Index?id=" + state.current.serverId;
+            if (window.discodeGo) window.discodeGo(url);
+            else window.location.href = url;
+        });
+        bar.querySelector(".vgb-mic").addEventListener("click", function () {
+            if (typeof window.mic === "function") window.mic();
+        });
+        bar.querySelector(".vgb-head").addEventListener("click", function () {
+            if (typeof window.headp === "function") window.headp();
+        });
+        bar.querySelector(".vgb-leave").addEventListener("click", function () {
+            leave();
+        });
+        return bar;
+    }
+
+    function paintGlobalBar() {
+        var bar = globalBar();
+        var current = state.current;
+        var onItsPage = !!current && pageServerId() === current.serverId;
+        bar.hidden = !current || onItsPage;
+        if (!current) return;
+        bar.querySelector("small").textContent = current.channelName + " / " + current.serverName;
+        var muted = typeof micO !== "undefined" && !!micO;
+        var deaf = typeof headO !== "undefined" && !!headO;
+        bar.querySelector(".vgb-mic").classList.toggle("is-off", muted || deaf);
+        bar.querySelector(".vgb-mic i").className = "fa-solid " + (muted || deaf ? "fa-microphone-slash" : "fa-microphone");
+        bar.querySelector(".vgb-head").classList.toggle("is-off", deaf);
+    }
+
+    document.addEventListener("discode-mic-changed", paintGlobalBar);
     document.addEventListener("discode-server-channels-rendered", paint);
     document.addEventListener("discode-server-channels-changed", function () { window.setTimeout(load, 400); });
     document.addEventListener("discode-server-roles-changed", function () { window.setTimeout(load, 400); });
@@ -362,13 +482,14 @@
         sync: sync,
         reload: load,
         current: function () { return state.current; },
-        here: mine,
+        here: here,
         roster: function () {
-            var here = mine();
-            if (!here) return null;
-            var users = state.channels[here.channelId] || [];
+            var current = here();
+            var source = rosterSource();
+            if (!current || !source) return null;
+            var users = source.channels[current.channelId] || [];
             var self = users.filter(function (user) { return user.isSelf; })[0];
-            return { channelId: here.channelId, selfId: self ? self.userId : "", users: users };
+            return { channelId: current.channelId, selfId: self ? self.userId : "", users: users };
         },
         has: function (userId) {
             return Object.keys(state.channels).some(function (id) {

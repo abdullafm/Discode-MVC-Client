@@ -169,8 +169,8 @@
     function refreshFriends() {
         document.dispatchEvent(new CustomEvent("discode-friends-changed"));
         if (!window.discodeFriends) return;
-        window.discodeFriends.reload();
-        window.discodeFriends.reloadFriends();
+        if (typeof window.discodeFriends.reload === "function") window.discodeFriends.reload();
+        if (typeof window.discodeFriends.reloadFriends === "function") window.discodeFriends.reloadFriends();
     }
 
     function connect() {

@@ -530,3 +530,112 @@ details[open] > :not(summary) {
 #live-preview-toggle[hidden] {
     display: none;
 }
+
+/* ---------- 16) "Voice Connected": səsdəykən başqa səhifələrə keçəndə də görünür ---------- */
+.voice-global-bar {
+    position: fixed;
+    left: 80px;
+    bottom: 64px;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 228px;
+    padding: 6px 6px;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #060607;
+    border: 1px solid rgba(128, 132, 142, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    transition: opacity var(--ux-base) var(--ux-ease), translate var(--ux-base) var(--ux-ease);
+}
+
+.voice-global-bar[hidden] {
+    display: none;
+}
+
+.voice-global-bar .vgb-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    padding: 4px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.voice-global-bar .vgb-main:hover {
+    background: rgba(128, 132, 142, 0.18);
+}
+
+.voice-global-bar .vgb-main i {
+    color: #23a559;
+}
+
+.voice-global-bar .vgb-main span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.voice-global-bar .vgb-main strong {
+    color: #23a559;
+    font-size: 12.5px;
+    white-space: nowrap;
+}
+
+.voice-global-bar .vgb-main small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #80848e;
+    font-size: 12px;
+}
+
+.voice-global-bar .vgb-btn {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.voice-global-bar .vgb-btn:hover {
+    background: rgba(128, 132, 142, 0.22);
+}
+
+.voice-global-bar .vgb-btn.is-off {
+    color: #f23f43;
+}
+
+.voice-global-bar .vgb-leave:hover {
+    background: #f23f43;
+    color: #fff;
+}
+
+html.theme-dark .voice-global-bar {
+    background: #232428;
+    color: #f2f3f5;
+    border-color: #1e1f22;
+}
+
+@media (max-width: 720px) {
+    .voice-global-bar {
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        width: auto;
+    }
+}

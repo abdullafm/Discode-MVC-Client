@@ -4,7 +4,7 @@
     var origAdd = EventTarget.prototype.addEventListener;
     var origRemove = EventTarget.prototype.removeEventListener;
 
-    var keepers = /\/(calls|groupcalls|presence|livedock|i18n|theme|timezone|nav)\.js|signalr/i;
+    var keepers = /\/(calls|groupcalls|presence|livedock|i18n|theme|timezone|nav|servervoice|servervoicertc)\.js|signalr/i;
     var swapping = false;
     var lateReady = [];
 
@@ -36,7 +36,7 @@
 
     function isAppPage(url) {
         if (url.origin !== location.origin) return false;
-        return /\.html$/i.test(url.pathname) || /^\/(Home|Dm|Social|Nitro|Group|Server)\/Index\/?$/i.test(url.pathname);
+        return /\.html$/i.test(url.pathname) || /^\/(Home|Dm|Social|Nitro|Group|Server|Discover)\/Index\/?$/i.test(url.pathname);
     }
 
     function sheetHref(link) {
@@ -99,6 +99,11 @@
             var old = list[i++];
             var src = old.getAttribute("src") || "";
             if (/theme\.js|nav\.js|calls\.js|presence\.js|livedock\.js|signalr/i.test(src)) {
+                next();
+                return;
+            }
+            // server səs modulu bir dəfə yüklənir və səhifələr arasında canlı qalır
+            if ((/\/servervoice\.js/i.test(src) && window.discodeVoice) || (/\/servervoicertc\.js/i.test(src) && window.discodeVoiceRtc)) {
                 next();
                 return;
             }
