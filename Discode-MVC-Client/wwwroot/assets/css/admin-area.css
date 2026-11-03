@@ -2071,3 +2071,74 @@ html.theme-dark .adm-chip.is-timeout {
         background: rgba(128, 132, 142, 0.3);
     }
 }
+
+/* ===== Məzmun (postlar, şərhlər, story-lər) ===== */
+.adm-content-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow: visible;
+}
+
+.adm-content {
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(128, 132, 142, 0.28);
+    background: rgba(128, 132, 142, 0.06);
+}
+
+.adm-content.is-reported {
+    border-left: 4px solid #f23f43;
+}
+
+.adm-content header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.adm-content header > div {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.adm-content-flag {
+    margin-left: auto;
+}
+
+.adm-content-avatar {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.adm-content-avatar.is-letter {
+    display: grid;
+    place-items: center;
+    background: #5865f2;
+    color: #fff;
+    font-weight: 800;
+}
+
+.adm-content-text {
+    margin: 12px 0 8px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.adm-content-media {
+    display: block;
+    max-width: min(360px, 100%);
+    max-height: 280px;
+    border-radius: 12px;
+    margin: 8px 0;
+}
+
+.adm-content-meta {
+    display: flex;
+    gap: 16px;
+    margin: 8px 0 12px;
+}

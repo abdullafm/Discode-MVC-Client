@@ -301,7 +301,7 @@
 
     function refreshList(root, url) {
         // a list that holds forms (the live streams) is left alone while somebody is writing in it
-        var forms = root.querySelector(".adm-live-list");
+        var forms = root.querySelector(".adm-live-list, .adm-content-list");
         if (forms) {
             var typing = [].some.call(forms.querySelectorAll("textarea"), function (field) { return field.value.trim().length > 0; });
             if (typing || forms.querySelector("details[open]")) return;
