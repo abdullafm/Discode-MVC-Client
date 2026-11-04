@@ -14,7 +14,7 @@
                     <button type="button" aria-label="Notification Settings">
                         <i class="fa-solid fa-bell"></i>
                     </button>
-                    <button type="button" aria-label="Pinned Messages">
+                    <button type="button" id="server-pins-toggle" aria-label="Pinned Messages">
                         <i class="fa-solid fa-thumbtack"></i>
                     </button>
                     <button type="button" class="server-members-toggle on" id="server-members-toggle" aria-label="Members">
@@ -847,6 +847,7 @@
             <div class="dm-poll-emojis" id="group-poll-emojis" hidden></div>
         </div>
     </div>
+    <div class="dm-pins-popover" id="server-pins-popover" hidden></div>
     <div class="dm-msg-menu" id="group-msg-menu" role="menu" hidden>
         <div class="dm-menu-quick">
             <button type="button" class="dm-react" data-act="react" aria-label="React with heart">&#10084;&#65039;</button>
@@ -854,6 +855,7 @@
         <button type="button" role="menuitem" class="emoji-open" data-menu="reaction"><i class="fa-solid fa-face-smile"></i><span>Add Reaction</span><i class="fa-solid fa-chevron-right dm-menu-arrow"></i></button>
         <hr>
         <button type="button" role="menuitem" data-menu="edit" data-own-only data-needs-edit><i class="fa-solid fa-pen"></i><span>Edit Message</span></button>
+        <button type="button" role="menuitem" data-menu="pin" data-needs-pin><i class="fa-solid fa-thumbtack"></i><span>Pin Message</span></button>
         <button type="button" role="menuitem" data-menu="reply"><i class="fa-solid fa-reply"></i><span>Reply</span></button>
         <hr>
         <button type="button" role="menuitem" data-menu="copy-text"><i class="fa-solid fa-copy"></i><span>Copy Text</span></button>

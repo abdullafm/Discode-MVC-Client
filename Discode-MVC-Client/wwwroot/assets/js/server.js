@@ -111,12 +111,20 @@
         }).catch(function () {});
     }
 
-    // people the message box can suggest after an @ (serverchat.js asks for them)
-    window.discodeMentionCandidates = function () {
-        return (Array.isArray(serverMembers) ? serverMembers : []).filter(function (member) { return member && member.userName; }).map(function (member) {
-            return { userName: member.userName, displayName: member.displayName || member.name || member.userName, avatar: member.avatarUrl || member.photo || "" };
-        });
-    };
+    // who can be @mentioned in this server's chat: mentions.js reads it exactly as it does for a group
+    Object.defineProperty(window, "discodeGroupInfo", {
+        configurable: true,
+        get: function () {
+            var people = (Array.isArray(serverMembers) ? serverMembers : []).filter(function (member) { return member && member.userName; }).map(function (member) {
+                return { userName: member.userName, displayName: member.displayName || member.name || member.userName, avatarUrl: member.avatarUrl || member.photo || "" };
+            });
+            return { members: people };
+        },
+        // the group page assigns its own value after a page change: let it
+        set: function (value) {
+            Object.defineProperty(window, "discodeGroupInfo", { value: value, writable: true, configurable: true });
+        }
+    });
 
     document.addEventListener("discode-server-updated", refreshMembers);
     var memberListNode = document.getElementById("server-member-list");

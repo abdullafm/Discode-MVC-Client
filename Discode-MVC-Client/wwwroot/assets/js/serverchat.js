@@ -117,6 +117,7 @@
         row.className = "dm-msg" + (compact ? " compact" : "");
         row.setAttribute("data-sender", message.senderUserName);
         row.setAttribute("data-mine", message.senderUserName === meName ? "1" : "0");
+        row.setAttribute("data-pinned", message.pinnedAt ? "1" : "0");
         var face = document.createElement("img");
         face.className = "dm-msg-avatar";
         face.alt = "";
@@ -143,7 +144,6 @@
                 text.appendChild(edited);
             }
             body.appendChild(text);
-            decorateMentions(text, row, message);
         }
         row.appendChild(face);
         row.appendChild(body);
@@ -155,46 +155,123 @@
         if (force || atBottom || message.senderUserName === meName) scroller.scrollTop = scroller.scrollHeight;
     }
 
-    // @name inside a message: known names are highlighted, and a message that mentions me (or everyone) stands out
-    function decorateMentions(holder, row, message) {
-        var known = {};
-        (window.discodeMentionCandidates ? window.discodeMentionCandidates() : []).forEach(function (person) { known[person.userName.toLowerCase()] = true; });
-        known.everyone = true;
-        known.here = true;
-        var me = meName.toLowerCase();
-        // my own name is always a mention, even before the member list has arrived
-        if (me) known[me] = true;
-        var mine = false;
-        var walker = document.createTreeWalker(holder, NodeFilter.SHOW_TEXT, null);
-        var nodes = [];
-        while (walker.nextNode()) {
-            if (!walker.currentNode.parentNode.closest("a, .dm-msg-edited")) nodes.push(walker.currentNode);
+    // ---------- pinned messages of this channel (the thumbtack in the bar), like the DM's pins ----------
+    var pinsPopover = document.getElementById("server-pins-popover");
+    var pinsToggle = document.getElementById("server-pins-toggle");
+
+    function pinsOpen() {
+        return !!pinsPopover && !pinsPopover.hidden;
+    }
+
+    function closePins() {
+        if (pinsPopover) pinsPopover.hidden = true;
+    }
+
+    function pinTime(value) {
+        var date = new Date(utcStamp(value));
+        return date.toLocaleString([], { month: "numeric", day: "numeric", year: "2-digit", hour: "numeric", minute: "2-digit" });
+    }
+
+    function utcStamp(value) {
+        return /Z$|[+-]\d\d:\d\d$/.test(String(value)) ? value : value + "Z";
+    }
+
+    function paintPins(list) {
+        pinsPopover.textContent = "";
+        var head = document.createElement("div");
+        head.className = "dm-pins-head";
+        head.innerHTML = '<i class="fa-solid fa-thumbtack"></i><h2>Pinned Messages</h2>';
+        pinsPopover.appendChild(head);
+        var body = document.createElement("div");
+        body.className = "dm-pins-list";
+        if (!list.length) {
+            var empty = document.createElement("p");
+            empty.className = "dm-pins-empty";
+            empty.textContent = "This channel doesn't have any pinned messages... yet.";
+            body.appendChild(empty);
         }
-        nodes.forEach(function (node) {
-            var value = node.nodeValue;
-            var pattern = /(^|[^\w@])@([A-Za-z0-9._+-]{2,64})/g;
-            var last = 0;
-            var found;
-            var pieces = document.createDocumentFragment();
-            var changed = false;
-            while ((found = pattern.exec(value)) !== null) {
-                var name = found[2].toLowerCase();
-                if (!known[name]) continue;
-                var start = found.index + found[1].length;
-                pieces.appendChild(document.createTextNode(value.slice(last, start)));
-                var tag = document.createElement("span");
-                tag.className = "mention" + (name === me || name === "everyone" || name === "here" ? " is-me" : "");
-                tag.textContent = "@" + found[2];
-                pieces.appendChild(tag);
-                last = start + 1 + found[2].length;
-                changed = true;
-                if (name === me || name === "everyone" || name === "here") mine = true;
+        list.forEach(function (message) {
+            var card = document.createElement("div");
+            card.className = "dm-pin-card";
+            card.setAttribute("data-jump", String(message.id));
+            card.setAttribute("role", "button");
+            card.setAttribute("tabindex", "0");
+            var face = document.createElement("img");
+            face.className = "dm-pin-avatar";
+            face.alt = "";
+            face.src = message.senderAvatarUrl || DEFAULT_AVATAR;
+            var inner = document.createElement("div");
+            inner.className = "dm-pin-body";
+            var top = document.createElement("div");
+            top.className = "dm-pin-head";
+            var who = document.createElement("strong");
+            who.textContent = message.senderDisplayName || message.senderUserName;
+            var when = document.createElement("time");
+            when.textContent = pinTime(message.createdAt);
+            top.appendChild(who);
+            top.appendChild(when);
+            var text = document.createElement("div");
+            text.className = "dm-pin-text";
+            window.GroupParts.textNodes(message.text || (message.attachments && message.attachments.length ? "Attachment" : "")).forEach(function (node) { text.appendChild(node); });
+            if (message.editedAt) {
+                var edited = document.createElement("span");
+                edited.className = "dm-msg-edited";
+                edited.textContent = "(edited)";
+                text.appendChild(edited);
             }
-            if (!changed) return;
-            pieces.appendChild(document.createTextNode(value.slice(last)));
-            node.parentNode.replaceChild(pieces, node);
+            inner.appendChild(top);
+            inner.appendChild(text);
+            card.appendChild(face);
+            card.appendChild(inner);
+            body.appendChild(card);
         });
-        row.classList.toggle("is-mention", mine && message.senderUserName !== meName);
+        pinsPopover.appendChild(body);
+    }
+
+    function loadPins() {
+        if (!channelId) return Promise.resolve();
+        var mine = channelId;
+        return request(path("Pins") + "?serverId=" + serverId + "&channelId=" + channelId).then(function (list) {
+            if (mine === channelId && pinsPopover) paintPins(Array.isArray(list) ? list : []);
+        });
+    }
+
+    function togglePins() {
+        if (!pinsPopover || !pinsToggle) return;
+        if (pinsOpen()) {
+            closePins();
+            return;
+        }
+        loadPins().then(function () {
+            var anchor = pinsToggle.getBoundingClientRect();
+            pinsPopover.hidden = false;
+            var width = pinsPopover.offsetWidth;
+            pinsPopover.style.left = Math.max(8, Math.min(anchor.right - width + 40, window.innerWidth - width - 8)) + "px";
+            pinsPopover.style.top = (anchor.bottom + 10) + "px";
+        }).catch(function (error) { showError(error.message); });
+    }
+
+    if (pinsToggle) pinsToggle.addEventListener("click", function (event) {
+        event.stopPropagation();
+        togglePins();
+    });
+    if (pinsPopover) {
+        pinsPopover.addEventListener("click", function (event) {
+            var card = event.target.closest("[data-jump]");
+            if (!card) return;
+            closePins();
+            window.GroupParts.jump(card.getAttribute("data-jump"));
+        });
+    }
+    document.addEventListener("click", function (event) {
+        if (pinsOpen() && !event.target.closest("#server-pins-popover, #server-pins-toggle")) closePins();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && pinsOpen()) closePins();
+    });
+
+    function pinMessage(messageId, pinned) {
+        return request(path("Pin"), "POST", { serverId: serverId, channelId: channelId, messageId: messageId, pinned: pinned });
     }
 
     function editMessage(messageId, text) {
@@ -315,8 +392,9 @@
 
     var context = {
         edit: editMessage,
-        decorateText: decorateMentions,
-        mentionCandidates: function () { return window.discodeMentionCandidates ? window.discodeMentionCandidates() : []; },
+        pin: pinMessage,
+        canPin: function () { return (perms() & 512) === 512; },
+        onPinsChanged: function () { if (pinsOpen()) loadPins().catch(function () {}); },
         box: box,
         input: input,
         compose: compose,
@@ -390,6 +468,7 @@
                 paintAccess();
                 return;
             }
+            closePins();
             channelId = id;
             channelKind = button.getAttribute("data-kind") || "text";
             channelReadOnly = button.getAttribute("data-readonly") === "1";

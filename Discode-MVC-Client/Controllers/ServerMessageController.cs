@@ -46,6 +46,22 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.DeleteAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}/messages/{model.MessageId}"));
         }
 
+        [HttpGet]
+        public Task<IActionResult> Pins(int serverId, int channelId)
+        {
+            return Forward(client => client.GetAsync($"api/server/{serverId}/channels/{channelId}/messages/pins"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Pin([FromBody] PinServerMessageUIVM model)
+        {
+            if (model is null || model.ServerId <= 0 || model.ChannelId <= 0 || model.MessageId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}/messages/{model.MessageId}/pin", new { pinned = model.Pinned }));
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public Task<IActionResult> Edit([FromBody] EditServerMessageUIVM model)

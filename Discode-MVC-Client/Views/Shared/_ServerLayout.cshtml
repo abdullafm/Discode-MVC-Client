@@ -938,7 +938,10 @@
         <script src="~/assets/js/serverchat.js" asp-append-version="true"></script>
         <script src="~/assets/js/discover.js" asp-append-version="true"></script>
         <script>window.discodeSettings = { theme: "@(Model.Profile.IsDark ? "dark" : "light")", notify: { all: @(Model.Profile.NotifyAll ? "true" : "false"), dm: @(Model.Profile.NotifyDm ? "true" : "false"), friends: @(Model.Profile.NotifyFriends ? "true" : "false"), sound: @(Model.Profile.NotifySound ? "true" : "false") } };</script>
+        <input type="hidden" id="Update_UserName" value="@Model.Profile.UserName">
         <script src="~/assets/js/groups.js" asp-append-version="true"></script>
+        <script src="~/assets/js/mentions.js" asp-append-version="true"></script>
+        <script src="~/assets/js/profilecard.js" asp-append-version="true"></script>
         <script src="~/assets/js/groupmenu.js" asp-append-version="true"></script>
         <script src="~/assets/js/profile.js" asp-append-version="true"></script>
         <script src="~/assets/js/script.js" asp-append-version="true"></script>
