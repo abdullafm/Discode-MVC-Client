@@ -1686,6 +1686,8 @@
             chat.classList.remove("has-room");
         }
         if (voice) voice.hidden = true;
+        // the real message list, intro and composer live in serverchat.js: they must go too
+        if (window.discodeServerChat && window.discodeServerChat.close) window.discodeServerChat.close();
         // silinən kanalın mesajları və adı ekranda qalmasın
         var staleMessages = document.getElementById("server-messages");
         if (staleMessages) staleMessages.hidden = true;

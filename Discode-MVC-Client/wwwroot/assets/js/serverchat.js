@@ -308,6 +308,17 @@
         watching: function (sentServer, sentChannel) {
             return !chat.hidden && !scroller.hidden && sentServer === serverId && sentChannel === channelId;
         },
+        // the open channel is gone (deleted, last one): no messages, intro or composer of it may stay on screen
+        close: function () {
+            channelId = 0;
+            generation += 1;
+            loaded = [];
+            box.textContent = "";
+            scroller.hidden = true;
+            compose.hidden = true;
+            if (lockNote) lockNote.hidden = true;
+            if (emptyNote) emptyNote.hidden = false;
+        },
         open: function (button) {
             var id = Number(button.getAttribute("data-id")) || 0;
             if (!id) {
