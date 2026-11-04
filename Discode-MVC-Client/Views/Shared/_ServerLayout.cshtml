@@ -464,6 +464,7 @@
         </div>
         <div class="me-profile d-none" id="me-profile">
             <div class="me-profile-card" role="dialog" aria-label="Profile">
+                <div class="me-private-head" id="me-private-head" hidden><i class="fa-solid fa-lock"></i> <span>Private Profile</span></div>
                 <button type="button" class="me-profile-close" id="me-profile-close" aria-label="Close"><i
                         class="fa-solid fa-xmark"></i></button>
                 <div class="me-profile-side">
@@ -487,12 +488,20 @@
                         <p class="me-handle"><span id="me-handle-name">@Model.Profile.UserName</span> <span
                                 id="me-handle-dot">•</span> <button type="button" class="me-pronouns"
                                 id="me-pronouns">@(string.IsNullOrWhiteSpace(Model.Profile.Pronouns) ? "Add pronouns" : Model.Profile.Pronouns)</button><span id="me-view-pronouns" hidden>@Model.Profile.Pronouns</span></p>
+                        <div class="me-request" id="me-request" hidden>
+                            <p id="me-request-text"></p>
+                            <div class="me-request-buttons">
+                                <button type="button" id="me-request-accept">Accept</button>
+                                <button type="button" id="me-request-ignore">Ignore</button>
+                            </div>
+                        </div>
                         <div class="me-actions">
                             <button type="button" class="me-add" id="me-add" hidden><i
-                                    class="fa-solid fa-user-plus"></i> Add Friend</button>
+                                    class="fa-solid fa-user-plus"></i> <span>Add Friend</span></button>
                             <button type="button" class="me-msg" id="me-msg"><i class="fa-solid fa-comment"></i>
                                 <span>Message</span></button>
                         </div>
+                        <p class="me-private-note" id="me-private-note" hidden></p>
                         <div class="me-block me-bio-block">
                             <h3>Bio</h3>
                             <form class="me-bio-form" id="me-bio-form"><input id="me-bio" type="text" maxlength="190"
@@ -520,6 +529,8 @@
                 <div class="me-board">
                     <div class="me-tabs">
                         <button type="button" class="on" data-tab="board">Board</button>
+                        <button type="button" data-tab="friends">Friends</button>
+                        <button type="button" data-tab="reposts">Reposts</button>
                     </div>
                     <div class="me-panel" id="me-board">
                         <template id="me-post">
@@ -529,7 +540,17 @@
                         </template>
                         <div class="me-posts" id="me-posts"></div>
                         <p class="me-posts-empty" id="me-posts-empty">No posts yet.</p>
+                        <p class="me-private-board" id="me-private-board" hidden>This profile is private. Add them as a friend to see their posts.</p>
                         <a class="me-posts-go" href="@Url.Action("Index", "Social")">Social Media</a>
+                    </div>
+                    <div class="me-panel d-none" id="me-friends">
+                        <div class="me-friends-list" id="me-friends-list"></div>
+                        <p class="me-friends-empty" id="me-friends-empty" hidden>No friends yet.</p>
+                        <p class="me-friends-empty" id="me-friends-private" hidden>This profile is private. Add them as a friend to see their friends.</p>
+                    </div>
+                    <div class="me-panel d-none" id="me-reposts">
+                        <div class="me-posts" id="me-reposts-list"></div>
+                        <p class="me-posts-empty" id="me-reposts-empty" hidden>No reposts yet.</p>
                     </div>
                     <div class="me-panel d-none" id="me-activity">
                         <p>Nothing here yet.</p>
