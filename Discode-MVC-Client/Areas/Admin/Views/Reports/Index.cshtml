@@ -197,16 +197,16 @@
             <footer>
                 @if (report.Status == "Open")
                 {
+                    <form method="post" asp-area="Admin" asp-controller="Reports" asp-action="SetStatus" asp-route-id="@report.Id">
+                        <input type="hidden" name="status" value="Reviewed"><input type="hidden" name="filter" value="@Model.Status"><input type="hidden" name="search" value="@Model.Search"><input type="hidden" name="page" value="@Model.Page">
+                        <button type="submit" class="adm-btn is-success" title="You checked it and dealt with it"><i class="fa-solid fa-check"></i> Mark reviewed</button>
+                    </form>
+                    <form method="post" asp-area="Admin" asp-controller="Reports" asp-action="SetStatus" asp-route-id="@report.Id" data-confirm="Nothing was wrong, so no action is needed." data-confirm-title="Dismiss this report?" data-confirm-button="Dismiss" data-confirm-tone="warning" data-confirm-icon="fa-ban">
+                        <input type="hidden" name="status" value="Dismissed"><input type="hidden" name="filter" value="@Model.Status"><input type="hidden" name="search" value="@Model.Search"><input type="hidden" name="page" value="@Model.Page">
+                        <button type="submit" class="adm-btn is-outline" title="Nothing wrong, no action needed"><i class="fa-solid fa-xmark"></i> Dismiss</button>
+                    </form>
                     @if (User.IsInRole("SuperAdmin"))
                     {
-                        <form method="post" asp-area="Admin" asp-controller="Reports" asp-action="SetStatus" asp-route-id="@report.Id">
-                            <input type="hidden" name="status" value="Reviewed"><input type="hidden" name="filter" value="@Model.Status"><input type="hidden" name="search" value="@Model.Search"><input type="hidden" name="page" value="@Model.Page">
-                            <button type="submit" class="adm-btn is-success" title="You checked it and dealt with it"><i class="fa-solid fa-check"></i> Mark reviewed</button>
-                        </form>
-                        <form method="post" asp-area="Admin" asp-controller="Reports" asp-action="SetStatus" asp-route-id="@report.Id" data-confirm="Nothing was wrong, so no action is needed." data-confirm-title="Dismiss this report?" data-confirm-button="Dismiss" data-confirm-tone="warning" data-confirm-icon="fa-ban">
-                            <input type="hidden" name="status" value="Dismissed"><input type="hidden" name="filter" value="@Model.Status"><input type="hidden" name="search" value="@Model.Search"><input type="hidden" name="page" value="@Model.Page">
-                            <button type="submit" class="adm-btn is-outline" title="Nothing wrong, no action needed"><i class="fa-solid fa-xmark"></i> Dismiss</button>
-                        </form>
                         @if (kind == "Post" || kind == "Comment" || kind == "Story")
                         {
                             <form method="post" asp-area="Admin" asp-controller="Content" asp-action="Delete" data-confirm="The reported @TargetLabel(kind) disappears for everybody and the author gets a message. This report is closed too." data-confirm-title="Remove the reported content?" data-confirm-button="Remove" data-confirm-tone="danger" data-confirm-icon="fa-trash">
@@ -216,9 +216,9 @@
                             </form>
                         }
                     }
-                    else
+                    else if (kind == "Post" || kind == "Comment" || kind == "Story")
                     {
-                        <span class="adm-muted">Only a SuperAdmin can close a report or remove content.</span>
+                        <span class="adm-muted">Only a SuperAdmin can remove content. Warn the author instead.</span>
                     }
                     @if (isServer)
                     {
@@ -232,13 +232,10 @@
                 else
                 {
                     <span class="adm-muted">@report.Status by @@@report.ReviewedBy @(report.ReviewedAt is null ? "" : "· " + report.ReviewedAt.Value.ToString("yyyy-MM-dd HH:mm"))</span>
-                    @if (User.IsInRole("SuperAdmin"))
-                    {
-                        <form method="post" asp-area="Admin" asp-controller="Reports" asp-action="SetStatus" asp-route-id="@report.Id">
-                            <input type="hidden" name="status" value="Open"><input type="hidden" name="filter" value="@Model.Status"><input type="hidden" name="search" value="@Model.Search"><input type="hidden" name="page" value="@Model.Page">
-                            <button type="submit" class="adm-btn is-outline"><i class="fa-solid fa-rotate-left"></i> Reopen</button>
-                        </form>
-                    }
+                    <form method="post" asp-area="Admin" asp-controller="Reports" asp-action="SetStatus" asp-route-id="@report.Id">
+                        <input type="hidden" name="status" value="Open"><input type="hidden" name="filter" value="@Model.Status"><input type="hidden" name="search" value="@Model.Search"><input type="hidden" name="page" value="@Model.Page">
+                        <button type="submit" class="adm-btn is-outline"><i class="fa-solid fa-rotate-left"></i> Reopen</button>
+                    </form>
                 }
             </footer>
         </article>
