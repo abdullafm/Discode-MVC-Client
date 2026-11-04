@@ -151,14 +151,8 @@ function panelPhoto() {
 }
 
 function myPhoto() {
-    return fetch("/api/me").then(function (response) {
-        if (!response.ok) throw new Error("me");
-        return response.json();
-    }).then(function (data) {
-        return data.avatar || data.avatarUrl || data.photo || panelPhoto();
-    }).catch(function () {
-        return panelPhoto();
-    });
+    // there is no /api/me endpoint (it answered 404 on every group page): my photo is the one in my panel
+    return Promise.resolve(panelPhoto());
 }
 
 var membersOpenBeforeCall = false;

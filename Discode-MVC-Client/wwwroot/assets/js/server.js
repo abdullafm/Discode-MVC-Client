@@ -119,6 +119,8 @@
             if (openNow !== lastManage || manageChannelsAllowed(openNow) !== isOwner) setManage(openNow);
             serverMembers = server.members;
             paintServerMembers();
+            // a new member is not in the list of people who may see this channel yet: ask again, otherwise they stay hidden until a reload
+            loadViewers(true);
         }).catch(function () {});
     }
 
