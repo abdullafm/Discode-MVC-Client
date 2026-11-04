@@ -779,7 +779,9 @@
         var chip = document.getElementById("member-pop-chip");
         var chipText = document.getElementById("member-pop-chip-text");
         if (chip && chipText) {
-            var showChip = self || !!statusLine;
+            // somebody who is offline shows no status bubble (their status is only for when they are around); my own stays so I can edit it
+            var offline = (button.getAttribute("data-status") || "offline") === "offline";
+            var showChip = self || (!!statusLine && !offline);
             chip.hidden = !showChip;
             chip.classList.toggle("has-status", !!statusLine);
             chip.classList.toggle("is-static", !self);
