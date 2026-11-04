@@ -542,7 +542,7 @@
                 if (item.publicId) button.setAttribute("data-public-id", item.publicId);
                 if (item.self) button.setAttribute("data-self", "1");
                 if (item.handle) button.setAttribute("data-handle", item.handle);
-                if (item.bio) button.setAttribute("data-bio", item.bio);
+                if (item.about) button.setAttribute("data-bio", item.about);
                 if (item.statusText) button.setAttribute("data-note", item.statusText);
                 var face = document.createElement("span");
                 face.className = "server-member-face";
@@ -750,12 +750,12 @@
             ? ((handleNode && handleNode.textContent.trim()) || "anonymou5")
             : (button.getAttribute("data-handle") || name.toLowerCase().replace(/\s+/g, ""));
         var bioInput = document.getElementById("me-bio");
+        // About (the bio): my own comes from my profile form, somebody else's from the member list
         var profileAbout = self
-            ? ((bioInput && bioInput.value.trim()) || saved.profileBio || "")
+            ? ((bioInput && bioInput.value.trim()) || button.getAttribute("data-bio") || "")
             : (button.getAttribute("data-bio") || "");
-        var custom = self
-            ? (((saved.emoji ? saved.emoji + " " : "") + (saved.bio || "")).trim())
-            : (button.getAttribute("data-note") || "");
+        // the status line above it (the chip): mine too is the status the list shows, not a value kept in the browser
+        var custom = button.getAttribute("data-note") || "";
         var about = profileAbout;
         var statusLine = custom;
         memberPop.setAttribute("data-status", button.getAttribute("data-status") || "offline");
