@@ -517,9 +517,12 @@
         var index = 0;
         tiles.forEach(function (tile) {
             var isTarget = tile === target;
+            // like DM and group calls: while one tile is zoomed, only the others that actually have video (a camera or a screen) stay as small tiles
+            var mini = !!target && !isTarget && tileHasVideo(tile);
             tile.classList.toggle("is-focused", isTarget);
-            tile.classList.toggle("is-mini", !!target && !isTarget);
-            if (target && !isTarget) {
+            tile.classList.toggle("is-mini", mini);
+            tile.classList.toggle("is-focus-hidden", !!target && !isTarget && !mini);
+            if (mini) {
                 tile.style.setProperty("--mini-i", String(index));
                 index += 1;
             } else {

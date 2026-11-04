@@ -942,8 +942,9 @@ html.theme-dark body .voice-mod-menu button > i {
     padding: 60px 16px 96px;
 }
 
-.server-voice-call.has-focus > .server-voice-activity {
-    display: none;
+.server-voice-call.has-focus > .server-voice-activity,
+.server-voice-call.has-focus > .server-voice-tile.is-focus-hidden {
+    display: none !important;
 }
 
 .server-voice-call.has-focus > .server-voice-tile.is-focused {
