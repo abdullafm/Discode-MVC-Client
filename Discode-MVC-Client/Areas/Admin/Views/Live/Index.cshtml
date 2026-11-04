@@ -70,28 +70,31 @@
                         </form>
                     </details>
 
-                    <details class="adm-action">
-                        <summary><i class="fa-solid fa-stop"></i> Close stream</summary>
-                        <form method="post" asp-area="Admin" asp-controller="Live" asp-action="End" asp-route-id="@stream.Id" data-confirm="The stream stops for everybody right now. The streamer can start a new one." data-confirm-title="Close this stream?" data-confirm-button="Close stream" data-confirm-tone="danger" data-confirm-icon="fa-stop">
-                            <textarea name="reason" class="adm-textarea" maxlength="250" placeholder="Why is it being closed?" required></textarea>
-                            <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-stop"></i> Close stream</button>
-                        </form>
-                    </details>
+                    @if (User.IsInRole("SuperAdmin"))
+                    {
+                        <details class="adm-action">
+                            <summary><i class="fa-solid fa-stop"></i> Close stream</summary>
+                            <form method="post" asp-area="Admin" asp-controller="Live" asp-action="End" asp-route-id="@stream.Id" data-confirm="The stream stops for everybody right now. The streamer can start a new one." data-confirm-title="Close this stream?" data-confirm-button="Close stream" data-confirm-tone="danger" data-confirm-icon="fa-stop">
+                                <textarea name="reason" class="adm-textarea" maxlength="250" placeholder="Why is it being closed?" required></textarea>
+                                <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-stop"></i> Close stream</button>
+                            </form>
+                        </details>
 
-                    <details class="adm-action">
-                        <summary><i class="fa-solid fa-ban"></i> Ban from going live</summary>
-                        <form method="post" asp-area="Admin" asp-controller="Live" asp-action="Ban" data-confirm="The stream is closed now and they cannot start another one until the ban ends." data-confirm-title="Ban from going live?" data-confirm-button="Ban" data-confirm-tone="danger" data-confirm-icon="fa-ban">
-                            <input type="hidden" name="hostId" value="@stream.HostId">
-                            <select name="minutes" class="adm-select">
-                                <option value="60">1 hour</option>
-                                <option value="1440" selected>1 day</option>
-                                <option value="10080">7 days</option>
-                                <option value="0">Permanent</option>
-                            </select>
-                            <textarea name="reason" class="adm-textarea" maxlength="250" placeholder="Why can they not go live?" required></textarea>
-                            <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-ban"></i> Ban from going live</button>
-                        </form>
-                    </details>
+                        <details class="adm-action">
+                            <summary><i class="fa-solid fa-ban"></i> Ban from going live</summary>
+                            <form method="post" asp-area="Admin" asp-controller="Live" asp-action="Ban" data-confirm="The stream is closed now and they cannot start another one until the ban ends." data-confirm-title="Ban from going live?" data-confirm-button="Ban" data-confirm-tone="danger" data-confirm-icon="fa-ban">
+                                <input type="hidden" name="hostId" value="@stream.HostId">
+                                <select name="minutes" class="adm-select">
+                                    <option value="60">1 hour</option>
+                                    <option value="1440" selected>1 day</option>
+                                    <option value="10080">7 days</option>
+                                    <option value="0">Permanent</option>
+                                </select>
+                                <textarea name="reason" class="adm-textarea" maxlength="250" placeholder="Why can they not go live?" required></textarea>
+                                <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-ban"></i> Ban from going live</button>
+                            </form>
+                        </details>
+                    }
                 </div>
             </div>
         </article>

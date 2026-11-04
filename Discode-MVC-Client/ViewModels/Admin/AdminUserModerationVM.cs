@@ -29,6 +29,7 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public int Comments { get; set; }
         public bool CanModerate { get; set; }
         public bool CanDelete { get; set; }
+        public bool CanBan { get; set; }
         public bool CanChangeRole { get; set; }
         public bool LiveBanned { get; set; }
         public DateTime? LiveBannedUntil { get; set; }

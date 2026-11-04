@@ -102,14 +102,17 @@
                     </form>
                 </details>
 
-                <details class="adm-action">
-                    <summary><i class="fa-solid fa-trash"></i> Remove @singular</summary>
-                    <form method="post" asp-area="Admin" asp-controller="Content" asp-action="Delete" data-confirm="It disappears for everybody right now and cannot be restored. The author gets a message with the reason." data-confirm-title="Remove this @singular?" data-confirm-button="Remove" data-confirm-tone="danger" data-confirm-icon="fa-trash">
-                        <input type="hidden" name="type" value="@Model.Type"><input type="hidden" name="id" value="@item.Id"><input type="hidden" name="page" value="@Model.Page">
-                        <textarea name="reason" class="adm-textarea" maxlength="250" placeholder="Why is it removed?" required></textarea>
-                        <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-trash"></i> Remove @singular</button>
-                    </form>
-                </details>
+                @if (User.IsInRole("SuperAdmin"))
+                {
+                    <details class="adm-action">
+                        <summary><i class="fa-solid fa-trash"></i> Remove @singular</summary>
+                        <form method="post" asp-area="Admin" asp-controller="Content" asp-action="Delete" data-confirm="It disappears for everybody right now and cannot be restored. The author gets a message with the reason." data-confirm-title="Remove this @singular?" data-confirm-button="Remove" data-confirm-tone="danger" data-confirm-icon="fa-trash">
+                            <input type="hidden" name="type" value="@Model.Type"><input type="hidden" name="id" value="@item.Id"><input type="hidden" name="page" value="@Model.Page">
+                            <textarea name="reason" class="adm-textarea" maxlength="250" placeholder="Why is it removed?" required></textarea>
+                            <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-trash"></i> Remove @singular</button>
+                        </form>
+                    </details>
+                }
 
                 <a class="adm-btn is-outline" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@item.AuthorId"><i class="fa-solid fa-user-gear"></i> Open member</a>
             </div>

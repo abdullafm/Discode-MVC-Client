@@ -1,5 +1,6 @@
 using Discode_MVC_Client.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace Discode_MVC_Client.Areas.Admin.Controllers
 {
@@ -15,6 +16,18 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
         {
             _environment = environment;
             _branding = branding;
+        }
+
+        // the logos are for a SuperAdmin only: an Admin who opens the address is sent back to the dashboard
+        public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+        {
+            if (!User.IsInRole("SuperAdmin"))
+            {
+                context.Result = RedirectToAction("Index", "Home", new { area = "Admin" });
+                return;
+            }
+
+            await base.OnActionExecutionAsync(context, next);
         }
 
         public async Task<IActionResult> Index()

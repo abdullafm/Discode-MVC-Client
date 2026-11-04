@@ -101,28 +101,31 @@ else
                 <button type="submit" class="adm-btn"><i class="fa-solid fa-triangle-exclamation"></i> Send warning</button>
             </form>
 
-            @if (!Model.IsBanned)
+            @if (User.IsInRole("SuperAdmin"))
             {
-                <form method="post" asp-area="Admin" asp-controller="Servers" asp-action="Ban" asp-route-id="@Model.Id" data-confirm="Nobody will be able to open this server, and its invite stops working, until you unban it." data-confirm-title="Ban this server?" data-confirm-button="Ban server" data-confirm-tone="danger" data-confirm-icon="fa-ban">
-                    <label class="adm-label" for="ban-reason">Reason for the ban</label>
-                    <textarea id="ban-reason" name="reason" class="adm-textarea" maxlength="300" placeholder="Why is this server being banned?" required></textarea>
-                    <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-ban"></i> Ban server</button>
-                </form>
-            }
-            else
-            {
-                <form method="post" asp-area="Admin" asp-controller="Servers" asp-action="Unban" asp-route-id="@Model.Id" data-confirm="Its members will be able to open it again and the invite link works again." data-confirm-title="Unban this server?" data-confirm-button="Unban server" data-confirm-tone="success" data-confirm-icon="fa-rotate-left">
-                    <button type="submit" class="adm-btn is-success"><i class="fa-solid fa-rotate-left"></i> Unban server</button>
-                </form>
-            }
+                @if (!Model.IsBanned)
+                {
+                    <form method="post" asp-area="Admin" asp-controller="Servers" asp-action="Ban" asp-route-id="@Model.Id" data-confirm="Nobody will be able to open this server, and its invite stops working, until you unban it." data-confirm-title="Ban this server?" data-confirm-button="Ban server" data-confirm-tone="danger" data-confirm-icon="fa-ban">
+                        <label class="adm-label" for="ban-reason">Reason for the ban</label>
+                        <textarea id="ban-reason" name="reason" class="adm-textarea" maxlength="300" placeholder="Why is this server being banned?" required></textarea>
+                        <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-ban"></i> Ban server</button>
+                    </form>
+                }
+                else
+                {
+                    <form method="post" asp-area="Admin" asp-controller="Servers" asp-action="Unban" asp-route-id="@Model.Id" data-confirm="Its members will be able to open it again and the invite link works again." data-confirm-title="Unban this server?" data-confirm-button="Unban server" data-confirm-tone="success" data-confirm-icon="fa-rotate-left">
+                        <button type="submit" class="adm-btn is-success"><i class="fa-solid fa-rotate-left"></i> Unban server</button>
+                    </form>
+                }
 
-            <div class="adm-danger-zone">
-                <h4>Delete server</h4>
-                <p>Permanently removes the server with its channels, messages and members. This cannot be undone.</p>
-                <form method="post" asp-area="Admin" asp-controller="Servers" asp-action="Delete" asp-route-id="@Model.Id" data-confirm="The server is removed with its channels, messages and members. This cannot be undone." data-confirm-title="Delete this server?" data-confirm-button="Delete forever" data-confirm-tone="danger" data-confirm-icon="fa-trash">
-                    <button type="submit" class="adm-btn is-outline-danger"><i class="fa-solid fa-trash"></i> Delete server</button>
-                </form>
-            </div>
+                <div class="adm-danger-zone">
+                    <h4>Delete server</h4>
+                    <p>Permanently removes the server with its channels, messages and members. This cannot be undone.</p>
+                    <form method="post" asp-area="Admin" asp-controller="Servers" asp-action="Delete" asp-route-id="@Model.Id" data-confirm="The server is removed with its channels, messages and members. This cannot be undone." data-confirm-title="Delete this server?" data-confirm-button="Delete forever" data-confirm-tone="danger" data-confirm-icon="fa-trash">
+                        <button type="submit" class="adm-btn is-outline-danger"><i class="fa-solid fa-trash"></i> Delete server</button>
+                    </form>
+                </div>
+            }
         </div>
     </div>
 }
