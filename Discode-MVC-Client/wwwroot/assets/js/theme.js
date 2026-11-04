@@ -1,7 +1,5 @@
 "use strict";
-try {
-    if (localStorage.getItem("discode-theme") === "dark") document.documentElement.classList.add("theme-dark");
-} catch (e) {}
+// the saved theme is put on <html> by the server (account setting), nothing is read from the browser here
 
 window.discodeSetTheme = function (dark) {
     var root = document.documentElement;

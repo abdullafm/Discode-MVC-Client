@@ -1,6 +1,6 @@
 ﻿@model HomeUIVM
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="@(Model.Profile.IsDark ? "theme-dark" : "")">
 
 <head>
     <script src="~/assets/js/theme.js" asp-append-version="true"></script>
@@ -937,6 +937,7 @@
         <script src="~/assets/js/groupparts.js" asp-append-version="true"></script>
         <script src="~/assets/js/serverchat.js" asp-append-version="true"></script>
         <script src="~/assets/js/discover.js" asp-append-version="true"></script>
+        <script>window.discodeSettings = { theme: "@(Model.Profile.IsDark ? "dark" : "light")", notify: { all: @(Model.Profile.NotifyAll ? "true" : "false"), dm: @(Model.Profile.NotifyDm ? "true" : "false"), friends: @(Model.Profile.NotifyFriends ? "true" : "false"), sound: @(Model.Profile.NotifySound ? "true" : "false") } };</script>
         <script src="~/assets/js/groups.js" asp-append-version="true"></script>
         <script src="~/assets/js/groupmenu.js" asp-append-version="true"></script>
         <script src="~/assets/js/profile.js" asp-append-version="true"></script>

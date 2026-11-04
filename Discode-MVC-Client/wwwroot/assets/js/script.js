@@ -329,6 +329,11 @@ function openToggle() {
         if (!isCompactFilter()) closeCompactFilter();
         syncGlide(menu.querySelector("button.active"));
     });
+
+    // /Home/Index?tab=add: the page is rendered with the Add Friend section open, so show it as the chosen tab too
+    var addSection = document.getElementById("friends-add");
+    var addButton = menu.querySelector('button[data-filter="add"]');
+    if (addSection && !addSection.hidden && addButton && currentTab !== "add") addButton.click();
 })();
 
 (function () {

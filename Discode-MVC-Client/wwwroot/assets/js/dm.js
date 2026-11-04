@@ -94,6 +94,15 @@ document.addEventListener("error", function (event) {
     }
 }, true);
 
+// messages drawn by the server: their story thumbnail may have failed before this script ran, so look at the ones already finished
+function markGoneStoryThumbs() {
+    [].forEach.call(document.querySelectorAll(".dm-story-reply img"), function (image) {
+        if (image.complete && image.naturalWidth === 0 && image.parentNode) image.parentNode.classList.add("is-gone");
+    });
+}
+markGoneStoryThumbs();
+window.addEventListener("load", markGoneStoryThumbs);
+
 function dmToken() {
     var input = document.querySelector("input[name='__RequestVerificationToken']");
     return input ? input.value : "";

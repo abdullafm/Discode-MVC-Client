@@ -11,5 +11,6 @@ namespace Discode_MVC_Client.ViewModels.Social
         public int LikeCount { get; set; }
         public bool LikedByMe { get; set; }
         public int ViewCount { get; set; }
+        public bool SeenByMe { get; set; }
     }
 }

@@ -1,36 +1,48 @@
 "use strict";
-var GROUP_KEY = "discode-groups";
 var GROUP_LIMIT = 10;
 
 var picked = [];
 var already = [];
 
-function loadGroups() {
-    try {
-        var saved = JSON.parse(localStorage.getItem(GROUP_KEY) || "[]");
-        return Array.isArray(saved) ? saved : [];
-    } catch (error) {
-        return [];
-    }
+// Settings, pins: everything that used to sit in the browser's localStorage lives on the account now
+function postJson(url, body) {
+    var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
+    return fetch(url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+            "Content-Type": "application/json",
+            "RequestVerificationToken": tokenInput ? tokenInput.value : "",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: JSON.stringify(body)
+    }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (data) {
+            if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Something went wrong.");
+            return data;
+        });
+    });
 }
 
-function saveGroups(groups) {
-    localStorage.setItem(GROUP_KEY, JSON.stringify(groups));
-}
-
-var PIN_KEY = "discode-pins";
+var pinKeys = [];
 
 function loadPins() {
-    try {
-        var saved = JSON.parse(localStorage.getItem(PIN_KEY) || "[]");
-        return Array.isArray(saved) ? saved : [];
-    } catch (error) {
-        return [];
-    }
+    return pinKeys;
 }
 
-function savePins(pins) {
-    localStorage.setItem(PIN_KEY, JSON.stringify(pins));
+// a pinned person is identified by their user name, the display name is not unique
+function pinKey(item) {
+    return String(item.getAttribute("data-dm") || rowName(item)).toLowerCase();
+}
+
+function fetchPins() {
+    fetch("/Home/Pins", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } })
+        .then(function (response) { return response.ok ? response.json() : []; })
+        .then(function (list) {
+            pinKeys = Array.isArray(list) ? list.map(String) : [];
+            applyPins();
+        })
+        .catch(function () {});
 }
 
 function rowName(item) {
@@ -55,7 +67,7 @@ function applyPins() {
     var pinned = [];
     var rest = [];
     rows.forEach(function (row) {
-        var name = rowName(row);
+        var name = pinKey(row);
         var on = pins.indexOf(name) !== -1;
         row.classList.toggle("pinned", on);
         var old = row.querySelector(".row-pin");
@@ -71,7 +83,7 @@ function applyPins() {
         }
     });
     pinned.sort(function (a, b) {
-        return pins.indexOf(rowName(a)) - pins.indexOf(rowName(b));
+        return pins.indexOf(pinKey(a)) - pins.indexOf(pinKey(b));
     });
     var recent = groups.concat(rest);
     recent.sort(function (a, b) {
@@ -84,13 +96,11 @@ function applyPins() {
     });
 }
 
-function togglePin(name) {
-    var pins = loadPins();
-    var index = pins.indexOf(name);
-    if (index === -1) pins.unshift(name);
-    else pins.splice(index, 1);
-    savePins(pins);
-    applyPins();
+function togglePin(key) {
+    postJson("/Home/TogglePin", { key: key }).then(function (list) {
+        pinKeys = Array.isArray(list) ? list.map(String) : pinKeys;
+        applyPins();
+    }).catch(function () {});
 }
 
 function paintGroupRows(groups) {
@@ -402,7 +412,7 @@ document.addEventListener("visibilitychange", function () {
         menu.dataset.photo = photo ? photo.getAttribute("src") || "" : "";
         if (muteName) muteName.textContent = name;
         var pinLabel = menu.querySelector('[data-action="pin"] .row-menu-label');
-        if (pinLabel) pinLabel.textContent = loadPins().indexOf(name) !== -1 ? "Unpin" : "Pin";
+        if (pinLabel) pinLabel.textContent = loadPins().indexOf(String(menu.dataset.user || name).toLowerCase()) !== -1 ? "Unpin" : "Pin";
         var subs = menu.querySelectorAll(".row-menu-sub");
         for (var i = 0; i < subs.length; i++) subs[i].classList.remove("open");
         placeRowMenu(x, y);
@@ -492,7 +502,7 @@ document.addEventListener("visibilitychange", function () {
         if (kind === "call" && window.discodeGo) window.discodeGo("/Dm/Index?name=" + encodeURIComponent(user) + "&call=1&t=" + Date.now());
         if (kind === "ring" && live && window.discodeCalls) window.discodeCalls.start(user, !!live.video).catch(function () {});
         if (kind === "stopring" && live && window.discodePresence) window.discodePresence.invoke("EndCall", live.callId, true).catch(function () {});
-        if (kind === "pin") togglePin(name);
+        if (kind === "pin") togglePin(String(user || name).toLowerCase());
         if (kind === "close") {
             var rows = document.querySelectorAll(".friend-list [data-dm]");
             for (var r = 0; r < rows.length; r++) {
@@ -558,12 +568,9 @@ document.addEventListener("visibilitychange", function () {
         window.DiscodeLang.apply();
     }
 
-    var notifyKey = "discode-notify";
+    var bootSettings = window.discodeSettings || {};
     var notifyState = { all: true, dm: true, friends: true, sound: true };
-    try {
-        var savedNotify = JSON.parse(localStorage.getItem(notifyKey) || "");
-        if (savedNotify && typeof savedNotify === "object") notifyState = savedNotify;
-    } catch (error) {}
+    if (bootSettings.notify && typeof bootSettings.notify === "object") notifyState = Object.assign(notifyState, bootSettings.notify);
 
     function paintNotify() {
         var switches = settings.querySelectorAll("[data-notify]");
@@ -586,23 +593,25 @@ document.addEventListener("visibilitychange", function () {
         var key = button.getAttribute("data-notify");
         if (key !== "all" && !notifyState.all) return;
         notifyState[key] = !notifyState[key];
-        localStorage.setItem(notifyKey, JSON.stringify(notifyState));
+        bootSettings.notify = notifyState;
+        postJson("/Home/SaveSettings", { notifyAll: notifyState.all, notifyDm: notifyState.dm, notifyFriends: notifyState.friends, notifySound: notifyState.sound }).catch(function () {});
         paintNotify();
     });
 
-    var themeKey = "discode-theme";
+    // the page is already drawn in the saved theme by the server; here only the switch is set and a change is saved
     function applyTheme(theme, animate) {
         var dark = theme === "dark";
         if (animate && window.discodeSetTheme) window.discodeSetTheme(dark);
         else document.documentElement.classList.toggle("theme-dark", dark);
-        localStorage.setItem(themeKey, dark ? "dark" : "light");
         var radios = document.querySelectorAll('input[name="theme"]');
         for (var i = 0; i < radios.length; i++) radios[i].checked = radios[i].value === (dark ? "dark" : "light");
     }
-    applyTheme(localStorage.getItem(themeKey) === "dark" ? "dark" : "light");
+    applyTheme(bootSettings.theme === "dark" ? "dark" : "light");
     settings.addEventListener("change", function (event) {
         if (event.target.name !== "theme") return;
         applyTheme(event.target.value, true);
+        bootSettings.theme = event.target.value === "dark" ? "dark" : "light";
+        postJson("/Home/SaveSettings", { theme: bootSettings.theme }).catch(function () {});
     });
 
     var emailToggle = document.getElementById("settings-email-toggle");
@@ -1048,3 +1057,5 @@ document.addEventListener("visibilitychange", function () {
     });
 
 })();
+
+fetchPins();

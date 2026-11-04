@@ -1034,6 +1034,9 @@ function showMenu(row) {
     for (var i = 0; i < gated.length; i++) gated[i].hidden = !mine;
     var others = menu.querySelectorAll("[data-other-only]");
     for (var o = 0; o < others.length; o++) others[o].hidden = row.getAttribute("data-mine") === "1";
+    // Edit: only the author, only where the chat can edit, only a message that has text
+    var editable = menu.querySelectorAll("[data-needs-edit]");
+    for (var e = 0; e < editable.length; e++) editable[e].hidden = !(ctx.edit && row.getAttribute("data-mine") === "1" && row.querySelector(".dm-msg-text"));
     menu.setAttribute("data-row", row.getAttribute("data-id"));
     menu.hidden = false;
     return menu;
@@ -1078,6 +1081,7 @@ function bindMenu() {
         else if (action === "reply") startReply(row);
         else if (action === "forward") openForward(row);
         else if (action === "delete") deleteMessage(row);
+        else if (action === "edit") startEdit(row);
         else if (action === "copy-text") {
             if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(messageText(row)).catch(function () {});
         } else if (action === "report") {
@@ -1173,9 +1177,252 @@ function bindForward() {
     });
 }
 
+
+// ---------- edit your own message (the chat gives ctx.edit(messageId, text) -> Promise<message>) ----------
+function cancelEdit(row) {
+    var editor = row.querySelector(".dm-edit");
+    if (editor) editor.remove();
+    var holder = row.querySelector(".dm-msg-text");
+    if (holder) holder.hidden = false;
+    row.classList.remove("is-editing");
+}
+
+function growEditor(area) {
+    area.style.height = "auto";
+    area.style.height = area.scrollHeight + "px";
+}
+
+function plainText(row) {
+    var holder = row.querySelector(".dm-msg-text");
+    if (!holder) return "";
+    var clone = holder.cloneNode(true);
+    var mark = clone.querySelector(".dm-msg-edited");
+    if (mark) mark.remove();
+    return fieldValue(clone);
+}
+
+function startEdit(row) {
+    if (!ctx.edit || row.getAttribute("data-mine") !== "1" || row.querySelector(".dm-edit")) return;
+    var holder = row.querySelector(".dm-msg-text");
+    if (!holder) return;
+    var open = ctx.box.querySelector(".dm-msg.is-editing");
+    if (open) cancelEdit(open);
+    var box = document.createElement("div");
+    box.className = "dm-edit";
+    box.innerHTML =
+        '<div class="dm-edit-box"><textarea rows="1" maxlength="2000" aria-label="Edit message"></textarea></div>' +
+        '<p class="dm-edit-hint">escape to <a href="#" data-edit="cancel">cancel</a> \u2022 enter to <a href="#" data-edit="save">save</a></p>';
+    holder.hidden = true;
+    holder.parentNode.insertBefore(box, holder.nextSibling);
+    row.classList.add("is-editing");
+    var area = box.querySelector("textarea");
+    area.value = plainText(row);
+    growEditor(area);
+    area.focus();
+    area.setSelectionRange(area.value.length, area.value.length);
+}
+
+function saveEdit(row) {
+    var area = row.querySelector(".dm-edit textarea");
+    if (!area) return;
+    var text = area.value.trim();
+    if (!text) return;
+    if (text === plainText(row).trim()) {
+        cancelEdit(row);
+        return;
+    }
+    ctx.showError("");
+    ctx.edit(Number(row.getAttribute("data-id")), text).then(function (message) {
+        if (message) applyEdited(row, message);
+        else cancelEdit(row);
+    }).catch(function (error) {
+        ctx.showError(error.message);
+    });
+}
+
+function applyEdited(row, message) {
+    cancelEdit(row);
+    var holder = row.querySelector(".dm-msg-text");
+    if (!holder) return;
+    while (holder.firstChild) holder.removeChild(holder.firstChild);
+    nodesForText(message.text).forEach(function (node) { holder.appendChild(node); });
+    if (message.editedAt) {
+        var label = document.createElement("span");
+        label.className = "dm-msg-edited";
+        label.textContent = "(edited)";
+        holder.appendChild(label);
+    }
+    if (ctx.decorateText) ctx.decorateText(holder, row, message);
+}
+
+function bindEdit() {
+    ctx.box.addEventListener("keydown", function (event) {
+        var area = event.target.closest && event.target.closest(".dm-edit textarea");
+        if (!area) return;
+        var row = area.closest(".dm-msg");
+        if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            cancelEdit(row);
+        } else if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+            event.preventDefault();
+            saveEdit(row);
+        }
+    });
+    ctx.box.addEventListener("input", function (event) {
+        if (event.target.closest && event.target.closest(".dm-edit textarea")) growEditor(event.target);
+    });
+    ctx.box.addEventListener("click", function (event) {
+        var link = event.target.closest && event.target.closest("[data-edit]");
+        if (!link) return;
+        event.preventDefault();
+        var row = link.closest(".dm-msg");
+        if (link.getAttribute("data-edit") === "save") saveEdit(row);
+        else cancelEdit(row);
+    });
+}
+
+// ---------- @ suggestions in the message box (the chat gives ctx.mentionCandidates() -> [{ userName, displayName, avatar }]) ----------
+var mention = { box: null, items: [], index: 0 };
+
+function closeMention() {
+    if (mention.box) mention.box.hidden = true;
+    mention.items = [];
+}
+
+// the "@word" that ends right at the caret, or null
+function mentionAtCaret() {
+    var selection = window.getSelection();
+    if (!selection.rangeCount || !selection.isCollapsed) return null;
+    var range = selection.getRangeAt(0);
+    var node = range.startContainer;
+    if (node.nodeType !== 3 || !ctx.input.contains(node)) return null;
+    var before = node.nodeValue.slice(0, range.startOffset);
+    var found = /(^|[\s\u00a0])@([A-Za-z0-9._+-]{0,32})$/.exec(before);
+    if (!found) return null;
+    return { node: node, query: found[2], start: range.startOffset - found[2].length - 1, end: range.startOffset };
+}
+
+function mentionBox() {
+    if (mention.box) return mention.box;
+    mention.box = document.createElement("div");
+    mention.box.className = "mention-menu";
+    mention.box.setAttribute("role", "listbox");
+    mention.box.hidden = true;
+    mention.box.addEventListener("mousedown", function (event) { event.preventDefault(); });
+    mention.box.addEventListener("click", function (event) {
+        var row = event.target.closest(".mention-item");
+        if (row) pickMention(Number(row.getAttribute("data-index")));
+    });
+    document.body.appendChild(mention.box);
+    return mention.box;
+}
+
+function paintMention() {
+    var menu = mentionBox();
+    menu.textContent = "";
+    mention.items.forEach(function (item, index) {
+        var row = document.createElement("div");
+        row.className = "mention-item" + (index === mention.index ? " is-active" : "");
+        row.setAttribute("role", "option");
+        row.setAttribute("data-index", String(index));
+        if (item.avatar !== undefined) {
+            var face = document.createElement("img");
+            face.alt = "";
+            face.src = item.avatar || "/assets/img/img-icon-profile.jpeg";
+            row.appendChild(face);
+        }
+        var name = document.createElement("strong");
+        name.textContent = item.displayName;
+        var handle = document.createElement("span");
+        handle.textContent = "@" + item.userName;
+        row.appendChild(name);
+        row.appendChild(handle);
+        menu.appendChild(row);
+    });
+    menu.hidden = false;
+    var rect = ctx.input.getBoundingClientRect();
+    menu.style.left = Math.max(8, rect.left) + "px";
+    menu.style.width = Math.min(rect.width, 360) + "px";
+    menu.style.bottom = (window.innerHeight - rect.top + 8) + "px";
+}
+
+function updateMention() {
+    if (!ctx.mentionCandidates) return;
+    var at = mentionAtCaret();
+    if (!at) {
+        closeMention();
+        return;
+    }
+    var q = at.query.toLowerCase();
+    var everyone = [
+        { userName: "everyone", displayName: "Notify everybody in this channel" },
+        { userName: "here", displayName: "Notify the people who are online" }
+    ];
+    var people = ctx.mentionCandidates();
+    var all = people.concat(everyone);
+    var starts = [];
+    var contains = [];
+    all.forEach(function (item) {
+        var user = item.userName.toLowerCase();
+        var display = String(item.displayName || "").toLowerCase();
+        if (user.indexOf(q) === 0 || display.indexOf(q) === 0) starts.push(item);
+        else if (q && (user.indexOf(q) !== -1 || display.indexOf(q) !== -1)) contains.push(item);
+    });
+    mention.items = starts.concat(contains).slice(0, 7);
+    mention.index = 0;
+    if (!mention.items.length) {
+        closeMention();
+        return;
+    }
+    paintMention();
+}
+
+function pickMention(index) {
+    var item = mention.items[index];
+    var at = mentionAtCaret();
+    closeMention();
+    if (!item || !at) return;
+    var range = document.createRange();
+    range.setStart(at.node, at.start);
+    range.setEnd(at.node, at.end);
+    var selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    ctx.input.focus();
+    document.execCommand("insertText", false, "@" + item.userName + " ");
+    setEmpty(ctx.input);
+}
+
+function bindMention() {
+    if (!ctx.mentionCandidates) return;
+    ctx.input.addEventListener("input", updateMention);
+    ctx.input.addEventListener("click", updateMention);
+    ctx.input.addEventListener("blur", function () { window.setTimeout(closeMention, 120); });
+    // runs before the chat's own Enter-to-send listener
+    ctx.input.addEventListener("keydown", function (event) {
+        if (!mention.box || mention.box.hidden || !mention.items.length) return;
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            mention.index = (mention.index + (event.key === "ArrowDown" ? 1 : mention.items.length - 1)) % mention.items.length;
+            paintMention();
+        } else if (event.key === "Enter" || event.key === "Tab") {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            pickMention(mention.index);
+        } else if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            closeMention();
+        }
+    });
+}
+
 window.GroupParts = {
     init: function (options) {
         ctx = options;
+        bindEdit();
+        bindMention();
         bindEmoji();
         bindAttach();
         bindPoll();
@@ -1229,6 +1476,9 @@ window.GroupParts = {
         var row = ctx.box.querySelector('.dm-msg[data-id="' + message.id + '"]');
         if (!row) return;
         renderReactions(row, message.reactions || []);
+        // somebody (the author, on another device) edited the text
+        var holder = row.querySelector(".dm-msg-text");
+        if (holder && !row.classList.contains("is-editing") && message.text !== undefined && message.text !== plainText(row)) applyEdited(row, message);
         var card = row.querySelector(".dm-poll");
         if (card && message.poll) {
             card._poll = message.poll;

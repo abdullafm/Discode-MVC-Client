@@ -1,6 +1,6 @@
 @model HomeUIVM
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="@(Model.Profile.IsDark ? "theme-dark" : "")">
 <head>
     <script src="~/assets/js/theme.js"></script>
     <script src="~/assets/js/i18n.js"></script>
@@ -46,8 +46,6 @@
             <nav class="server-nav" aria-label="Servers">
                 <button type="button" class="server-home" onclick="openToggle()" aria-label="Home">@await Component.InvokeAsync("Branding", new { kind = "logo" })</button>
                 <hr>
-                <a href="@Url.Action("Index", "Server")?id=azaan" data-id="azaan" aria-label="Azaan server"><img
-                        src="~/assets/img/Azaan.jpeg" alt=""></a>
                 <div id="server-list"></div>
                 <template id="server-chip"><button type="button" class="server-chip"></button></template>
                 <button type="button" class="server-action" id="server-add" aria-label="Add a Server"><i
@@ -608,16 +606,17 @@
             <button type="button" class="incoming-call-btn is-decline" id="incoming-group-call-decline" aria-label="Decline"><i class="fa-solid fa-phone-slash"></i></button>
             <button type="button" class="incoming-call-btn is-accept" id="incoming-group-call-accept" aria-label="Join"><i class="fa-solid fa-phone"></i></button>
         </div>
-        <script src="~/assets/js/groupmenu.js" asp-append-version="true"></script>
         <script src="~/assets/js/emoji.js" asp-append-version="true"></script>
+        <script>window.discodeSettings = { theme: "@(Model.Profile.IsDark ? "dark" : "light")", notify: { all: @(Model.Profile.NotifyAll ? "true" : "false"), dm: @(Model.Profile.NotifyDm ? "true" : "false"), friends: @(Model.Profile.NotifyFriends ? "true" : "false"), sound: @(Model.Profile.NotifySound ? "true" : "false") } };</script>
         <script src="~/assets/js/groups.js" asp-append-version="true"></script>
+        <script src="~/assets/js/groupmenu.js" asp-append-version="true"></script>
         <script src="~/assets/js/profile.js" asp-append-version="true"></script>
         <script src="~/assets/js/call.js" asp-append-version="true"></script>
         <script src="~/assets/js/mentions.js" asp-append-version="true"></script>
-        <script src="~/assets/js/report.js" asp-append-version="true"></script>
-        <script src="~/assets/js/ux.js" asp-append-version="true"></script>
         <script src="~/assets/js/messagesearch.js" asp-append-version="true"></script>
         <script src="~/assets/js/ignore.js" asp-append-version="true"></script>
+        <script src="~/assets/js/report.js" asp-append-version="true"></script>
+        <script src="~/assets/js/ux.js" asp-append-version="true"></script>
         <script src="~/assets/js/invitecards.js" asp-append-version="true"></script>
         <script src="~/assets/js/servermenu.js" asp-append-version="true"></script>
         <script src="~/assets/js/membermenu.js" asp-append-version="true"></script>
@@ -626,6 +625,10 @@
         <script src="~/assets/js/friendactions.js" asp-append-version="true"></script>
         <script src="~/assets/js/script.js" asp-append-version="true"></script>
         <script src="~/assets/js/socialmedia.js" asp-append-version="true"></script>
+        @if (string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Social", StringComparison.OrdinalIgnoreCase))
+        {
+            <script src="~/assets/js/socialpage.js" asp-append-version="true"></script>
+        }
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"
             integrity="sha512-7SRCYIJtR6F8ocwW7UxW6wGKqbSyqREDbfCORCbGLatU0iugBLwyOXpzhkPyHIFdBO0K2VCu57fvP2Twgx1o2A=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>

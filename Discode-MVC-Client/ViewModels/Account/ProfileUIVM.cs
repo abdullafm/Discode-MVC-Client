@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Discode_MVC_Client.ViewModels.Account
 {
     public class ProfileUIVM
@@ -18,6 +12,18 @@ namespace Discode_MVC_Client.ViewModels.Account
         public string Pronouns { get; set; } = string.Empty;
         public string CustomStatus { get; set; } = string.Empty;
         public bool IsPublic { get; set; } = true;
+        public string Theme { get; set; } = "light";
+        public bool NotifyAll { get; set; } = true;
+        public bool NotifyDm { get; set; } = true;
+        public bool NotifyFriends { get; set; } = true;
+        public bool NotifySound { get; set; } = true;
+        public bool IsDark
+        {
+            get
+            {
+                return string.Equals(Theme, "dark", StringComparison.OrdinalIgnoreCase);
+            }
+        }
         public string MemberSince
         {
             get

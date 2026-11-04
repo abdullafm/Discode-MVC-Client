@@ -29,21 +29,8 @@
         if (role === "member" || owner === "false" || owner === "0") return false;
         if (role === "owner" || owner === "true" || owner === "1") return true;
 
-        var serverId = (openId || "azaan").toLowerCase();
-        var savedRole = localStorage.getItem("discode-server-role-" + serverId);
-        if (savedRole === "member") return false;
-        if (savedRole === "owner") return true;
-
-        if (openId && openId.toLowerCase() !== "azaan") {
-            try {
-                var createdServers = JSON.parse(localStorage.getItem("discode-servers") || "[]");
-                var isCreated = createdServers.some(function (s) {
-                    return String(s.id).toLowerCase() === openId.toLowerCase();
-                });
-                if (isCreated) return true;
-            } catch (e) {}
-            return false;
-        }
+        // a real server: whether I may manage it comes from the API (loadServer / refreshMembers set it), until then no
+        if (openId && openId.toLowerCase() !== "azaan") return false;
 
         return pageCanManage();
     }
@@ -124,6 +111,13 @@
         }).catch(function () {});
     }
 
+    // people the message box can suggest after an @ (serverchat.js asks for them)
+    window.discodeMentionCandidates = function () {
+        return (Array.isArray(serverMembers) ? serverMembers : []).filter(function (member) { return member && member.userName; }).map(function (member) {
+            return { userName: member.userName, displayName: member.displayName || member.name || member.userName, avatar: member.avatarUrl || member.photo || "" };
+        });
+    };
+
     document.addEventListener("discode-server-updated", refreshMembers);
     var memberListNode = document.getElementById("server-member-list");
     if (memberListNode) {
@@ -187,11 +181,6 @@
         }, 250);
     }
 
-    window.setServerRole = function (role) {
-        var serverId = (openId || "azaan").toLowerCase();
-        localStorage.setItem("discode-server-role-" + serverId, role === "owner" ? "owner" : "member");
-        setManage(role === "owner");
-    };
     if (openId) {
         var marks = document.querySelectorAll(".server-nav a[data-id]");
         for (var n = 0; n < marks.length; n++) {
@@ -409,11 +398,6 @@
     function localMe() {
         var me = meProfile();
         var saved = {};
-        try {
-            saved = JSON.parse(localStorage.getItem("discode-me")) || {};
-        } catch (e) {
-            saved = {};
-        }
         var note = "";
         if (saved.bio || saved.emoji) note = (saved.emoji ? saved.emoji + " " : "") + (saved.bio || "");
         return {
@@ -646,11 +630,7 @@
     }
 
     function readMeRecord() {
-        try {
-            return JSON.parse(localStorage.getItem("discode-me")) || {};
-        } catch (e) {
-            return {};
-        }
+        return {};
     }
 
     function popMember() {

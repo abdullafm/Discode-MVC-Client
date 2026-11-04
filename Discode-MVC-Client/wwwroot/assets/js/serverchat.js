@@ -136,7 +136,14 @@
             var text = document.createElement("div");
             text.className = "dm-msg-text";
             window.GroupParts.textNodes(message.text).forEach(function (node) { text.appendChild(node); });
+            if (message.editedAt) {
+                var edited = document.createElement("span");
+                edited.className = "dm-msg-edited";
+                edited.textContent = "(edited)";
+                text.appendChild(edited);
+            }
             body.appendChild(text);
+            decorateMentions(text, row, message);
         }
         row.appendChild(face);
         row.appendChild(body);
@@ -146,6 +153,52 @@
         row.setAttribute("data-time", String(when));
         box.appendChild(row);
         if (force || atBottom || message.senderUserName === meName) scroller.scrollTop = scroller.scrollHeight;
+    }
+
+    // @name inside a message: known names are highlighted, and a message that mentions me (or everyone) stands out
+    function decorateMentions(holder, row, message) {
+        var known = {};
+        (window.discodeMentionCandidates ? window.discodeMentionCandidates() : []).forEach(function (person) { known[person.userName.toLowerCase()] = true; });
+        known.everyone = true;
+        known.here = true;
+        var me = meName.toLowerCase();
+        // my own name is always a mention, even before the member list has arrived
+        if (me) known[me] = true;
+        var mine = false;
+        var walker = document.createTreeWalker(holder, NodeFilter.SHOW_TEXT, null);
+        var nodes = [];
+        while (walker.nextNode()) {
+            if (!walker.currentNode.parentNode.closest("a, .dm-msg-edited")) nodes.push(walker.currentNode);
+        }
+        nodes.forEach(function (node) {
+            var value = node.nodeValue;
+            var pattern = /(^|[^\w@])@([A-Za-z0-9._+-]{2,64})/g;
+            var last = 0;
+            var found;
+            var pieces = document.createDocumentFragment();
+            var changed = false;
+            while ((found = pattern.exec(value)) !== null) {
+                var name = found[2].toLowerCase();
+                if (!known[name]) continue;
+                var start = found.index + found[1].length;
+                pieces.appendChild(document.createTextNode(value.slice(last, start)));
+                var tag = document.createElement("span");
+                tag.className = "mention" + (name === me || name === "everyone" || name === "here" ? " is-me" : "");
+                tag.textContent = "@" + found[2];
+                pieces.appendChild(tag);
+                last = start + 1 + found[2].length;
+                changed = true;
+                if (name === me || name === "everyone" || name === "here") mine = true;
+            }
+            if (!changed) return;
+            pieces.appendChild(document.createTextNode(value.slice(last)));
+            node.parentNode.replaceChild(pieces, node);
+        });
+        row.classList.toggle("is-mention", mine && message.senderUserName !== meName);
+    }
+
+    function editMessage(messageId, text) {
+        return request(path("Edit"), "POST", { serverId: serverId, channelId: channelId, messageId: messageId, text: text });
     }
 
     function renderAll() {
@@ -261,6 +314,9 @@
     }
 
     var context = {
+        edit: editMessage,
+        decorateText: decorateMentions,
+        mentionCandidates: function () { return window.discodeMentionCandidates ? window.discodeMentionCandidates() : []; },
         box: box,
         input: input,
         compose: compose,

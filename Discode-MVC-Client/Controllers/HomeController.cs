@@ -275,6 +275,38 @@ namespace Discode_MVC_Client.Controllers
             return GetPosts("api/post/user/" + Uri.EscapeDataString(name.Trim()));
         }
 
+        // theme and notification switches belong to the account, not to the browser
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> SaveSettings([FromBody] SaveSettingsUIVM model)
+        {
+            return ForwardToApi(client => client.PutAsJsonAsync("api/account/settings", new
+            {
+                theme = model?.Theme,
+                notifyAll = model?.NotifyAll,
+                notifyDm = model?.NotifyDm,
+                notifyFriends = model?.NotifyFriends,
+                notifySound = model?.NotifySound
+            }));
+        }
+
+        // people pinned to the top of the DM list
+        [HttpGet]
+        public Task<IActionResult> Pins()
+        {
+            return ForwardToApi(client => client.GetAsync("api/pin"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> TogglePin([FromBody] TogglePinUIVM model)
+        {
+            if (model is null || string.IsNullOrWhiteSpace(model.Key))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a conversation to pin." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync("api/pin", new { key = model.Key.Trim() }));
+        }
+
         [HttpGet]
         public Task<IActionResult> IgnoredUsers()
         {

@@ -48,6 +48,16 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> Edit([FromBody] EditServerMessageUIVM model)
+        {
+            if (model is null || model.ServerId <= 0 || model.ChannelId <= 0 || model.MessageId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}/messages/{model.MessageId}", new { text = model.Text ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> React([FromBody] ReactServerMessageUIVM model)
         {
             if (model is null || model.ServerId <= 0 || model.ChannelId <= 0 || model.MessageId <= 0)

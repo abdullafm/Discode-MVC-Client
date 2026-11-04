@@ -27,6 +27,7 @@
         <section id="group-chat" data-group-id="@group.Id" data-me="@Model.Profile.UserName" data-group="@groupJson"><div class="group-chat">
             <div class="group-bar">
                 <div class="group-bar-name">
+                    <button type="button" class="phone-list-btn" aria-label="Conversations" onclick="openToggle()"><i class="fa-solid fa-bars"></i></button>
                     <span class="group-mark" id="group-mark"><i class="fa-solid fa-user-group"></i><img alt="" hidden></span>
                     <h1 id="group-title">@group.Name</h1>
                 </div>
