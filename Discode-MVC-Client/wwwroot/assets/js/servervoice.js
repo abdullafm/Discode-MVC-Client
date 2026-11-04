@@ -489,6 +489,84 @@
         load();
     });
 
+    // ---------- a camera / screen tile can be zoomed (click again, Escape or the other tile to leave), like in DM and group calls ----------
+    var focusKey = "";
+
+    function tileKey(tile) {
+        return tile.classList.contains("is-screen") ? "screen:" + tile.getAttribute("data-for") : "user:" + tile.getAttribute("data-user");
+    }
+
+    function tileHasVideo(tile) {
+        return tile.classList.contains("has-cam") || tile.classList.contains("has-screen") || tile.classList.contains("is-screen");
+    }
+
+    function applyFocus() {
+        var call = document.getElementById("server-voice-call");
+        if (!call) return;
+        var tiles = [].slice.call(call.querySelectorAll(".server-voice-tile"));
+        var target = null;
+        if (focusKey) {
+            tiles.forEach(function (tile) { if (tileKey(tile) === focusKey) target = tile; });
+            // the zoomed person turned the video off or left: back to the grid
+            if (!target || !tileHasVideo(target)) {
+                focusKey = "";
+                target = null;
+            }
+        }
+        call.classList.toggle("has-focus", !!target);
+        var index = 0;
+        tiles.forEach(function (tile) {
+            var isTarget = tile === target;
+            tile.classList.toggle("is-focused", isTarget);
+            tile.classList.toggle("is-mini", !!target && !isTarget);
+            if (target && !isTarget) {
+                tile.style.setProperty("--mini-i", String(index));
+                index += 1;
+            } else {
+                tile.style.removeProperty("--mini-i");
+            }
+        });
+    }
+
+    document.addEventListener("click", function (event) {
+        var tile = event.target.closest && event.target.closest("#server-voice-call .server-voice-tile");
+        if (!tile) return;
+        var key = tileKey(tile);
+        if (!focusKey) {
+            if (!tileHasVideo(tile)) return;
+            focusKey = key;
+        } else if (focusKey === key) {
+            focusKey = "";
+        } else if (tileHasVideo(tile)) {
+            focusKey = key;
+        } else {
+            return;
+        }
+        applyFocus();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && focusKey && !(modMenu && !modMenu.hidden)) {
+            focusKey = "";
+            applyFocus();
+        }
+    });
+    document.addEventListener("discode-page-ready", function () {
+        focusKey = "";
+        watchCall();
+    });
+
+    // tiles change by themselves (somebody starts a camera, a screen share ends): keep the zoom in step
+    var callWatcher = null;
+    function watchCall() {
+        var call = document.getElementById("server-voice-call");
+        if (callWatcher) callWatcher.disconnect();
+        callWatcher = null;
+        if (!call || !window.MutationObserver) return;
+        callWatcher = new MutationObserver(function () { if (focusKey || call.classList.contains("has-focus")) applyFocus(); });
+        callWatcher.observe(call, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+    }
+    watchCall();
+
     // ---------- right click on someone in a voice channel: server mute / deafen / disconnect ----------
     var modMenu = null;
 

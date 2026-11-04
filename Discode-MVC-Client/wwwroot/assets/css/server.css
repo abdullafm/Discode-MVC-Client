@@ -1361,17 +1361,21 @@ body:has(.server-voice.is-full) .server-channels {
     display: block;
 }
 
+.server-voice-tile.is-deafened p::before {
+    order: -2;
+}
+
+/* the slash is a flex item laid over the headphones (not positioned from the pill's edge), so it always sits on the icon */
 .server-voice-tile.is-deafened p::after {
     content: '';
-    position: absolute;
-    left: 7px;
-    top: 50%;
-    width: 16px;
-    height: 1.5px;
-    background: #fff;
-    border-radius: 2px;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
-    transform: translate(-50%, -50%) rotate(-45deg);
+    order: -1;
+    flex: none;
+    width: 14px;
+    height: 13px;
+    margin-left: -20px;
+    background:
+        linear-gradient(to top right, transparent calc(50% - 2.4px), rgba(0, 0, 0, 0.6) calc(50% - 2.4px), rgba(0, 0, 0, 0.6) calc(50% + 2.4px), transparent calc(50% + 2.4px)),
+        linear-gradient(to top right, transparent calc(50% - 1.2px), #f23f42 calc(50% - 1.2px), #f23f42 calc(50% + 1.2px), transparent calc(50% + 1.2px));
     pointer-events: none;
 }
 

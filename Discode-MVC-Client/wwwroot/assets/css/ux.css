@@ -929,3 +929,74 @@ html.theme-dark body .voice-mod-menu p {
 html.theme-dark body .voice-mod-menu button > i {
     opacity: 1;
 }
+
+/* ---- zoom a camera / screen tile in a server voice channel ---- */
+.server-voice-tile.has-cam,
+.server-voice-tile.has-screen,
+.server-voice-tile.is-screen {
+    cursor: zoom-in;
+}
+
+.server-voice-call.has-focus {
+    position: relative;
+    padding: 60px 16px 96px;
+}
+
+.server-voice-call.has-focus > .server-voice-activity {
+    display: none;
+}
+
+.server-voice-call.has-focus > .server-voice-tile.is-focused {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    border-radius: 12px;
+    background: #000;
+    cursor: zoom-out;
+}
+
+.server-voice-call.has-focus > .server-voice-tile.is-focused .server-voice-screen,
+.server-voice-call.has-focus > .server-voice-tile.is-focused .server-voice-cam-video {
+    object-fit: contain;
+}
+
+/* everybody else: small tiles stacked at the bottom right, a click moves the zoom to them */
+.server-voice-call.has-focus > .server-voice-tile.is-mini {
+    position: absolute;
+    right: 24px;
+    bottom: calc(104px + var(--mini-i, 0) * 122px);
+    z-index: 5;
+    flex: none !important;
+    width: 200px !important;
+    height: 112px !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+    animation: vt-mini-in 0.18s ease both;
+}
+
+.server-voice-call.has-focus > .server-voice-tile.is-mini > img {
+    width: 44px;
+    height: 44px;
+}
+
+.server-voice-call.has-focus > .server-voice-tile.is-mini p {
+    left: 8px;
+    bottom: 6px;
+    font-size: 12px;
+}
+
+@keyframes vt-mini-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
