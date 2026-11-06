@@ -45,24 +45,132 @@
         if (watchedProfile && isConnected()) connection.invoke("WatchProfile", watchedProfile).catch(function () {});
     }
 
-    function onConnected() {
+    var notifySound = new Audio("/assets/css/audio/notification.mp3");
+    var lastSoundAt = 0;
+
+    function playNotifySound() {
+        var now = Date.now();
+        if (now - lastSoundAt < 600) return;
+        lastSoundAt = now;
+        try {
+            notifySound.currentTime = 0;
+            var started = notifySound.play();
+            if (started && started.catch) started.catch(function () {});
+        } catch (error) {}
+    }
+
+    window.discodeNotifySound = playNotifySound;
+
+    function playMessageSound() {
+        var panel = document.getElementById("user-panel");
+        if (panel && panel.getAttribute("data-status") === "dnd") return;
+        playNotifySound();
+    }
+
+    var knownUnread = null;
+
+    function checkNotificationSound() {
+        fetch("/Notification/Unread", {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        }).then(function (response) {
+            return response.ok ? response.json() : null;
+        }).then(function (ids) {
+            if (!Array.isArray(ids)) return;
+            var arrived = !!knownUnread && ids.some(function (id) { return !knownUnread[id]; });
+            knownUnread = {};
+            ids.forEach(function (id) { knownUnread[id] = true; });
+            if (arrived) playNotifySound();
+        }).catch(function () {});
+    }
+
+    document.addEventListener("discode-notifications-changed", checkNotificationSound);
+
+    window.discodeIgnored = window.discodeIgnored || {};
+
+    function loadIgnored() {
+        fetch("/Home/IgnoredUsers", {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        }).then(function (response) {
+            return response.ok ? response.json() : null;
+        }).then(function (list) {
+            if (!Array.isArray(list)) return;
+            var map = {};
+            list.forEach(function (name) { map[String(name).toLowerCase()] = true; });
+            window.discodeIgnored = map;
+            document.dispatchEvent(new CustomEvent("discode-ignore-updated"));
+        }).catch(function () {});
+    }
+
+    function isIgnored(userName) {
+        return !!window.discodeIgnored[String(userName || "").toLowerCase()];
+    }
+
+    function soundForDirectMessage(data) {
+        var message = data && data.message;
+        var conversation = data && data.conversation;
+        if (!message || message.mine || message.undelivered || message.isCall) return;
+        if (isIgnored(message.senderUserName)) return;
+        var watching = document.visibilityState === "visible" && window.discodeOpenDm && conversation && conversation.userName === window.discodeOpenDm;
+        if (!watching) playMessageSound();
+    }
+
+    function soundForGroupMessage(data) {
+        var message = data && data.message;
+        if (!message || message.isSystem || message.isCall || isIgnored(message.senderUserName)) return;
+        var field = document.getElementById("Update_UserName");
+        if (field && message.senderUserName === field.value.trim()) return;
+        var chat = document.getElementById("group-chat");
+        var watching = document.visibilityState === "visible" && chat && Number(chat.getAttribute("data-group-id")) === data.groupId;
+        if (!watching) playMessageSound();
+    }
+
+    function soundForServerMessage(data) {
+        var message = data && data.message;
+        if (!message || isIgnored(message.senderUserName)) return;
+        var field = document.getElementById("Update_UserName");
+        var me = field ? field.value.trim() : "";
+        if (!me || message.senderUserName === me) return;
+        var prefs = (window.discodeServerPrefs || {})[data.serverId];
+        if (!prefs || prefs.muted || prefs.notify === "nothing") return;
+        if (prefs.notify !== "all") {
+            var text = String(message.text || "").toLowerCase();
+            if (text.indexOf("@" + me.toLowerCase()) === -1 && !/@(everyone|here)\b/.test(text)) return;
+        }
+        var chat = window.discodeServerChat;
+        var watching = document.visibilityState === "visible" && chat && chat.watching && chat.watching(data.serverId, data.channelId);
+        if (!watching) playMessageSound();
+    }
+
+    function onConnected(pageSwap) {
         window.discodeLive = true;
-        away = false;
-        lastActive = Date.now();
+        if (pageSwap !== true) {
+            away = false;
+            lastActive = Date.now();
+        }
         document.dispatchEvent(new CustomEvent("discode-live-changed"));
         document.dispatchEvent(new CustomEvent("discode-stories-changed"));
         document.dispatchEvent(new CustomEvent("discode-posts-changed"));
         document.dispatchEvent(new CustomEvent("discode-notifications-changed"));
         document.dispatchEvent(new CustomEvent("discode-dm-changed"));
+        loadIgnored();
+        document.dispatchEvent(new CustomEvent("discode-hub-connected", { detail: { pageSwap: pageSwap === true } }));
         refreshFriends();
         joinWatchedProfile();
     }
 
+    document.addEventListener("discode-page-ready", function () {
+        if (isConnected()) onConnected(true);
+    });
+
+    var profileTimer = 0;
+
     function refreshFriends() {
-        if (!window.discodeFriends) return;
-        window.discodeFriends.reload();
-        window.discodeFriends.reloadFriends();
         document.dispatchEvent(new CustomEvent("discode-friends-changed"));
+        if (!window.discodeFriends) return;
+        if (typeof window.discodeFriends.reload === "function") window.discodeFriends.reload();
+        if (typeof window.discodeFriends.reloadFriends === "function") window.discodeFriends.reloadFriends();
     }
 
     function connect() {
@@ -88,22 +196,174 @@
                     applyPresence(data);
                 });
 
+                connection.on("ServerMentions", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-mentions", { detail: data }));
+                });
+
+                connection.on("DiscoverServer", function (server) {
+                    document.dispatchEvent(new CustomEvent("discode-discover-server", { detail: server }));
+                });
+
+                connection.on("DiscoverServerRemoved", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-discover-removed", { detail: data }));
+                });
+
                 connection.on("StatusChanged", function (status) {
                     document.dispatchEvent(new CustomEvent("discode-status-set", { detail: { status: status } }));
                 });
 
                 connection.on("ProfileChanged", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-profile-changed", { detail: { userId: data.userId } }));
+                    window.clearTimeout(profileTimer);
+                    profileTimer = window.setTimeout(refreshFriends, 300);
                 });
 
                 connection.on("FriendsChanged", refreshFriends);
+
+                connection.on("IncomingCall", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-call-incoming", { detail: data }));
+                });
+
+                connection.on("CallAccepted", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-call-accepted", { detail: data }));
+                });
+
+                connection.on("CallUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-call-updated", { detail: data }));
+                });
+
+                connection.on("CallPeerLeft", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-call-peer", { detail: { callId: data.callId, present: false } }));
+                });
+
+                connection.on("CallPeerJoined", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-call-peer", { detail: { callId: data.callId, present: true } }));
+                });
+
+                connection.on("CallSignal", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-call-signal", { detail: data }));
+                });
+
+                connection.on("CallEnded", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-call-ended", { detail: data }));
+                });
+
+                connection.on("AccountWarning", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-account-warning", { detail: data }));
+                });
+
+                connection.on("LiveClosedByAdmin", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-live-closed", { detail: data }));
+                });
+
+                connection.on("BrandingChanged", function (data) {
+                    var logo = (data && data.logoUrl) || "";
+                    document.querySelectorAll('[data-brand="logo"]').forEach(function (node) {
+                        if (logo) {
+                            if (node.tagName === "IMG") {
+                                node.src = logo;
+                            } else {
+                                var img = document.createElement("img");
+                                img.setAttribute("data-brand", "logo");
+                                img.className = "site-logo";
+                                img.alt = "";
+                                img.src = logo;
+                                img.style.cssText = "width:1em;height:1em;object-fit:contain";
+                                node.replaceWith(img);
+                            }
+                        } else if (node.tagName === "IMG") {
+                            var icon = document.createElement("i");
+                            icon.setAttribute("data-brand", "logo");
+                            icon.className = "fa-brands fa-discord";
+                            icon.setAttribute("aria-hidden", "true");
+                            node.replaceWith(icon);
+                        }
+                    });
+
+                    var fav = document.querySelector('link[data-brand="favicon"]');
+                    if (fav) fav.href = ((data && data.faviconUrl) || "/assets/icons/favicon.ico") + "?v=" + Date.now();
+                });
+
+                connection.on("AccountTimeout", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-account-timeout", { detail: data }));
+                });
+
+                connection.on("ForceLogout", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-force-logout", { detail: data }));
+                });
+
+                connection.on("AdminChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-admin-changed", { detail: data }));
+                });
 
                 connection.on("PostsChanged", function () {
                     document.dispatchEvent(new CustomEvent("discode-posts-changed"));
                 });
 
                 connection.on("DirectMessage", function (data) {
+                    soundForDirectMessage(data);
                     document.dispatchEvent(new CustomEvent("discode-dm-message", { detail: data }));
+                });
+
+                connection.on("DirectMessageCallUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-dm-call-updated", { detail: data }));
+                });
+
+                connection.on("DirectMessageEdited", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-dm-edited", { detail: data }));
+                });
+
+                connection.on("DirectMessageDeleted", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-dm-deleted", { detail: data }));
+                });
+
+                connection.on("DirectMessagePinned", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-dm-pinned", { detail: data }));
+                });
+
+                connection.on("GroupMessage", function (data) {
+                    soundForGroupMessage(data);
+                    document.dispatchEvent(new CustomEvent("discode-group-message", { detail: data }));
+                });
+
+                connection.on("GroupCallIncoming", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-gcall-incoming", { detail: data }));
+                });
+
+                connection.on("GroupCallUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-gcall-updated", { detail: data }));
+                });
+
+                connection.on("GroupCallRingStopped", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-gcall-ring-stopped", { detail: data }));
+                });
+
+                connection.on("GroupCallSignal", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-gcall-signal", { detail: data }));
+                });
+
+                connection.on("GroupMessageDeleted", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-group-message-deleted", { detail: data }));
+                });
+
+                connection.on("GroupMessageUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-group-message-updated", { detail: data }));
+                });
+
+                connection.on("GroupUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-group-updated", { detail: data }));
+                });
+
+                connection.on("GroupsChanged", function () {
+                    document.dispatchEvent(new CustomEvent("discode-groups-changed"));
+                });
+
+                connection.on("DirectMessagePoll", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-dm-poll-updated", { detail: data }));
+                });
+
+                connection.on("DirectMessageReaction", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-dm-reaction", { detail: data }));
                 });
 
                 connection.on("NotificationsChanged", function () {
@@ -134,6 +394,79 @@
                     document.dispatchEvent(new CustomEvent("discode-live-viewer-left", { detail: { streamId: streamId, connectionId: connectionId } }));
                 });
 
+                connection.on("ServersChanged", function () {
+                    document.dispatchEvent(new CustomEvent("discode-servers-changed"));
+                });
+
+                connection.on("ServerMessage", function (data) {
+                    soundForServerMessage(data);
+                    document.dispatchEvent(new CustomEvent("discode-server-message", { detail: data }));
+                });
+
+                connection.on("ServerMessageDeleted", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-message-deleted", { detail: data }));
+                });
+
+                connection.on("ServerMessageUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-message-updated", { detail: data }));
+                });
+
+                connection.on("ServerChannelsChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-channels-changed", { detail: data }));
+                });
+
+                connection.on("ServerRemoved", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-removed", { detail: data }));
+                });
+
+                connection.on("ServerBansChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-bans-changed", { detail: data }));
+                });
+
+                connection.on("ServerAuditChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-audit-changed", { detail: data }));
+                });
+
+                connection.on("ServerVoiceSignal", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-voice-signal", { detail: data }));
+                });
+
+                connection.on("ServerVoiceModerated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-voice-moderated", { detail: data }));
+                });
+
+                connection.on("ServerVoiceChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-voice-changed", { detail: data }));
+                });
+
+                connection.on("ServerRolesChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-roles-changed", { detail: data }));
+                });
+
+                connection.on("ServerUpdated", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-updated", { detail: data }));
+                });
+
+                connection.on("IgnoreChanged", function () {
+                    loadIgnored();
+                });
+
+                connection.on("GuestRequested", function (guest) {
+                    document.dispatchEvent(new CustomEvent("discode-live-guest-requested", { detail: guest }));
+                });
+
+                connection.on("GuestResponse", function (streamId, accepted) {
+                    document.dispatchEvent(new CustomEvent("discode-live-guest-response", { detail: { streamId: streamId, accepted: accepted } }));
+                });
+
+                connection.on("GuestStarted", function (guest) {
+                    document.dispatchEvent(new CustomEvent("discode-live-guest-started", { detail: guest }));
+                });
+
+                connection.on("GuestEnded", function (streamId, connectionId) {
+                    document.dispatchEvent(new CustomEvent("discode-live-guest-ended", { detail: { streamId: streamId, connectionId: connectionId } }));
+                });
+
                 connection.on("ReceiveSignal", function (streamId, from, payload) {
                     document.dispatchEvent(new CustomEvent("discode-live-signal", { detail: { streamId: streamId, from: from, payload: payload } }));
                 });
@@ -156,9 +489,9 @@
 
                 connection.onreconnecting(function () { window.discodeLive = false; });
                 connection.onclose(function () { window.discodeLive = false; });
-                connection.onreconnected(onConnected);
+                connection.onreconnected(function () { onConnected(); });
 
-                return connection.start().then(onConnected);
+                return connection.start().then(function () { onConnected(); });
             })
             .catch(function () {});
     }

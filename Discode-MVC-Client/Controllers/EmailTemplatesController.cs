@@ -7,7 +7,7 @@ namespace Discode_MVC_Client.Controllers
     public class EmailTemplatesController : Controller
     {
         [HttpPost]
-        public IActionResult VerificationCode([FromForm] VerificationCodeEmailVM model)
+        public IActionResult VerificationCode([FromForm] VerificationCodeEmailUIVM model)
         {
             if (string.IsNullOrWhiteSpace(model.Code))
                 return BadRequest();
@@ -16,7 +16,7 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpPost]
-        public IActionResult PasswordReset([FromForm] PasswordResetEmailVM model)
+        public IActionResult PasswordReset([FromForm] PasswordResetEmailUIVM model)
         {
             if (!Uri.TryCreate(model.ResetUrl, UriKind.Absolute, out var uri) ||
                 (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))

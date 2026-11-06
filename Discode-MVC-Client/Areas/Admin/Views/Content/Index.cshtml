@@ -1,0 +1,134 @@
+@model AdminContentListVM
+@{
+    ViewData["Title"] = "Content";
+    ViewData["Section"] = "content";
+    var tabs = new[]
+    {
+        (Key: "Posts", Count: Model.PostCount),
+        (Key: "Comments", Count: Model.CommentCount),
+        (Key: "Stories", Count: Model.StoryCount)
+    };
+    var singular = Model.Type == "Comments" ? "comment" : Model.Type == "Stories" ? "story" : "post";
+    bool IsVideo(string url) => url.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) || url.EndsWith(".webm", StringComparison.OrdinalIgnoreCase) || url.EndsWith(".mov", StringComparison.OrdinalIgnoreCase);
+}
+@if (!string.IsNullOrEmpty(Model.Notice))
+{
+    <p class="adm-notice"><i class="fa-solid fa-circle-check"></i> @Model.Notice</p>
+}
+@if (!string.IsNullOrEmpty(Model.Warning))
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Warning</p>
+}
+
+<div class="adm-report-tabs">
+    @foreach (var tab in tabs)
+    {
+        <a class="@(Model.Type == tab.Key ? "on" : "")" asp-area="Admin" asp-controller="Content" asp-action="Index" asp-route-type="@tab.Key" asp-route-search="@Model.Search">@tab.Key <span>@tab.Count</span></a>
+    }
+</div>
+
+<div class="adm-list-head">
+    <form method="get" class="adm-search" asp-area="Admin" asp-controller="Content" asp-action="Index">
+        <input type="hidden" name="type" value="@Model.Type">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" name="search" value="@Model.Search" placeholder="@(Model.Type == "Stories" ? "Search by author" : "Search by text or author")" autocomplete="off">
+    </form>
+    <span class="adm-count">@Model.Total @(Model.Total == 1 ? singular : Model.Type.ToLowerInvariant())</span>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Error</p>
+}
+
+<div class="adm-table-wrap adm-content-list">
+    @foreach (var item in Model.Items)
+    {
+        <article class="adm-content @(item.OpenReports > 0 ? "is-reported" : "")">
+            <header>
+                @if (!string.IsNullOrEmpty(item.AuthorAvatarUrl))
+                {
+                    <img class="adm-content-avatar" src="@item.AuthorAvatarUrl" alt="">
+                }
+                else
+                {
+                    <span class="adm-content-avatar is-letter">@(item.AuthorUserName.Length > 0 ? item.AuthorUserName.Substring(0, 1).ToUpperInvariant() : "?")</span>
+                }
+                <div>
+                    <a class="adm-link" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@item.AuthorId"><strong>@(string.IsNullOrEmpty(item.AuthorDisplayName) ? item.AuthorUserName : item.AuthorDisplayName)</strong> <span class="adm-muted">@@@item.AuthorUserName</span></a>
+                    <small class="adm-muted">@singular #@item.Id &middot; @item.CreatedAt.ToString("yyyy-MM-dd HH:mm")@(item.PostId is not null ? " · on post #" + item.PostId : "")</small>
+                </div>
+                @if (item.OpenReports > 0)
+                {
+                    <span class="adm-chip is-banned adm-content-flag"><i class="fa-solid fa-flag"></i> @item.OpenReports @(item.OpenReports == 1 ? "report" : "reports")</span>
+                }
+            </header>
+
+            @if (!string.IsNullOrWhiteSpace(item.Text))
+            {
+                <p class="adm-content-text">@item.Text</p>
+            }
+            @if (!string.IsNullOrEmpty(item.MediaUrl))
+            {
+                @if (IsVideo(item.MediaUrl))
+                {
+                    <video class="adm-content-media" src="@item.MediaUrl" controls preload="metadata"></video>
+                }
+                else
+                {
+                    <a href="@item.MediaUrl" target="_blank" rel="noopener"><img class="adm-content-media" src="@item.MediaUrl" alt=""></a>
+                }
+            }
+
+            <p class="adm-content-meta adm-muted">
+                <span><i class="fa-regular fa-heart"></i> @item.Likes</span>
+                @if (Model.Type == "Posts")
+                {
+                    <span><i class="fa-regular fa-comment"></i> @item.Comments</span>
+                }
+                @if (Model.Type == "Stories")
+                {
+                    <span><i class="fa-regular fa-eye"></i> @item.Views</span>
+                }
+            </p>
+
+            <div class="adm-live-actions">
+                <details class="adm-action">
+                    <summary><i class="fa-solid fa-triangle-exclamation"></i> Warn author</summary>
+                    <form method="post" asp-area="Admin" asp-controller="Content" asp-action="Warn" data-confirm="The author sees this warning right away and gets a message from Discode." data-confirm-title="Warn the author?" data-confirm-button="Send warning" data-confirm-tone="warning" data-confirm-icon="fa-triangle-exclamation">
+                        <input type="hidden" name="type" value="@Model.Type"><input type="hidden" name="id" value="@item.Id"><input type="hidden" name="page" value="@Model.Page">
+                        <textarea name="reason" class="adm-textarea" maxlength="250" placeholder="What is wrong with it?" required></textarea>
+                        <button type="submit" class="adm-btn is-amber"><i class="fa-solid fa-triangle-exclamation"></i> Send warning</button>
+                    </form>
+                </details>
+
+                @if (User.IsInRole("SuperAdmin"))
+                {
+                    <details class="adm-action">
+                        <summary><i class="fa-solid fa-trash"></i> Remove @singular</summary>
+                        <form method="post" asp-area="Admin" asp-controller="Content" asp-action="Delete" data-confirm="It disappears for everybody right now and cannot be restored. The author gets a message with the reason." data-confirm-title="Remove this @singular?" data-confirm-button="Remove" data-confirm-tone="danger" data-confirm-icon="fa-trash">
+                            <input type="hidden" name="type" value="@Model.Type"><input type="hidden" name="id" value="@item.Id"><input type="hidden" name="page" value="@Model.Page">
+                            <textarea name="reason" class="adm-textarea" maxlength="250" placeholder="Why is it removed?" required></textarea>
+                            <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-trash"></i> Remove @singular</button>
+                        </form>
+                    </details>
+                }
+
+                <a class="adm-btn is-outline" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@item.AuthorId"><i class="fa-solid fa-user-gear"></i> Open member</a>
+            </div>
+        </article>
+    }
+    @if (Model.Items.Count == 0)
+    {
+        <p class="adm-empty">Nothing here yet.</p>
+    }
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="adm-pager">
+        <a class="@(Model.Page <= 1 ? "is-off" : "")" asp-area="Admin" asp-controller="Content" asp-action="Index" asp-route-type="@Model.Type" asp-route-search="@Model.Search" asp-route-page="@(Model.Page - 1)"><i class="fa-solid fa-chevron-left"></i></a>
+        <span>Page @Model.Page / @Model.TotalPages</span>
+        <a class="@(Model.Page >= Model.TotalPages ? "is-off" : "")" asp-area="Admin" asp-controller="Content" asp-action="Index" asp-route-type="@Model.Type" asp-route-search="@Model.Search" asp-route-page="@(Model.Page + 1)"><i class="fa-solid fa-chevron-right"></i></a>
+    </div>
+}

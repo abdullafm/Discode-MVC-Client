@@ -1,10 +1,11 @@
-@model HomeVM
+@model HomeUIVM
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="@(Model.Profile.IsDark ? "theme-dark" : "")">
 <head>
     <script src="~/assets/js/theme.js"></script>
     <script src="~/assets/js/i18n.js"></script>
     <script src="~/assets/js/nav.js"></script>
+    <script src="~/assets/js/livedock.js" asp-append-version="true"></script>
     <script src="~/assets/js/timezone.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +18,10 @@
      <link rel="stylesheet" href="~/assets/css/nitro.css" asp-append-version="true">
      <link rel="stylesheet" href="~/assets/css/socialmedia.css" asp-append-version="true">
      <link rel="stylesheet" href="~/assets/css/dm.css" asp-append-version="true">
-    <link rel="shortcut icon" href="~/assets/icons/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="~/assets/css/group.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/assets/css/report.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/assets/css/ux.css" asp-append-version="true">
+    @await Component.InvokeAsync("Branding", new { kind = "favicon" })
 </head>
 
 <body>
@@ -27,7 +31,7 @@
     }
     <header class="app-header">
         <div class="home-loader" id="loader" role="status">
-            <i class="fa-brands fa-discord"></i>
+            @await Component.InvokeAsync("Branding", new { kind = "logo" })
             <p class="loader-title">DID YOU KNOW</p>
             <p class="loader-message">
                 <span>
@@ -40,18 +44,18 @@
         </div>
         <div class="server-rail" id="server-rail">
             <nav class="server-nav" aria-label="Servers">
-                <button type="button" class="server-home" onclick="openToggle()" aria-label="Home"><i
-                        class="fa-brands fa-discord" aria-hidden="true"></i></button>
+                <button type="button" class="server-home" onclick="openToggle()" aria-label="Home">@await Component.InvokeAsync("Branding", new { kind = "logo" })</button>
                 <hr>
-                <a href="./server.html?id=azaan" data-id="azaan" aria-label="Azaan server"><img
-                        src="~/assets/img/Azaan.jpeg" alt=""></a>
                 <div id="server-list"></div>
                 <template id="server-chip"><button type="button" class="server-chip"></button></template>
                 <button type="button" class="server-action" id="server-add" aria-label="Add a Server"><i
                         class="fa-solid fa-plus" aria-hidden="true"></i></button>
                 <hr>
-                     <a class="server-action" href="./discover.html" aria-label="Discover"><i class="fa-solid fa-compass"></i></a>
-                    <a class="server-action" href="./discover.html" aria-label="Discover"><i class="fa-solid fa-server"></i></a>
+                     <a class="server-action" href="@Url.Action("Index", "Discover")" aria-label="Discover"><i class="fa-solid fa-compass"></i></a>
+                    @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
+                    {
+                        <a class="server-action" href="@Url.Action("Index", "Home", new { area = "Admin" })" aria-label="Admin"><i class="fa-solid fa-server"></i></a>
+                    }
                 </nav>
         </div>
         @await Component.InvokeAsync("Sidebar", new { home = Model })
@@ -79,6 +83,7 @@
                     <p class="new-msg-empty" id="new-msg-empty" hidden>No friends found.</p>
                 </div>
                 <div class="new-msg-actions">
+                    <p class="new-msg-error" id="new-msg-error" hidden></p>
                     <button type="button" class="new-msg-cancel" id="new-msg-cancel">Cancel</button>
                     <button type="button" class="new-msg-create" id="new-msg-create" disabled>Create Message</button>
                 </div>
@@ -170,6 +175,8 @@
                 <div class="me-board">
                     <div class="me-tabs">
                         <button type="button" class="on" data-tab="board">Board</button>
+                        <button type="button" data-tab="friends">Friends</button>
+                        <button type="button" data-tab="reposts">Reposts</button>
                     </div>
                     <div class="me-panel" id="me-board">
                         <template id="me-post">
@@ -181,6 +188,15 @@
                         <p class="me-posts-empty" id="me-posts-empty">No posts yet.</p>
                         <p class="me-private-board" id="me-private-board" hidden>This profile is private. Add them as a friend to see their posts.</p>
                         <a class="me-posts-go" href="./socialmedia.html">Social Media</a>
+                    </div>
+                    <div class="me-panel d-none" id="me-friends">
+                        <div class="me-friends-list" id="me-friends-list"></div>
+                        <p class="me-friends-empty" id="me-friends-empty" hidden>No friends yet.</p>
+                        <p class="me-friends-empty" id="me-friends-private" hidden>This profile is private. Add them as a friend to see their friends.</p>
+                    </div>
+                    <div class="me-panel d-none" id="me-reposts">
+                        <div class="me-posts" id="me-reposts-list"></div>
+                        <p class="me-posts-empty" id="me-reposts-empty" hidden>No reposts yet.</p>
                     </div>
                     <div class="me-panel d-none" id="me-activity">
                         <p>Nothing here yet.</p>
@@ -258,7 +274,11 @@
                             class="row-menu-label">Profile</span></button></li>
                 <li><button type="button" data-action="call"><i class="fa-solid fa-phone"></i><span
                             class="row-menu-label">Start a Call</span></button></li>
-                <li><button type="button" data-action="close"><i class="fa-solid fa-xmark"></i><span>
+                <li><button type="button" data-action="ring"><i class="fa-solid fa-bell"></i><span
+                            class="row-menu-label">Ring to Call</span></button></li>
+                <li><button type="button" data-action="stopring"><i class="fa-solid fa-bell-slash"></i><span
+                            class="row-menu-label">Stop Ringing</span></button></li>
+                <li><button type="button" data-action="close"><i class="fa-solid fa-xmark"></i><span
                             class="row-menu-label">Close DM</span></button></li>
                 <li class="row-menu-line"></li>
                 <li class="row-menu-branch">
@@ -421,33 +441,18 @@
                             <h2 data-i18n="Language &amp; Time">Language &amp; Time</h2>
                             <h3 data-i18n="Select a Language">Select a Language</h3>
                             <p class="settings-note" data-i18n="Choose the language you want Discord to display.">Choose the language you want Discord to display.</p>
-                            <div class="lang-box">
-                                <label class="lang-field">
-                                    <img class="lang-flag" id="lang-field-flag" src="https://flagcdn.com/w40/us.png"
-                                        alt="">
-                                    <input id="lang-search" type="text" value="English" autocomplete="off">
+                            <div class="lang-picker" id="lang-box">
+                                <button type="button" class="lang-trigger" id="lang-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                    <img class="lang-flag" id="lang-field-flag" src="https://flagcdn.com/w80/us.png" alt="">
+                                    <span class="lang-trigger-name" id="lang-current-name">English</span>
                                     <i class="fa-solid fa-chevron-down" id="lang-chevron"></i>
-                                </label>
-                                <ul id="lang-select-list" hidden>
-                                    <li><button type="button" class="on" data-lang="English" data-native="English"
-                                            data-flag="us"><img class="lang-flag" src="https://flagcdn.com/w40/us.png"
-                                                alt=""><span>English</span><span class="lang-en">English</span><i
-                                                class="fa-solid fa-check"></i></button></li>
-                                    <li><button type="button" data-lang="Turkish" data-native="Türkçe"
-                                            data-flag="tr"><img class="lang-flag" src="https://flagcdn.com/w40/tr.png"
-                                                alt=""><span>Türkçe</span><span class="lang-en">Turkish</span><i
-                                                class="fa-solid fa-check"></i></button></li>
-                                    <li><button type="button" data-lang="Azerbaijan" data-native="Azərbaycan"
-                                            data-flag="az"><img class="lang-flag" src="https://flagcdn.com/w40/az.png"
-                                                alt=""><span>Azərbaycan</span><span class="lang-en">Azerbaijan</span><i
-                                                class="fa-solid fa-check"></i></button></li>
+                                </button>
+                                <ul class="lang-menu" id="lang-select-list" role="listbox" hidden>
+                                    <li role="option"><button type="button" class="lang-opt on" data-lang="English" data-native="English" data-flag="us"><img class="lang-flag" src="https://flagcdn.com/w80/us.png" alt=""><span class="lang-opt-name">English</span><span class="lang-opt-sub">English</span><i class="fa-solid fa-check"></i></button></li>
+                                    <li role="option"><button type="button" class="lang-opt" data-lang="Turkish" data-native="Türkçe" data-flag="tr"><img class="lang-flag" src="https://flagcdn.com/w80/tr.png" alt=""><span class="lang-opt-name">Türkçe</span><span class="lang-opt-sub">Turkish</span><i class="fa-solid fa-check"></i></button></li>
+                                    <li role="option"><button type="button" class="lang-opt" data-lang="Azerbaijan" data-native="Azərbaycan" data-flag="az"><img class="lang-flag" src="https://flagcdn.com/w80/az.png" alt=""><span class="lang-opt-name">Azərbaycan</span><span class="lang-opt-sub">Azerbaijan</span><i class="fa-solid fa-check"></i></button></li>
+                                    <li role="option"><button type="button" class="lang-opt" data-lang="Russian" data-native="Русский" data-flag="ru"><img class="lang-flag" src="https://flagcdn.com/w80/ru.png" alt=""><span class="lang-opt-name">Русский</span><span class="lang-opt-sub">Russian</span><i class="fa-solid fa-check"></i></button></li>
                                 </ul>
-                            </div>
-                            <h3 data-i18n="Time format">Time format</h3>
-                            <div class="time-format">
-                                <label><input type="radio" name="time-format" value="auto" checked> Auto</label>
-                                <label><input type="radio" name="time-format" value="12"> 12-hour</label>
-                                <label><input type="radio" name="time-format" value="24"> 24-hour</label>
                             </div>
                         </div>
                     </section>
@@ -554,21 +559,23 @@
         </div>
         <div class="friend-context" id="friend-context" role="menu" hidden>
             <button type="button" role="menuitem" data-action="profile">Profile</button>
-            <button type="button" role="menuitem" data-action="message">Message</button>
-            <button type="button" role="menuitem" data-action="voice">Start a Call</button>
+            <button type="button" role="menuitem" data-action="message" data-for="friends received sent">Message</button>
+            <button type="button" role="menuitem" data-action="voice" data-for="friends received sent">Start a Call</button>
             <button type="button" role="menuitem" data-action="note">
                 <span>Add Note</span>
                 <small>Only visible to you</small>
             </button>
-            <button type="button" role="menuitem" data-action="nickname">Add Friend Nickname</button>
-            <hr>
-            <button type="button" role="menuitem" data-action="invite" class="has-arrow">
+            <button type="button" role="menuitem" data-action="nickname" data-for="friends">Add Friend Nickname</button>
+            <hr data-for="friends received sent">
+            <button type="button" role="menuitem" data-action="invite" class="has-arrow" data-for="friends received sent">
                 <span>Invite to Server</span>
                 <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
             </button>
-            <button type="button" role="menuitem" data-action="remove">Remove Friend</button>
-            <button type="button" role="menuitem" data-action="ignore">Ignore</button>
-            <button type="button" role="menuitem" data-action="block" class="is-danger">Block</button>
+            <button type="button" role="menuitem" data-action="addfriend" data-for="received sent">Add Friend</button>
+            <button type="button" role="menuitem" data-action="remove" data-for="friends">Remove Friend</button>
+            <button type="button" role="menuitem" data-action="ignore" data-for="friends received sent">Ignore</button>
+            <button type="button" role="menuitem" data-action="block" class="is-danger" data-for="friends received sent">Block</button>
+            <button type="button" role="menuitem" data-action="unblock" data-for="blocked">Unblock</button>
         </div>
         @Html.AntiForgeryToken()
         <form id="logout-form" asp-controller="Account" asp-action="Logout" method="post" hidden></form>
@@ -581,17 +588,53 @@
             <input type="hidden" asp-for="Update.Bio" />
             <input type="hidden" name="Update.IsPublic" value="@(Model.Update.IsPublic ? "true" : "false")" />
         </form>
+        <div class="incoming-call" id="incoming-call" role="alertdialog" aria-live="assertive" aria-label="Incoming call" hidden>
+            <img class="incoming-call-avatar" id="incoming-call-avatar" alt="">
+            <div class="incoming-call-body">
+                <strong id="incoming-call-name"></strong>
+                <span id="incoming-call-kind">Incoming Voice Call</span>
+            </div>
+            <button type="button" class="incoming-call-btn is-decline" id="incoming-call-decline" aria-label="Decline"><i class="fa-solid fa-phone-slash"></i></button>
+            <button type="button" class="incoming-call-btn is-accept" id="incoming-call-accept" aria-label="Accept"><i class="fa-solid fa-phone"></i></button>
+        </div>
+        <div class="incoming-call" id="incoming-group-call" role="alertdialog" aria-live="assertive" aria-label="Incoming group call" hidden>
+            <img class="incoming-call-avatar" id="incoming-group-call-avatar" alt="">
+            <div class="incoming-call-body">
+                <strong id="incoming-group-call-name"></strong>
+                <span id="incoming-group-call-kind">Incoming Group Call</span>
+            </div>
+            <button type="button" class="incoming-call-btn is-decline" id="incoming-group-call-decline" aria-label="Decline"><i class="fa-solid fa-phone-slash"></i></button>
+            <button type="button" class="incoming-call-btn is-accept" id="incoming-group-call-accept" aria-label="Join"><i class="fa-solid fa-phone"></i></button>
+        </div>
         <script src="~/assets/js/emoji.js" asp-append-version="true"></script>
+        <script>window.discodeSettings = { theme: "@(Model.Profile.IsDark ? "dark" : "light")", notify: { all: @(Model.Profile.NotifyAll ? "true" : "false"), dm: @(Model.Profile.NotifyDm ? "true" : "false"), friends: @(Model.Profile.NotifyFriends ? "true" : "false"), sound: @(Model.Profile.NotifySound ? "true" : "false") } };</script>
         <script src="~/assets/js/groups.js" asp-append-version="true"></script>
+        <script src="~/assets/js/groupmenu.js" asp-append-version="true"></script>
         <script src="~/assets/js/profile.js" asp-append-version="true"></script>
         <script src="~/assets/js/call.js" asp-append-version="true"></script>
+        <script src="~/assets/js/mentions.js" asp-append-version="true"></script>
+        <script src="~/assets/js/messagesearch.js" asp-append-version="true"></script>
+        <script src="~/assets/js/ignore.js" asp-append-version="true"></script>
+        <script src="~/assets/js/report.js" asp-append-version="true"></script>
+        <script src="~/assets/js/ux.js" asp-append-version="true"></script>
+        <script src="~/assets/js/invitecards.js" asp-append-version="true"></script>
+        <script src="~/assets/js/servermenu.js" asp-append-version="true"></script>
+        <script src="~/assets/js/membermenu.js" asp-append-version="true"></script>
+        <script src="~/assets/js/profilecard.js" asp-append-version="true"></script>
         <script src="~/assets/js/dm.js" asp-append-version="true"></script>
+        <script src="~/assets/js/friendactions.js" asp-append-version="true"></script>
         <script src="~/assets/js/script.js" asp-append-version="true"></script>
         <script src="~/assets/js/socialmedia.js" asp-append-version="true"></script>
+        @if (string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Social", StringComparison.OrdinalIgnoreCase))
+        {
+            <script src="~/assets/js/socialpage.js" asp-append-version="true"></script>
+        }
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"
             integrity="sha512-7SRCYIJtR6F8ocwW7UxW6wGKqbSyqREDbfCORCbGLatU0iugBLwyOXpzhkPyHIFdBO0K2VCu57fvP2Twgx1o2A=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
         <script src="~/assets/js/presence.js" asp-append-version="true"></script>
+        <script src="~/assets/js/calls.js" asp-append-version="true"></script>
+        <script src="~/assets/js/groupcalls.js" asp-append-version="true"></script>
         <script src="~/assets/js/notifications.js" asp-append-version="true"></script>
         <script src="~/assets/js/directmessages.js" asp-append-version="true"></script>
         @RenderSection("Scripts", required: false)

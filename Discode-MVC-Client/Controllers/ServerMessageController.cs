@@ -1,0 +1,136 @@
+using Discode_MVC_Client.ViewModels.Dm;
+using Discode_MVC_Client.ViewModels.ServerMessages;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Discode_MVC_Client.Controllers
+{
+    [Authorize]
+    public class ServerMessageController : Controller
+    {
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public ServerMessageController(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory;
+        }
+
+        [HttpGet]
+        public Task<IActionResult> List(int serverId, int channelId, int? before = null)
+        {
+            return Forward(client => client.GetAsync($"api/server/{serverId}/channels/{channelId}/messages" + (before.HasValue ? "?before=" + before.Value : string.Empty)));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Send([FromBody] SendServerMessageUIVM model)
+        {
+            if (model is null || model.ServerId <= 0 || model.ChannelId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Channel not found." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}/messages", new
+            {
+                text = model.Text ?? string.Empty,
+                replyToMessageId = model.ReplyToMessageId,
+                attachments = (model.Attachments ?? new List<MessageAttachmentUIVM>()).Select(a => new { url = a.Url, fileName = a.FileName, contentType = a.ContentType, size = a.Size })
+            }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Delete([FromBody] ServerMessageRefUIVM model)
+        {
+            if (model is null || model.ServerId <= 0 || model.ChannelId <= 0 || model.MessageId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return Forward(client => client.DeleteAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}/messages/{model.MessageId}"));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> Pins(int serverId, int channelId)
+        {
+            return Forward(client => client.GetAsync($"api/server/{serverId}/channels/{channelId}/messages/pins"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Pin([FromBody] PinServerMessageUIVM model)
+        {
+            if (model is null || model.ServerId <= 0 || model.ChannelId <= 0 || model.MessageId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}/messages/{model.MessageId}/pin", new { pinned = model.Pinned }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Edit([FromBody] EditServerMessageUIVM model)
+        {
+            if (model is null || model.ServerId <= 0 || model.ChannelId <= 0 || model.MessageId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}/messages/{model.MessageId}", new { text = model.Text ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> React([FromBody] ReactServerMessageUIVM model)
+        {
+            if (model is null || model.ServerId <= 0 || model.ChannelId <= 0 || model.MessageId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
+
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}/messages/{model.MessageId}/reactions", new { emoji = model.Emoji ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> CreatePoll([FromBody] CreateServerPollUIVM model)
+        {
+            if (model is null || model.ServerId <= 0 || model.ChannelId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Channel not found." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}/messages/polls", new
+            {
+                question = model.Question ?? string.Empty,
+                allowMultiple = model.AllowMultiple,
+                durationHours = model.DurationHours,
+                options = (model.Options ?? new List<CreatePollOptionUIVM>()).Select(o => new { text = o.Text ?? string.Empty, emoji = o.Emoji ?? string.Empty })
+            }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> VotePoll([FromBody] VoteServerPollUIVM model)
+        {
+            if (model is null || model.ServerId <= 0 || model.ChannelId <= 0 || model.MessageId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Poll not found." } }));
+
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/channels/{model.ChannelId}/messages/{model.MessageId}/poll-votes", new { optionIds = model.OptionIds ?? new List<int>() }));
+        }
+
+        private async Task<IActionResult> Forward(Func<HttpClient, Task<HttpResponseMessage>> send)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await send(client);
+                var payload = await response.Content.ReadAsStringAsync();
+                if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                {
+                    return new StatusCodeResult(StatusCodes.Status204NoContent);
+                }
+
+                return new ContentResult
+                {
+                    StatusCode = (int)response.StatusCode,
+                    Content = string.IsNullOrWhiteSpace(payload) ? "{}" : payload,
+                    ContentType = "application/json"
+                };
+            }
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
+            {
+                return StatusCode(503, new { errors = new[] { "The service is unavailable right now. Please try again later." } });
+            }
+        }
+    }
+}

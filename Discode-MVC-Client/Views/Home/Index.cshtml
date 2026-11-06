@@ -1,4 +1,4 @@
-@model HomeIndexVM
+@model HomeIndexUIVM
 @{
     Layout = "_HomeLayout";
     var showList = Model.Tab is "online" or "all";
@@ -36,6 +36,7 @@
     <section id="friends-toolbar">
         <div class="friends-header">
             <div class="friends-header-start">
+                <button type="button" class="phone-list-btn" aria-label="Conversations" onclick="openToggle()"><i class="fa-solid fa-bars"></i></button>
                 <div class="friends-title">
                     <svg class="linkButtonIcon_c91bad" aria-hidden="true" role="img"
                          xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
@@ -118,9 +119,9 @@
                                             {
                                                 <img class="notify-avatar-img" src="@notification.ActorAvatarUrl" alt="@notification.ActorUserName">
                                             }
-                                            <span class="notify-badge-icon @(notification.Type == "PostComment" ? "badge-comment" : "badge-like")"><i class="fa-solid @(notification.Type == "PostComment" ? "fa-comment" : "fa-heart")"></i></span>
+                                            <span class="notify-badge-icon @(notification.Type switch { "PostComment" or "CommentReply" or "PostMention" or "CommentMention" => "badge-comment", "FriendRequest" or "FriendAccepted" => "badge-friend", _ => "badge-like" })"><i class="fa-solid @(notification.Type switch { "PostComment" or "CommentReply" => "fa-comment", "FriendRequest" => "fa-user-plus", "FriendAccepted" => "fa-user-check", "LiveInvite" => "fa-tower-broadcast", "PostMention" or "CommentMention" => "fa-at", _ => "fa-heart" })"></i></span>
                                         </div>
-                                        <a class="notify-content" href="@Url.Action("Open", "Notification", new { id = notification.Id })">
+                                        <a class="notify-content" href="@Url.Action("Open", "Notification", new { id = notification.Id, tab = notification.Type == "FriendRequest" ? "pending" : (notification.Type == "FriendAccepted" ? "all" : null), live = notification.LiveStreamId })">
                                             <div class="notify-headline">
                                                 <span class="notify-author">@notification.ActorUserName</span>
                                                 <span class="notify-action">
@@ -130,6 +131,12 @@
                                                         "PostComment" => "commented on your post",
                                                         "CommentLike" => "liked your comment",
                                                         "StoryLike" => "liked your story",
+                                                        "CommentReply" => "replied to your comment",
+                                                        "FriendRequest" => "sent you a friend request",
+                                                        "FriendAccepted" => "accepted your friend request",
+                                                        "LiveInvite" => "invited you to watch a live stream",
+                                                        "PostMention" => "mentioned you in a post",
+                                                        "CommentMention" => "mentioned you in a comment",
                                                         _ => "sent you a notification"
                                                     })
                                                 </span>
@@ -212,6 +219,8 @@
                             </div>
                         }
                     </div>
+                    <p class="friends-hint friends-hint-wait"><i class="fa-solid fa-moon"></i>Nobody is online right now. Pick <strong>All</strong> to see every friend.</p>
+                    <p class="friends-hint friends-hint-none"><i class="fa-solid fa-user-group"></i>You have no friends yet. Use <strong>Add Friend</strong> to find people.</p>
                 </div>
             </section>
             <section id="friends-pending" hidden="@(Model.Tab != "pending")">
@@ -275,6 +284,7 @@
                             </div>
                         }
                     </div>
+                    <p class="friends-hint friends-hint-pending"><i class="fa-solid fa-user-clock"></i>No pending requests.</p>
                 </div>
             </section>
             <section id="friends-blocked" hidden="@(Model.Tab != "blocked")">
@@ -303,6 +313,7 @@
                             </div>
                         }
                     </div>
+                    <p class="friends-hint friends-hint-blocked"><i class="fa-solid fa-ban"></i>You have not blocked anyone.</p>
                 </div>
             </section>
             <section id="friends-add" hidden="@(Model.Tab != "add")">

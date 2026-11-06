@@ -1,0 +1,46 @@
+@model AdminServerMemberListVM
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Error</p>
+}
+else
+{
+    <div class="adm-mini-members">
+        @foreach (var member in Model.Items)
+        {
+            <div class="adm-person">
+                <img src="@(string.IsNullOrWhiteSpace(member.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : member.AvatarUrl)" alt="">
+                <span><strong>@(string.IsNullOrWhiteSpace(member.DisplayName) ? member.UserName : member.DisplayName)@(member.IsOwner ? " 👑" : "")</strong><small>@member.UserName &middot; joined @member.JoinedAt.ToString("yyyy-MM-dd")</small></span>
+            </div>
+        }
+        @if (Model.Items.Count == 0)
+        {
+            <p class="adm-empty">@(Model.Search.Length > 0 ? "No member matches your search." : "No members.")</p>
+        }
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        var pages = new List<int>();
+        for (var number = 1; number <= Model.TotalPages; number++)
+        {
+            if (number == 1 || number == Model.TotalPages || Math.Abs(number - Model.Page) <= 2)
+            {
+                pages.Add(number);
+            }
+        }
+
+        <div class="adm-numbers">
+            <button type="button" class="adm-num-step @(Model.Page <= 1 ? "is-off" : "")" data-members-page="@(Model.Page - 1)" aria-label="Previous"><i class="fa-solid fa-chevron-left"></i></button>
+            @for (var index = 0; index < pages.Count; index++)
+            {
+                if (index > 0 && pages[index] - pages[index - 1] > 1)
+                {
+                    <span class="adm-num-gap">&hellip;</span>
+                }
+                <button type="button" class="adm-num @(pages[index] == Model.Page ? "on" : "")" data-members-page="@pages[index]">@pages[index]</button>
+            }
+            <button type="button" class="adm-num-step @(Model.Page >= Model.TotalPages ? "is-off" : "")" data-members-page="@(Model.Page + 1)" aria-label="Next"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+    }
+}

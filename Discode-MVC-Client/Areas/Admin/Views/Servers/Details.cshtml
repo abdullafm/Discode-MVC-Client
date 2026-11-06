@@ -1,0 +1,131 @@
+@model AdminServerDetailVM
+@{
+    ViewData["Title"] = string.IsNullOrEmpty(Model.Name) ? "Server" : Model.Name;
+    ViewData["Section"] = "servers";
+}
+<a class="adm-back-link" asp-area="Admin" asp-controller="Servers" asp-action="Index"><i class="fa-solid fa-arrow-left"></i> Back to servers</a>
+
+@if (!string.IsNullOrEmpty(Model.Notice))
+{
+    <p class="adm-notice"><i class="fa-solid fa-circle-check"></i> @Model.Notice</p>
+}
+@if (!string.IsNullOrEmpty(Model.Warning))
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Warning</p>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Error</p>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(Model.BannerUrl))
+    {
+        <div class="adm-banner adm-zoom-wrap is-banner" title="Click to enlarge">
+            <img class="adm-zoom" src="@Model.BannerUrl" alt="@Model.Name banner">
+        </div>
+    }
+
+    <div class="adm-detail-head" data-server-id="@Model.Id">
+        <div class="adm-person adm-person-big">
+            @if (string.IsNullOrWhiteSpace(Model.IconUrl))
+            {
+                <span class="adm-letter">@Model.Name.Trim().Substring(0, 1).ToUpperInvariant()</span>
+            }
+            else
+            {
+                <span class="adm-zoom-wrap" title="Click to enlarge"><img class="adm-zoom" src="@Model.IconUrl" alt="@Model.Name"></span>
+            }
+            <span>
+                <strong>@Model.Name</strong>
+                <small>#@Model.Id &middot; created @Model.CreatedAt.ToString("yyyy-MM-dd")</small>
+            </span>
+        </div>
+        <div class="adm-detail-chips">
+            @if (Model.IsBanned)
+            {
+                <span class="adm-chip is-banned">Banned</span>
+            }
+            <span class="adm-chip @(Model.IsPrivate ? "is-private" : "is-public")">@(Model.IsPrivate ? "Private" : "Public")</span>
+        </div>
+    </div>
+
+    @if (Model.IsBanned)
+    {
+        <div class="adm-ban-banner">
+            <i class="fa-solid fa-ban"></i>
+            <div>
+                <strong>This server is banned</strong>
+                <p>@Model.BanReason</p>
+                <small>By @(string.IsNullOrEmpty(Model.BannedByUserName) ? "an admin" : Model.BannedByUserName)@(Model.BannedAt is null ? "" : " on " + Model.BannedAt.Value.ToString("yyyy-MM-dd HH:mm")). Nobody can open it or join through its invite until it is unbanned.</small>
+            </div>
+        </div>
+    }
+
+    <div class="adm-metrics">
+        <div><strong>@Model.MemberCount</strong><span>Members</span></div>
+        <div><strong>@Model.TextChannels</strong><span>Text channels</span></div>
+        <div><strong>@Model.VoiceChannels</strong><span>Voice channels</span></div>
+        <div><strong>@Model.Roles</strong><span>Roles</span></div>
+        <div><strong>@Model.Messages</strong><span>Messages</span></div>
+        <div><strong class="@(Model.MemberBans > 0 ? "adm-bad" : "")">@Model.MemberBans</strong><span>Member bans</span></div>
+    </div>
+
+    <div class="adm-detail-grid">
+        <div class="adm-panel">
+            <h3>About</h3>
+            <dl class="adm-dl">
+                <dt>Owner</dt><dd>@(string.IsNullOrWhiteSpace(Model.OwnerDisplayName) ? Model.OwnerUserName : Model.OwnerDisplayName) <small>@@@Model.OwnerUserName</small></dd>
+                <dt>Invite code</dt><dd>@Model.InviteCode</dd>
+                <dt>Public ID</dt><dd>@Model.PublicId</dd>
+                <dt>Description</dt><dd>@(string.IsNullOrWhiteSpace(Model.Description) ? "No description" : Model.Description)</dd>
+            </dl>
+
+            <h3>Members <span class="adm-count-pill">@Model.MemberCount</span></h3>
+            <div class="adm-members" data-url="@Url.Action("Members", "Servers", new { area = "Admin", id = Model.Id })">
+                <label class="adm-search adm-search-small">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="search" class="adm-members-search" placeholder="Search members" autocomplete="off">
+                </label>
+                <div class="adm-members-list">
+                    @await Html.PartialAsync("_Members", Model.Members)
+                </div>
+            </div>
+        </div>
+
+        <div class="adm-panel">
+            <h3>Actions</h3>
+            <form method="post" asp-area="Admin" asp-controller="Servers" asp-action="Warn" asp-route-id="@Model.Id" data-confirm="The server owner gets a direct message from Discode with this reason." data-confirm-title="Warn the server owner?" data-confirm-button="Send warning" data-confirm-tone="warning" data-confirm-icon="fa-triangle-exclamation">
+                <label class="adm-label" for="warn-reason">Warn the owner</label>
+                <textarea id="warn-reason" name="reason" class="adm-textarea" maxlength="300" placeholder="What should the owner fix?" required></textarea>
+                <button type="submit" class="adm-btn"><i class="fa-solid fa-triangle-exclamation"></i> Send warning</button>
+            </form>
+
+            @if (User.IsInRole("SuperAdmin"))
+            {
+                @if (!Model.IsBanned)
+                {
+                    <form method="post" asp-area="Admin" asp-controller="Servers" asp-action="Ban" asp-route-id="@Model.Id" data-confirm="Nobody will be able to open this server, and its invite stops working, until you unban it." data-confirm-title="Ban this server?" data-confirm-button="Ban server" data-confirm-tone="danger" data-confirm-icon="fa-ban">
+                        <label class="adm-label" for="ban-reason">Reason for the ban</label>
+                        <textarea id="ban-reason" name="reason" class="adm-textarea" maxlength="300" placeholder="Why is this server being banned?" required></textarea>
+                        <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-ban"></i> Ban server</button>
+                    </form>
+                }
+                else
+                {
+                    <form method="post" asp-area="Admin" asp-controller="Servers" asp-action="Unban" asp-route-id="@Model.Id" data-confirm="Its members will be able to open it again and the invite link works again." data-confirm-title="Unban this server?" data-confirm-button="Unban server" data-confirm-tone="success" data-confirm-icon="fa-rotate-left">
+                        <button type="submit" class="adm-btn is-success"><i class="fa-solid fa-rotate-left"></i> Unban server</button>
+                    </form>
+                }
+
+                <div class="adm-danger-zone">
+                    <h4>Delete server</h4>
+                    <p>Permanently removes the server with its channels, messages and members. This cannot be undone.</p>
+                    <form method="post" asp-area="Admin" asp-controller="Servers" asp-action="Delete" asp-route-id="@Model.Id" data-confirm="The server is removed with its channels, messages and members. This cannot be undone." data-confirm-title="Delete this server?" data-confirm-button="Delete forever" data-confirm-tone="danger" data-confirm-icon="fa-trash">
+                        <button type="submit" class="adm-btn is-outline-danger"><i class="fa-solid fa-trash"></i> Delete server</button>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+}

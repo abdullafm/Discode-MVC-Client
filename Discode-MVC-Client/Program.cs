@@ -3,8 +3,14 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<Discode_MVC_Client.Filters.ApiFailureFilter>();
+    options.Filters.Add<Discode_MVC_Client.Filters.EmptyStatusResultFilter>();
+});
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<Discode_MVC_Client.Services.BrandingProvider>();
 builder.Services.AddTransient<BearerTokenHandler>();
 
 builder.Services.AddHttpClient("DiscodeApi", client =>
@@ -42,15 +48,22 @@ var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
+
+// 404, 403, ... on a page request show the Discode error page; script requests keep the bare status they had
+app.UseStatusCodePagesWithReExecute("/Error/{0}");
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "areas",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllerRoute(
     name: "default",

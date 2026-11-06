@@ -14,12 +14,15 @@
     var unmuteSound = new Audio("/assets/css/audio/discord-unmute-sound.mp3");
     var muteSound = new Audio("/assets/css/audio/discordmute_IZNcLx2.mp3");
 
+    var quiet = false;
+
     function paintMic(muted, playSound) {
         if (playSound === undefined) playSound = true;
         micBtn.classList.toggle("is-off", muted);
         micBtn.setAttribute("aria-pressed", muted ? "true" : "false");
         micBtn.querySelector("i").className = muted ? "fa-solid fa-microphone-slash" : "fa-solid fa-microphone";
         muteBadge.classList.toggle("is-gone", !muted);
+        if (!quiet) document.dispatchEvent(new CustomEvent("discode-call-mic", { detail: { muted: muted } }));
         if (playSound) {
             if (muted) {
                 muteSound.currentTime = 0;
@@ -38,6 +41,8 @@
             deafenBtn.setAttribute("aria-pressed", deafened ? "true" : "false");
             deafenBtn.querySelector("i").className = "fa-solid fa-headphones";
         }
+        muteBadge.classList.toggle("is-deaf", deafened);
+        if (!quiet) document.dispatchEvent(new CustomEvent("discode-call-deafen", { detail: { deafened: deafened } }));
         if (phoneSoundBtn) {
             phoneSoundBtn.classList.toggle("is-off", deafened);
             phoneSoundBtn.setAttribute("aria-pressed", deafened ? "true" : "false");
@@ -61,8 +66,20 @@
         paintMic(!enabled, false);
     }
 
+    quiet = true;
     paintDeafen(false, false);
     paintMic(true, false);
+    quiet = false;
+
+    window.discodeCallControls = {
+        set: function (muted, deafened) {
+            paintDeafen(deafened, false);
+            paintMic(muted, false);
+        },
+        isMuted: function () { return micBtn.classList.contains("is-off"); },
+        setCameraButton: function (on) { paintCam(on, true); },
+        setScreenButton: function (on) { paintScreen(on, true); }
+    };
 
     var camStream = null;
 
@@ -73,10 +90,14 @@
         camVideo.srcObject = null;
     }
 
-    function paintCam(on) {
+    function paintCam(on, silent) {
         camBtn.classList.toggle("is-off", !on);
         camBtn.setAttribute("aria-pressed", on ? "false" : "true");
         camBtn.querySelector("i").className = on ? "fa-solid fa-video" : "fa-solid fa-video-slash";
+        if (document.getElementById("call-faces")) {
+            if (!silent) document.dispatchEvent(new CustomEvent("discode-call-camera", { detail: { on: on } }));
+            return;
+        }
         camVideo.hidden = false;
         stage.classList.toggle("has-cam", on);
         stage.classList.toggle("has-media", on || stage.classList.contains("has-screen"));
@@ -102,7 +123,13 @@
         });
     }
 
-    function paintScreen(on) {
+    function paintScreen(on, silent) {
+        if (document.getElementById("call-faces")) {
+            screenBtn.classList.toggle("is-on", on);
+            screenBtn.setAttribute("aria-pressed", on ? "true" : "false");
+            if (!silent) document.dispatchEvent(new CustomEvent("discode-call-screen", { detail: { on: on } }));
+            return;
+        }
         screenBtn.classList.toggle("is-on", on);
         screenBtn.setAttribute("aria-pressed", on ? "true" : "false");
         screenVideo.hidden = false;

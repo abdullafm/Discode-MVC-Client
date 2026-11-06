@@ -1,0 +1,1049 @@
+/*
+  Ortaq hərəkət qaydaları: pəncərələr, menyular, panellər və xəta mətnləri
+  artıq birdən açılıb-bağlanmır, yumşaq görünür və yumşaq yox olur.
+  Hamısı :where() ilə yazılıb: səhifənin öz animasiyası olan yerə toxunmur.
+*/
+
+:root {
+    --ux-fast: 0.16s;
+    --ux-base: 0.22s;
+    --ux-ease: cubic-bezier(0.22, 0.8, 0.3, 1);
+}
+
+/* ---------- 1) tam ekran pəncərələr: fon solur, kart yumşaq böyüyür ---------- */
+:where(.channel-modal, .dm-modal, .group-edit-modal, .live-modal, .name-modal, .new-msg,
+       .server-delete-modal, .server-modal, .settings, .adm-modal-layer, .members-backdrop) {
+    transition: opacity var(--ux-base) var(--ux-ease);
+}
+
+@supports (transition-behavior: allow-discrete) {
+    :where(.channel-modal, .dm-modal, .group-edit-modal, .live-modal, .name-modal, .new-msg,
+           .server-delete-modal, .server-modal, .settings, .adm-modal-layer, .members-backdrop) {
+        transition: opacity var(--ux-base) var(--ux-ease), display var(--ux-base) allow-discrete, overlay var(--ux-base) allow-discrete;
+    }
+}
+
+:where(.channel-modal, .dm-modal, .group-edit-modal, .live-modal, .name-modal, .new-msg,
+       .server-delete-modal, .server-modal, .settings, .adm-modal-layer, .members-backdrop)[hidden] {
+    opacity: 0;
+    pointer-events: none;
+}
+
+@starting-style {
+    :where(.channel-modal, .dm-modal, .group-edit-modal, .live-modal, .name-modal, .new-msg,
+           .server-delete-modal, .server-modal, .settings, .adm-modal-layer, .members-backdrop):not([hidden]) {
+        opacity: 0;
+    }
+}
+
+:where(.channel-card, .dm-modal-card, .group-edit-card, .confirm-dialog, .live-create-dialog, .watch-dialog,
+       .views-dialog, .name-modal-card, .new-msg-card, .server-delete-card, .server-modal-card, .settings-card, .adm-modal) {
+    transition: scale var(--ux-base) var(--ux-ease), translate var(--ux-base) var(--ux-ease);
+}
+
+:where(.channel-modal, .dm-modal, .group-edit-modal, .live-modal, .name-modal, .new-msg,
+       .server-delete-modal, .server-modal, .settings, .adm-modal-layer)[hidden]
+    :where(.channel-card, .dm-modal-card, .group-edit-card, .confirm-dialog, .live-create-dialog, .watch-dialog,
+           .views-dialog, .name-modal-card, .new-msg-card, .server-delete-card, .server-modal-card, .settings-card, .adm-modal) {
+    scale: 0.95;
+    translate: 0 10px;
+}
+
+@starting-style {
+    :where(.channel-card, .dm-modal-card, .group-edit-card, .confirm-dialog, .live-create-dialog, .watch-dialog,
+           .views-dialog, .name-modal-card, .new-msg-card, .server-delete-card, .server-modal-card, .settings-card, .adm-modal) {
+        scale: 0.95;
+        translate: 0 10px;
+    }
+}
+
+/* ---------- 2) menyular və açılan kiçik panellər ---------- */
+:where(.channel-menu, .dm-attach-menu, .dm-msg-menu, .dm-pins-popover, .dm-poll-emojis, .emoji-panel,
+       .friend-context, .friend-more, .me-status-menu, .member-pop-menu, .member-pop-role-menu,
+       .msg-search-panel, .role-more-menu, .row-menu, .server-menu, .story-delete, .story-edit-panel,
+       .story-tool-menu, .watch-viewer-list, .delete-pop, .color-picker, .lang-menu, .adm-picker-menu) {
+    transition: opacity var(--ux-fast) var(--ux-ease), translate var(--ux-fast) var(--ux-ease), scale var(--ux-fast) var(--ux-ease);
+}
+
+@supports (transition-behavior: allow-discrete) {
+    :where(.channel-menu, .dm-attach-menu, .dm-msg-menu, .dm-pins-popover, .dm-poll-emojis, .emoji-panel,
+           .friend-context, .friend-more, .me-status-menu, .member-pop-menu, .member-pop-role-menu,
+           .msg-search-panel, .role-more-menu, .row-menu, .server-menu, .story-delete, .story-edit-panel,
+           .story-tool-menu, .watch-viewer-list, .delete-pop, .color-picker, .lang-menu, .adm-picker-menu) {
+        transition: opacity var(--ux-fast) var(--ux-ease), translate var(--ux-fast) var(--ux-ease), scale var(--ux-fast) var(--ux-ease),
+                    display var(--ux-fast) allow-discrete, overlay var(--ux-fast) allow-discrete;
+    }
+}
+
+:where(.channel-menu, .dm-attach-menu, .dm-msg-menu, .dm-pins-popover, .dm-poll-emojis, .emoji-panel,
+       .friend-context, .friend-more, .me-status-menu, .member-pop-menu, .member-pop-role-menu,
+       .msg-search-panel, .role-more-menu, .row-menu, .server-menu, .story-delete, .story-edit-panel,
+       .story-tool-menu, .watch-viewer-list, .delete-pop, .color-picker, .lang-menu, .adm-picker-menu)[hidden] {
+    opacity: 0;
+    translate: 0 6px;
+    scale: 0.97;
+    pointer-events: none;
+}
+
+@starting-style {
+    :where(.channel-menu, .dm-attach-menu, .dm-msg-menu, .dm-pins-popover, .dm-poll-emojis, .emoji-panel,
+           .friend-context, .friend-more, .me-status-menu, .member-pop-menu, .member-pop-role-menu,
+           .msg-search-panel, .role-more-menu, .row-menu, .server-menu, .story-delete, .story-edit-panel,
+           .story-tool-menu, .watch-viewer-list, .delete-pop, .color-picker, .lang-menu, .adm-picker-menu):not([hidden]) {
+        opacity: 0;
+        translate: 0 6px;
+        scale: 0.97;
+    }
+}
+
+/* ---------- 3) zolaqlar və bildirişlər: aşağıdan/yuxarıdan süzülür ---------- */
+:where(.incoming-call, .call-answer-bar, .sidebar-call, .server-save-bar, .server-voice-bar, .server-voice-dock,
+       .dm-reply-bar, .watch-reply-bar, .reply-chip, .dm-attach-tray, .story-reply, .inline-search-results-card,
+       .live-hero, .live-chips, .photo-preview, .me-request) {
+    transition: opacity var(--ux-base) var(--ux-ease), translate var(--ux-base) var(--ux-ease);
+}
+
+@supports (transition-behavior: allow-discrete) {
+    :where(.incoming-call, .call-answer-bar, .sidebar-call, .server-save-bar, .server-voice-bar, .server-voice-dock,
+           .dm-reply-bar, .watch-reply-bar, .reply-chip, .dm-attach-tray, .story-reply, .inline-search-results-card,
+           .live-hero, .live-chips, .photo-preview, .me-request) {
+        transition: opacity var(--ux-base) var(--ux-ease), translate var(--ux-base) var(--ux-ease),
+                    display var(--ux-base) allow-discrete, overlay var(--ux-base) allow-discrete;
+    }
+}
+
+:where(.incoming-call, .call-answer-bar, .sidebar-call, .server-save-bar, .server-voice-bar, .server-voice-dock,
+       .dm-reply-bar, .watch-reply-bar, .reply-chip, .dm-attach-tray, .story-reply, .inline-search-results-card,
+       .live-hero, .live-chips, .photo-preview, .me-request)[hidden] {
+    opacity: 0;
+    translate: 0 8px;
+    pointer-events: none;
+}
+
+@starting-style {
+    :where(.incoming-call, .call-answer-bar, .sidebar-call, .server-save-bar, .server-voice-bar, .server-voice-dock,
+           .dm-reply-bar, .watch-reply-bar, .reply-chip, .dm-attach-tray, .story-reply, .inline-search-results-card,
+           .live-hero, .live-chips, .photo-preview, .me-request):not([hidden]) {
+        opacity: 0;
+        translate: 0 8px;
+    }
+}
+
+/* ---------- 4) xəta və boş vəziyyət mətnləri: yumşaq düşür ---------- */
+@keyframes ux-drop {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes ux-rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes ux-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+:where(p[class*="error"], p[class*="-empty"], p[class$="-empty"], .feed-empty, .dm-error, .group-error):not([hidden]) {
+    animation: ux-drop var(--ux-base) var(--ux-ease) both;
+}
+
+/* ---------- 5) tablar və bölmələr: növbəti panel yumşaq gəlir ---------- */
+:where(.settings-panel, .server-settings-panel, .social-panel, .story-editor, .story-viewer,
+       .friends-online, .friends-add, .friends-empty, .active-now, .role-panel, .me-block) {
+    animation: ux-rise var(--ux-base) var(--ux-ease) both;
+}
+
+/* ---------- 7) açılan bölmələr (details) yumşaq açılır ---------- */
+details[open] > :not(summary) {
+    animation: ux-drop var(--ux-base) var(--ux-ease) both;
+}
+
+/* ---------- 8) üstünə gələndə reaksiya verməyən düymələr ---------- */
+:is(#name-modal-done, #pass-modal-done, #server-create-done, #server-join-done, #dm-poll-post, #group-poll-post,
+    #dm-forward-submit, #group-forward-submit, #live-share-submit, #live-create-submit):not(:disabled):hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+:is(#name-modal-cancel, #pass-modal-cancel, #server-create-back, #server-join-back, .server-join-open,
+    .dm-poll-add, #dm-poll-add, #group-poll-add, .category-emoji, #category-emoji):not(:disabled):hover {
+    background-color: rgba(128, 132, 142, 0.22);
+}
+
+:is(.name-modal-x, .server-modal-x, .settings-close, #settings-close, .pass-eye, #name-modal-eye,
+    #settings-open, #dm-attach, #dm-profile-close, #dm-profile-more, .member-pop-more):hover {
+    background-color: rgba(128, 132, 142, 0.22);
+}
+
+:is(.member-pop-chip, .dm-react, .live-source-card, .server-home, .line-btn, .like-btn):hover {
+    filter: brightness(1.12);
+}
+
+:is(.line-btn, .like-btn):hover {
+    transform: scale(1.08);
+}
+
+.settings-link:hover {
+    text-decoration: underline;
+}
+
+:is(#name-modal-done, #pass-modal-done, #server-create-done, #server-join-done, #dm-poll-post, #group-poll-post,
+    #name-modal-cancel, #pass-modal-cancel, #server-create-back, #server-join-back, .server-join-open, .dm-poll-add,
+    .category-emoji, .name-modal-x, .server-modal-x, .settings-close, .pass-eye, #name-modal-eye, #settings-open,
+    #dm-attach, #dm-profile-close, #dm-profile-more, .member-pop-more, .member-pop-chip, .dm-react, .live-source-card,
+    .server-home, .line-btn, .like-btn) {
+    transition: filter 0.15s ease, background-color 0.15s ease, transform 0.15s ease, color 0.15s ease;
+}
+
+/* admin */
+.adm-btn:not(:disabled):hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+}
+
+.adm-btn {
+    transition: filter 0.15s ease, background-color 0.15s ease, transform 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.adm-select:hover,
+.adm-input:hover,
+.adm-textarea:hover {
+    border-color: #5865f2;
+}
+
+.adm-select,
+.adm-input,
+.adm-textarea {
+    transition: border-color 0.15s ease;
+}
+
+.notify-switch:hover {
+    filter: brightness(1.08);
+}
+
+.notify-switch {
+    transition: filter 0.15s ease;
+}
+
+/* ---------- 9) kiçik ekranda pəncərə ekrandan çıxmasın ---------- */
+.dm-modal-card {
+    max-width: calc(100vw - 32px);
+    max-height: calc(100dvh - 32px);
+}
+
+/* ---------- 10) boş siyahı mətnləri (dostlar) ---------- */
+.friends-hint {
+    display: none;
+    margin: 56px 16px 0;
+    color: #80848e;
+    font-size: 15px;
+    line-height: 1.5;
+    text-align: center;
+    animation: ux-drop var(--ux-base) var(--ux-ease) both;
+}
+
+.friends-hint i {
+    display: block;
+    margin-bottom: 12px;
+    font-size: 38px;
+    opacity: 0.55;
+}
+
+#friends-online:has(.online-row):not(:has(.online-row:not([hidden]))) .friends-hint-wait,
+#friends-online:not(:has(.online-row)) .friends-hint-none,
+#friends-pending:not(:has(.online-row)) .friends-hint-pending,
+#friends-blocked:not(:has(.online-row)) .friends-hint-blocked {
+    display: block;
+}
+
+/* ---------- 11) rəsmi Discode hesabı: zəng və cavab yoxdur ---------- */
+.dm-bar-tools.is-system #dm-call,
+.dm-bar-tools.is-system #dm-video,
+.dm-bar-tools.is-system #dm-add {
+    display: none;
+}
+
+.dm-system-note {
+    margin: 0 16px 16px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: rgba(128, 132, 142, 0.14);
+    color: #80848e;
+    font-size: 14px;
+    text-align: center;
+}
+
+.dm-system-note i {
+    margin-right: 6px;
+}
+
+/* ---------- 12) telefonda başlıq daha az sıxılsın ---------- */
+@media (max-width: 480px) {
+    .group-bar .group-bar-tools button,
+    .group-bar .group-bar-tools > i {
+        width: 36px;
+        height: 36px;
+    }
+
+    .group-bar .group-bar-tools {
+        gap: 4px;
+    }
+
+    .group-bar-name {
+        min-width: 0;
+    }
+}
+
+/* canlı yayın sayğacı: yayın yoxdursa göstərilməsin */
+.explore-live-toggle-count[hidden] {
+    display: none;
+}
+
+/* ---------- 13) server ayarları: telefonda yan menyu üfüqi tablara çevrilir ---------- */
+@media (max-width: 720px) {
+    .server-settings-nav {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        max-height: none;
+        width: calc(100% - 64px);
+        padding: 14px 8px 10px 12px;
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    .server-settings-nav > p,
+    .server-settings-nav .server-settings-kicker {
+        display: none;
+    }
+
+    .server-settings-nav button {
+        flex: none;
+        width: auto;
+        white-space: nowrap;
+        border-radius: 999px;
+        padding: 8px 14px;
+    }
+
+    .server-settings-nav button.server-settings-delete {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+}
+
+.dm-system-note + .dm-compose {
+    display: none;
+}
+
+.dm-system-note + #dm-compose,
+.dm-system-note ~ #dm-compose {
+    display: none !important;
+}
+
+/* admin: üst-üstə düşən formalar arasında boşluq */
+.adm-panel > form + form,
+.adm-panel > form + .adm-action-row,
+.adm-panel > form + .adm-danger-zone {
+    margin-top: 20px;
+}
+
+/* ---------- 14) tablar dar ekranda dropdown olur ---------- */
+.ux-select {
+    display: none;
+}
+
+@media (max-width: 800px) {
+    .ux-has-select > .settings-tabs {
+        display: none !important;
+    }
+
+    .settings-nav.ux-has-select {
+        position: relative;
+        z-index: 5;
+        overflow: visible;
+    }
+
+    .server-settings-nav.ux-has-select {
+        display: block;
+        width: calc(100% - 64px);
+        padding: 14px 8px 10px 12px;
+        overflow: visible;
+    }
+
+    .server-settings-nav.ux-has-select > :not(.ux-select) {
+        display: none !important;
+    }
+
+    .ux-select {
+        position: relative;
+        display: block;
+        width: 100%;
+    }
+
+    .ux-select-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 11px 14px;
+        border: 0;
+        border-radius: 10px;
+        background: rgba(128, 132, 142, 0.24);
+        color: inherit;
+        font: inherit;
+        font-size: 15px;
+        font-weight: 700;
+        text-align: left;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+    }
+
+    .ux-select-btn:hover {
+        background: rgba(128, 132, 142, 0.28);
+    }
+
+    .ux-select-ico[hidden] {
+        display: none;
+    }
+
+    .ux-select-ico {
+        display: inline-flex;
+        width: 20px;
+        justify-content: center;
+    }
+
+    .ux-select-label {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .ux-select-chev {
+        font-size: 12px;
+        opacity: 0.7;
+        transition: transform 0.2s var(--ux-ease);
+    }
+
+    .ux-select.open .ux-select-chev {
+        transform: rotate(180deg);
+    }
+
+    .ux-select-menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        z-index: 60;
+        padding: 6px;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #060607;
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+        border: 1px solid rgba(128, 132, 142, 0.25);
+        max-height: 60vh;
+        overflow-y: auto;
+        transition: opacity var(--ux-fast) var(--ux-ease), translate var(--ux-fast) var(--ux-ease);
+    }
+
+    @supports (transition-behavior: allow-discrete) {
+        .ux-select-menu {
+            transition: opacity var(--ux-fast) var(--ux-ease), translate var(--ux-fast) var(--ux-ease), display var(--ux-fast) allow-discrete, overlay var(--ux-fast) allow-discrete;
+        }
+    }
+
+    .ux-select-menu[hidden] {
+        display: none;
+        opacity: 0;
+        translate: 0 -6px;
+    }
+
+    @starting-style {
+        .ux-select-menu:not([hidden]) {
+            opacity: 0;
+            translate: 0 -6px;
+        }
+    }
+
+    .ux-select-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 12px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        font-size: 15px;
+        text-align: left;
+        cursor: pointer;
+        transition: background-color 0.12s ease;
+    }
+
+    .ux-select-item > i:first-child,
+    .ux-select-item > .lang-icon:first-child {
+        width: 20px;
+        text-align: center;
+    }
+
+    .ux-select-item:hover,
+    .ux-select-item.on {
+        background: rgba(88, 101, 242, 0.14);
+    }
+
+    .ux-select-item.on {
+        font-weight: 700;
+    }
+
+    .ux-select-item.is-danger {
+        color: #da373c;
+    }
+
+    html.theme-dark .ux-select-menu {
+        background: #2b2d31;
+        color: #f2f3f5;
+        border-color: #1e1f22;
+    }
+}
+
+/* ---------- 15) server üzv kartı: şəkil böyük profili açır ---------- */
+.member-pop-avatar {
+    cursor: pointer;
+}
+
+.member-pop-avatar img {
+    transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.member-pop-avatar:hover img {
+    filter: brightness(1.12);
+    transform: scale(1.03);
+}
+
+#live-preview-toggle[hidden] {
+    display: none;
+}
+
+/* ---------- 16) "Voice Connected": səsdəykən başqa səhifələrə keçəndə də görünür ---------- */
+.voice-global-bar {
+    position: fixed;
+    left: 80px;
+    bottom: 64px;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 228px;
+    padding: 6px 6px;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #060607;
+    border: 1px solid rgba(128, 132, 142, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    transition: opacity var(--ux-base) var(--ux-ease), translate var(--ux-base) var(--ux-ease);
+}
+
+.voice-global-bar[hidden] {
+    display: none;
+}
+
+.voice-global-bar .vgb-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    padding: 4px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.voice-global-bar .vgb-main:hover {
+    background: rgba(128, 132, 142, 0.18);
+}
+
+.voice-global-bar .vgb-main i {
+    color: #23a559;
+}
+
+.voice-global-bar .vgb-main span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.voice-global-bar .vgb-main strong {
+    color: #23a559;
+    font-size: 12.5px;
+    white-space: nowrap;
+}
+
+.voice-global-bar .vgb-main small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #80848e;
+    font-size: 12px;
+}
+
+.voice-global-bar .vgb-btn {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.voice-global-bar .vgb-btn:hover {
+    background: rgba(128, 132, 142, 0.22);
+}
+
+.voice-global-bar .vgb-btn.is-off {
+    color: #f23f43;
+}
+
+.voice-global-bar .vgb-leave:hover {
+    background: #f23f43;
+    color: #fff;
+}
+
+html.theme-dark .voice-global-bar {
+    background: #232428;
+    color: #f2f3f5;
+    border-color: #1e1f22;
+}
+
+@media (max-width: 720px) {
+    .voice-global-bar {
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        width: auto;
+    }
+}
+
+/* ---- voice moderation: server mute / deafen shown in red, right-click menu on a person in a voice channel ---- */
+.voice-mod-menu p {
+    margin: 0;
+    padding: 6px 8px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0.7;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.voice-mod-menu button {
+    justify-content: flex-start !important;
+}
+
+.voice-mod-menu button i {
+    width: 16px;
+    text-align: center;
+}
+
+.server-voice-user.is-server-muted .voice-mute-icon,
+.server-voice-user.is-server-deafened .voice-deaf-icon i,
+.server-voice-tile.is-server-muted p::before,
+.server-voice-tile.is-server-deafened p::before {
+    color: #da373c !important;
+}
+
+.voice-server-muted #mic,
+.voice-server-deafened #mic,
+.voice-server-deafened #head {
+    color: #da373c !important;
+}
+
+/* ---------- müasir açılan siyahı (select yerinə) ---------- */
+.msel-native {
+    display: none !important;
+}
+
+.msel {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.msel-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 16px;
+    text-align: left;
+    cursor: pointer;
+    outline: none;
+}
+
+.msel-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.msel-chev {
+    flex: none;
+    font-size: 12px;
+    opacity: 0.7;
+    transition: rotate 0.18s ease;
+}
+
+.msel.open .msel-chev {
+    rotate: 180deg;
+}
+
+.msel-btn:focus-visible {
+    box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.6);
+    border-radius: 6px;
+}
+
+/* a select that stands on its own (not inside an input box) gets its own box */
+.msel-boxed .msel-btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(128, 132, 142, 0.4);
+    background: rgba(128, 132, 142, 0.1);
+    font-size: 14px;
+    transition: border-color 0.15s ease;
+}
+
+.msel-boxed .msel-btn:hover,
+.msel-boxed.open .msel-btn {
+    border-color: #5865f2;
+}
+
+.msel-menu {
+    position: fixed;
+    z-index: 100000;
+    box-sizing: border-box;
+    padding: 6px;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #060607;
+    border: 1px solid rgba(128, 132, 142, 0.25);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+    overflow-y: auto;
+    transition: opacity 0.14s ease, translate 0.14s ease;
+}
+
+@supports (transition-behavior: allow-discrete) {
+    .msel-menu {
+        transition: opacity 0.14s ease, translate 0.14s ease, display 0.14s allow-discrete, overlay 0.14s allow-discrete;
+    }
+}
+
+.msel-menu[hidden] {
+    display: none;
+    opacity: 0;
+    translate: 0 -6px;
+}
+
+@starting-style {
+    .msel-menu:not([hidden]) {
+        opacity: 0;
+        translate: 0 -6px;
+    }
+}
+
+.msel-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 15px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+}
+
+.msel-item span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.msel-item > i {
+    flex: none;
+    font-size: 12px;
+    color: #5865f2;
+    opacity: 0;
+}
+
+.msel-item.on {
+    font-weight: 700;
+}
+
+.msel-item.on > i {
+    opacity: 1;
+}
+
+.msel-item.is-active {
+    background: rgba(88, 101, 242, 0.16);
+}
+
+html.theme-dark .msel-menu {
+    background: #2b2d31;
+    color: #f2f3f5;
+    border-color: #1e1f22;
+}
+
+/* ---- right click on a person in voice: the Discord-style menu ---- */
+.voice-mod-menu {
+    width: 240px;
+    padding: 6px;
+}
+
+.voice-mod-menu hr {
+    margin: 4px 2px;
+}
+
+.voice-mod-menu button {
+    justify-content: space-between !important;
+    gap: 10px;
+}
+
+.voice-mod-menu button small {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.65;
+}
+
+.voice-mod-menu button i {
+    width: 16px;
+    text-align: center;
+    opacity: 0.8;
+}
+
+.vm-check {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid currentColor;
+    opacity: 0.7;
+    transition: background-color 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+}
+
+.voice-mod-menu .vm-check i {
+    width: auto;
+    font-size: 10px;
+    color: #fff;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+}
+
+.vm-check.on {
+    background: #5865f2;
+    border-color: #5865f2;
+    opacity: 1;
+}
+
+.voice-mod-menu button.is-danger .vm-check.on {
+    background: #da373c;
+    border-color: #da373c;
+}
+
+.voice-mod-menu .vm-check.on i {
+    opacity: 1;
+}
+
+/* a red (danger) row turns solid red on hover: its box turns white so it stays visible */
+.voice-mod-menu button.is-danger:hover .vm-check {
+    border-color: #fff;
+    opacity: 1;
+}
+
+.voice-mod-menu button.is-danger:hover .vm-check.on {
+    background: #fff;
+}
+
+.voice-mod-menu button.is-danger:hover .vm-check.on i {
+    color: #da373c;
+}
+
+.vm-volume {
+    padding: 6px 8px 8px;
+}
+
+.vm-volume span {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.vm-volume input[type="range"] {
+    width: 100%;
+    accent-color: #5865f2;
+    cursor: pointer;
+}
+
+/* dark theme: every label of the voice user menu is plain white (the danger rows only turn red on hover) */
+html.theme-dark body .voice-mod-menu button,
+html.theme-dark body .voice-mod-menu button.is-danger,
+html.theme-dark body .voice-mod-menu button small,
+html.theme-dark body .voice-mod-menu .vm-volume span,
+html.theme-dark body .voice-mod-menu p {
+    color: #fff !important;
+    opacity: 1;
+}
+
+html.theme-dark body .voice-mod-menu button > i {
+    opacity: 1;
+}
+
+/* ---- zoom a camera / screen tile in a server voice channel ---- */
+.server-voice-tile.has-cam,
+.server-voice-tile.has-screen,
+.server-voice-tile.is-screen {
+    cursor: zoom-in;
+}
+
+.server-voice-call.has-focus {
+    position: relative;
+    padding: 60px 16px 96px;
+}
+
+.server-voice-call.has-focus > .server-voice-activity,
+.server-voice-call.has-focus > .server-voice-tile.is-focus-hidden {
+    display: none !important;
+}
+
+.server-voice-call.has-focus > .server-voice-tile.is-focused {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    border-radius: 12px;
+    background: #000;
+    cursor: zoom-out;
+}
+
+.server-voice-call.has-focus > .server-voice-tile.is-focused .server-voice-screen,
+.server-voice-call.has-focus > .server-voice-tile.is-focused .server-voice-cam-video {
+    object-fit: contain;
+}
+
+/* everybody else: small tiles stacked at the bottom right, a click moves the zoom to them */
+.server-voice-call.has-focus > .server-voice-tile.is-mini {
+    position: absolute;
+    right: 24px;
+    bottom: calc(104px + var(--mini-i, 0) * 122px);
+    z-index: 5;
+    flex: none !important;
+    width: 200px !important;
+    height: 112px !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
+    animation: vt-mini-in 0.18s ease both;
+}
+
+.server-voice-call.has-focus > .server-voice-tile.is-mini > img {
+    width: 44px;
+    height: 44px;
+}
+
+.server-voice-call.has-focus > .server-voice-tile.is-mini p {
+    left: 8px;
+    bottom: 6px;
+    font-size: 12px;
+}
+
+@keyframes vt-mini-in {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ---- touch: the small header icons and the "mark all as read" button get a thumb-sized hit area ---- */
+@media (pointer: coarse), (max-width: 720px) {
+    .dm-bar-tools > i[role="button"],
+    .group-bar-tools > i[role="button"] {
+        box-sizing: content-box;
+        min-width: 20px;
+        min-height: 20px;
+        padding: 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .notify-mark-read-btn {
+        min-width: 36px;
+        min-height: 36px;
+    }
+}
+
+/* ---- phone: a visible way back to the conversation list (it holds the DM list, Nitro, Media and the settings gear) ---- */
+.phone-list-btn {
+    display: none;
+}
+
+@media (max-width: 720px) {
+    .phone-list-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: none;
+        width: 40px;
+        height: 40px;
+        margin-right: 6px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: inherit;
+        font-size: 18px;
+        cursor: pointer;
+    }
+
+    .phone-list-btn:active {
+        background: rgba(128, 132, 142, 0.2);
+    }
+}

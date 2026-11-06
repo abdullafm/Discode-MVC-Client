@@ -1,0 +1,38 @@
+@model Discode_MVC_Client.ViewModels.Home.ErrorUIVM
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DisCode | @Model.Title</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Nunito Sans", system-ui, sans-serif; }
+        body { min-height: 100dvh; display: grid; place-items: center; background: #000; color: #e7e9ea; padding: 24px; }
+        .err { max-width: 440px; text-align: center; }
+        .err-code { font-size: 72px; font-weight: 800; line-height: 1; color: #5865f2; }
+        .err h1 { font-size: 24px; margin: 14px 0 8px; }
+        .err p { color: #9ca3a8; line-height: 1.5; }
+        .err-actions { display: flex; gap: 10px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+        .err-actions a, .err-actions button { padding: 10px 18px; border-radius: 8px; border: 0; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; background: #5865f2; color: #fff; transition: filter .15s, transform .15s; }
+        .err-actions .ghost { background: #2b2d31; color: #e7e9ea; }
+        .err-actions a:hover, .err-actions button:hover { filter: brightness(1.12); }
+        .err-actions a:active, .err-actions button:active { transform: scale(.97); }
+        .err small { display: block; margin-top: 22px; color: #6b7177; font-size: 12px; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <main class="err">
+        <div class="err-code">@Model.Code</div>
+        <h1>@Model.Title</h1>
+        <p>@Model.Message</p>
+        <div class="err-actions">
+            <button type="button" onclick="location.reload()">Try again</button>
+            <a class="ghost" href="@(Model.SignedIn ? Url.Action("Index", "Home") : Url.Action("Login", "Account"))">@(Model.SignedIn ? "Back to Home" : "Go to sign in")</a>
+        </div>
+        <small>Reference: @Model.RequestId</small>
+    </main>
+</body>
+</html>

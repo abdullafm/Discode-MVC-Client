@@ -12,10 +12,12 @@
     var roomKind = "text";
     var openId = new URLSearchParams(window.location.search).get("id");
     var isOwner = false;
+    var lastManage = null;
 
     function canManageServer(server) {
         if (!server) return false;
         if (server.canManage === true || server.owner === true || server.isOwner === true) return true;
+        if (typeof server.permissions === "number") return (server.permissions & (2 | 4 | 32 | 128)) !== 0;
         var role = String(server.role || server.membership || "").toLowerCase();
         return role === "owner" || role === "admin";
     }
@@ -27,29 +29,29 @@
         if (role === "member" || owner === "false" || owner === "0") return false;
         if (role === "owner" || owner === "true" || owner === "1") return true;
 
-        var serverId = (openId || "azaan").toLowerCase();
-        var savedRole = localStorage.getItem("discode-server-role-" + serverId);
-        if (savedRole === "member") return false;
-        if (savedRole === "owner") return true;
-
-        if (openId && openId.toLowerCase() !== "azaan") {
-            try {
-                var createdServers = JSON.parse(localStorage.getItem("discode-servers") || "[]");
-                var isCreated = createdServers.some(function (s) {
-                    return String(s.id).toLowerCase() === openId.toLowerCase();
-                });
-                if (isCreated) return true;
-            } catch (e) {}
-            return false;
-        }
+        // a real server: whether I may manage it comes from the API (loadServer / refreshMembers set it), until then no
+        if (openId && openId.toLowerCase() !== "azaan") return false;
 
         return pageCanManage();
     }
 
+    function manageChannelsAllowed(open) {
+        var server = typeof currentServer !== "undefined" ? currentServer : null;
+        if (server) {
+            if (server.isOwner === true) return true;
+            if (typeof server.permissions === "number") return (server.permissions & 2) === 2;
+        }
+        return !!open;
+    }
+
     function setManage(open) {
-        isOwner = !!open;
-        var manageOnly = document.querySelectorAll("#server-settings-open, [data-create='channel'], [data-create='category'], [data-edit-channel], [data-delete-channel], [data-delete-category], #server-welcome-edit, #channel-edit-delete");
+        lastManage = !!open;
+        isOwner = manageChannelsAllowed(open);
+        window.discodeCanManage = isOwner;
+        var manageOnly = document.querySelectorAll("[data-create='channel'], [data-create='category'], [data-edit-channel], [data-delete-channel], [data-delete-category], #server-welcome-edit, #channel-edit-delete");
         for (var m = 0; m < manageOnly.length; m++) manageOnly[m].hidden = !isOwner;
+        var settingsEntry = document.getElementById("server-settings-open");
+        if (settingsEntry) settingsEntry.hidden = !open;
 
 
         if (channelList) channelList.classList.toggle("can-sort", isOwner);
@@ -72,21 +74,121 @@
     }
 
     setManage(checkServerOwnership());
-    fetch("/api/servers/" + encodeURIComponent(openId || "azaan")).then(function (response) {
-        if (!response.ok) throw new Error("server");
-        return response.json();
-    }).then(function (server) {
-        applyChannelAccess(server);
-        setManage(canManageServer(server));
-    }).catch(function () {
-        setManage(checkServerOwnership());
+    var currentServer = null;
+
+    function loadServer(first) {
+        fetch("/Server/Get?id=" + encodeURIComponent(openId || "azaan"), { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            if (!response.ok) throw new Error("server");
+            return response.json();
+        }).then(function (server) {
+            currentServer = server;
+            var title = document.getElementById("server-title");
+            if (title && server.name) title.textContent = server.name;
+            applyChannelAccess(server);
+            setManage(canManageServer(server));
+            if (first) runPendingAction();
+        }).catch(function () {
+            if (first) setManage(checkServerOwnership());
+        });
+    }
+
+    loadServer(true);
+
+    function refreshMembers(event) {
+        var detail = event && event.detail;
+        if (detail && detail.serverId && String(detail.serverId) !== String(openId)) return;
+        fetch("/Server/Get?id=" + encodeURIComponent(openId || "azaan"), { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            return response.ok ? response.json() : null;
+        }).then(function (server) {
+            if (!server || !Array.isArray(server.members)) return;
+            currentServer = server;
+            var openNow = canManageServer(server);
+            if (openNow !== lastManage || manageChannelsAllowed(openNow) !== isOwner) setManage(openNow);
+            serverMembers = server.members;
+            paintServerMembers();
+            // a new member is not in the list of people who may see this channel yet: ask again, otherwise they stay hidden until a reload
+            loadViewers(true);
+        }).catch(function () {});
+    }
+
+    // who can be @mentioned in this server's chat: mentions.js reads it exactly as it does for a group
+    Object.defineProperty(window, "discodeGroupInfo", {
+        configurable: true,
+        get: function () {
+            var people = (Array.isArray(serverMembers) ? serverMembers : []).filter(function (member) { return member && member.userName; }).map(function (member) {
+                return { userName: member.userName, displayName: member.displayName || member.name || member.userName, avatarUrl: member.avatarUrl || member.photo || "" };
+            });
+            return { members: people };
+        },
+        // the group page assigns its own value after a page change: let it
+        set: function (value) {
+            Object.defineProperty(window, "discodeGroupInfo", { value: value, writable: true, configurable: true });
+        }
     });
 
-    window.setServerRole = function (role) {
-        var serverId = (openId || "azaan").toLowerCase();
-        localStorage.setItem("discode-server-role-" + serverId, role === "owner" ? "owner" : "member");
-        setManage(role === "owner");
-    };
+    document.addEventListener("discode-server-updated", refreshMembers);
+    var memberListNode = document.getElementById("server-member-list");
+    if (memberListNode) {
+        memberListNode.addEventListener("contextmenu", function (event) {
+            var button = event.target.closest(".server-member");
+            if (!button || !window.discodeMemberMenu) return;
+            var id = button.getAttribute("data-id");
+            var found = null;
+            for (var i = 0; i < serverMembers.length; i++) {
+                if (serverMembers[i] && serverMembers[i].id === id) found = serverMembers[i];
+            }
+            if (!found) return;
+            event.preventDefault();
+            window.discodeMemberMenu.open(found, event.clientX, event.clientY);
+        });
+    }
+    document.addEventListener("discode-profile-changed", function () { refreshMembers(null); });
+    document.addEventListener("discode-server-roles-changed", function () { refreshMembers(null); });
+    document.addEventListener("discode-roles-ready", function () {
+        var button = currentMemberButton();
+        if (button) fillMemberPop(button);
+    });
+    document.addEventListener("discode-hub-connected", function () { window.setTimeout(function () { refreshMembers(null); }, 400); });
+    document.addEventListener("discode-status-set", function () { window.setTimeout(function () { refreshMembers(null); }, 300); });
+    document.addEventListener("discode-user-presence", function (event) {
+        var data = event.detail || {};
+        var touched = false;
+        for (var i = 0; i < serverMembers.length; i++) {
+            if (serverMembers[i] && serverMembers[i].id === data.userId) {
+                serverMembers[i].status = data.status;
+                touched = true;
+            }
+        }
+        if (touched) paintServerMembers();
+    });
+
+    function runPendingAction() {
+        var wanted = new URLSearchParams(window.location.search).get("do");
+        if (!wanted) return;
+        try {
+            var cleaned = new URL(window.location.href);
+            cleaned.searchParams.delete("do");
+            window.history.replaceState(window.history.state, "", cleaned.pathname + cleaned.search);
+        } catch (error) {}
+        window.setTimeout(function () {
+            if (wanted.indexOf("settings:") === 0) {
+                var open = document.getElementById("server-settings-open");
+                if (open) open.click();
+                var panel = document.querySelector(".server-settings-nav [data-panel='" + wanted.slice(9) + "']");
+                if (panel) panel.click();
+                return;
+            }
+            var targets = {
+                invite: "[data-invite='server']",
+                channel: "[data-create='channel']",
+                category: "[data-create='category']",
+                leave: "#server-leave-open"
+            };
+            var button = targets[wanted] ? document.querySelector(targets[wanted]) : null;
+            if (button) button.click();
+        }, 250);
+    }
+
     if (openId) {
         var marks = document.querySelectorAll(".server-nav a[data-id]");
         for (var n = 0; n < marks.length; n++) {
@@ -132,7 +234,7 @@
         var photo = document.querySelector("#user-panel .avatar img");
         return {
             name: nameNode && nameNode.textContent.trim() ? nameNode.textContent.trim() : "Anonymou5",
-            photo: photo ? photo.getAttribute("src") : "./assets/img/img-icon-profile.jpeg"
+            photo: photo ? photo.getAttribute("src") : "/assets/img/img-icon-profile.jpeg"
         };
     }
 
@@ -160,23 +262,9 @@
                 if (buttons[i].getAttribute("data-kind") === "voice") buttons[i].setAttribute("data-join", channel.canJoin ? "1" : "0");
             }
         }
-        var oldVoiceMembersLength = voiceMembers.length;
-        voiceMembers = server.voice && server.voice.members ? server.voice.members : [];
         serverMembers = server.members || server.people || [];
         serverCreator = creatorKey(server.createdBy || server.creator || server.ownerId || (server.owner && server.owner !== true ? server.owner : ""));
         paintServerMembers();
-        if (voiceMembers.length > oldVoiceMembersLength && joinedVoice) {
-            joinVoiceSound.currentTime = 0;
-            joinVoiceSound.play().catch(function() {});
-        }
-        voiceFeeds.camera = feedUrl(server.voice && server.voice.camera, "camera");
-        voiceFeeds.screen = feedUrl(server.voice && server.voice.screen, "screen");
-        joinedVoice = null;
-        if (server.voice && server.voice.channel) {
-            for (var j = 0; j < buttons.length; j++) {
-                if (buttons[j].getAttribute("data-kind") === "voice" && channelTitle(buttons[j]) === server.voice.channel) joinedVoice = buttons[j];
-            }
-        }
     }
 
     function messageList(payload) {
@@ -195,7 +283,7 @@
             var item = list[i];
             var row = tpl.content.firstElementChild.cloneNode(true);
             var photo = row.querySelector("img");
-            if (photo) photo.src = item.photo || item.avatar || "./assets/img/img-icon-profile.jpeg";
+            if (photo) photo.src = item.photo || item.avatar || "/assets/img/img-icon-profile.jpeg";
             var name = row.querySelector("strong");
             if (name) name.textContent = item.name || item.author || "";
             var time = row.querySelector("time");
@@ -233,16 +321,6 @@
     }
 
     function tickVoiceClock() {
-        var marks = channelList ? channelList.querySelectorAll(".server-voice-live") : [];
-        for (var i = 0; i < marks.length; i++) marks[i].hidden = true;
-        if (!joinedVoice) return;
-        var live = joinedVoice.querySelector(".server-voice-live");
-        if (!live) return;
-        var seconds = Math.max(0, Math.floor((Date.now() - voiceStarted) / 1000));
-        var minutes = Math.floor(seconds / 60);
-        var rest = seconds % 60;
-        live.hidden = false;
-        live.textContent = minutes + ":" + (rest < 10 ? "0" : "") + rest;
     }
 
     function paintVoice() {
@@ -250,16 +328,7 @@
         var me = meProfile();
         var buttons = channelList.querySelectorAll(".server-channel[data-kind='voice']");
         for (var i = 0; i < buttons.length; i++) {
-            var slot = voiceSlot(buttons[i]);
-            var here = buttons[i] === joinedVoice;
-            buttons[i].classList.toggle("joined", here);
-            if (!slot) continue;
-            slot.hidden = !here;
-            if (!here) continue;
-            var photo = slot.querySelector("img");
-            var who = slot.querySelector("strong");
-            if (photo) photo.src = me.photo;
-            if (who) who.textContent = me.name;
+            buttons[i].classList.toggle("joined", buttons[i] === joinedVoice);
         }
         var face = document.getElementById("server-voice-face");
         var person = document.getElementById("server-voice-person");
@@ -277,13 +346,10 @@
         if (lobby) lobby.hidden = inside;
         if (call) call.hidden = !inside;
         if (dock) dock.hidden = !inside;
-        if (bar) bar.hidden = !joinedVoice;
+        var linked = window.discodeVoice ? window.discodeVoice.current() : null;
+        if (bar) bar.hidden = !joinedVoice && !linked;
         if (side) side.classList.toggle("voice-on", !!joinedVoice);
-        if (where && joinedVoice) {
-            var serverTitle = document.getElementById("server-title");
-            var server = serverTitle && serverTitle.textContent.trim() ? serverTitle.textContent.trim() : "Server";
-            where.textContent = channelTitle(joinedVoice) + " / " + server;
-        }
+        if (where && linked) where.textContent = linked.channelName + " / " + linked.serverName;
         if (voiceStatus) {
             if (blocked) voiceStatus.textContent = "You can't join this voice channel.";
             else voiceStatus.textContent = "Voice room";
@@ -308,7 +374,7 @@
 
     function isServerCreator(member) {
         if (!member) return false;
-        if (member.creator === true || member.createdServer === true || member.owner === true) return true;
+        if (member.creator === true || member.createdServer === true || member.owner === true || member.isOwner === true) return true;
         var name = String(member.name || member.displayName || member.username || "").trim().toLowerCase();
         var id = String(member.id || member.userId || "").trim().toLowerCase();
         if (serverCreator && ((name && name === serverCreator) || (id && id === serverCreator))) return true;
@@ -324,6 +390,7 @@
     }
 
     function memberInVoice(member) {
+        if (member.id && window.discodeVoice && window.discodeVoice.has(member.id)) return true;
         if (member.self && joinedVoice) return true;
         if (member.voice === true || member.inVoice === true) return true;
         if (member.voiceChannel || member.channel) return true;
@@ -339,11 +406,6 @@
     function localMe() {
         var me = meProfile();
         var saved = {};
-        try {
-            saved = JSON.parse(localStorage.getItem("discode-me")) || {};
-        } catch (e) {
-            saved = {};
-        }
         var note = "";
         if (saved.bio || saved.emoji) note = (saved.emoji ? saved.emoji + " " : "") + (saved.bio || "");
         return {
@@ -357,14 +419,56 @@
 
     function sameMember(member, me) {
         var name = String(member.name || member.displayName || member.username || "").toLowerCase();
-        return name && (name === String(me.name || "").toLowerCase() || member.self === true || member.me === true);
+        return (name && name === String(me.name || "").toLowerCase()) || member.self === true || member.me === true || member.isSelf === true;
     }
+
+    function roleTint(roles) {
+        var tinted = (roles || []).filter(function (role) { return role.color && role.color !== "gray"; })[0];
+        if (!tinted) return "";
+        return String(tinted.color).charAt(0) === "#" ? tinted.color : (ROLE_COLORS[tinted.color] || "");
+    }
+
+    var channelViewers = null;
+    var viewersFor = "";
+    var viewersTicket = 0;
+
+    function loadViewers(force) {
+        var id = currentChannel ? currentChannel.getAttribute("data-id") : "";
+        if (!id || !window.discodeServerChannels) {
+            if (channelViewers) {
+                channelViewers = null;
+                viewersFor = "";
+                paintServerMembers();
+            }
+            return;
+        }
+        if (!force && id === viewersFor) return;
+        viewersFor = id;
+        var ticket = ++viewersTicket;
+        window.discodeServerChannels.getViewers(id).then(function (ids) {
+            if (ticket !== viewersTicket) return;
+            channelViewers = Array.isArray(ids) ? ids : null;
+            paintServerMembers();
+        }).catch(function () {
+            if (ticket !== viewersTicket) return;
+            channelViewers = null;
+            paintServerMembers();
+        });
+    }
+
+    document.addEventListener("discode-server-channels-changed", function () { window.setTimeout(function () { loadViewers(true); }, 300); });
+    document.addEventListener("discode-server-roles-changed", function () { window.setTimeout(function () { loadViewers(true); }, 300); });
 
     function paintServerMembers() {
         var list = document.getElementById("server-member-list");
         if (!list) return;
         var me = localMe();
         var source = Array.isArray(serverMembers) ? serverMembers.slice() : [];
+        if (channelViewers) {
+            source = source.filter(function (member) {
+                return !member || !member.id || channelViewers.indexOf(member.id) !== -1;
+            });
+        }
         var people = [];
         var sawMe = false;
         for (var i = 0; i < source.length; i++) {
@@ -376,10 +480,12 @@
                 raw = {
                     name: me.name,
                     photo: raw.photo || raw.avatar || me.photo,
-                    status: me.status,
+                    status: raw.isSelf === true ? raw.status : me.status,
                     statusText: me.statusText || raw.statusText || raw.customStatus || raw.activity || "",
-                    creator: raw.creator === true || raw.createdServer === true || raw.owner === true,
+                    creator: raw.creator === true || raw.createdServer === true || raw.owner === true || raw.isOwner === true,
                     id: raw.id || raw.userId || "",
+                    publicId: raw.publicId || "",
+                    roles: raw.roles || [],
                     self: true,
                     voice: raw.voice,
                     inVoice: raw.inVoice,
@@ -396,13 +502,16 @@
             var presence = memberPresence(people[p]);
             var row = {
                 name: people[p].name || people[p].displayName || people[p].username || "Member",
-                photo: people[p].photo || people[p].avatar || "./assets/img/img-icon-profile.jpeg",
+                photo: people[p].photo || people[p].avatar || people[p].avatarUrl || "/assets/img/img-icon-profile.jpeg",
                 status: presence,
                 owner: isServerCreator(people[p]),
                 voice: memberInVoice(people[p]),
                 statusText: people[p].statusText || people[p].customStatus || people[p].activity || "",
                 self: people[p].self === true,
-                handle: people[p].username || people[p].handle || "",
+                id: people[p].id || people[p].userId || "",
+                publicId: people[p].publicId || "",
+                roles: people[p].roles || [],
+                handle: people[p].username || people[p].userName || people[p].handle || "",
                 about: people[p].about || people[p].bio || ""
             };
             if (presence === "offline") offline.push(row);
@@ -429,9 +538,11 @@
                 button.className = "server-member" + (item.status === "offline" ? " is-offline" : "");
                 button.setAttribute("data-status", item.status);
                 button.setAttribute("data-name", item.name);
+                if (item.id) button.setAttribute("data-id", item.id);
+                if (item.publicId) button.setAttribute("data-public-id", item.publicId);
                 if (item.self) button.setAttribute("data-self", "1");
                 if (item.handle) button.setAttribute("data-handle", item.handle);
-                if (item.bio) button.setAttribute("data-bio", item.bio);
+                if (item.about) button.setAttribute("data-bio", item.about);
                 if (item.statusText) button.setAttribute("data-note", item.statusText);
                 var face = document.createElement("span");
                 face.className = "server-member-face";
@@ -449,6 +560,8 @@
                 var name = document.createElement("span");
                 name.className = "server-member-name";
                 name.textContent = item.name;
+                var tint = roleTint(item.roles);
+                if (tint) name.style.setProperty("color", tint, "important");
                 line.appendChild(name);
                 if (item.owner) {
                     var crown = document.createElement("i");
@@ -476,6 +589,19 @@
             }
             list.appendChild(group);
         }
+        var split = [];
+        var splitIndex = {};
+        online = online.filter(function (row) {
+            var top = (row.roles || []).filter(function (role) { return role.displaySeparately; })[0];
+            if (!top) return true;
+            if (splitIndex[top.id] === undefined) {
+                splitIndex[top.id] = split.length;
+                split.push({ name: top.name, rows: [] });
+            }
+            split[splitIndex[top.id]].rows.push(row);
+            return false;
+        });
+        split.forEach(function (group) { addGroup(group.name, group.rows); });
         addGroup("Online", online);
         addGroup("Offline", offline);
         syncMemberPop();
@@ -512,42 +638,27 @@
     }
 
     function readMeRecord() {
-        try {
-            return JSON.parse(localStorage.getItem("discode-me")) || {};
-        } catch (e) {
-            return {};
-        }
+        return {};
     }
 
-    function roleStorage() {
-        try {
-            return JSON.parse(localStorage.getItem("discode-member-roles")) || {};
-        } catch (e) {
-            return {};
+    function popMember() {
+        var button = currentMemberButton();
+        var id = button ? button.getAttribute("data-id") : "";
+        for (var i = 0; i < serverMembers.length; i++) {
+            if (serverMembers[i] && serverMembers[i].id === id) return serverMembers[i];
         }
-    }
-
-    function roleBucket() {
-        return (openId || "server") + ":" + memberPopKey;
+        return null;
     }
 
     function assignedRoles() {
-        var all = roleStorage();
-        var list = all[roleBucket()];
-        return Array.isArray(list) ? list : [];
+        var member = popMember();
+        return member && Array.isArray(member.roles) ? member.roles : [];
     }
 
     function serverRoleChoices() {
-        var rows = document.querySelectorAll("#server-role-list .role-row");
-        var list = [];
-        for (var i = 0; i < rows.length; i++) {
-            if (rows[i].hidden || rows[i].id === "role-everyone") continue;
-            var label = rows[i].querySelector(".role-label");
-            var name = label ? label.textContent.trim() : "";
-            if (!name || name === "@everyone") continue;
-            list.push({ name: name, color: rows[i].getAttribute("data-color") || "gray" });
-        }
-        return list;
+        var state = window.discodeServerRoles;
+        if (!state || !Array.isArray(state.roles)) return [];
+        return state.roles.filter(function (role) { return !role.isEveryone && role.canManage !== false; });
     }
 
     function closeMemberMenus() {
@@ -586,7 +697,7 @@
             var pill = document.createElement("span");
             pill.className = "member-pop-role";
             var dot = document.createElement("i");
-            dot.style.background = ROLE_COLORS[roles[i].color] || ROLE_COLORS.gray;
+            dot.style.background = String(roles[i].color).charAt(0) === "#" ? roles[i].color : (ROLE_COLORS[roles[i].color] || ROLE_COLORS.gray);
             pill.appendChild(dot);
             pill.appendChild(document.createTextNode(roles[i].name));
             box.appendChild(pill);
@@ -608,17 +719,13 @@
         }
         for (var i = 0; i < choices.length; i++) {
             var role = choices[i];
-            var on = false;
-            for (var j = 0; j < owned.length; j++) {
-                if (owned[j].name === role.name) on = true;
-            }
+            var on = owned.some(function (held) { return held.id === role.id; });
             var button = document.createElement("button");
             button.type = "button";
             button.className = on ? "on" : "";
-            button.setAttribute("data-role-name", role.name);
-            button.setAttribute("data-role-color", role.color);
+            button.setAttribute("data-role-id", role.id);
             var dot = document.createElement("i");
-            dot.style.background = ROLE_COLORS[role.color] || ROLE_COLORS.gray;
+            dot.style.background = String(role.color).charAt(0) === "#" ? role.color : (ROLE_COLORS[role.color] || ROLE_COLORS.gray);
             var label = document.createElement("span");
             label.textContent = role.name;
             button.appendChild(dot);
@@ -643,19 +750,23 @@
             ? ((handleNode && handleNode.textContent.trim()) || "anonymou5")
             : (button.getAttribute("data-handle") || name.toLowerCase().replace(/\s+/g, ""));
         var bioInput = document.getElementById("me-bio");
+        // About (the bio): my own comes from my profile form, somebody else's from the member list
         var profileAbout = self
-            ? ((bioInput && bioInput.value.trim()) || saved.profileBio || "")
+            ? ((bioInput && bioInput.value.trim()) || button.getAttribute("data-bio") || "")
             : (button.getAttribute("data-bio") || "");
-        var custom = self
-            ? (((saved.emoji ? saved.emoji + " " : "") + (saved.bio || "")).trim())
-            : (button.getAttribute("data-note") || "");
+        // the status line above it (the chip): mine too is the status the list shows, not a value kept in the browser
+        var custom = button.getAttribute("data-note") || "";
         var about = profileAbout;
         var statusLine = custom;
         memberPop.setAttribute("data-status", button.getAttribute("data-status") || "offline");
         memberPop.setAttribute("data-self", self ? "1" : "0");
         memberPop.setAttribute("data-name", name);
+        memberPop.setAttribute("data-handle", handle);
+        memberPop.setAttribute("data-public-id", button.getAttribute("data-public-id") || "");
+        var reportPop = document.querySelector("[data-pop-action=\"report\"]");
+        if (reportPop) reportPop.hidden = self;
         var face = document.getElementById("member-pop-photo");
-        if (face) face.src = photo ? photo.getAttribute("src") : "./assets/img/img-icon-profile.jpeg";
+        if (face) face.src = photo ? photo.getAttribute("src") : "/assets/img/img-icon-profile.jpeg";
         var title = document.getElementById("member-pop-name");
         if (title) title.textContent = name;
         var handleEl = document.getElementById("member-pop-handle");
@@ -668,14 +779,16 @@
         var chip = document.getElementById("member-pop-chip");
         var chipText = document.getElementById("member-pop-chip-text");
         if (chip && chipText) {
-            var showChip = self || !!statusLine;
+            // somebody who is offline shows no status bubble (their status is only for when they are around); my own stays so I can edit it
+            var offline = (button.getAttribute("data-status") || "offline") === "offline";
+            var showChip = self || (!!statusLine && !offline);
             chip.hidden = !showChip;
             chip.classList.toggle("has-status", !!statusLine);
             chip.classList.toggle("is-static", !self);
             chipText.textContent = statusLine || "Today I learned...";
         }
         var add = document.getElementById("member-pop-add");
-        if (add) add.hidden = !self;
+        if (add) add.hidden = !(window.discodeServerRoles && window.discodeServerRoles.canManage);
         var edit = document.getElementById("member-pop-edit");
         if (edit) {
             var icon = edit.querySelector("i");
@@ -727,24 +840,12 @@
         placeMemberPop(button);
     }
 
-    function toggleMemberRole(name, color) {
-        var all = roleStorage();
-        var key = roleBucket();
-        var list = Array.isArray(all[key]) ? all[key].slice() : [];
-        var next = [];
-        var found = false;
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].name === name) found = true;
-            else next.push(list[i]);
-        }
-        if (!found) next.push({ name: name, color: color || "gray" });
-        all[key] = next;
-        localStorage.setItem("discode-member-roles", JSON.stringify(all));
-        var button = currentMemberButton();
-        if (button) {
-            fillMemberPop(button);
-            placeMemberPop(button);
-        }
+    function toggleMemberRole(roleId) {
+        var member = popMember();
+        var state = window.discodeServerRoles;
+        if (!member || !state) return;
+        var has = (member.roles || []).some(function (role) { return role.id === roleId; });
+        state.toggle(roleId, member.id, has).catch(function () {});
     }
 
     if (memberPop) {
@@ -762,6 +863,20 @@
                 openMemberPop(button);
             });
         }
+        // profilin şəklinə basanda böyük profil pəncərəsi açılır (qrup və DM-dəki kimi)
+        var popAvatar = document.querySelector("#member-pop .member-pop-avatar");
+        if (popAvatar) {
+            popAvatar.setAttribute("title", "View Full Profile");
+            popAvatar.addEventListener("click", function (event) {
+                event.stopPropagation();
+                var who = (memberPop.getAttribute("data-handle") || "").replace(/^@/, "");
+                var photoNode = document.getElementById("member-pop-photo");
+                var photoUrl = photoNode ? photoNode.getAttribute("src") || "" : "";
+                if (!who || !window.openUserProfile) return;
+                closeMemberPop();
+                window.openUserProfile(who, photoUrl);
+            });
+        }
         document.getElementById("member-pop-more").addEventListener("click", function (event) {
             event.stopPropagation();
             var menu = document.getElementById("member-pop-menu");
@@ -774,6 +889,14 @@
             var button = event.target.closest("button");
             if (!button) return;
             event.stopPropagation();
+            if (button.getAttribute("data-pop-action") === "report") {
+                var reportHandle = memberPop.getAttribute("data-handle") || "";
+                if (reportHandle && window.discodeReport) window.discodeReport({ type: "User", id: reportHandle, label: "user" });
+            }
+            if (button.getAttribute("data-pop-action") === "copy-id") {
+                var publicId = memberPop.getAttribute("data-public-id") || "";
+                window.discodeCopy(publicId, "User ID");
+            }
             if (button.getAttribute("data-pop-action") === "copy") {
                 var handle = document.getElementById("member-pop-handle");
                 var value = handle ? handle.textContent : "";
@@ -796,24 +919,32 @@
             menu.hidden = !menu.hidden;
             placeMemberPop(currentMemberButton());
         });
+        memberPop.addEventListener("click", function (event) {
+            var rolesMenu = document.getElementById("member-pop-role-menu");
+            if (!rolesMenu || rolesMenu.hidden) return;
+            if (event.target.closest("#member-pop-role-menu, #member-pop-add")) return;
+            rolesMenu.hidden = true;
+            placeMemberPop(currentMemberButton());
+        }, true);
         document.getElementById("member-pop-role-menu").addEventListener("click", function (event) {
             var button = event.target.closest("button");
             if (!button) return;
             event.stopPropagation();
-            toggleMemberRole(button.getAttribute("data-role-name"), button.getAttribute("data-role-color"));
+            toggleMemberRole(Number(button.getAttribute("data-role-id")));
         });
         document.getElementById("member-pop-edit").addEventListener("click", function (event) {
             event.stopPropagation();
             var self = memberPop.getAttribute("data-self") === "1";
-            var name = memberPop.getAttribute("data-name") || "";
+            var handle = memberPop.getAttribute("data-handle") || "";
             var photo = document.getElementById("member-pop-photo");
             var src = photo ? photo.getAttribute("src") : "";
             closeMemberPop();
             if (self) {
-                if (window.openUserProfile) window.openUserProfile("Anonymou5", src);
+                if (window.openUserProfile) window.openUserProfile(handle, src);
                 return;
             }
-            if (window.openUserProfile) window.openUserProfile(name, src);
+            if (window.discodeGo) window.discodeGo("/Dm/Index?name=" + encodeURIComponent(handle));
+            else window.location.href = "/Dm/Index?name=" + encodeURIComponent(handle);
         });
         document.addEventListener("click", function (event) {
             if (!memberPop || memberPop.hidden) return;
@@ -854,38 +985,62 @@
             paintVoice();
             return;
         }
-        if (joinedVoice !== button) {
-            joinedVoice = button;
-            voiceStarted = Date.now();
-            clearInterval(voiceClock);
-            voiceClock = setInterval(tickVoiceClock, 1000);
-            var freshPeople = voiceSlot(button);
-            var freshInvite = freshPeople && freshPeople.querySelector(".server-voice-invite");
-            if (freshInvite) freshInvite.hidden = false;
-            joinVoiceSound.currentTime = 0;
-            joinVoiceSound.play().catch(function() {});
+        if (joinedVoice === button) {
+            paintVoice();
+            return;
         }
-        paintVoice();
-        fetch(serverApi("/voice"), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ channel: channelTitle(button) })
-        }).catch(function () {});
+        if (window.discodeVoice) window.discodeVoice.join(button.getAttribute("data-id"));
     }
 
-    function leaveVoice() {
-        joinedVoice = null;
-        clearInterval(voiceClock);
-        voiceClock = 0;
+    function syncJoinedVoice() {
+        var current = window.discodeVoice ? window.discodeVoice.here() : null;
+        var next = null;
+        if (current) {
+            var buttons = channelList ? channelList.querySelectorAll(".server-channel[data-kind='voice']") : [];
+            for (var i = 0; i < buttons.length; i++) {
+                if (Number(buttons[i].getAttribute("data-id")) === current.channelId) next = buttons[i];
+            }
+        }
+        var changed = next !== joinedVoice;
+        joinedVoice = next;
+        if (!next) {
+            clearInterval(voiceClock);
+            voiceClock = 0;
+        } else if (changed || !voiceClock) {
+            voiceStarted = Date.parse(current.joinedAt) || Date.now();
+            clearInterval(voiceClock);
+            voiceClock = setInterval(tickVoiceClock, 1000);
+        }
         paintVoice();
+    }
+
+    document.addEventListener("discode-voice-updated", syncJoinedVoice);
+    document.addEventListener("discode-voice-updated", function () { paintServerMembers(); });
+    document.addEventListener("discode-server-channels-rendered", syncJoinedVoice);
+
+    function leaveVoice() {
         if (typeof stopVoiceMedia === "function") stopVoiceMedia();
         if (typeof setVoiceFull === "function") setVoiceFull(false);
-        fetch(serverApi("/voice"), { method: "DELETE" }).catch(function () {});
+        if (window.discodeVoice) window.discodeVoice.leave();
+    }
+
+    window.discodeServerFlash = function (text) { flash(text); };
+
+    function flash(text) {
+        var note = document.createElement("div");
+        note.className = "server-menu-notice";
+        note.textContent = text;
+        document.body.appendChild(note);
+        window.setTimeout(function () {
+            if (window.discodeDismiss) window.discodeDismiss(note);
+            else if (note.parentNode) note.parentNode.removeChild(note);
+        }, 3000);
     }
 
     function selectChannel(button, keepVoice) {
         if (!button) return;
         currentChannel = button;
+        loadViewers(false);
         var buttons = channelList.querySelectorAll(".server-channel");
         var name = channelTitle(button);
         var kind = button.getAttribute("data-kind") || "text";
@@ -894,6 +1049,7 @@
         var canPost = canPostIn(button);
         for (var i = 0; i < buttons.length; i++) buttons[i].classList.toggle("on", buttons[i] === button);
         showRoom(isVoice ? "voice" : "text");
+        if (!isVoice && window.discodeServerChat) window.discodeServerChat.open(button);
         if (isVoice) {
             if (voiceName) voiceName.textContent = name;
             if (keepVoice) paintVoice();
@@ -951,11 +1107,22 @@
 
     if (channelList) {
         channelList.addEventListener("click", function (event) {
+            var inviteButton = event.target.closest(".server-channel-invite");
+            if (inviteButton) {
+                var inviteRow = inviteButton.closest(".server-channel-row");
+                var channelNameNode = inviteRow ? inviteRow.querySelector(".server-channel-name") : null;
+                openInviteModal(channelNameNode ? channelNameNode.textContent.trim() : "");
+                return;
+            }
             var edit = event.target.closest("[data-edit-channel]");
             if (edit) {
                 var row = edit.closest(".server-channel-row");
                 var target = row ? row.querySelector(".server-channel") : null;
-                if (isOwner && target) openChannelEdit(target);
+                // holding Shift turns the gear into a trash can: delete (with the usual confirmation) instead of edit
+                if (isOwner && target) {
+                    if (event.shiftKey) openRemove("channel", target);
+                    else openChannelEdit(target);
+                }
                 return;
             }
             var removeChannelBtn = event.target.closest("[data-delete-channel]");
@@ -1069,7 +1236,7 @@
     }
 
     function canArrange() {
-        return !!(isOwner || pageCanManage());
+        return !!isOwner;
     }
 
     function channelMenuTarget(node) {
@@ -1080,6 +1247,8 @@
 
     if (canManage && channelSide && channelMenu) {
         channelSide.addEventListener("contextmenu", function (event) {
+            // a person in a voice channel has their own menu (servervoice.js): not the category's
+            if (event.target.closest(".server-voice-user")) return;
             var row = event.target.closest(".server-channel-row");
             var channel = row ? row.querySelector(".server-channel") : null;
             var category = channel ? null : event.target.closest(".server-category");
@@ -1182,6 +1351,7 @@
         document.addEventListener("scroll", closeRowMenu, true);
     }
 
+    window.discodeSelectChannel = selectChannel;
     var channelModal = document.getElementById("channel-modal");
     var channelName = document.getElementById("channel-name");
     var channelNameIcon = document.getElementById("channel-name-icon");
@@ -1204,6 +1374,10 @@
         var picked = document.querySelector('#channel-types input:checked');
         var kind = picked ? picked.value : "text";
         if (channelNameIcon) channelNameIcon.className = "fa-solid " + (channelKinds[kind] || "fa-hashtag");
+        var limitWrap = document.getElementById("channel-limit-wrap");
+        var limitLabel = document.getElementById("channel-limit-label");
+        if (limitWrap) limitWrap.hidden = kind !== "voice";
+        if (limitLabel) limitLabel.hidden = kind !== "voice";
     }
 
     function syncChannelName() {
@@ -1269,6 +1443,8 @@
         var radios = document.querySelectorAll('#channel-types input');
         for (var i = 0; i < radios.length; i++) radios[i].checked = radios[i].value === "text";
         if (channelPrivate) channelPrivate.checked = false;
+        var limitInput = document.getElementById("channel-limit");
+        if (limitInput) limitInput.value = "0";
         if (channelName) channelName.value = "new-channel";
         syncChannelKind();
         syncChannelName();
@@ -1312,6 +1488,26 @@
             if (!isOwner || !channelConfirm || channelConfirm.disabled) return;
             var picked = document.querySelector("#channel-types input:checked");
             var kind = picked ? picked.value : "text";
+            if (window.discodeServerChannels) {
+                var chosen = channelCategory;
+                var pickBox = document.getElementById("channel-category-pick");
+                if (!chosen && pickBox && pickBox.value) chosen = liveCategories()[Number(pickBox.value)] || null;
+                channelConfirm.disabled = true;
+                window.discodeServerChannels.createChannel({
+                    name: channelName ? channelName.value : "",
+                    kind: kind,
+                    categoryId: chosen ? chosen.getAttribute("data-id") : null,
+                    isPrivate: !!(channelPrivate && channelPrivate.checked),
+                    userLimit: kind === "voice" ? Number((document.getElementById("channel-limit") || {}).value) || 0 : 0
+                }).then(function () {
+                    closeChannelModal();
+                    channelConfirm.disabled = false;
+                }).catch(function (error) {
+                    channelConfirm.disabled = false;
+                    flash(error.message);
+                });
+                return;
+            }
             var label = channelLabel(kind, channelName ? channelName.value : "");
             var list = channelCategory ? channelCategory.querySelector(".server-category-list") : null;
             if (!list) list = chosenCategoryList();
@@ -1370,9 +1566,19 @@
         return value !== "0";
     }
 
+    var channelOverwritesHost = document.getElementById("channel-overwrites");
+    var channelEditor = null;
+
+    function ensureChannelEditor(mode) {
+        if (!channelOverwritesHost || !window.discodeOverwrites) return null;
+        if (!channelEditor || channelEditor.mode !== mode) channelEditor = window.discodeOverwrites.create(channelOverwritesHost, mode);
+        return channelEditor;
+    }
+
     function closeChannelEdit() {
         if (channelEdit) channelEdit.hidden = true;
         channelEditTarget = null;
+        if (channelEditor) channelEditor.reset();
     }
 
     function openChannelEdit(channel) {
@@ -1384,6 +1590,12 @@
         if (channelEditName) channelEditName.value = name;
         if (channelEditIcon) channelEditIcon.className = "fa-solid " + (channelKinds[kind] || "fa-hashtag");
         if (channelEditSub) channelEditSub.textContent = (voiceRoom ? "" : "#") + name;
+        var editLimit = document.getElementById("channel-edit-limit");
+        var editLimitWrap = document.getElementById("channel-edit-limit-wrap");
+        var editLimitLabel = document.getElementById("channel-edit-limit-label");
+        if (editLimit) editLimit.value = channel.getAttribute("data-limit") || "0";
+        if (editLimitWrap) editLimitWrap.hidden = !voiceRoom;
+        if (editLimitLabel) editLimitLabel.hidden = !voiceRoom;
         if (channelPerms.view) channelPerms.view.checked = permOn(channel, "data-view");
         if (channelPerms.send) channelPerms.send.checked = permOn(channel, "data-send");
         if (channelPerms.manage) channelPerms.manage.checked = permOn(channel, "data-manage");
@@ -1398,6 +1610,11 @@
         closeMenu();
         closeChannelMenu();
         closeChannelModal();
+        var editor = ensureChannelEditor(voiceRoom ? "voice" : "text");
+        if (editor && channel.getAttribute("data-id") && window.discodeServerChannels) {
+            var parent = channel.closest(".server-category");
+            editor.load(window.discodeServerChannels.getChannelPermissions(channel.getAttribute("data-id")), parent ? parent.getAttribute("data-id") : null);
+        }
         channelEdit.hidden = false;
         if (channelEditName) {
             channelEditName.focus();
@@ -1461,7 +1678,44 @@
             chat.classList.remove("has-room");
         }
         if (voice) voice.hidden = true;
+        // the real message list, intro and composer live in serverchat.js: they must go too
+        if (window.discodeServerChat && window.discodeServerChat.close) window.discodeServerChat.close();
+        // silinən kanalın mesajları və adı ekranda qalmasın
+        var staleMessages = document.getElementById("server-messages");
+        if (staleMessages) staleMessages.hidden = true;
+        if (roomName) roomName.textContent = "";
+        var staleMark = document.getElementById("server-room-mark");
+        if (staleMark) staleMark.textContent = "";
+        var emptyRoom = document.getElementById("server-chat-empty");
+        if (emptyRoom) emptyRoom.hidden = false;
     }
+
+    // Kanal siyahısı yenilənəndə (məsələn kanal silinəndə, hətta başqası silsə də) açıq otaq hələ də var?
+    function reconcileRoom() {
+        if (!channelList || roomKind === "settings") return;
+        var all = channelList.querySelectorAll(".server-channel");
+        if (!all.length) {
+            if (joinedVoice) leaveVoice();
+            clearRoom();
+            return;
+        }
+
+        if (!currentChannel) return;
+        var openId = currentChannel.getAttribute("data-id");
+        var again = openId ? channelList.querySelector('.server-channel[data-id="' + openId + '"]') : null;
+        if (again) {
+            currentChannel = again;
+            return;
+        }
+        if (channelList.contains(currentChannel)) return;
+
+        currentChannel = null;
+        var next = channelList.querySelector(".server-channel:not([data-kind='voice'])");
+        if (next) selectChannel(next);
+        else clearRoom();
+    }
+
+    document.addEventListener("discode-server-channels-rendered", reconcileRoom);
 
     function detachChannel(channel) {
         if (!channel) return false;
@@ -1486,11 +1740,23 @@
     }
 
     function deleteChannel(channel) {
+        if (window.discodeServerChannels && channel && channel.getAttribute("data-id")) {
+            window.discodeServerChannels.deleteChannel(channel.getAttribute("data-id")).catch(function (error) {
+                flash(error.message);
+            });
+            return;
+        }
         settleAfterRemove(detachChannel(channel));
     }
 
     function deleteCategory(category) {
         if (!category) return;
+        if (window.discodeServerChannels && category.getAttribute("data-id")) {
+            window.discodeServerChannels.deleteCategory(category.getAttribute("data-id")).catch(function (error) {
+                flash(error.message);
+            });
+            return;
+        }
         var nameNode = category.querySelector(".server-category-name span");
         var name = nameNode ? nameNode.textContent.trim() : "";
         var channels = category.querySelectorAll(".server-channel");
@@ -1533,6 +1799,21 @@
             var kind = channel.getAttribute("data-kind") || "text";
             var label = channelLabel(kind, channelEditName.value);
             if (!label) return;
+            if (window.discodeServerChannels && channel.getAttribute("data-id")) {
+                var collected = channelEditor ? channelEditor.collect() : { sync: null, overwrites: null };
+                window.discodeServerChannels.updateChannel({
+                    id: channel.getAttribute("data-id"),
+                    name: channelEditName.value,
+                    syncWithCategory: collected.sync,
+                    userLimit: kind === "voice" ? Number((document.getElementById("channel-edit-limit") || {}).value) || 0 : undefined,
+                    overwrites: collected.overwrites
+                }).then(function () {
+                    closeChannelEdit();
+                }).catch(function (error) {
+                    flash(error.message);
+                });
+                return;
+            }
             var nameNode = channel.querySelector(".server-channel-name");
             if (nameNode) nameNode.textContent = label;
             channel.setAttribute("data-view", channelPerms.view && channelPerms.view.checked ? "1" : "0");
@@ -1558,6 +1839,8 @@
     var categoryPrivate = document.getElementById("category-private");
     var categoryTitle = document.getElementById("category-modal-title");
     var categoryEditTarget = null;
+    var categoryOverwritesHost = document.getElementById("category-overwrites");
+    var categoryEditor = null;
 
     function syncCategoryName() {
         var text = categoryName ? categoryName.value.trim() : "";
@@ -1576,6 +1859,13 @@
         if (categoryConfirm) categoryConfirm.textContent = categoryEditTarget ? "Save Changes" : "Create Category";
         if (categoryName) categoryName.value = currentName;
         if (categoryPrivate) categoryPrivate.checked = false;
+        var privateBlock = categoryPrivate ? categoryPrivate.closest(".channel-private") : null;
+        if (privateBlock) privateBlock.hidden = !!categoryEditTarget;
+        if (categoryOverwritesHost) categoryOverwritesHost.hidden = !categoryEditTarget;
+        if (categoryEditTarget && categoryEditTarget.getAttribute("data-id") && window.discodeOverwrites && window.discodeServerChannels) {
+            if (!categoryEditor) categoryEditor = window.discodeOverwrites.create(categoryOverwritesHost, "category");
+            categoryEditor.load(window.discodeServerChannels.getCategoryPermissions(categoryEditTarget.getAttribute("data-id")), null);
+        }
         syncCategoryName();
         closeMenu();
         closeChannelMenu();
@@ -1591,6 +1881,7 @@
     function closeCategoryModal() {
         if (categoryModal) categoryModal.hidden = true;
         categoryEditTarget = null;
+        if (categoryEditor) categoryEditor.reset();
     }
 
     if (categoryModal) {
@@ -1610,10 +1901,32 @@
             var text = categoryName ? categoryName.value.trim() : "";
             var editing = categoryEditTarget;
             if (!canArrange() || !text) return;
+            if (editing && window.discodeServerChannels && editing.getAttribute("data-id")) {
+                categoryConfirm.disabled = true;
+                window.discodeServerChannels.updateCategory({ id: editing.getAttribute("data-id"), name: text, overwrites: categoryEditor ? categoryEditor.collect().overwrites : null }).then(function () {
+                    closeCategoryModal();
+                    categoryConfirm.disabled = false;
+                }).catch(function (error) {
+                    categoryConfirm.disabled = false;
+                    flash(error.message);
+                });
+                return;
+            }
             if (editing) {
                 var editedName = editing.querySelector(".server-category-name span");
                 if (editedName) editedName.textContent = text;
                 closeCategoryModal();
+                return;
+            }
+            if (window.discodeServerChannels) {
+                categoryConfirm.disabled = true;
+                window.discodeServerChannels.createCategory({ name: text, isPrivate: !!(categoryPrivate && categoryPrivate.checked) }).then(function () {
+                    closeCategoryModal();
+                    categoryConfirm.disabled = false;
+                }).catch(function (error) {
+                    categoryConfirm.disabled = false;
+                    flash(error.message);
+                });
                 return;
             }
             var tpl = document.getElementById("server-category-new");
@@ -1766,6 +2079,14 @@
         }
     }
 
+    // Shift held over a channel row: the gear shows as a trash can (see .shift-down in server.css)
+    function setShiftDown(down) {
+        document.body.classList.toggle("shift-down", !!down && isOwner);
+    }
+    document.addEventListener("keydown", function (event) { if (event.key === "Shift") setShiftDown(true); });
+    document.addEventListener("keyup", function (event) { if (event.key === "Shift") setShiftDown(false); });
+    window.addEventListener("blur", function () { setShiftDown(false); });
+
     if (channelList) {
         channelList.addEventListener("click", function (event) {
             if (!suppressSortClick) return;
@@ -1775,7 +2096,7 @@
         }, true);
         channelList.addEventListener("pointerdown", function (event) {
             if (!isOwner || event.button !== 0) return;
-            if (event.target.closest(".server-channel-edit, .server-channel-delete, .server-category-add, .server-category-delete, .server-voice-invite, .server-voice-invite-open, .server-voice-invite-close")) return;
+            if (event.target.closest(".server-channel-edit, .server-channel-invite, .server-channel-delete, .server-category-add, .server-category-delete, .server-voice-invite, .server-voice-invite-open, .server-voice-invite-close")) return;
             var head = event.target.closest(".server-category-name");
             var row = head ? null : event.target.closest(".server-channel-row");
             var category = head ? head.closest(".server-category") : null;
@@ -1831,22 +2152,111 @@
     var inviteLink = document.getElementById("invite-link");
     var inviteCopy = document.getElementById("invite-copy");
 
-    function openInviteModal() {
-        if (!inviteModal || !canManage) return;
+    function openInviteModal(roomName) {
+        if (!inviteModal) return;
         if (inviteName && serverTitle) inviteName.textContent = serverTitle.textContent.trim() || "Server";
         if (inviteRoom) {
             var room = document.querySelector("#server-channel-list .server-channel:not([hidden]) .server-channel-name");
-            inviteRoom.textContent = room ? "#" + room.textContent.trim() : "the server";
+            inviteRoom.textContent = roomName ? roomName : room ? "#" + room.textContent.trim() : "the server";
         }
         if (inviteCopy) inviteCopy.textContent = "Copy";
-        var members = document.querySelectorAll("#server-member-list .server-member-name");
-        var taken = [];
-        for (var i = 0; i < members.length; i++) taken.push(members[i].textContent.trim());
-        var rows = document.querySelectorAll("#invite-list .invite-row");
-        for (var j = 0; j < rows.length; j++) rows[j].hidden = taken.indexOf(rows[j].getAttribute("data-friend")) !== -1;
+        if (inviteLink && currentServer && currentServer.inviteCode) inviteLink.value = window.location.origin + "/" + currentServer.inviteCode;
+        loadInviteFriends();
         closeMenu();
         closeChannelMenu();
         inviteModal.hidden = false;
+    }
+
+    var inviteList = document.getElementById("invite-list");
+    var inviteSearch = document.getElementById("invite-search");
+
+    function inviteUrl() {
+        return currentServer && currentServer.inviteCode ? window.location.origin + "/" + currentServer.inviteCode : "";
+    }
+
+    function inviteRow(friend) {
+        var row = document.createElement("div");
+        row.className = "invite-row";
+        row.setAttribute("data-friend", friend.name);
+        row.setAttribute("data-user", friend.userName);
+        var photo = document.createElement("img");
+        photo.alt = "";
+        photo.src = friend.avatarUrl || "/assets/img/img-icon-profile.jpeg";
+        var text = document.createElement("span");
+        var name = document.createElement("strong");
+        name.textContent = friend.name;
+        var handle = document.createElement("small");
+        handle.textContent = friend.userName;
+        text.appendChild(name);
+        text.appendChild(handle);
+        var send = document.createElement("button");
+        send.type = "button";
+        send.className = "invite-send";
+        send.textContent = "Invite";
+        row.appendChild(photo);
+        row.appendChild(text);
+        row.appendChild(send);
+        return row;
+    }
+
+    function filterInviteRows() {
+        if (!inviteList) return;
+        var term = inviteSearch ? inviteSearch.value.trim().toLowerCase() : "";
+        var rows = inviteList.querySelectorAll(".invite-row");
+        var shown = 0;
+        for (var i = 0; i < rows.length; i++) {
+            var hit = !term || rows[i].getAttribute("data-friend").toLowerCase().indexOf(term) !== -1 || rows[i].getAttribute("data-user").toLowerCase().indexOf(term) !== -1;
+            rows[i].hidden = !hit;
+            if (hit) shown++;
+        }
+        var empty = inviteList.querySelector(".invite-empty");
+        if (empty) empty.hidden = shown > 0;
+    }
+
+    function loadInviteFriends() {
+        if (!inviteList) return;
+        if (inviteSearch) inviteSearch.value = "";
+        inviteList.textContent = "";
+        fetch("/Server/InviteFriends", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            return response.ok ? response.json() : [];
+        }).catch(function () {
+            return [];
+        }).then(function (friends) {
+            var members = document.querySelectorAll("#server-member-list .server-member-name");
+            var taken = [];
+            for (var i = 0; i < members.length; i++) taken.push(members[i].textContent.trim());
+            inviteList.textContent = "";
+            friends.filter(function (friend) { return taken.indexOf(friend.name) === -1; }).forEach(function (friend) {
+                inviteList.appendChild(inviteRow(friend));
+            });
+            var empty = document.createElement("p");
+            empty.className = "invite-empty";
+            empty.textContent = "No friends to invite.";
+            empty.hidden = !!inviteList.querySelector(".invite-row");
+            inviteList.appendChild(empty);
+        });
+    }
+
+    function sendInvite(button) {
+        var row = button.closest(".invite-row");
+        var link = inviteUrl();
+        if (!row || !link || button.disabled) return;
+        button.disabled = true;
+        button.textContent = "Sending";
+        var field = document.querySelector("input[name='__RequestVerificationToken']");
+        fetch("/Dm/Send", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "RequestVerificationToken": field ? field.value : "", "X-Requested-With": "XMLHttpRequest" },
+            body: JSON.stringify({ userName: row.getAttribute("data-user"), text: link })
+        }).then(function (response) {
+            if (!response.ok) throw new Error("failed");
+            button.classList.add("on");
+            button.textContent = "Invited";
+        }).catch(function () {
+            button.disabled = false;
+            button.textContent = "Retry";
+        });
     }
 
     function closeInviteModal() {
@@ -1857,10 +2267,9 @@
         inviteModal.addEventListener("click", function (event) {
             if (event.target === inviteModal) closeInviteModal();
             var send = event.target.closest(".invite-send");
-            if (!send || send.classList.contains("on")) return;
-            send.classList.add("on");
-            send.textContent = "Invited";
+            if (send && !send.classList.contains("on")) sendInvite(send);
         });
+        if (inviteSearch) inviteSearch.addEventListener("input", filterInviteRows);
     }
     if (inviteCopy && inviteLink) {
         inviteCopy.addEventListener("click", function () {
@@ -2026,124 +2435,6 @@
         if (roleAdd) roleAdd.hidden = true;
     }
 
-    function showRoleTab(name) {
-        if (!roleEditor) return;
-        var tabs = roleEditor.querySelectorAll("[data-role-tab]");
-        var panels = roleEditor.querySelectorAll("[data-role-panel]");
-        for (var i = 0; i < tabs.length; i++) tabs[i].classList.toggle("on", tabs[i].getAttribute("data-role-tab") === name);
-        for (var j = 0; j < panels.length; j++) panels[j].hidden = panels[j].getAttribute("data-role-panel") !== name;
-    }
-
-    function selectRole(row) {
-        if (!roleEditor || !row) return;
-        var rows = roleEditor.querySelectorAll(".role-row");
-        var label = row.querySelector(".role-label");
-        var text = label ? label.textContent : "";
-        for (var i = 0; i < rows.length; i++) rows[i].classList.toggle("on", rows[i] === row);
-        if (roleTitle) roleTitle.textContent = text;
-        if (roleName) {
-            roleName.value = text;
-            roleName.readOnly = row === roleEveryone;
-        }
-        if (roleDelete) roleDelete.disabled = row === roleEveryone;
-        if (roleColors) {
-            var color = row.getAttribute("data-color") || "gray";
-            var swatches = roleColors.querySelectorAll("[data-role-color]");
-            for (var j = 0; j < swatches.length; j++) swatches[j].classList.toggle("on", swatches[j].getAttribute("data-role-color") === color);
-        }
-    }
-
-    var roleBack = document.getElementById("role-back");
-    if (roleBack && settingsNav) {
-        roleBack.addEventListener("click", function () {
-            var profile = settingsNav.querySelector('[data-panel="profile"]');
-            if (profile) profile.click();
-        });
-    }
-
-    var roleCreate = document.getElementById("role-create");
-    if (roleCreate && roleDraft) {
-        roleCreate.addEventListener("click", function () {
-            var label = roleDraft.querySelector(".role-label");
-            if (label) label.textContent = "new role";
-            roleDraft.hidden = false;
-            roleDraft.setAttribute("data-color", "gray");
-            selectRole(roleDraft);
-            showRoleTab("display");
-            if (roleName) roleName.focus();
-        });
-    }
-
-    if (roleEditor) {
-        roleEditor.addEventListener("click", function (event) {
-            var clear = event.target.closest(".perm-clear");
-            if (clear) {
-                var group = clear.closest(".perm-group");
-                var boxes = group ? group.querySelectorAll("input[type=checkbox]") : [];
-                for (var k = 0; k < boxes.length; k++) boxes[k].checked = false;
-                return;
-            }
-            var row = event.target.closest(".role-row");
-            if (row && roleEditor.contains(row)) selectRole(row);
-            var tab = event.target.closest("[data-role-tab]");
-            if (tab) showRoleTab(tab.getAttribute("data-role-tab"));
-        });
-    }
-
-    if (roleName && roleDraft) {
-        roleName.addEventListener("input", function () {
-            if (roleDraft.hidden || !roleDraft.classList.contains("on")) return;
-            var text = roleName.value.trim() || "new role";
-            var label = roleDraft.querySelector(".role-label");
-            if (label) label.textContent = text;
-            if (roleTitle) roleTitle.textContent = text;
-        });
-    }
-
-    if (roleColors) {
-        roleColors.addEventListener("click", function (event) {
-            var swatch = event.target.closest("[data-role-color]");
-            if (!swatch || !roleEditor) return;
-            var row = roleEditor.querySelector(".role-row.on");
-            if (!row) return;
-            var swatches = roleColors.querySelectorAll("[data-role-color]");
-            var color = swatch.getAttribute("data-role-color");
-            for (var i = 0; i < swatches.length; i++) swatches[i].classList.toggle("on", swatches[i] === swatch);
-            row.setAttribute("data-color", color);
-        });
-    }
-
-    if (roleMore && roleMoreMenu) {
-        roleMore.addEventListener("click", function (event) {
-            event.stopPropagation();
-            roleMoreMenu.hidden = !roleMoreMenu.hidden;
-            roleMore.setAttribute("aria-expanded", roleMoreMenu.hidden ? "false" : "true");
-        });
-        roleMoreMenu.addEventListener("click", function (event) {
-            event.stopPropagation();
-        });
-    }
-
-    if (roleDelete && roleDraft && roleEveryone) {
-        roleDelete.addEventListener("click", function () {
-            if (roleDelete.disabled || roleDraft.hidden || !roleDraft.classList.contains("on")) return;
-            roleDraft.hidden = true;
-            selectRole(roleEveryone);
-            closeRoleMenu();
-        });
-    }
-
-    function openRoleAdd() {
-        if (roleAdd) roleAdd.hidden = !roleAdd.hidden;
-    }
-
-    var roleAddOpen = document.getElementById("role-add-open");
-    var roleAddLink = document.getElementById("role-add-link");
-    if (roleAddOpen) roleAddOpen.addEventListener("click", openRoleAdd);
-    if (roleAddLink) roleAddLink.addEventListener("click", function () {
-        if (roleAdd) roleAdd.hidden = false;
-    });
-
     document.addEventListener("click", function (event) {
         if (roleMoreMenu && !roleMoreMenu.hidden && !event.target.closest("#role-more") && !event.target.closest("#role-more-menu")) closeRoleMenu();
     });
@@ -2199,7 +2490,31 @@
         deleteForm.addEventListener("submit", function (event) {
             event.preventDefault();
             if (!deleteConfirm || deleteConfirm.disabled) return;
-            closeDeleteModal();
+            var typed = deleteInput ? deleteInput.value : "";
+            deleteConfirm.disabled = true;
+            var field = document.querySelector("input[name='__RequestVerificationToken']");
+            fetch("/Server/Delete", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/json", "RequestVerificationToken": field ? field.value : "", "X-Requested-With": "XMLHttpRequest" },
+                body: JSON.stringify({ serverId: Number(openId) || 0, name: typed })
+            }).then(function (response) {
+                return response.json().catch(function () { return {}; }).then(function (data) {
+                    if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Could not delete the server.");
+                    closeDeleteModal();
+                    if (window.discodeGo) window.discodeGo("/Home/Index");
+                    else window.location.href = "/Home/Index";
+                });
+            }).catch(function (error) {
+                deleteConfirm.disabled = false;
+                var note = deleteForm.querySelector(".confirm-error");
+                if (!note) {
+                    note = document.createElement("p");
+                    note.className = "confirm-error";
+                    deleteForm.insertBefore(note, deleteForm.querySelector(".server-delete-actions"));
+                }
+                note.textContent = error.message;
+            });
         });
     }
 
@@ -2231,14 +2546,18 @@
 
     function confirmLeaveServer() {
         closeLeaveModal();
-        var serverId = (openId || "azaan").toLowerCase();
-        try {
-            var joined = JSON.parse(localStorage.getItem("discode-joined-servers") || "[]");
-            joined = joined.filter(function (id) { return String(id).toLowerCase() !== serverId; });
-            localStorage.setItem("discode-joined-servers", JSON.stringify(joined));
-            localStorage.removeItem("discode-server-role-" + serverId);
-        } catch (e) {}
-        window.location.href = "./index.html";
+        var field = document.querySelector("input[name='__RequestVerificationToken']");
+        fetch("/Server/Leave", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "RequestVerificationToken": field ? field.value : "", "X-Requested-With": "XMLHttpRequest" },
+            body: JSON.stringify({ id: Number(openId) || 0 })
+        }).then(function () {
+            if (window.discodeGo) window.discodeGo("/Home/Index");
+            else window.location.href = "/Home/Index";
+        }).catch(function () {
+            window.location.href = "/Home/Index";
+        });
     }
 
     if (leaveOpen) leaveOpen.addEventListener("click", openLeaveModal);
@@ -2340,11 +2659,7 @@
             tile.classList.toggle("is-muted", anyMuted);
             tile.classList.toggle("is-deafened", deafened);
         }
-        var users = document.querySelectorAll(".server-voice-user");
-        for (var u = 0; u < users.length; u++) {
-            users[u].classList.toggle("is-muted", anyMuted);
-            users[u].classList.toggle("is-deafened", deafened);
-        }
+        if (window.discodeVoice) window.discodeVoice.sync(muted, deafened);
     }
     var toggleMic = window.mic;
     window.mic = function () {
@@ -2395,7 +2710,6 @@
         var camOn = !!voiceFeeds.camera;
         var screenOn = !!voiceFeeds.screen;
         voiceTile.classList.toggle("has-cam", camOn);
-        voiceTile.classList.toggle("has-screen", screenOn);
         if (voiceCam) {
             voiceCam.classList.toggle("is-off", !camOn);
             voiceCam.setAttribute("aria-pressed", camOn ? "true" : "false");
@@ -2407,43 +2721,26 @@
             voiceScreen.classList.toggle("is-on", screenOn);
             voiceScreen.setAttribute("aria-pressed", screenOn ? "true" : "false");
         }
-        setFeedVideo(camVideo, voiceFeeds.camera);
-        setFeedVideo(screenVideo, voiceFeeds.screen);
     }
 
     function setVoiceFeed(kind, on) {
-        var key = kind === "screen" ? "screen" : "camera";
-        if (!on) {
-            voiceFeeds[key] = "";
-            syncVoiceFeeds();
-            fetch(serverApi("/voice/" + key), { method: "DELETE" }).catch(function () {});
-            return;
-        }
-        fetch(serverApi("/voice/" + key), {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ channel: joinedVoice ? channelTitle(joinedVoice) : "" })
-        }).then(function (response) {
-            if (!response.ok) throw new Error(key);
-            return response.json();
-        }).then(function (payload) {
-            var url = feedUrl(payload, key);
-            if (!url) throw new Error(key);
-            voiceFeeds[key] = url;
-            syncVoiceFeeds();
-        }).catch(function () {
-            voiceFeeds[key] = "";
-            syncVoiceFeeds();
-        });
+        if (!window.discodeVoiceRtc) return;
+        if (kind === "screen") window.discodeVoiceRtc.setScreen(on);
+        else window.discodeVoiceRtc.setCamera(on);
     }
 
     function stopVoiceMedia() {
         voiceFeeds.camera = "";
         voiceFeeds.screen = "";
         syncVoiceFeeds();
-        fetch(serverApi("/voice/camera"), { method: "DELETE" }).catch(function () {});
-        fetch(serverApi("/voice/screen"), { method: "DELETE" }).catch(function () {});
     }
+
+    document.addEventListener("discode-voice-media", function () {
+        var live = window.discodeVoiceRtc ? window.discodeVoiceRtc.media() : { camera: false, screen: false };
+        voiceFeeds.camera = live.camera ? "on" : "";
+        voiceFeeds.screen = live.screen ? "on" : "";
+        syncVoiceFeeds();
+    });
 
     if (voiceCam) {
         voiceCam.addEventListener("click", function () {
@@ -2504,7 +2801,11 @@
         var closeInvite = event.target.closest(".server-voice-invite-close");
         if (!closeInvite) return false;
         var inviteRow = closeInvite.closest(".server-voice-invite");
-        if (inviteRow) inviteRow.hidden = true;
+        if (inviteRow) {
+            inviteRow.hidden = true;
+            // stays closed while I am in this channel: a mute, an unmute or anyone joining redraws the list but must not bring it back
+            inviteRow.setAttribute("data-dismissed", "1");
+        }
         return true;
     }
     if (channelList) {
@@ -2523,14 +2824,6 @@
         });
     }
 
-    var logoutBtn = document.getElementById("me-logout");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", function () {
-            if (confirm("Are you sure you want to log out?")) {
-                window.location.href = "./login.html";
-            }
-        });
-    }
 
     var firstRoom = document.querySelector("#server-channel-list .server-channel.on");
     if (firstRoom) selectChannel(firstRoom);

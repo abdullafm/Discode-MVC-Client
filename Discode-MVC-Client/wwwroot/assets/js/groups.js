@@ -1,36 +1,48 @@
 "use strict";
-var GROUP_KEY = "discode-groups";
 var GROUP_LIMIT = 10;
 
 var picked = [];
 var already = [];
 
-function loadGroups() {
-    try {
-        var saved = JSON.parse(localStorage.getItem(GROUP_KEY) || "[]");
-        return Array.isArray(saved) ? saved : [];
-    } catch (error) {
-        return [];
-    }
+// Settings, pins: everything that used to sit in the browser's localStorage lives on the account now
+function postJson(url, body) {
+    var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
+    return fetch(url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+            "Content-Type": "application/json",
+            "RequestVerificationToken": tokenInput ? tokenInput.value : "",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: JSON.stringify(body)
+    }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (data) {
+            if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Something went wrong.");
+            return data;
+        });
+    });
 }
 
-function saveGroups(groups) {
-    localStorage.setItem(GROUP_KEY, JSON.stringify(groups));
-}
-
-var PIN_KEY = "discode-pins";
+var pinKeys = [];
 
 function loadPins() {
-    try {
-        var saved = JSON.parse(localStorage.getItem(PIN_KEY) || "[]");
-        return Array.isArray(saved) ? saved : [];
-    } catch (error) {
-        return [];
-    }
+    return pinKeys;
 }
 
-function savePins(pins) {
-    localStorage.setItem(PIN_KEY, JSON.stringify(pins));
+// a pinned person is identified by their user name, the display name is not unique
+function pinKey(item) {
+    return String(item.getAttribute("data-dm") || rowName(item)).toLowerCase();
+}
+
+function fetchPins() {
+    fetch("/Home/Pins", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } })
+        .then(function (response) { return response.ok ? response.json() : []; })
+        .then(function (list) {
+            pinKeys = Array.isArray(list) ? list.map(String) : [];
+            applyPins();
+        })
+        .catch(function () {});
 }
 
 function rowName(item) {
@@ -55,7 +67,7 @@ function applyPins() {
     var pinned = [];
     var rest = [];
     rows.forEach(function (row) {
-        var name = rowName(row);
+        var name = pinKey(row);
         var on = pins.indexOf(name) !== -1;
         row.classList.toggle("pinned", on);
         var old = row.querySelector(".row-pin");
@@ -71,49 +83,86 @@ function applyPins() {
         }
     });
     pinned.sort(function (a, b) {
-        return pins.indexOf(rowName(a)) - pins.indexOf(rowName(b));
+        return pins.indexOf(pinKey(a)) - pins.indexOf(pinKey(b));
     });
-    pinned.concat(groups, rest).forEach(function (row) {
+    var recent = groups.concat(rest);
+    recent.sort(function (a, b) {
+        var diff = Number(b.getAttribute("data-last") || 0) - Number(a.getAttribute("data-last") || 0);
+        if (diff !== 0) return diff;
+        return Number(a.getAttribute("data-order") || 0) - Number(b.getAttribute("data-order") || 0);
+    });
+    pinned.concat(recent).forEach(function (row) {
         list.appendChild(row);
     });
 }
 
-function togglePin(name) {
-    var pins = loadPins();
-    var index = pins.indexOf(name);
-    if (index === -1) pins.unshift(name);
-    else pins.splice(index, 1);
-    savePins(pins);
+function togglePin(key) {
+    postJson("/Home/TogglePin", { key: key }).then(function (list) {
+        pinKeys = Array.isArray(list) ? list.map(String) : pinKeys;
+        applyPins();
+    }).catch(function () {});
+}
+
+function paintGroupRows(groups) {
+    var list = document.querySelector(".friend-list");
+    var tpl = document.getElementById("group-row");
+    if (!list || !tpl) return;
+    var open = document.getElementById("group-chat");
+    var openId = open ? open.getAttribute("data-group-id") : "";
+    var wanted = {};
+    groups.forEach(function (group) { wanted[String(group.id)] = true; });
+    var existing = {};
+    [].forEach.call(list.querySelectorAll("[data-group]"), function (row) {
+        var id = row.getAttribute("data-group");
+        if (wanted[id]) existing[id] = row;
+        else row.remove();
+    });
+    groups.slice().reverse().forEach(function (group) {
+        var id = String(group.id);
+        var link = existing[id];
+        if (!link) {
+            link = tpl.content.firstElementChild.cloneNode(true);
+            link.href = "/Group/Index?id=" + encodeURIComponent(group.id);
+            link.setAttribute("data-group", id);
+            list.insertBefore(link, list.firstChild);
+        }
+        var photo = link.querySelector(".group-avatar img");
+        var mark = link.querySelector(".group-avatar i");
+        if (photo) {
+            photo.hidden = !group.iconUrl;
+            if (group.iconUrl && photo.getAttribute("src") !== group.iconUrl) photo.src = group.iconUrl;
+        }
+        if (mark) mark.hidden = !!group.iconUrl;
+        var label = link.querySelector("p");
+        var meta = link.querySelector(".group-row-text span");
+        if (label && label.textContent !== group.name) label.textContent = group.name;
+        var count = group.memberCount + " Members";
+        if (meta && meta.textContent !== count) meta.textContent = count;
+        link.classList.toggle("active", id === openId);
+        var unread = Number(group.unreadCount || 0);
+        var badge = link.querySelector(".dm-unread");
+        if (badge) {
+            badge.textContent = unread > 99 ? "99+" : String(unread);
+            badge.hidden = unread <= 0;
+        }
+        link.classList.toggle("has-unread", unread > 0);
+        link.setAttribute("data-last", String(Date.parse(/Z$|[+-]\d\d:\d\d$/.test(String(group.lastMessageAt)) ? group.lastMessageAt : group.lastMessageAt + "Z") || 0));
+    });
     applyPins();
 }
 
 function renderGroupList() {
-    var list = document.querySelector(".friend-list");
-    var tpl = document.getElementById("group-row");
-    if (!list || !tpl) return;
-    var old = list.querySelectorAll("[data-group]");
-    for (var i = 0; i < old.length; i++) old[i].remove();
-    var groups = loadGroups();
-    for (var g = groups.length - 1; g >= 0; g--) {
-        var group = groups[g];
-        var count = (group.members ? group.members.length : 0) + 1;
-        var link = tpl.content.firstElementChild.cloneNode(true);
-        link.href = "./group.html?group=" + encodeURIComponent(group.id);
-        link.setAttribute("data-group", group.id);
-        var photo = link.querySelector("img");
-        var mark = link.querySelector(".group-avatar i");
-        if (group.icon && photo) {
-            photo.hidden = false;
-            photo.src = group.icon;
-            if (mark) mark.hidden = true;
-        }
-        var label = link.querySelector("p");
-        var meta = link.querySelector(".group-row-text span");
-        if (label) label.textContent = group.name || (group.members || []).join(", ");
-        if (meta) meta.textContent = count + " Members";
-        list.insertBefore(link, list.firstChild);
-    }
-    applyPins();
+    if (window.discodeGroupCache) paintGroupRows(window.discodeGroupCache);
+    fetch("/Group/Mine", {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    }).then(function (response) {
+        return response.ok ? response.json() : null;
+    }).then(function (groups) {
+        if (!Array.isArray(groups)) return;
+        window.discodeGroupCache = groups;
+        paintGroupRows(groups);
+    }).catch(function () {});
 }
 
 function renderPicker() {
@@ -192,68 +241,61 @@ function closeNewMessage() {
 function toggleFriend(name) {
     var index = picked.indexOf(name);
     if (index !== -1) picked.splice(index, 1);
-    else if (already.length + picked.length < GROUP_LIMIT) picked.push(name);
+    else if (already.length + picked.length < GROUP_LIMIT - 1) picked.push(name);
     renderPicker();
 }
 
 function createMessage() {
     if (!picked.length) return;
-    var params = new URLSearchParams(window.location.search);
-    var here = params.get("group");
-    if (document.querySelector(".group-view")) {
-        var current = loadGroups();
-        if (!here) {
-            var me = document.querySelector(".me-display");
-            var meName = me ? me.textContent.trim() : "";
-            var currentNames = [];
-            var labels = document.querySelectorAll("#group-member-list .group-member p");
-            for (var l = 0; l < labels.length; l++) {
-                var label = labels[l].textContent.trim();
-                if (label && label !== meName && currentNames.indexOf(label) === -1) currentNames.push(label);
-            }
-            here = "g" + Date.now().toString(36);
-            current.unshift({
-                id: here,
-                name: (document.getElementById("group-title") || {}).textContent || currentNames.join(", "),
-                members: currentNames
-            });
-            saveGroups(current);
-        }
-        for (var c = 0; c < current.length; c++) {
-            if (current[c].id !== here) continue;
-            var auto = current[c].members.join(", ");
-            var next = current[c].members.slice();
-            picked.forEach(function (name) {
-                if (next.indexOf(name) === -1) next.push(name);
-            });
-            current[c].members = next;
-            if (!current[c].name || current[c].name === auto) current[c].name = next.join(", ");
-            saveGroups(current);
-            if (window.discodeGo) window.discodeGo("./group.html?group=" + encodeURIComponent(here));
-            else window.location.href = "./group.html?group=" + encodeURIComponent(here);
-            return;
-        }
-    }
+    var chat = document.getElementById("group-chat");
+    var groupId = chat ? chat.getAttribute("data-group-id") : "";
     var members = already.concat(picked).filter(function (name, index, list) {
         return !!name && list.indexOf(name) === index;
     }).sort();
-    if (members.length === 1) {
-        window.location.href = "/Dm/Index?name=" + encodeURIComponent(members[0]);
+    if (groupId) {
+        sendGroupRequest("/Group/AddMembers", { id: Number(groupId), userNames: picked.slice() }, function () {
+            closeNewMessage();
+        });
         return;
     }
-    var groups = loadGroups();
-    var existing = null;
-    for (var i = 0; i < groups.length; i++) {
-        var same = groups[i].members.slice().sort().join("\n") === members.join("\n");
-        if (same) existing = groups[i];
+    if (members.length === 1) {
+        window.discodeGo("/Dm/Index?name=" + encodeURIComponent(members[0]));
+        return;
     }
-    if (!existing) {
-        existing = { id: "g" + Date.now().toString(36), name: members.join(", "), members: members.slice() };
-        groups.unshift(existing);
-        saveGroups(groups);
-    }
-    if (window.discodeGo) window.discodeGo("./group.html?group=" + encodeURIComponent(existing.id));
-    else window.location.href = "./group.html?group=" + encodeURIComponent(existing.id);
+    sendGroupRequest("/Group/Create", { userNames: members }, function (group) {
+        closeNewMessage();
+        renderGroupList();
+        window.discodeGo("/Group/Index?id=" + encodeURIComponent(group.id));
+    });
+}
+
+function sendGroupRequest(url, body, done) {
+    var failure = document.getElementById("new-msg-error");
+    var create = document.getElementById("new-msg-create");
+    if (failure) failure.hidden = true;
+    if (create) create.disabled = true;
+    var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
+    fetch(url, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+            "Content-Type": "application/json",
+            "RequestVerificationToken": tokenInput ? tokenInput.value : "",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: JSON.stringify(body)
+    }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (data) {
+            if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Something went wrong.");
+            return data;
+        });
+    }).then(done).catch(function (error) {
+        if (failure) {
+            failure.textContent = error.message;
+            failure.hidden = false;
+        }
+        if (create) create.disabled = false;
+    });
 }
 
 var newButton = document.querySelector(".direct-messages h2 .dm-new");
@@ -287,6 +329,30 @@ document.addEventListener("keydown", function (event) {
 });
 
 renderGroupList();
+document.addEventListener("discode-groups-changed", renderGroupList);
+document.addEventListener("discode-group-message", function (event) {
+    var data = event.detail;
+    if (!data || !data.message || !Array.isArray(window.discodeGroupCache)) return;
+    var field = document.getElementById("Update_UserName");
+    var me = field ? field.value.trim() : "";
+    var open = document.getElementById("group-chat");
+    var openId = open ? Number(open.getAttribute("data-group-id")) : 0;
+    window.discodeGroupCache.forEach(function (group) {
+        if (group.id !== data.groupId) return;
+        group.lastMessageAt = data.message.createdAt;
+        if (data.message.senderUserName !== me && !data.message.isSystem && !(openId === group.id && !document.hidden)) {
+            group.unreadCount = Number(group.unreadCount || 0) + 1;
+        }
+    });
+    paintGroupRows(window.discodeGroupCache);
+});
+document.addEventListener("discode-hub-connected", function (event) {
+    if (event.detail && event.detail.pageSwap) return;
+    renderGroupList();
+});
+document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) renderGroupList();
+});
 
 (function () {
     var menu = document.getElementById("row-menu");
@@ -313,23 +379,60 @@ renderGroupList();
         menu.style.top = top + "px";
     }
 
+    function oneToOneCall(user) {
+        var calls = window.discodeCalls;
+        var current = calls && calls.current ? calls.current() : null;
+        return current && current.other && String(current.other.userName).toLowerCase() === String(user).toLowerCase() ? current : null;
+    }
+
+    function paintCallItems(user) {
+        var current = oneToOneCall(user);
+        var ring = current && current.status === "active" && current.joined !== false && current.peerPresent === false;
+        var stop = current && current.status === "ringing" && current.role === "caller";
+        function setHidden(action, hidden) {
+            var button = menu.querySelector('[data-action="' + action + '"]');
+            if (button && button.parentNode) button.parentNode.hidden = hidden;
+        }
+        setHidden("call", !!current);
+        setHidden("ring", !ring);
+        setHidden("stopring", !stop);
+    }
+
     function openRowMenu(item, x, y) {
+        if (menu.getAttribute("data-pop-lock") === "1") {
+            window.setTimeout(function () { openRowMenu(item, x, y); }, 230);
+            return;
+        }
         var nameEl = item.querySelector("p");
         var name = nameEl ? nameEl.textContent.trim() : "user";
         var photo = item.querySelector("img");
         menu.dataset.name = name;
+        menu.dataset.user = item.getAttribute("data-dm") || "";
+        paintCallItems(menu.dataset.user);
         menu.dataset.photo = photo ? photo.getAttribute("src") || "" : "";
         if (muteName) muteName.textContent = name;
         var pinLabel = menu.querySelector('[data-action="pin"] .row-menu-label');
-        if (pinLabel) pinLabel.textContent = loadPins().indexOf(name) !== -1 ? "Unpin" : "Pin";
+        if (pinLabel) pinLabel.textContent = loadPins().indexOf(String(menu.dataset.user || name).toLowerCase()) !== -1 ? "Unpin" : "Pin";
         var subs = menu.querySelectorAll(".row-menu-sub");
         for (var i = 0; i < subs.length; i++) subs[i].classList.remove("open");
         placeRowMenu(x, y);
     }
 
     document.addEventListener("contextmenu", function (event) {
+        var face = event.target.closest("#call-faces .call-face");
+        if (face && face.querySelector("#call-avatar") && window.discodeOpenDm) {
+            var row = document.querySelector('.friend-list .friend-item[data-dm="' + window.discodeOpenDm + '"]');
+            if (row) {
+                event.preventDefault();
+                openRowMenu(row, event.clientX, event.clientY);
+                return;
+            }
+        }
         var item = event.target.closest(".friend-list .friend-item:not(.group-row)");
-        if (!item) return;
+        if (!item) {
+            if (!menu.hidden && !menu.contains(event.target)) closeRowMenu();
+            return;
+        }
         event.preventDefault();
         openRowMenu(item, event.clientX, event.clientY);
     });
@@ -386,21 +489,45 @@ renderGroupList();
             return;
         }
         var action = event.target.closest("[data-action]");
-        if (!action) return;
-        if (action.getAttribute("data-action") === "pin") togglePin(menu.dataset.name);
-        if (action.getAttribute("data-action") === "profile" && typeof openUserProfile === "function") {
-            openUserProfile(menu.dataset.name, menu.dataset.photo);
+        if (!action) {
+            if (!event.target.closest("button")) closeRowMenu();
+            return;
         }
+        var kind = action.getAttribute("data-action");
+        var user = menu.dataset.user || menu.dataset.name;
+        var name = menu.dataset.name;
+        var photo = menu.dataset.photo;
         closeRowMenu();
+        var live = oneToOneCall(user);
+        if (kind === "call" && window.discodeGo) window.discodeGo("/Dm/Index?name=" + encodeURIComponent(user) + "&call=1&t=" + Date.now());
+        if (kind === "ring" && live && window.discodeCalls) window.discodeCalls.start(user, !!live.video).catch(function () {});
+        if (kind === "stopring" && live && window.discodePresence) window.discodePresence.invoke("EndCall", live.callId, true).catch(function () {});
+        if (kind === "pin") togglePin(String(user || name).toLowerCase());
+        if (kind === "close") {
+            var rows = document.querySelectorAll(".friend-list [data-dm]");
+            for (var r = 0; r < rows.length; r++) {
+                if (rows[r].getAttribute("data-dm") !== user) continue;
+                var closeIcon = rows[r].querySelector(":scope > i.fa-xmark");
+                if (closeIcon) closeIcon.click();
+                break;
+            }
+        }
+        if (kind === "profile" && typeof openUserProfile === "function") openUserProfile(user, photo);
     });
 
-    document.addEventListener("click", function (event) {
+    function closeOutside(event) {
         if (menu.hidden || menu.contains(event.target)) return;
+        if (event.button === 2) return;
         closeRowMenu();
-    });
+    }
+
+    document.addEventListener("mousedown", closeOutside, true);
+    document.addEventListener("touchstart", closeOutside, { capture: true, passive: true });
+    document.addEventListener("click", closeOutside, true);
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape") closeRowMenu();
     });
+    window.addEventListener("blur", closeRowMenu);
     window.addEventListener("resize", closeRowMenu);
     document.addEventListener("scroll", closeRowMenu, true);
 })();
@@ -441,12 +568,9 @@ renderGroupList();
         window.DiscodeLang.apply();
     }
 
-    var notifyKey = "discode-notify";
+    var bootSettings = window.discodeSettings || {};
     var notifyState = { all: true, dm: true, friends: true, sound: true };
-    try {
-        var savedNotify = JSON.parse(localStorage.getItem(notifyKey) || "");
-        if (savedNotify && typeof savedNotify === "object") notifyState = savedNotify;
-    } catch (error) {}
+    if (bootSettings.notify && typeof bootSettings.notify === "object") notifyState = Object.assign(notifyState, bootSettings.notify);
 
     function paintNotify() {
         var switches = settings.querySelectorAll("[data-notify]");
@@ -469,22 +593,25 @@ renderGroupList();
         var key = button.getAttribute("data-notify");
         if (key !== "all" && !notifyState.all) return;
         notifyState[key] = !notifyState[key];
-        localStorage.setItem(notifyKey, JSON.stringify(notifyState));
+        bootSettings.notify = notifyState;
+        postJson("/Home/SaveSettings", { notifyAll: notifyState.all, notifyDm: notifyState.dm, notifyFriends: notifyState.friends, notifySound: notifyState.sound }).catch(function () {});
         paintNotify();
     });
 
-    var themeKey = "discode-theme";
-    function applyTheme(theme) {
+    // the page is already drawn in the saved theme by the server; here only the switch is set and a change is saved
+    function applyTheme(theme, animate) {
         var dark = theme === "dark";
-        document.documentElement.classList.toggle("theme-dark", dark);
-        localStorage.setItem(themeKey, dark ? "dark" : "light");
+        if (animate && window.discodeSetTheme) window.discodeSetTheme(dark);
+        else document.documentElement.classList.toggle("theme-dark", dark);
         var radios = document.querySelectorAll('input[name="theme"]');
         for (var i = 0; i < radios.length; i++) radios[i].checked = radios[i].value === (dark ? "dark" : "light");
     }
-    applyTheme(localStorage.getItem(themeKey) === "dark" ? "dark" : "light");
+    applyTheme(bootSettings.theme === "dark" ? "dark" : "light");
     settings.addEventListener("change", function (event) {
         if (event.target.name !== "theme") return;
-        applyTheme(event.target.value);
+        applyTheme(event.target.value, true);
+        bootSettings.theme = event.target.value === "dark" ? "dark" : "light";
+        postJson("/Home/SaveSettings", { theme: bootSettings.theme }).catch(function () {});
     });
 
     var emailToggle = document.getElementById("settings-email-toggle");
@@ -719,37 +846,148 @@ renderGroupList();
     var joinError = document.getElementById("server-join-error");
     var pendingTemplate = "own";
 
+    var serverTip = null;
+
+    function showServerTip(button, name) {
+        if (!serverTip) {
+            serverTip = document.createElement("div");
+            serverTip.className = "server-tip";
+            serverTip.setAttribute("role", "tooltip");
+            serverTip.hidden = true;
+            document.body.appendChild(serverTip);
+        }
+        serverTip.textContent = name;
+        serverTip.hidden = false;
+        var rect = button.getBoundingClientRect();
+        serverTip.style.left = Math.round(rect.right + 14) + "px";
+        serverTip.style.top = Math.round(rect.top + rect.height / 2) + "px";
+    }
+
+    function hideServerTip() {
+        if (serverTip) serverTip.hidden = true;
+    }
+
+    function paintBadge(button, count) {
+        var badge = button.querySelector(".server-badge");
+        if (!badge) return;
+        var value = Number(count) || 0;
+        badge.textContent = value > 99 ? "99+" : String(value);
+        badge.hidden = value <= 0;
+    }
+
+    window.discodeSetServerMentions = function (serverId, count) {
+        var chips = list.querySelectorAll(".server-chip[data-id=\"" + String(serverId) + "\"]");
+        for (var i = 0; i < chips.length; i++) paintBadge(chips[i], count);
+    };
+
+    document.addEventListener("discode-server-mentions", function (event) {
+        var detail = event.detail || {};
+        if (detail.serverId == null) return;
+        window.discodeSetServerMentions(detail.serverId, detail.count);
+    });
+
     function addChip(server) {
         var button = chip.content.firstElementChild.cloneNode(true);
+        button._server = server;
         var name = server && server.name ? server.name : "Server";
-        button.textContent = name.trim().charAt(0).toUpperCase();
-        button.title = name;
+        if (server && server.iconUrl) {
+            var face = document.createElement("img");
+            face.alt = "";
+            face.src = server.iconUrl;
+            face.className = "server-chip-icon";
+            button.appendChild(face);
+        } else {
+            button.textContent = name.trim().charAt(0).toUpperCase();
+        }
         button.setAttribute("aria-label", name);
         if (server && server.id != null) button.setAttribute("data-id", server.id);
+        var badge = document.createElement("span");
+        badge.className = "server-badge";
+        button.appendChild(badge);
+        paintBadge(button, server && server.mentionCount);
+        button.addEventListener("mouseenter", function () { showServerTip(button, name); });
+        button.addEventListener("focus", function () { showServerTip(button, name); });
+        button.addEventListener("mouseleave", hideServerTip);
+        button.addEventListener("contextmenu", hideServerTip);
+        button.addEventListener("blur", hideServerTip);
         var current = "";
-        if (window.location.pathname.indexOf("server.html") !== -1) {
+        if (window.location.pathname.toLowerCase().indexOf("/server") === 0) {
             current = new URLSearchParams(window.location.search).get("id") || "";
         }
         if (current && server && String(server.id) === String(current)) button.classList.add("on");
         button.addEventListener("click", function () {
+            hideServerTip();
             var id = button.getAttribute("data-id");
             if (!id) return;
-            if (window.discodeGo) window.discodeGo("./server.html?id=" + encodeURIComponent(id));
-            else window.location.href = "./server.html?id=" + encodeURIComponent(id);
+            if (window.discodeGo) window.discodeGo("/Server/Index?id=" + encodeURIComponent(id));
+            else window.location.href = "/Server/Index?id=" + encodeURIComponent(id);
         });
         list.appendChild(button);
     }
 
+    function token() {
+        var field = document.querySelector("input[name='__RequestVerificationToken']");
+        return field ? field.value : "";
+    }
+
+    function sendServer(url, body) {
+        return fetch(url, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "RequestVerificationToken": token(), "X-Requested-With": "XMLHttpRequest" },
+            body: JSON.stringify(body)
+        }).then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (data) {
+                if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Something went wrong.");
+                return data;
+            });
+        });
+    }
+
+    function showError(box, message) {
+        if (!box) return;
+        box.textContent = message;
+        box.hidden = false;
+    }
+
+    function openServer(server) {
+        var url = "/Server/Index?id=" + encodeURIComponent(server.id);
+        if (window.discodeGo) window.discodeGo(url);
+        else window.location.href = url;
+    }
+
+    window.discodeMoveServer = function (id, where) {
+        var ids = [].map.call(list.children, function (child) { return child._server ? child._server.id : null; }).filter(function (value) { return value !== null; });
+        var at = ids.indexOf(id);
+        if (at === -1) return;
+        ids.splice(at, 1);
+        if (where === "top") ids.unshift(id);
+        else if (where === "bottom") ids.push(id);
+        else if (where === "up") ids.splice(Math.max(0, at - 1), 0, id);
+        else ids.splice(Math.min(ids.length, at + 1), 0, id);
+        sendServer("/Server/Reorder", { serverIds: ids }).then(loadServers).catch(loadServers);
+    };
+
+    window.discodeReloadServers = function () {
+        loadServers();
+    };
+
     function loadServers() {
-        fetch("/api/servers").then(function (response) {
+        fetch("/Server/List", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
             if (!response.ok) throw new Error("servers");
             return response.json();
         }).then(function (servers) {
             while (list.firstChild) list.removeChild(list.firstChild);
+            window.discodeServerPrefs = {};
+            (servers || []).forEach(function (server) {
+                window.discodeServerPrefs[server.id] = { muted: !!server.muted, notify: server.notificationLevel || "mentions" };
+            });
             if (!servers || !servers.length) return;
             servers.forEach(addChip);
         }).catch(function () {});
     }
+
+    document.addEventListener("discode-servers-changed", loadServers);
 
     function showStep(step) {
         pick.hidden = step !== "pick";
@@ -792,50 +1030,32 @@ renderGroupList();
     document.getElementById("server-create-done").addEventListener("click", function () {
         var name = nameInput.value.trim();
         if (!name) {
-            if (createError) createError.hidden = false;
+            showError(createError, "Enter a server name.");
             return;
         }
-        fetch("/api/servers", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: name, template: pendingTemplate })
-        }).then(function (response) {
-            if (!response.ok) throw new Error("create");
-            return response.json();
-        }).then(function (server) {
-            addChip(server);
+        sendServer("/Server/Create", { name: name }).then(function (server) {
             closeModal();
-        }).catch(function () {
-            if (createError) createError.hidden = false;
+            loadServers();
+            openServer(server);
+        }).catch(function (error) {
+            showError(createError, error.message);
         });
     });
     document.getElementById("server-join-done").addEventListener("click", function () {
         var invite = inviteInput.value.trim();
         if (!invite) {
-            if (joinError) joinError.hidden = false;
+            showError(joinError, "Enter an invite link.");
             return;
         }
-        fetch("/api/servers/join", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ invite: invite })
-        }).then(function (response) {
-            if (!response.ok) throw new Error("join");
-            return response.json();
-        }).then(function (server) {
-            addChip(server);
+        sendServer("/Server/Join", { invite: invite }).then(function (server) {
             closeModal();
-        }).catch(function () {
-            if (joinError) joinError.hidden = false;
+            loadServers();
+            openServer(server);
+        }).catch(function (error) {
+            showError(joinError, error.message);
         });
     });
 
-    var logoutBtn = document.getElementById("me-logout");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", function () {
-            if (confirm("Are you sure you want to log out?")) {
-                window.location.href = "./login.html";
-            }
-        });
-    }
 })();
+
+fetchPins();

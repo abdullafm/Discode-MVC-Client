@@ -1,0 +1,105 @@
+@model AdminUserListVM
+@{
+    var tabs = new[]
+    {
+        (Key: "", Label: "All members"),
+        (Key: "admins", Label: "Admins"),
+        (Key: "superadmins", Label: "SuperAdmins"),
+        (Key: "banned", Label: "Banned members")
+    };
+    var current = tabs.First(x => x.Key == Model.Filter);
+    ViewData["Title"] = Model.Filter == "" ? "Members" : current.Label;
+    ViewData["Section"] = "users";
+}
+<div class="adm-tabs">
+    @foreach (var tab in tabs)
+    {
+        <a class="@(tab.Key == Model.Filter ? "on" : "")" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-filter="@tab.Key">@tab.Label</a>
+    }
+</div>
+
+<div class="adm-list-head">
+    <form method="get" class="adm-search" asp-area="Admin" asp-controller="Users" asp-action="Index">
+        <input type="hidden" name="filter" value="@Model.Filter">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" name="search" value="@Model.Search" placeholder="Search members by username, name or email" autocomplete="off">
+    </form>
+    <span class="adm-count">@Model.Total @(Model.Filter == "" ? ViewData["Title"]?.ToString()?.ToLowerInvariant() : current.Label.ToLowerInvariant())</span>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Error</p>
+}
+
+<div class="adm-table-wrap">
+    <table class="adm-table">
+        <thead>
+            <tr>
+                <th>Member</th>
+                <th>Email</th>
+                <th>Roles</th>
+                <th>Status</th>
+                <th>Servers</th>
+                <th>Bans</th>
+                <th>Joined</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model.Items)
+            {
+                <tr>
+                    <td>
+                        <div class="adm-person">
+                            <img src="@(string.IsNullOrWhiteSpace(user.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : user.AvatarUrl)" alt="">
+                            <span><strong><a class="adm-link" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@user.Id">@(string.IsNullOrWhiteSpace(user.DisplayName) ? user.UserName : user.DisplayName)</a></strong><small>@user.UserName</small></span>
+                        </div>
+                    </td>
+                    <td class="adm-muted">@user.Email</td>
+                    <td>
+                        @foreach (var role in user.Roles)
+                        {
+                            <span class="adm-chip role-@role.ToLowerInvariant()">@role</span>
+                        }
+                    </td>
+                    <td>
+                        @if (user.IsDeleted)
+                        {
+                            <span class="adm-chip is-banned">Deleted</span>
+                        }
+                        else
+                        {
+                            @if (user.IsBanned)
+                            {
+                                <span class="adm-chip is-banned">Banned</span>
+                            }
+                            @if (user.TimedOut)
+                            {
+                                <span class="adm-chip is-timeout">Timed out</span>
+                            }
+                            <span class="adm-chip @(user.IsPublic ? "is-public" : "is-private")">@(user.IsPublic ? "Public" : "Private")</span>
+                        }
+                    </td>
+                    <td>@user.ServersJoined</td>
+                    <td><span class="@(user.BansReceived > 0 ? "adm-bad" : "adm-muted")">@user.BansReceived</span></td>
+                    <td class="adm-muted">@user.CreatedAt.ToString("yyyy-MM-dd")</td>
+                    <td class="adm-actions"><a class="adm-btn is-small" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@user.Id">Detail <i class="fa-solid fa-arrow-right"></i></a></td>
+                </tr>
+            }
+            @if (Model.Items.Count == 0)
+            {
+                <tr><td colspan="8" class="adm-empty">No members found.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="adm-pager">
+        <a class="@(Model.Page <= 1 ? "is-off" : "")" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-filter="@Model.Filter" asp-route-search="@Model.Search" asp-route-page="@(Model.Page - 1)"><i class="fa-solid fa-chevron-left"></i></a>
+        <span>Page @Model.Page / @Model.TotalPages</span>
+        <a class="@(Model.Page >= Model.TotalPages ? "is-off" : "")" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-filter="@Model.Filter" asp-route-search="@Model.Search" asp-route-page="@(Model.Page + 1)"><i class="fa-solid fa-chevron-right"></i></a>
+    </div>
+}

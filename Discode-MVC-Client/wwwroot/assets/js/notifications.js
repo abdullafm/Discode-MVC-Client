@@ -62,7 +62,7 @@
         var item = event.target.closest(".notify-item");
         if (item && !event.target.closest("a, button, form")) {
             var link = item.querySelector("a.notify-content");
-            if (link) window.location.href = link.href;
+            if (link) window.discodeGo(link.href);
         }
     });
 

@@ -104,7 +104,9 @@
     }
 
     function applyDisplay(name) {
+        var viewingOwn = isMe(viewing);
         ownName = name;
+        if (viewingOwn) viewing = name;
         var nodes = document.querySelectorAll(".me-display");
         for (var i = 0; i < nodes.length; i++) nodes[i].textContent = name;
         var input = document.getElementById("me-display-input");
@@ -166,16 +168,6 @@
         profile.classList.remove("d-none");
     });
 
-    var logoutBtn = document.getElementById("me-logout");
-    if (logoutBtn) {
-        logoutBtn.addEventListener("click", function () {
-            if (confirm("Are you sure you want to log out?")) {
-                var form = document.getElementById("logout-form");
-                if (form) form.submit();
-                else window.location.href = "/Account/Login";
-            }
-        });
-    }
 
     var settingsMe = document.querySelector(".settings-me");
     if (settingsMe) {
@@ -202,8 +194,96 @@
                 panel.classList.toggle("d-none", panel.id !== "me-" + tab);
             });
             if (tab === "board") renderMyPosts();
+            if (tab === "friends") renderFriends();
+            if (tab === "reposts") renderReposts();
         });
     });
+
+    function renderReposts() {
+        var box = document.getElementById("me-reposts-list");
+        var empty = document.getElementById("me-reposts-empty");
+        if (!box) return;
+        var name = viewing;
+        var target = isMe(viewing) ? meHandle() : viewing;
+        while (box.firstChild) box.removeChild(box.firstChild);
+        if (empty) empty.hidden = true;
+        fetch("/Home/UserReposts?name=" + encodeURIComponent(target), {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        }).then(function (response) {
+            return response.ok ? response.json() : [];
+        }).then(function (posts) {
+            if (viewing !== name) return;
+            posts = Array.isArray(posts) ? posts : [];
+            if (empty) empty.hidden = posts.length > 0;
+            var tpl = document.getElementById("me-post");
+            posts.forEach(function (post) {
+                if (!tpl) return;
+                var card = tpl.content.firstElementChild.cloneNode(true);
+                var image = card.querySelector("img");
+                var text = card.querySelector("p");
+                var when = card.querySelector("time");
+                if (image) {
+                    if (post.imageUrl && window.discodeIsVideo(post.imageUrl)) {
+                        image.hidden = true;
+                        image.parentNode.insertBefore(window.discodeReel(post.imageUrl), image);
+                    } else {
+                        image.hidden = !post.imageUrl;
+                        if (post.imageUrl) image.src = post.imageUrl;
+                    }
+                }
+                if (text) text.textContent = (post.authorDisplayName || post.authorUserName) + ": " + (post.text || "");
+                if (when) when.textContent = formatJoined(postTime(post.createdAt));
+                box.appendChild(card);
+            });
+        }).catch(function () {});
+    }
+
+    function renderFriends() {
+        var list = document.getElementById("me-friends-list");
+        var empty = document.getElementById("me-friends-empty");
+        var privateNote = document.getElementById("me-friends-private");
+        if (!list) return;
+        var name = viewing;
+        var target = isMe(viewing) ? meHandle() : viewing;
+        list.textContent = "";
+        if (empty) empty.hidden = true;
+        if (privateNote) privateNote.hidden = true;
+        fetch("/Home/UserFriends?name=" + encodeURIComponent(target), {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+        }).then(function (response) {
+            if (!response.ok) {
+                if (privateNote && viewing === name) privateNote.hidden = false;
+                return null;
+            }
+            return response.json();
+        }).then(function (friends) {
+            if (!friends || viewing !== name) return;
+            if (empty) empty.hidden = friends.length > 0;
+            friends.forEach(function (friend) {
+                var row = document.createElement("button");
+                row.type = "button";
+                row.className = "me-friend";
+                var face = document.createElement("img");
+                face.alt = "";
+                face.src = friend.avatarUrl || DEFAULT_AVATAR;
+                var text = document.createElement("span");
+                var title = document.createElement("strong");
+                title.textContent = friend.name;
+                var handle = document.createElement("small");
+                handle.textContent = friend.userName;
+                text.appendChild(title);
+                text.appendChild(handle);
+                row.appendChild(face);
+                row.appendChild(text);
+                row.addEventListener("click", function () {
+                    window.openUserProfile(friend.userName, friend.avatarUrl || "");
+                });
+                list.appendChild(row);
+            });
+        }).catch(function () {});
+    }
 
     function closeProfile() {
         if (profile.classList.contains("d-none")) return;
@@ -478,7 +558,7 @@
 
     function applyOwnPhoto(src) {
         ownPhoto = src;
-        var faces = document.querySelectorAll("#user-panel .avatar img, #me-pop .me-avatar img, #me-profile .me-profile-avatar img, .set-status-person > img, .settings-me img");
+        var faces = document.querySelectorAll("#user-panel .avatar img, #server-voice-face, #call-avatar, .call-phone-faces img, #me-pop .me-avatar img, #me-profile .me-profile-avatar img, .set-status-person > img, .settings-me img, #dm-messages .dm-msg[data-mine=\"1\"] .dm-msg-avatar");
         for (var i = 0; i < faces.length; i++) faces[i].src = src;
     }
 
@@ -524,7 +604,7 @@
                             savedAvatarUrl = data.avatarUrl;
                             var hidden = document.getElementById("Update_AvatarUrl");
                             if (hidden) hidden.value = data.avatarUrl;
-                            applyOwnPhoto(data.avatarUrl + "?v=" + Date.now());
+                            applyOwnPhoto(data.avatarUrl);
                             saveProfile();
                         }).catch(function () {
                             showProfileError("Could not save the photo.");
@@ -617,16 +697,25 @@
     }
 
     document.addEventListener("discode-posts-changed", function () {
-        if (!profile.classList.contains("d-none")) renderMyPosts();
+        if (profile.classList.contains("d-none")) return;
+        renderMyPosts();
+        var repostsTab = profile.querySelector(".me-tabs button[data-tab='reposts']");
+        if (repostsTab && repostsTab.classList.contains("on")) renderReposts();
     });
 
     document.addEventListener("discode-user-presence", function (event) {
         if (profile.classList.contains("d-none") || !profile.classList.contains("visitor-view")) return;
-        if (event.detail && event.detail.userId === viewingUserId) paintVisitorStatus(event.detail.status);
+        if (!event.detail || event.detail.userId !== viewingUserId) return;
+        paintVisitorStatus(event.detail.status);
+        loadVisitor(viewing);
     });
 
     document.addEventListener("discode-friends-changed", function () {
-        if (profile.classList.contains("d-none") || !profile.classList.contains("visitor-view")) return;
+        if (profile.classList.contains("d-none")) return;
+        if (!profile.classList.contains("visitor-view")) {
+            if (friendsPanelOpen()) renderFriends();
+            return;
+        }
         loadVisitor(viewing);
     });
 
@@ -647,6 +736,21 @@
             note.textContent = on ? name + "'s profile is private, so some info is hidden. Add them as a friend to see more." : "";
         }
         if (board) board.hidden = !on;
+        var repostsTab = profile.querySelector(".me-tabs button[data-tab='reposts']");
+        if (repostsTab) repostsTab.hidden = on;
+        var friendsTab = profile.querySelector(".me-tabs button[data-tab='friends']");
+        if (friendsTab) {
+            friendsTab.hidden = on;
+            if (on && (friendsTab.classList.contains("on") || (repostsTab && repostsTab.classList.contains("on")))) {
+                var boardTab = profile.querySelector(".me-tabs button[data-tab='board']");
+                if (boardTab) boardTab.click();
+            }
+        }
+    }
+
+    function friendsPanelOpen() {
+        var panel = document.getElementById("me-friends");
+        return !!panel && !panel.classList.contains("d-none");
     }
 
     function setRequestCard(on, requestId, name) {
@@ -700,6 +804,7 @@
         if (since && joined) since.textContent = joined;
         paintPerson({ pronouns: data.pronouns || "", bio: data.bio || "", status: data.customStatus || "", emoji: "" });
         setPrivateView(!!data.isPrivate, displayName);
+        if (!data.isPrivate && friendsPanelOpen()) renderFriends();
         var requestId = data.relation === "pending-received" ? (data.requestId || pendingRequestId(data.userName)) : 0;
         var incoming = !!requestId;
         setRequestCard(incoming, requestId, displayName);
@@ -758,6 +863,11 @@
             }
             var viewPronouns = document.getElementById("me-view-pronouns");
             if (viewPronouns) viewPronouns.hidden = true;
+            var viewBio = document.getElementById("me-view-bio");
+            if (viewBio) {
+                viewBio.hidden = true;
+                viewBio.textContent = "";
+            }
             var bioBlock = profile.querySelector(".me-bio-block");
             if (bioBlock) bioBlock.classList.remove("has-text");
             paintPop();
@@ -828,8 +938,13 @@
                 var text = card.querySelector("p");
                 var when = card.querySelector("time");
                 if (image) {
-                    image.hidden = !post.imageUrl;
-                    if (post.imageUrl) image.src = post.imageUrl;
+                    if (post.imageUrl && window.discodeIsVideo(post.imageUrl)) {
+                        image.hidden = true;
+                        image.parentNode.insertBefore(window.discodeReel(post.imageUrl), image);
+                    } else {
+                        image.hidden = !post.imageUrl;
+                        if (post.imageUrl) image.src = post.imageUrl;
+                    }
                 }
                 if (text) text.textContent = post.text || "";
                 if (when) when.textContent = formatJoined(postTime(post.createdAt));
@@ -972,10 +1087,135 @@
         var since = document.getElementById("me-since");
         if (since && !self) showJoined(viewing);
         renderMyPosts();
+        profile.querySelectorAll(".me-tabs button").forEach(function (item) {
+            item.classList.toggle("on", item.getAttribute("data-tab") === "board");
+        });
+        profile.querySelectorAll(".me-panel").forEach(function (panel) {
+            panel.classList.toggle("d-none", panel.id !== "me-board");
+        });
         profile.classList.remove("d-none");
     };
 
     window.addEventListener("resize", function () {
         if (!pop.classList.contains("d-none")) place();
     });
+})();
+
+(function () {
+    var control = document.getElementById("account-public");
+    if (!control || control.querySelector(".vis-opt")) return;
+
+    function option(value, icon, label) {
+        var pick = document.createElement("span");
+        pick.className = "vis-opt vis-" + value;
+        pick.setAttribute("data-v", value);
+        var glyph = document.createElement("i");
+        glyph.className = "fa-solid " + icon;
+        var text = document.createElement("span");
+        text.textContent = label;
+        pick.appendChild(glyph);
+        pick.appendChild(text);
+        return pick;
+    }
+
+    control.appendChild(option("public", "fa-earth-americas", "Public"));
+    control.appendChild(option("private", "fa-lock", "Private"));
+
+    var row = control.closest(".notify-row");
+    var title = row ? row.querySelector("strong") : null;
+    var note = row ? row.querySelector("p") : null;
+    if (title) {
+        title.removeAttribute("data-i18n");
+        title.textContent = "Account visibility";
+    }
+
+    function paint() {
+        var isPublic = control.classList.contains("on");
+        control.setAttribute("data-state", isPublic ? "public" : "private");
+        control.setAttribute("aria-label", "Account visibility: " + (isPublic ? "Public" : "Private"));
+        if (note) note.textContent = isPublic
+            ? "Anyone can find you and see your bio, status and posts."
+            : "Only your friends can see your bio, status and posts.";
+    }
+
+    control.addEventListener("click", function (event) {
+        var pick = event.target.closest(".vis-opt");
+        if (!pick) return;
+        var wantPublic = pick.getAttribute("data-v") === "public";
+        if (wantPublic === control.classList.contains("on")) event.stopImmediatePropagation();
+    }, true);
+
+    document.addEventListener("discode-privacy", paint);
+    paint();
+})();
+
+(function () {
+    var profile = document.getElementById("me-profile");
+    var original = window.openUserProfile;
+    if (!profile || typeof original !== "function" || original.discodeHistory) return;
+
+    var trail = [];
+    var at = -1;
+
+    function makeButton(id, icon, label) {
+        var button = document.createElement("button");
+        button.type = "button";
+        button.id = id;
+        button.className = "me-profile-nav";
+        button.setAttribute("aria-label", label);
+        button.title = label;
+        button.hidden = true;
+        button.innerHTML = '<i class="fa-solid ' + icon + '"></i>';
+        profile.querySelector(".me-profile-card").appendChild(button);
+        return button;
+    }
+
+    var back = makeButton("me-profile-back", "fa-arrow-left", "Back");
+    var forward = makeButton("me-profile-forward", "fa-arrow-right", "Forward");
+
+    function paint() {
+        var show = trail.length > 1;
+        back.hidden = !show;
+        forward.hidden = !show;
+        back.disabled = at <= 0;
+        forward.disabled = at >= trail.length - 1;
+    }
+
+    function wrapped(name, photo) {
+        var open = !profile.classList.contains("d-none");
+        if (!open) {
+            trail = [];
+            at = -1;
+        }
+        var current = trail[at];
+        var same = current && current.name === name;
+        if (!same) {
+            trail = trail.slice(0, at + 1);
+            trail.push({ name: name, photo: photo });
+            at = trail.length - 1;
+        }
+        original(name, photo);
+        paint();
+    }
+    wrapped.discodeHistory = true;
+    window.openUserProfile = wrapped;
+
+    function go(step) {
+        var next = at + step;
+        if (next < 0 || next >= trail.length) return;
+        at = next;
+        original(trail[at].name, trail[at].photo);
+        paint();
+    }
+
+    back.addEventListener("click", function () { go(-1); });
+    forward.addEventListener("click", function () { go(1); });
+
+    new MutationObserver(function () {
+        if (profile.classList.contains("d-none")) {
+            trail = [];
+            at = -1;
+            paint();
+        }
+    }).observe(profile, { attributes: true, attributeFilter: ["class"] });
 })();

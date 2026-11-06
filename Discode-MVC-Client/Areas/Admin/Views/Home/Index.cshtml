@@ -1,0 +1,57 @@
+@model AdminOverviewVM
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["Section"] = "overview";
+}
+<div class="stat-grid">
+    <a class="stat-card" asp-area="Admin" asp-controller="Users" asp-action="Index" data-panel="@Url.Action("Index", "Users", new { area = "Admin" })">
+        <div class="stat-head"><span>Members</span><i class="stat-icon tone-blue fa-solid fa-users"></i></div>
+        <strong data-stat="users">@Model.Users.Total.ToString("N0")</strong>
+        <small class="tone-green-text" data-stat="users-note">+@Model.Users.NewLast7Days this week</small>
+    </a>
+
+    <a class="stat-card" asp-area="Admin" asp-controller="Servers" asp-action="Index" data-panel="@Url.Action("Index", "Servers", new { area = "Admin" })">
+        <div class="stat-head"><span>Servers</span><i class="stat-icon tone-green fa-solid fa-server"></i></div>
+        <strong data-stat="servers">@Model.Servers.Total.ToString("N0")</strong>
+        <small data-stat="servers-note">@Model.Servers.Public public &middot; @Model.Servers.Private private</small>
+    </a>
+
+    <div class="stat-card stat-staff" id="stat-staff" data-admins="@Model.Users.Admins" data-superadmins="@Model.Users.SuperAdmins"
+         data-admins-url="@Url.Action("Index", "Users", new { area = "Admin", filter = "admins" })"
+         data-superadmins-url="@Url.Action("Index", "Users", new { area = "Admin", filter = "superadmins" })">
+        <div class="stat-head">
+            <div class="adm-picker adm-picker-mini">
+                <button type="button" class="adm-picker-trigger" aria-haspopup="listbox" aria-expanded="false">
+                    <span id="stat-staff-label">Admins</span>
+                    <i class="fa-solid fa-chevron-down adm-picker-arrow"></i>
+                </button>
+                <ul class="adm-picker-menu" role="listbox" hidden>
+                    <li role="option"><a class="on" href="#" data-staff="admins"><span>Admins</span><i class="fa-solid fa-check"></i></a></li>
+                    <li role="option"><a href="#" data-staff="superadmins"><span>SuperAdmins</span><i class="fa-solid fa-check"></i></a></li>
+                </ul>
+            </div>
+            <i class="stat-icon tone-purple fa-solid fa-user-shield"></i>
+        </div>
+        <strong id="stat-staff-count">@Model.Users.Admins.ToString("N0")</strong>
+    </div>
+
+    <a class="stat-card" asp-area="Admin" asp-controller="Users" asp-action="Index" asp-route-filter="banned" data-panel="@Url.Action("Index", "Users", new { area = "Admin", filter = "banned" })">
+        <div class="stat-head"><span>Banned members</span><i class="stat-icon tone-red fa-solid fa-user-xmark"></i></div>
+        <strong data-stat="banned-users">@Model.Bans.UsersBanned.ToString("N0")</strong>
+        <small data-stat="banned-users-note">@Model.Bans.TotalBans server bans in total</small>
+    </a>
+
+    <a class="stat-card" asp-area="Admin" asp-controller="Servers" asp-action="Index" asp-route-filter="banned" data-panel="@Url.Action("Index", "Servers", new { area = "Admin", filter = "banned" })">
+        <div class="stat-head"><span>Banned servers</span><i class="stat-icon tone-amber fa-solid fa-ban"></i></div>
+        <strong data-stat="banned-servers">@Model.Servers.Banned.ToString("N0")</strong>
+        <small>Blocked by an admin</small>
+    </a>
+
+    <a class="stat-card" asp-area="Admin" asp-controller="Reports" asp-action="Index" data-panel="@Url.Action("Index", "Reports", new { area = "Admin" })">
+        <div class="stat-head"><span>Reports</span><i class="stat-icon tone-red fa-solid fa-flag"></i></div>
+        <strong data-stat="reports">@Model.Reports.Total.ToString("N0")</strong>
+        <small class="@(Model.Reports.Open > 0 ? "tone-red-text" : "")" data-stat="reports-note">@Model.Reports.Open waiting review</small>
+    </a>
+</div>
+
+<div id="stat-panel" class="stat-panel" hidden></div>

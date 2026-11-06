@@ -9,9 +9,24 @@ function startDmPage() {
     }, 2000);
     if (!document.getElementById("dm-chat")) return;
     showDmPage();
+    var syncCall = function () {
+        var current = window.discodeCalls && window.discodeCalls.current();
+        if (!current || !dmPartner || current.other.userName !== dmPartner.userName) return;
+        dmShowCallStage();
+        dmSetCallStatus(current);
+    };
+    syncCall();
+    if (window.discodeCalls) window.discodeCalls.ready(syncCall);
     var call = new URLSearchParams(window.location.search).get("call");
-    if (call === "voice" || call === "video") startDmCall();
-    if (call === "video" && window.openCallCamera) window.openCallCamera();
+    if (call === "voice" || call === "video") {
+        var video = call === "video";
+        var begin = function () {
+            startDmCall(video);
+            if (video && window.openCallCamera) window.openCallCamera();
+        };
+        if (window.discodeCalls) window.discodeCalls.ready(begin);
+        else begin();
+    }
 }
 
 var x = new Audio("/assets/css/audio/discordmute_IZNcLx2.mp3");
@@ -60,7 +75,7 @@ function openToggle() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    updateMicHeadphoneIcon();
+    if (typeof updateMicHeadphoneIcon === "function") updateMicHeadphoneIcon();
 });
 
 function cloneTpl(id) {
@@ -71,6 +86,22 @@ function cloneTpl(id) {
 
 var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
 var dmPartner = null;
+
+document.addEventListener("error", function (event) {
+    var image = event.target;
+    if (image && image.tagName === "IMG" && image.parentNode && image.parentNode.classList && image.parentNode.classList.contains("dm-story-reply")) {
+        image.parentNode.classList.add("is-gone");
+    }
+}, true);
+
+// messages drawn by the server: their story thumbnail may have failed before this script ran, so look at the ones already finished
+function markGoneStoryThumbs() {
+    [].forEach.call(document.querySelectorAll(".dm-story-reply img"), function (image) {
+        if (image.complete && image.naturalWidth === 0 && image.parentNode) image.parentNode.classList.add("is-gone");
+    });
+}
+markGoneStoryThumbs();
+window.addEventListener("load", markGoneStoryThumbs);
 
 function dmToken() {
     var input = document.querySelector("input[name='__RequestVerificationToken']");
@@ -120,11 +151,179 @@ function dayLabel(stamp) {
     return new Date(stamp).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
 }
 
+function messageTools(mine) {
+    var tools = document.createElement("div");
+    tools.className = "dm-msg-tools";
+    tools.setAttribute("role", "toolbar");
+    tools.setAttribute("aria-label", "Message actions");
+    tools.innerHTML =
+        '<button type="button" class="dm-react" data-act="react" aria-label="React with heart">\u2764\uFE0F</button>' +
+        '<button type="button" class="dm-react" data-act="react" aria-label="React with 100">\uD83D\uDCAF</button>' +
+        '<button type="button" class="dm-react" data-act="react" aria-label="React with laughing">\uD83D\uDE06</button>' +
+        '<span class="dm-tools-sep"></span>' +
+        '<button type="button" class="emoji-open" data-act="picker" aria-label="Add reaction"><i class="fa-regular fa-face-smile"></i></button>' +
+        (mine
+            ? '<button type="button" data-act="edit" aria-label="Edit"><i class="fa-solid fa-pen"></i></button>'
+            : '<button type="button" data-act="reply" aria-label="Reply"><i class="fa-solid fa-reply"></i></button>') +
+        '<button type="button" data-act="forward" aria-label="Forward"><i class="fa-solid fa-share"></i></button>' +
+        (mine ? '<button type="button" class="dm-tool-delete" data-act="delete" aria-label="Delete"><i class="fa-solid fa-trash-can"></i></button>' : '') +
+        '<button type="button" data-act="more" aria-label="More"><i class="fa-solid fa-ellipsis"></i></button>';
+    return tools;
+}
+
+function dmReplyHeader(reply) {
+    var header = document.createElement("div");
+    header.className = "dm-msg-reply";
+    header.setAttribute("data-reply-id", String(reply.messageId));
+    header.setAttribute("role", "button");
+    header.setAttribute("tabindex", "0");
+    var face = document.createElement("img");
+    face.className = "dm-reply-avatar";
+    face.alt = "";
+    face.src = reply.senderAvatarUrl || DEFAULT_AVATAR;
+    var who = document.createElement("strong");
+    who.textContent = reply.senderDisplayName || reply.senderUserName;
+    var text = document.createElement("span");
+    text.className = "dm-reply-text";
+    text.textContent = reply.text;
+    header.appendChild(face);
+    header.appendChild(who);
+    header.appendChild(text);
+    return header;
+}
+
+function dmEditedLabel() {
+    var label = document.createElement("span");
+    label.className = "dm-msg-edited";
+    label.textContent = "(edited)";
+    return label;
+}
+
+function dmLiveCard(message) {
+    var card = document.createElement("a");
+    card.className = "dm-live-card";
+    card.href = "/Social/Index?live=" + message.liveStreamId;
+    var thumb = document.createElement("span");
+    thumb.className = "dm-live-thumb";
+    if (message.liveImageUrl) {
+        var image = document.createElement("img");
+        image.alt = "";
+        image.src = message.liveImageUrl;
+        thumb.appendChild(image);
+    } else {
+        thumb.innerHTML = '<i class="fa-solid fa-tower-broadcast"></i>';
+    }
+    var badge = document.createElement("em");
+    badge.textContent = "LIVE";
+    thumb.appendChild(badge);
+    var info = document.createElement("span");
+    info.className = "dm-live-info";
+    var label = document.createElement("small");
+    label.textContent = message.mine ? "You shared a live stream" : "Shared a live stream with you";
+    var title = document.createElement("strong");
+    title.textContent = message.liveTitle || "";
+    var host = document.createElement("span");
+    host.textContent = message.liveHostName || "";
+    info.appendChild(label);
+    info.appendChild(title);
+    info.appendChild(host);
+    var watch = document.createElement("span");
+    watch.className = "dm-live-watch";
+    watch.textContent = "Watch";
+    card.appendChild(thumb);
+    card.appendChild(info);
+    card.appendChild(watch);
+    return card;
+}
+
 function messageNodes(text) {
     var holder = document.createElement("div");
     holder.className = "dm-msg-text";
     nodesForText(text).forEach(function (node) { holder.appendChild(node); });
     return holder;
+}
+
+function dmCallUnit(value, unit) {
+    return value + " " + unit + (value === 1 ? "" : "s");
+}
+
+function dmCallDuration(seconds) {
+    var total = Math.max(1, Math.round(seconds));
+    var hours = Math.floor(total / 3600);
+    var minutes = Math.floor((total % 3600) / 60);
+    var rest = total % 60;
+    var parts = [];
+    if (hours) parts.push(dmCallUnit(hours, "hour"));
+    if (minutes) parts.push(dmCallUnit(minutes, "minute"));
+    if (rest && !hours) parts.push(dmCallUnit(rest, "second"));
+    return parts.join(" ");
+}
+
+var dmOngoingCall = 0;
+
+function dmRefreshJoinLinks() {
+    if (!dmPartner) return;
+    var calls = window.discodeCalls;
+    var current = calls && calls.current();
+    var inCall = !!current && current.other.userName === dmPartner.userName && current.joined !== false;
+    var rows = document.querySelectorAll("#dm-messages .dm-call-msg");
+    for (var i = 0; i < rows.length; i++) {
+        var wanted = dmOngoingCall > 0 && Number(rows[i].getAttribute("data-id")) === dmOngoingCall && !inCall;
+        var existing = rows[i].querySelector(".dm-call-join-wrap");
+        if (wanted && !existing) {
+            var wrap = document.createElement("span");
+            wrap.className = "dm-call-join-wrap";
+            wrap.appendChild(document.createTextNode(" \u2014 "));
+            var link = document.createElement("a");
+            link.className = "dm-call-join";
+            link.setAttribute("href", "#");
+            link.textContent = "Join call";
+            wrap.appendChild(link);
+            rows[i].querySelector(".dm-call-text").appendChild(wrap);
+        } else if (!wanted && existing) {
+            existing.remove();
+        }
+    }
+}
+
+function dmFillCallRow(row, message) {
+    var missed = !!message.callMissed && !message.mine;
+    row.classList.toggle("is-missed", missed);
+    var text = row.querySelector(".dm-call-text");
+    text.textContent = "";
+    var who = document.createElement("strong");
+    who.textContent = message.senderDisplayName || message.senderUserName;
+    if (missed) {
+        text.appendChild(document.createTextNode("You missed a call from "));
+        text.appendChild(who);
+        text.appendChild(document.createTextNode("."));
+        return;
+    }
+    text.appendChild(who);
+    text.appendChild(document.createTextNode(message.callSeconds == null ? " started a call." : " started a call that lasted " + dmCallDuration(message.callSeconds) + "."));
+    dmRefreshJoinLinks();
+}
+
+function dmBuildCallRow(message, stamp) {
+    var row = document.createElement("div");
+    row.className = "dm-msg dm-call-msg";
+    row.setAttribute("data-id", String(message.id));
+    row.setAttribute("data-public-id", message.publicId || "");
+    row.setAttribute("data-sender", message.senderUserName);
+    row.setAttribute("data-time", String(stamp));
+    row.setAttribute("data-mine", message.mine ? "1" : "0");
+    row.setAttribute("data-pinned", "0");
+    var icon = document.createElement("i");
+    icon.className = "fa-solid fa-phone";
+    var text = document.createElement("span");
+    text.className = "dm-call-text";
+    var when = document.createElement("time");
+    when.textContent = messageTime(stamp);
+    row.appendChild(icon);
+    row.appendChild(text);
+    row.appendChild(when);
+    dmFillCallRow(row, message);
+    return row;
 }
 
 function appendMessage(message, forceScroll) {
@@ -144,14 +343,27 @@ function appendMessage(message, forceScroll) {
         divider.appendChild(label);
         box.appendChild(divider);
     }
-    var compact = !newDay && last && last.getAttribute("data-sender") === message.senderUserName &&
+    if (message.isCall) {
+        dmOngoingCall = message.id;
+        box.appendChild(dmBuildCallRow(message, stamp));
+        dmRefreshJoinLinks();
+        document.getElementById("dm-wave-box").hidden = true;
+        if (forceScroll || message.mine || atBottom) scrollDmToEnd();
+        return;
+    }
+    var compact = !newDay && !message.replyTo && last && !last.classList.contains("dm-call-msg") && last.getAttribute("data-sender") === message.senderUserName &&
         stamp - Number(last.getAttribute("data-time")) < 5 * 60 * 1000 && box.lastElementChild === last;
 
     var row = document.createElement("div");
-    row.className = "dm-msg" + (compact ? " compact" : "");
+    row.className = "dm-msg" + (compact ? " compact" : "") + (message.replyTo ? " has-reply" : "") + (message.undelivered ? " is-undelivered" : "");
     row.setAttribute("data-id", String(message.id));
+    row.setAttribute("data-public-id", message.publicId || "");
     row.setAttribute("data-sender", message.senderUserName);
     row.setAttribute("data-time", String(stamp));
+    row.setAttribute("data-mine", message.mine ? "1" : "0");
+    row.setAttribute("data-pinned", message.pinnedAt ? "1" : "0");
+
+    if (message.replyTo) row.appendChild(dmReplyHeader(message.replyTo));
 
     var face = document.createElement("img");
     face.className = "dm-msg-avatar";
@@ -170,11 +382,78 @@ function appendMessage(message, forceScroll) {
     head.appendChild(who);
     head.appendChild(when);
     body.appendChild(head);
-    body.appendChild(messageNodes(message.text));
+    if (message.forwarded) {
+        var forwarded = document.createElement("div");
+        forwarded.className = "dm-msg-forwarded";
+        forwarded.innerHTML = '<i class="fa-solid fa-share"></i> Forwarded';
+        body.appendChild(forwarded);
+    }
+    if (message.storyId && message.storyImageUrl) {
+        var storyCard = document.createElement("a");
+        storyCard.className = "dm-story-reply";
+        storyCard.href = "/Social/Index?story=" + message.storyId;
+        storyCard.setAttribute("data-story-id", String(message.storyId));
+        var storyImage = document.createElement("img");
+        storyImage.alt = "";
+        storyImage.src = message.storyImageUrl;
+        var storyLabel = document.createElement("span");
+        storyLabel.innerHTML = '<i class="fa-solid fa-clapperboard"></i> ';
+        storyLabel.appendChild(document.createTextNode(message.mine ? "You replied to a story" : "Replied to your story"));
+        storyCard.appendChild(storyImage);
+        storyCard.appendChild(storyLabel);
+        body.appendChild(storyCard);
+    }
+    if (message.liveStreamId) body.appendChild(dmLiveCard(message));
+    var textHolder = messageNodes(message.text);
+    if (message.editedAt) textHolder.appendChild(dmEditedLabel());
+    body.appendChild(textHolder);
+    if (message.attachments && message.attachments.length) body.appendChild(dmBuildAttachments(message.attachments));
+    if (message.isPoll && message.poll) {
+        var pollCard = document.createElement("div");
+        pollCard.className = "dm-poll";
+        body.appendChild(pollCard);
+        dmMountPoll(pollCard, message.poll);
+        row.classList.add("is-poll");
+    }
+    if (message.undelivered) {
+        var failed = document.createElement("div");
+        failed.className = "dm-msg-undelivered";
+        failed.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Your message could not be delivered.';
+        body.appendChild(failed);
+    }
     row.appendChild(body);
+    row.appendChild(messageTools(message.mine));
     box.appendChild(row);
     document.getElementById("dm-wave-box").hidden = true;
     if (forceScroll || message.mine || atBottom) scrollDmToEnd();
+}
+
+var IDLE_NOTE = "It appears you've been by yourself in this call for more than 3 minutes. The bandwidth patrol has asked me to disconnect you to save bandwidth. That stuff doesn't grow on trees!";
+
+function dmShowIdleNote() {
+    var box = document.getElementById("dm-messages");
+    if (!box) return;
+    var note = document.createElement("div");
+    note.className = "dm-system-note";
+    note.textContent = IDLE_NOTE;
+    box.appendChild(note);
+    document.getElementById("dm-wave-box").hidden = true;
+    scrollDmToEnd();
+    setTimeout(function () {
+        if (note.parentNode) note.parentNode.removeChild(note);
+    }, 10000);
+}
+
+function dmCheckIdleNote() {
+    var pending = "";
+    try {
+        pending = sessionStorage.getItem("discode-idle-note") || "";
+    } catch (e) {}
+    if (!pending || !dmPartner || pending !== dmPartner.userName) return;
+    try {
+        sessionStorage.removeItem("discode-idle-note");
+    } catch (e) {}
+    dmShowIdleNote();
 }
 
 function scrollDmToEnd() {
@@ -182,11 +461,27 @@ function scrollDmToEnd() {
     scroller.scrollTop = scroller.scrollHeight;
 }
 
+function dmAutoCall(attempt) {
+    if (window.discodeLive === true && window.discodeCalls) {
+        startDmCall(false);
+        return;
+    }
+    if (attempt < 25) window.setTimeout(function () { dmAutoCall(attempt + 1); }, 300);
+}
+
 function showDmPage() {
     var chat = document.getElementById("dm-chat");
     var userName = chat ? chat.getAttribute("data-user-name") : "";
     if (!userName) return;
     dmPartner = { userName: userName, userId: chat.getAttribute("data-user-id") };
+    dmOngoingCall = Number(chat.getAttribute("data-ongoing-call")) || 0;
+    dmRefreshJoinLinks();
+    dmCheckIdleNote();
+    if (/[?&]call=1(&|$)/.test(location.search)) dmAutoCall(0);
+    document.addEventListener("discode-call-idle", function () {
+        dmCheckIdleNote();
+    });
+    if (window.discodePresence) window.discodePresence.watchProfile(dmPartner.userId);
     window.discodeOpenDm = userName;
     var stamps = document.querySelectorAll("#dm-messages .dm-msg");
     for (var i = 0; i < stamps.length; i++) {
@@ -195,12 +490,23 @@ function showDmPage() {
     }
     var texts = document.querySelectorAll("#dm-messages .dm-msg-text");
     for (var j = 0; j < texts.length; j++) {
-        var text = texts[j].textContent;
+        var edited = texts[j].querySelector(".dm-msg-edited");
+        var text = edited ? texts[j].firstChild.textContent : texts[j].textContent;
         FLAG_RE.lastIndex = 0;
         if (!FLAG_RE.test(text)) continue;
         FLAG_RE.lastIndex = 0;
         while (texts[j].firstChild) texts[j].removeChild(texts[j].firstChild);
         nodesForText(text).forEach(function (node) { texts[j].appendChild(node); });
+        if (edited) texts[j].appendChild(edited);
+    }
+    var faces = document.querySelectorAll("#dm-messages .dm-reaction-emoji");
+    for (var k = 0; k < faces.length; k++) {
+        var symbol = faces[k].textContent;
+        FLAG_RE.lastIndex = 0;
+        if (!FLAG_RE.test(symbol)) continue;
+        FLAG_RE.lastIndex = 0;
+        while (faces[k].firstChild) faces[k].removeChild(faces[k].firstChild);
+        nodesForText(symbol).forEach(function (node) { faces[k].appendChild(node); });
     }
     scrollDmToEnd();
     if (window.matchMedia("(max-width: 1100px)").matches) setDmProfile(false, true);
@@ -220,21 +526,620 @@ function focusDmInput() {
     savedRange = range.cloneRange();
 }
 
+var dmFiles = [];
+var dmFileCounter = 0;
+var DM_MAX_FILES = 10;
+var DM_MAX_BYTES = 25 * 1024 * 1024;
+
+function dmFileKind(type, name) {
+    var kind = String(type || "").toLowerCase();
+    var ext = (String(name || "").split(".").pop() || "").toLowerCase();
+    if (kind.indexOf("image/") === 0 && ext !== "svg") return "image";
+    if (kind.indexOf("video/") === 0) return "video";
+    if (kind.indexOf("audio/") === 0) return "audio";
+    return "file";
+}
+
+function dmFileSize(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (Math.round(bytes / 102.4) / 10) + " KB";
+    return (Math.round(bytes / 104857.6) / 10) + " MB";
+}
+
+function dmBuildAttachments(list) {
+    var holder = document.createElement("div");
+    holder.className = "dm-attachments";
+    list.forEach(function (item) {
+        var kind = dmFileKind(item.contentType, item.fileName);
+        var node;
+        if (kind === "image") {
+            node = document.createElement("a");
+            node.className = "dm-att-media";
+            node.href = item.url;
+            node.target = "_blank";
+            node.rel = "noopener";
+            node.setAttribute("data-att", "image");
+            var picture = document.createElement("img");
+            picture.src = item.url;
+            picture.alt = item.fileName;
+            picture.loading = "lazy";
+            node.appendChild(picture);
+        } else if (kind === "video") {
+            node = document.createElement("video");
+            node.className = "dm-att-video";
+            node.src = item.url;
+            node.controls = true;
+            node.preload = "metadata";
+        } else if (kind === "audio") {
+            node = document.createElement("div");
+            node.className = "dm-att-audio";
+            var label = document.createElement("span");
+            label.textContent = item.fileName;
+            var player = document.createElement("audio");
+            player.src = item.url;
+            player.controls = true;
+            player.preload = "metadata";
+            node.appendChild(label);
+            node.appendChild(player);
+        } else {
+            node = document.createElement("a");
+            node.className = "dm-att-file";
+            node.href = item.url;
+            node.setAttribute("download", item.fileName);
+            node.target = "_blank";
+            node.rel = "noopener";
+            node.innerHTML = '<i class="fa-solid fa-file-lines"></i><span class="dm-att-info"><strong></strong><small></small></span><i class="fa-solid fa-download"></i>';
+            node.querySelector("strong").textContent = item.fileName;
+            node.querySelector("small").textContent = dmFileSize(item.size);
+        }
+        holder.appendChild(node);
+    });
+    return holder;
+}
+
+function dmRenderTray() {
+    var tray = document.getElementById("dm-attach-tray");
+    if (!tray) return;
+    tray.textContent = "";
+    tray.hidden = dmFiles.length === 0;
+    dmFiles.forEach(function (item) {
+        var card = document.createElement("div");
+        card.className = "dm-attach-item is-" + item.state;
+        var thumb = document.createElement("div");
+        thumb.className = "dm-attach-thumb";
+        if (item.previewUrl) {
+            var preview = document.createElement("img");
+            preview.src = item.previewUrl;
+            preview.alt = "";
+            thumb.appendChild(preview);
+        } else {
+            var kind = dmFileKind(item.type, item.name);
+            thumb.innerHTML = '<i class="fa-solid ' + (kind === "video" ? "fa-film" : kind === "audio" ? "fa-music" : "fa-file-lines") + '"></i>';
+        }
+        var name = document.createElement("span");
+        name.className = "dm-attach-name";
+        name.textContent = item.name;
+        name.title = item.name;
+        var info = document.createElement("small");
+        info.textContent = item.state === "error" ? item.error : (item.state === "uploading" ? "Uploading..." : dmFileSize(item.size));
+        var remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "dm-attach-remove";
+        remove.setAttribute("aria-label", "Remove");
+        remove.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+        remove.addEventListener("click", function () {
+            dmFiles = dmFiles.filter(function (other) { return other.id !== item.id; });
+            if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+            dmRenderTray();
+        });
+        card.appendChild(thumb);
+        card.appendChild(name);
+        card.appendChild(info);
+        card.appendChild(remove);
+        tray.appendChild(card);
+    });
+}
+
+function dmUploadFile(item) {
+    var form = new FormData();
+    form.append("file", item.file, item.name);
+    return fetch("/Dm/UploadAttachment", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "RequestVerificationToken": dmToken(), "X-Requested-With": "XMLHttpRequest" },
+        body: form
+    }).then(function (response) {
+        return response.json().catch(function () { return {}; }).then(function (data) {
+            if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Could not upload the file.");
+            return data;
+        });
+    }).then(function (data) {
+        item.data = { url: data.url, fileName: data.fileName, contentType: data.contentType, size: data.size };
+        item.state = "ready";
+        item.file = null;
+    }).catch(function (error) {
+        item.state = "error";
+        item.error = error.message;
+    }).then(dmRenderTray);
+}
+
+function dmAddFiles(files) {
+    if (!dmPartner) return;
+    var list = [].slice.call(files || []);
+    for (var i = 0; i < list.length; i++) {
+        var file = list[i];
+        if (dmFiles.length >= DM_MAX_FILES) {
+            showDmError("You can send at most " + DM_MAX_FILES + " files at once.");
+            break;
+        }
+        if (file.size > DM_MAX_BYTES) {
+            showDmError(file.name + " is larger than 25 MB.");
+            continue;
+        }
+        var item = {
+            id: ++dmFileCounter,
+            name: file.name || "file",
+            size: file.size,
+            type: file.type,
+            file: file,
+            previewUrl: dmFileKind(file.type, file.name) === "image" ? URL.createObjectURL(file) : "",
+            state: "uploading",
+            data: null,
+            error: ""
+        };
+        dmFiles.push(item);
+        dmUploadFile(item);
+    }
+    dmRenderTray();
+}
+
+function bindDmAttach() {
+    var button = document.getElementById("dm-attach");
+    var picker = document.getElementById("dm-file");
+    var compose = document.getElementById("dm-compose");
+    if (!button || !picker || !compose) return;
+    var tray = document.createElement("div");
+    tray.id = "dm-attach-tray";
+    tray.className = "dm-attach-tray";
+    tray.hidden = true;
+    compose.parentNode.insertBefore(tray, compose);
+    var menu = document.getElementById("dm-attach-menu");
+    var closeMenu = function () {
+        if (menu) menu.hidden = true;
+        button.setAttribute("aria-expanded", "false");
+    };
+    button.setAttribute("aria-haspopup", "menu");
+    button.setAttribute("aria-expanded", "false");
+    button.addEventListener("click", function (event) {
+        event.stopPropagation();
+        if (!menu) {
+            picker.click();
+            return;
+        }
+        var open = menu.hidden;
+        menu.hidden = !open;
+        button.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    if (menu) {
+        menu.addEventListener("click", function (event) {
+            var item = event.target.closest("button[data-act]");
+            if (!item) return;
+            closeMenu();
+            if (item.getAttribute("data-act") === "upload") picker.click();
+            else document.dispatchEvent(new CustomEvent("discode-dm-poll"));
+        });
+        document.addEventListener("click", function (event) {
+            if (!menu.hidden && !event.target.closest("#dm-attach-menu")) closeMenu();
+        });
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && !menu.hidden) closeMenu();
+        });
+    }
+    picker.addEventListener("change", function () {
+        dmAddFiles(picker.files);
+        picker.value = "";
+    });
+    var chat = document.querySelector(".dm-chat");
+    if (chat) {
+        chat.addEventListener("dragover", function (event) {
+            if (event.dataTransfer && [].indexOf.call(event.dataTransfer.types || [], "Files") !== -1) {
+                event.preventDefault();
+                chat.classList.add("is-dropping");
+            }
+        });
+        chat.addEventListener("dragleave", function (event) {
+            if (!chat.contains(event.relatedTarget)) chat.classList.remove("is-dropping");
+        });
+        chat.addEventListener("drop", function (event) {
+            chat.classList.remove("is-dropping");
+            if (!event.dataTransfer || !event.dataTransfer.files || !event.dataTransfer.files.length) return;
+            event.preventDefault();
+            dmAddFiles(event.dataTransfer.files);
+        });
+    }
+    dmInput.addEventListener("paste", function (event) {
+        var files = event.clipboardData && event.clipboardData.files;
+        if (files && files.length) {
+            event.preventDefault();
+            dmAddFiles(files);
+        }
+    });
+    document.addEventListener("click", function (event) {
+        var link = event.target.closest && event.target.closest("a.dm-att-media");
+        if (!link || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey) return;
+        event.preventDefault();
+        var overlay = document.createElement("div");
+        overlay.className = "dm-lightbox";
+        var big = document.createElement("img");
+        big.src = link.href;
+        big.alt = "";
+        overlay.appendChild(big);
+        var close = function () {
+            if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+            document.removeEventListener("keydown", onKey);
+        };
+        var onKey = function (e) {
+            if (e.key === "Escape") close();
+        };
+        overlay.addEventListener("click", close);
+        document.addEventListener("keydown", onKey);
+        document.body.appendChild(overlay);
+    });
+}
+
+var POLL_EMOJIS = ["😀", "😂", "😍", "😎", "🤔", "😢", "😡", "👍", "👎", "👏", "🙏", "🔥", "❤️", "💯", "🎉", "✅", "❌", "⭐", "🍕", "🍔", "🍟", "🍺", "☕", "🎮", "🎵", "🎬", "⚽", "🏀", "🚗", "✈️", "🏠", "🌍", "🌙", "☀️", "🐶", "🐱", "🦁", "🌹", "💎", "🎁"];
+
+function dmPollStamp(poll) {
+    var text = String(poll.expiresAt || "");
+    return Date.parse(/Z$|[+-]\d\d:\d\d$/.test(text) ? text : text + "Z");
+}
+
+function dmPollSpan(poll) {
+    var left = dmPollStamp(poll) - Date.now();
+    if (poll.ended || left <= 0) return "Poll closed";
+    var minutes = Math.ceil(left / 60000);
+    if (minutes >= 2880) return Math.floor(minutes / 1440) + "d left";
+    if (minutes >= 60) return Math.floor(minutes / 60) + "h left";
+    return Math.max(1, minutes) + "m left";
+}
+
+function dmPollEnded(poll) {
+    return !!poll.ended || dmPollStamp(poll) <= Date.now();
+}
+
+function dmPollVotes(count) {
+    return count + (count === 1 ? " vote" : " votes");
+}
+
+function dmRenderPoll(card) {
+    var poll = card._poll;
+    var ended = dmPollEnded(poll);
+    var results = poll.voted || ended || card._results;
+    var multiple = poll.allowMultiple;
+    card.textContent = "";
+    var title = document.createElement("strong");
+    title.className = "dm-poll-question";
+    title.textContent = poll.question;
+    var hint = document.createElement("span");
+    hint.className = "dm-poll-hint";
+    hint.textContent = multiple ? "Select one or more answers" : "Select one answer";
+    card.appendChild(title);
+    card.appendChild(hint);
+    var list = document.createElement("div");
+    list.className = "dm-poll-options";
+    var top = 0;
+    poll.options.forEach(function (option) { if (option.votes > top) top = option.votes; });
+    poll.options.forEach(function (option) {
+        var row = document.createElement("button");
+        row.type = "button";
+        row.className = "dm-poll-option" + (results ? " is-result" : "") + (results && option.voted ? " is-mine" : "") + (!results && card._selected.indexOf(option.id) !== -1 ? " is-selected" : "");
+        row.disabled = results;
+        if (results) {
+            var percent = poll.totalVoters ? Math.round(option.votes * 100 / poll.totalVoters) : 0;
+            var fill = document.createElement("span");
+            fill.className = "dm-poll-fill";
+            fill.style.width = percent + "%";
+            row.appendChild(fill);
+        }
+        var label = document.createElement("span");
+        label.className = "dm-poll-label-text";
+        if (option.emoji) {
+            var face = document.createElement("span");
+            face.className = "dm-poll-emoji";
+            face.textContent = option.emoji;
+            label.appendChild(face);
+        }
+        var text = document.createElement("span");
+        text.textContent = option.text;
+        label.appendChild(text);
+        row.appendChild(label);
+        if (results) {
+            var stats = document.createElement("span");
+            stats.className = "dm-poll-stats";
+            stats.innerHTML = "<small></small><b></b>";
+            stats.querySelector("small").textContent = dmPollVotes(option.votes);
+            stats.querySelector("b").textContent = (poll.totalVoters ? Math.round(option.votes * 100 / poll.totalVoters) : 0) + "%";
+            row.appendChild(stats);
+            if (option.voted) {
+                var tick = document.createElement("span");
+                tick.className = "dm-poll-tick";
+                tick.innerHTML = '<i class="fa-solid fa-check"></i>';
+                row.appendChild(tick);
+            }
+        } else {
+            var box = document.createElement("span");
+            box.className = "dm-poll-box" + (multiple ? "" : " is-round");
+            box.innerHTML = '<i class="fa-solid fa-check"></i>';
+            row.appendChild(box);
+            row.addEventListener("click", function () {
+                var at = card._selected.indexOf(option.id);
+                if (multiple) {
+                    if (at === -1) card._selected.push(option.id);
+                    else card._selected.splice(at, 1);
+                } else {
+                    card._selected = at === -1 ? [option.id] : [];
+                }
+                dmRenderPoll(card);
+            });
+        }
+        list.appendChild(row);
+    });
+    card.appendChild(list);
+    var foot = document.createElement("div");
+    foot.className = "dm-poll-foot-row";
+    var meta = document.createElement("span");
+    meta.className = "dm-poll-meta";
+    meta.innerHTML = "<b></b><i></i><span></span>";
+    meta.querySelector("b").textContent = dmPollVotes(poll.totalVoters);
+    meta.querySelector("i").textContent = "•";
+    meta.querySelector("span").textContent = dmPollSpan(poll);
+    foot.appendChild(meta);
+    var actions = document.createElement("span");
+    actions.className = "dm-poll-actions";
+    var button = function (label, cls, handler, disabled) {
+        var item = document.createElement("button");
+        item.type = "button";
+        item.className = cls;
+        item.textContent = label;
+        item.disabled = !!disabled;
+        item.addEventListener("click", handler);
+        actions.appendChild(item);
+    };
+    if (!ended) {
+        if (poll.voted) {
+            button("Remove Vote", "dm-poll-secondary", function () { dmPollSend(card, []); });
+        } else if (card._results) {
+            button("Back", "dm-poll-link", function () { card._results = false; dmRenderPoll(card); });
+        } else {
+            button("Show results", "dm-poll-link", function () { card._results = true; dmRenderPoll(card); });
+            button("Vote", "dm-poll-vote", function () { dmPollSend(card, card._selected.slice()); }, card._selected.length === 0);
+        }
+    }
+    foot.appendChild(actions);
+    card.appendChild(foot);
+}
+
+function dmPollSend(card, optionIds) {
+    if (card._busy) return;
+    card._busy = true;
+    var row = card.closest(".dm-msg");
+    dmRequest("/Dm/VotePoll", "POST", { id: Number(row.getAttribute("data-id")), optionIds: optionIds }).then(function (poll) {
+        card._poll = poll;
+        card._results = false;
+        card._selected = [];
+    }).catch(function (error) {
+        showDmError(error.message);
+    }).then(function () {
+        card._busy = false;
+        dmRenderPoll(card);
+    });
+}
+
+function dmMountPoll(card, poll) {
+    card._poll = poll;
+    card._results = false;
+    card._selected = poll.options.filter(function (option) { return option.voted; }).map(function (option) { return option.id; });
+    dmRenderPoll(card);
+}
+
+function dmHydratePolls() {
+    [].forEach.call(document.querySelectorAll("#dm-messages .dm-poll[data-poll]"), function (card) {
+        if (card._poll) return;
+        try {
+            dmMountPoll(card, JSON.parse(card.getAttribute("data-poll")));
+        } catch (e) {}
+    });
+}
+
+document.addEventListener("discode-dm-poll-updated", function (event) {
+    var data = event.detail;
+    if (!data) return;
+    var row = document.querySelector('#dm-messages .dm-msg[data-id="' + data.messageId + '"]');
+    var card = row && row.querySelector(".dm-poll");
+    if (!card || !card._poll) return;
+    card._poll = data.poll;
+    dmRenderPoll(card);
+});
+
+setInterval(function () {
+    [].forEach.call(document.querySelectorAll("#dm-messages .dm-poll"), function (card) {
+        if (card._poll) dmRenderPoll(card);
+    });
+}, 30000);
+
+function bindDmPoll() {
+    var modal = document.getElementById("dm-poll-modal");
+    if (!modal) return;
+    var list = document.getElementById("dm-poll-answers");
+    var question = document.getElementById("dm-poll-question");
+    var picker = document.getElementById("dm-poll-emojis");
+    var errorBox = document.getElementById("dm-poll-error");
+    var activeEmojiRow = null;
+
+    var fail = function (text) {
+        errorBox.textContent = text || "";
+        errorBox.hidden = !text;
+    };
+
+    var addAnswer = function () {
+        if (list.children.length >= 10) return;
+        var row = document.createElement("div");
+        row.className = "dm-poll-answer";
+        row.innerHTML = '<button type="button" class="dm-poll-face" aria-label="Choose an emoji"><i class="fa-regular fa-face-smile"></i></button>' +
+            '<input type="text" maxlength="55" placeholder="Type your answer" autocomplete="off">' +
+            '<button type="button" class="dm-poll-trash" aria-label="Remove answer"><i class="fa-solid fa-trash-can"></i></button>';
+        list.appendChild(row);
+        refreshAnswers();
+    };
+
+    var refreshAnswers = function () {
+        document.getElementById("dm-poll-add").hidden = list.children.length >= 10;
+        [].forEach.call(list.querySelectorAll(".dm-poll-trash"), function (trash) {
+            trash.disabled = list.children.length <= 2;
+        });
+    };
+
+    var closePicker = function () {
+        picker.hidden = true;
+        activeEmojiRow = null;
+    };
+
+    var reset = function () {
+        question.value = "";
+        document.getElementById("dm-poll-count").textContent = "0";
+        document.getElementById("dm-poll-duration").value = "24";
+        document.getElementById("dm-poll-multiple").checked = false;
+        list.textContent = "";
+        addAnswer();
+        addAnswer();
+        fail("");
+        closePicker();
+    };
+
+    var open = function () {
+        if (!dmPartner) return;
+        reset();
+        modal.hidden = false;
+        question.focus();
+    };
+
+    var close = function () {
+        modal.hidden = true;
+        closePicker();
+    };
+
+    picker.innerHTML = '<button type="button" class="dm-poll-emoji-clear">No emoji</button>';
+    POLL_EMOJIS.forEach(function (emoji) {
+        var item = document.createElement("button");
+        item.type = "button";
+        item.textContent = emoji;
+        picker.appendChild(item);
+    });
+    picker.addEventListener("click", function (event) {
+        var item = event.target.closest("button");
+        if (!item || !activeEmojiRow) return;
+        var face = activeEmojiRow.querySelector(".dm-poll-face");
+        var clear = item.classList.contains("dm-poll-emoji-clear");
+        face.setAttribute("data-emoji", clear ? "" : item.textContent);
+        face.innerHTML = clear ? '<i class="fa-regular fa-face-smile"></i>' : "";
+        if (!clear) face.textContent = item.textContent;
+        closePicker();
+    });
+
+    list.addEventListener("click", function (event) {
+        var trash = event.target.closest(".dm-poll-trash");
+        if (trash && list.children.length > 2) {
+            trash.closest(".dm-poll-answer").remove();
+            refreshAnswers();
+            return;
+        }
+        var face = event.target.closest(".dm-poll-face");
+        if (face) {
+            event.stopPropagation();
+            activeEmojiRow = face.closest(".dm-poll-answer");
+            var card = modal.querySelector(".dm-poll-card").getBoundingClientRect();
+            var at = face.getBoundingClientRect();
+            picker.style.left = Math.max(8, at.left - card.left) + "px";
+            picker.style.top = (at.bottom - card.top + 6) + "px";
+            picker.hidden = false;
+        }
+    });
+    document.getElementById("dm-poll-add").addEventListener("click", addAnswer);
+    question.addEventListener("input", function () {
+        document.getElementById("dm-poll-count").textContent = String(question.value.length);
+        fail("");
+    });
+    modal.addEventListener("click", function (event) {
+        if (event.target.closest("[data-close]")) close();
+        else if (!event.target.closest(".dm-poll-emojis")) closePicker();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !modal.hidden) close();
+    });
+    document.addEventListener("discode-dm-poll", open);
+
+    document.getElementById("dm-poll-post").addEventListener("click", function () {
+        var options = [].map.call(list.querySelectorAll(".dm-poll-answer"), function (row) {
+            return { text: row.querySelector("input").value.trim(), emoji: row.querySelector(".dm-poll-face").getAttribute("data-emoji") || "" };
+        }).filter(function (option) { return option.text.length > 0; });
+        if (!question.value.trim()) {
+            fail("Ask a question.");
+            return;
+        }
+        if (options.length < 2) {
+            fail("Add at least two answers.");
+            return;
+        }
+        fail("");
+        var post = document.getElementById("dm-poll-post");
+        post.disabled = true;
+        dmRequest("/Dm/CreatePoll", "POST", {
+            userName: dmPartner.userName,
+            question: question.value.trim(),
+            allowMultiple: document.getElementById("dm-poll-multiple").checked,
+            durationHours: Number(document.getElementById("dm-poll-duration").value),
+            options: options
+        }).then(function (sent) {
+            appendMessage(sent, true);
+            close();
+        }).catch(function (error) {
+            fail(error.message);
+        }).then(function () {
+            post.disabled = false;
+        });
+    });
+}
+
 function submitDm(text) {
     if (!dmPartner) return;
     var message = (text !== undefined ? text : fieldValue(dmInput)).trim();
-    if (!message) return;
+    var typed = text === undefined ? dmInput.innerHTML : null;
+    var pending = text === undefined ? dmFiles.slice() : [];
+    if (pending.some(function (item) { return item.state === "uploading"; })) {
+        showDmError("Wait for the files to finish uploading.");
+        return;
+    }
+    var attachments = pending.filter(function (item) { return item.state === "ready"; });
+    if (pending.some(function (item) { return item.state === "error"; })) {
+        showDmError("Remove the files that could not be uploaded.");
+        return;
+    }
+    if (!message && !attachments.length) return;
     showDmError("");
     var partner = dmPartner.userName;
-    var typed = text === undefined ? dmInput.innerHTML : null;
+    var replyId = dmReply ? dmReply.id : null;
+    if (dmReply) dmCancelReply();
     if (typed !== null) {
         while (dmInput.firstChild) dmInput.removeChild(dmInput.firstChild);
         focusDmInput();
         markEmpty(dmInput);
+        dmFiles = [];
+        dmRenderTray();
     }
     dmQueue = dmQueue.then(function () {
-        return dmRequest("/Dm/Send", "POST", { userName: partner, text: message });
+        return dmRequest("/Dm/Send", "POST", { userName: partner, text: message, replyToMessageId: replyId, attachments: attachments.map(function (item) { return item.data; }) });
     }).then(function (sent) {
+        attachments.forEach(function (item) { if (item.previewUrl) URL.revokeObjectURL(item.previewUrl); });
         appendMessage(sent);
     }).catch(function (err) {
         showDmError(err.message);
@@ -242,6 +1147,10 @@ function submitDm(text) {
             dmInput.innerHTML = typed;
             markEmpty(dmInput);
             focusDmInput();
+        }
+        if (attachments.length && !dmFiles.length) {
+            dmFiles = attachments;
+            dmRenderTray();
         }
     });
 }
@@ -253,8 +1162,76 @@ document.addEventListener("discode-dm-message", function (event) {
     if (!data.message.mine) dmRequest("/Dm/Read", "POST", { userName: dmPartner.userName }).catch(function () {});
 });
 
+function dmRefreshProfile() {
+    if (!dmPartner) return;
+    fetch("/Dm/ProfileInfo?name=" + encodeURIComponent(dmPartner.userName), {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    }).then(function (response) {
+        if (!response.ok) throw new Error("profile");
+        return response.text();
+    }).then(function (html) {
+        var holder = document.getElementById("dm-profile-info");
+        if (holder) holder.innerHTML = html;
+        dmSyncPartnerMessages();
+    }).catch(function () {});
+}
+
+function dmSyncPartnerMessages() {
+    var avatar = document.getElementById("dm-profile-avatar");
+    var name = document.getElementById("dm-profile-name");
+    var title = document.getElementById("dm-title");
+    var rows = document.querySelectorAll('#dm-messages .dm-msg[data-sender="' + dmPartner.userName + '"]');
+    for (var i = 0; i < rows.length; i++) {
+        var face = rows[i].querySelector(".dm-msg-avatar");
+        var who = rows[i].querySelector(".dm-msg-head strong");
+        if (face && avatar) face.src = avatar.getAttribute("src");
+        if (who && name && name.textContent) who.textContent = name.textContent;
+    }
+    if (title && name && name.textContent) title.textContent = name.textContent;
+    var peerFace = document.getElementById("call-peer-avatar");
+    if (peerFace && avatar) peerFace.src = avatar.getAttribute("src");
+}
+
+function dmPaintRelation(relation) {
+    var button = document.getElementById("dm-profile-close");
+    var icon = button ? button.querySelector("i") : null;
+    if (!button || !icon) return;
+    var friend = relation === "friend";
+    button.setAttribute("title", friend ? "Friends" : "Not friends");
+    icon.className = "fa-solid " + (friend ? "fa-user-check" : "fa-user");
+}
+
+function dmRefreshRelation() {
+    if (!dmPartner) return;
+    fetch("/Dm/Relation?name=" + encodeURIComponent(dmPartner.userName), {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    }).then(function (response) {
+        if (!response.ok) throw new Error("relation");
+        return response.text();
+    }).then(function (html) {
+        var holder = document.getElementById("dm-relation");
+        if (!holder) return;
+        holder.innerHTML = html;
+        var marker = holder.querySelector("[data-relation]");
+        dmPaintRelation(marker ? marker.getAttribute("data-relation") : "none");
+    }).catch(function () {});
+}
+
+document.addEventListener("discode-friends-changed", function () {
+    dmRefreshRelation();
+    dmRefreshProfile();
+});
+
+document.addEventListener("discode-profile-changed", function (event) {
+    if (dmPartner && event.detail && event.detail.userId === dmPartner.userId) dmRefreshProfile();
+});
+
 document.addEventListener("discode-user-presence", function (event) {
-    if (dmPartner && event.detail.userId === dmPartner.userId) paintDmStatus(event.detail.status);
+    if (!dmPartner || event.detail.userId !== dmPartner.userId) return;
+    paintDmStatus(event.detail.status);
+    dmRefreshProfile();
 });
 
 var profileOpenBeforeCall = false;
@@ -270,20 +1247,14 @@ function setCallFace(src) {
     faces.appendChild(face);
 }
 
-function panelPhoto() {
+function dmPanelPhoto() {
     var img = document.querySelector("#user-panel .avatar img");
     return (img && img.getAttribute("src")) || "/assets/img/img-icon-profile.jpeg";
 }
 
-function myPhoto() {
-    return fetch("/api/me").then(function (response) {
-        if (!response.ok) throw new Error("me");
-        return response.json();
-    }).then(function (data) {
-        return data.avatar || data.avatarUrl || data.photo || panelPhoto();
-    }).catch(function () {
-        return panelPhoto();
-    });
+function dmMyPhoto() {
+    // there is no /api/me endpoint (it answered 404 on every DM page): my photo is the one in my panel
+    return Promise.resolve(dmPanelPhoto());
 }
 
 var callInviteCardClosed = false;
@@ -294,13 +1265,104 @@ function setCallInviteCardVisible(open) {
     sheet.hidden = !open;
 }
 
-function startDmCall() {
+function dmSetCallStatus(call) {
+    var stage = document.getElementById("call-stage");
+    if (!call) return;
+    var ringing = call.status === "ringing";
+    var incoming = ringing && call.role === "callee";
+    var joinable = call.status === "active" && call.joined === false;
+    stage.classList.toggle("is-ringing", ringing);
+    stage.classList.toggle("is-incoming", incoming);
+    stage.classList.toggle("is-joinable", joinable);
+    var answerBar = document.getElementById("call-answer-bar");
+    if (answerBar) answerBar.hidden = !(incoming || joinable);
+    var faces = document.getElementById("call-faces");
+    if (faces) {
+        faces.classList.toggle("is-callee", call.role === "callee");
+        faces.classList.toggle("is-me-away", joinable);
+    }
+    var myFace = document.getElementById("call-avatar");
+    if (myFace && myFace.parentNode) myFace.parentNode.classList.toggle("is-waiting", incoming);
+    var peerFace = document.getElementById("call-peer-face");
+    if (peerFace) {
+        peerFace.classList.toggle("is-waiting", ringing && call.role === "caller");
+        peerFace.classList.toggle("is-away", call.status === "active" && !joinable && call.peerPresent === false);
+    }
+}
+
+function dmNotice(text) {
+    showDmError(text);
+    if (text) setTimeout(function () { showDmError(""); }, 5000);
+}
+
+function dmCloseCallStage() {
+    document.getElementById("call-stage").hidden = true;
+    document.getElementById("call-stage").classList.remove("is-ringing");
+    document.querySelector(".dm-chat").classList.remove("call-chat");
+    callInviteCardClosed = false;
+    setCallInviteCardVisible(true);
+    if (profileOpenBeforeCall) setDmProfile(true);
+}
+
+function startDmCall(video) {
+    if (!dmPartner) return;
+    var calls = window.discodeCalls;
+    if (!calls) return;
+    var current = calls.current();
+    if (current && current.other.userName === dmPartner.userName && current.joined !== false) {
+        dmShowCallStage();
+        dmSetCallStatus(current);
+        return;
+    }
+    if (current && current.other.userName === dmPartner.userName) {
+        showDmError("");
+        calls.answer(video).catch(function (error) {
+            dmNotice(error.message);
+        });
+        return;
+    }
+    showDmError("");
+    calls.start(dmPartner.userName, video).catch(function (error) {
+        dmNotice(error.message);
+    });
+}
+
+document.addEventListener("discode-call-over", function (event) {
+    if (!event.detail || Number(event.detail.messageId) !== dmOngoingCall) return;
+    dmOngoingCall = 0;
+    dmRefreshJoinLinks();
+});
+
+document.addEventListener("discode-call-state", function (event) {
+    dmRefreshJoinLinks();
+    if (!dmPartner) return;
+    var call = event.detail.call;
+    var stage = document.getElementById("call-stage");
+    if (call && call.other.userName === dmPartner.userName) {
+        if (stage.hidden) dmShowCallStage();
+        dmSetCallStatus(call);
+        return;
+    }
+    if (call) return;
+    var previous = event.detail.previous;
+    var wasHere = previous && previous.other.userName === dmPartner.userName;
+    if (!stage.hidden) dmCloseCallStage();
+    if (!wasHere) return;
+    var title = document.getElementById("dm-title").textContent;
+    var reason = event.detail.reason;
+    if (reason === "unavailable") dmNotice("The call is no longer available.");
+});
+
+function dmShowCallStage() {
     var profile = document.getElementById("dm-profile");
+    var peerAvatar = document.getElementById("call-peer-avatar");
+    var partnerPhoto = document.getElementById("dm-profile-avatar") || document.getElementById("dm-avatar");
+    if (peerAvatar && partnerPhoto) peerAvatar.src = partnerPhoto.getAttribute("src");
     var avatar = document.getElementById("call-avatar");
-    avatar.src = panelPhoto();
-    var photo = panelPhoto();
+    avatar.src = dmPanelPhoto();
+    var photo = dmPanelPhoto();
     setCallFace(photo);
-    myPhoto().then(function (next) {
+    dmMyPhoto().then(function (next) {
         photo = next;
         avatar.src = next;
         setCallFace(next);
@@ -314,30 +1376,54 @@ function startDmCall() {
     document.getElementById("call-stage").hidden = false;
     profileOpenBeforeCall = !profile.classList.contains("is-collapsed");
     setDmProfile(false);
-    joinVoiceSound.currentTime = 0;
-    joinVoiceSound.play().catch(function() {});
 }
 
 function bindDmCall() {
-    document.getElementById("dm-call").addEventListener("click", startDmCall);
+    document.getElementById("dm-call").addEventListener("click", function () {
+        startDmCall(false);
+    });
     document.getElementById("dm-video").addEventListener("click", function () {
-        startDmCall();
+        startDmCall(true);
         if (window.openCallCamera) window.openCallCamera();
     });
 
-    document.getElementById("call-hangup").addEventListener("click", function () {
-        document.getElementById("call-stage").hidden = true;
-        document.querySelector(".dm-chat").classList.remove("call-chat");
-        callInviteCardClosed = false;
-        setCallInviteCardVisible(true);
-        if (profileOpenBeforeCall) setDmProfile(true);
+    var answerWith = function (video) {
+        if (!window.discodeCalls) return;
+        window.discodeCalls.answer(video).then(function () {
+            if (video && window.openCallCamera) window.openCallCamera();
+        }).catch(function (error) {
+            dmNotice(error.message);
+        });
+    };
+    document.getElementById("call-answer-video").addEventListener("click", function () { answerWith(true); });
+    document.getElementById("call-answer-voice").addEventListener("click", function () { answerWith(false); });
+    document.getElementById("call-answer-decline").addEventListener("click", function () {
+        if (window.discodeCalls) window.discodeCalls.decline();
     });
 
-    document.querySelector(".call-phone-add").addEventListener("click", function () {
-        var current = document.getElementById("dm-title");
-        var name = current ? current.textContent.trim() : "";
-        if (typeof openNewMessage === "function") openNewMessage(name ? [name] : []);
+    document.getElementById("call-hangup").addEventListener("click", function () {
+        if (window.discodeCalls) window.discodeCalls.end();
+        var current = window.discodeCalls && window.discodeCalls.current();
+        if (!current || !dmPartner || current.other.userName !== dmPartner.userName) dmCloseCallStage();
     });
+
+    function openGroupPicker() {
+        var name = dmPartner ? dmPartner.userName : "";
+        if (typeof openNewMessage === "function") openNewMessage(name ? [name] : []);
+    }
+
+    document.querySelector(".call-phone-add").addEventListener("click", openGroupPicker);
+
+    var dmAdd = document.getElementById("dm-add");
+    if (dmAdd) {
+        dmAdd.addEventListener("click", openGroupPicker);
+        dmAdd.addEventListener("keydown", function (event) {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openGroupPicker();
+            }
+        });
+    }
 
     document.getElementById("call-phone-add-close").addEventListener("click", function (event) {
         event.preventDefault();
@@ -384,14 +1470,158 @@ function setDmProfile(open, instant) {
     }
 }
 
+var dmDropdown = null;
+
+function dmCloseDropdown() {
+    if (dmDropdown) dmDropdown.hidden = true;
+}
+
+function dmDropdownEntry(label, icon, danger, onClick) {
+    var item = document.createElement("li");
+    var button = document.createElement("button");
+    button.type = "button";
+    if (danger) button.className = "row-menu-danger";
+    var glyph = document.createElement("i");
+    glyph.className = "fa-solid " + icon;
+    var text = document.createElement("span");
+    text.className = "row-menu-label";
+    text.textContent = label;
+    button.appendChild(glyph);
+    button.appendChild(text);
+    button.addEventListener("click", function () {
+        dmCloseDropdown();
+        onClick();
+    });
+    item.appendChild(button);
+    return item;
+}
+
+function dmToggleDropdown(button, entries) {
+    if (dmDropdown && !dmDropdown.hidden && dmDropdown.getAttribute("data-owner") === button.id) {
+        dmCloseDropdown();
+        return;
+    }
+    if (!entries.length) return;
+    if (!dmDropdown) {
+        dmDropdown = document.createElement("div");
+        dmDropdown.className = "row-menu dm-friend-menu";
+        dmDropdown.hidden = true;
+        dmDropdown.appendChild(document.createElement("ul"));
+        document.body.appendChild(dmDropdown);
+        document.addEventListener("click", function (event) {
+            if (dmDropdown.hidden) return;
+            if (dmDropdown.contains(event.target) || event.target.closest("#dm-profile-close, #dm-profile-more")) return;
+            dmCloseDropdown();
+        });
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") dmCloseDropdown();
+        });
+        window.addEventListener("scroll", dmCloseDropdown, true);
+        window.addEventListener("resize", dmCloseDropdown);
+    }
+    var holder = dmDropdown.firstChild;
+    holder.textContent = "";
+    entries.forEach(function (entry) { holder.appendChild(entry); });
+    dmDropdown.setAttribute("data-owner", button.id);
+    dmDropdown.hidden = false;
+    var rect = button.getBoundingClientRect();
+    var width = dmDropdown.offsetWidth;
+    dmDropdown.style.left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8)) + "px";
+    dmDropdown.style.top = Math.round(rect.bottom + 6) + "px";
+}
+
+function dmRelationState() {
+    var marker = document.querySelector("#dm-relation [data-relation]");
+    return marker ? marker.getAttribute("data-relation") : "";
+}
+
+function dmRelationInput(action) {
+    var input = document.querySelector('#dm-relation form[action$="/Friend/' + action + '"] input[name="id"]');
+    return input ? input.value : "";
+}
+
+function dmAfterRelationChange() {
+    dmRefreshRelation();
+    dmRefreshProfile();
+}
+
+function dmRemoveFriend() {
+    var id = dmRelationInput("Remove");
+    if (!id || !window.discodeFriends || !window.discodeFriends.post) return;
+    window.discodeFriends.post("Remove", { id: id }).then(function (response) {
+        if (response.ok) dmAfterRelationChange();
+    }).catch(function () {});
+}
+
+function dmToggleBlock() {
+    if (!window.discodeFriends || !window.discodeFriends.post || !dmPartner) return;
+    var blocked = dmRelationState() === "blocked";
+    var request = blocked
+        ? window.discodeFriends.post("Unblock", { id: dmRelationInput("Unblock") })
+        : window.discodeFriends.post("Block", { userName: dmPartner.userName });
+    request.then(function (response) {
+        if (response.ok) dmAfterRelationChange();
+    }).catch(function () {});
+}
+
+function dmToggleIgnore() {
+    if (!dmPartner) return;
+    var field = document.querySelector("input[name='__RequestVerificationToken']");
+    fetch("/Home/IgnoreUser", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+            "Content-Type": "application/json",
+            "RequestVerificationToken": field ? field.value : "",
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: JSON.stringify({ userName: dmPartner.userName })
+    }).catch(function () {});
+}
+
+function dmToggleFriendMenu(button) {
+    if (dmRelationState() !== "friend") {
+        dmCloseDropdown();
+        return;
+    }
+    dmToggleDropdown(button, [dmDropdownEntry("Remove Friend", "fa-user-minus", true, dmRemoveFriend)]);
+}
+
+function dmToggleMoreMenu(button) {
+    if (!dmPartner) return;
+    var profile = document.getElementById("dm-profile");
+    var publicId = profile ? profile.getAttribute("data-public-id") || "" : "";
+    var ignored = !!(window.discodeIgnored || {})[String(dmPartner.userName).toLowerCase()];
+    var blocked = dmRelationState() === "blocked";
+    var entries = [];
+    entries.push(dmDropdownEntry("Copy User ID", "fa-fingerprint", false, function () {
+        window.discodeCopy(publicId, "User ID");
+    }));
+    entries.push(dmDropdownEntry(ignored ? "Unignore" : "Ignore", ignored ? "fa-eye" : "fa-eye-slash", false, dmToggleIgnore));
+    entries.push(dmDropdownEntry(blocked ? "Unblock" : "Block", blocked ? "fa-circle-check" : "fa-ban", !blocked, dmToggleBlock));
+    entries.push(dmDropdownEntry("Report User", "fa-flag", true, function () {
+        if (window.discodeReport) window.discodeReport({ type: "User", id: dmPartner.userName, label: "user" });
+    }));
+    dmToggleDropdown(button, entries);
+}
+
 function bindDmCompose() {
     document.getElementById("dm-profile-toggle").addEventListener("click", function () {
         setDmProfile(document.getElementById("dm-profile").classList.contains("is-collapsed"));
     });
 
-    document.getElementById("dm-profile-close").addEventListener("click", function () {
-        setDmProfile(false);
+    document.getElementById("dm-profile-close").addEventListener("click", function (event) {
+        event.stopPropagation();
+        dmToggleFriendMenu(event.currentTarget);
     });
+
+    var more = document.getElementById("dm-profile-more");
+    if (more) {
+        more.addEventListener("click", function (event) {
+            event.stopPropagation();
+            dmToggleMoreMenu(event.currentTarget);
+        });
+    }
 
     document.getElementById("dm-compose").addEventListener("submit", function (event) {
         event.preventDefault();
@@ -593,6 +1823,704 @@ function insertEmoji(emoji) {
 
 var dmInput = document.getElementById("dm-input");
 
+var dmPicker = { mode: "", row: null };
+var dmReply = null;
+
+function dmCancelReply() {
+    if (!dmReply) return;
+    var marked = document.querySelector("#dm-messages .dm-msg.is-replying");
+    if (marked) marked.classList.remove("is-replying");
+    dmReply = null;
+    document.getElementById("dm-reply-bar").hidden = true;
+}
+
+function dmStartReply(row) {
+    dmCancelReply();
+    var head = row.querySelector(".dm-msg-head strong");
+    dmReply = { id: Number(row.getAttribute("data-id")) };
+    row.classList.add("is-replying");
+    document.getElementById("dm-reply-name").textContent = head ? head.textContent : "";
+    document.getElementById("dm-reply-bar").hidden = false;
+    focusDmInput();
+}
+
+function dmJumpTo(messageId) {
+    var target = document.querySelector('#dm-messages .dm-msg[data-id="' + messageId + '"]');
+    if (!target) return;
+    target.scrollIntoView({ block: "center", behavior: "smooth" });
+    target.classList.add("is-flash");
+    setTimeout(function () { target.classList.remove("is-flash"); }, 1600);
+}
+
+function dmMessageText(row) {
+    var clone = row.querySelector(".dm-msg-text").cloneNode(true);
+    var edited = clone.querySelector(".dm-msg-edited");
+    if (edited) edited.remove();
+    return fieldValue(clone);
+}
+
+function dmCancelEdit(row) {
+    var editor = row.querySelector(".dm-edit");
+    if (editor) editor.remove();
+    var holder = row.querySelector(".dm-msg-text");
+    if (holder) holder.hidden = false;
+    row.classList.remove("is-editing");
+}
+
+function dmGrowEditor(area) {
+    area.style.height = "auto";
+    area.style.height = area.scrollHeight + "px";
+}
+
+function dmStartEdit(row) {
+    if (row.getAttribute("data-mine") !== "1" || row.querySelector(".dm-edit")) return;
+    var open = document.querySelector("#dm-messages .dm-msg.is-editing");
+    if (open) dmCancelEdit(open);
+    var holder = row.querySelector(".dm-msg-text");
+    var box = document.createElement("div");
+    box.className = "dm-edit";
+    box.innerHTML =
+        '<div class="dm-edit-box">' +
+        '<textarea rows="1" maxlength="2000" aria-label="Edit message"></textarea>' +
+        '<button type="button" class="dm-edit-emoji emoji-open" data-act="edit-picker" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>' +
+        '</div>' +
+        '<p class="dm-edit-hint">escape to <a href="#" data-edit="cancel">cancel</a> \u2022 enter to <a href="#" data-edit="save">save</a></p>';
+    holder.hidden = true;
+    holder.parentNode.insertBefore(box, holder.nextSibling);
+    row.classList.add("is-editing");
+    var area = box.querySelector("textarea");
+    area.value = dmMessageText(row);
+    dmGrowEditor(area);
+    area.focus();
+    area.setSelectionRange(area.value.length, area.value.length);
+    var scroller = document.querySelector(".dm-scroll");
+    if (scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 160) scrollDmToEnd();
+}
+
+function dmApplyEdit(row, message) {
+    dmCancelEdit(row);
+    var holder = row.querySelector(".dm-msg-text");
+    while (holder.firstChild) holder.removeChild(holder.firstChild);
+    nodesForText(message.text).forEach(function (node) { holder.appendChild(node); });
+    if (message.editedAt) holder.appendChild(dmEditedLabel());
+}
+
+function dmSaveEdit(row) {
+    var area = row.querySelector(".dm-edit textarea");
+    if (!area) return;
+    var text = area.value.trim();
+    if (!text) return;
+    if (text === dmMessageText(row).trim()) {
+        dmCancelEdit(row);
+        return;
+    }
+    showDmError("");
+    dmRequest("/Dm/Edit", "POST", { id: Number(row.getAttribute("data-id")), text: text }).then(function (message) {
+        dmApplyEdit(row, message);
+    }).catch(function (err) {
+        showDmError(err.message);
+    });
+}
+
+function dmDeleteMessage(row) {
+    showDmError("");
+    dmRequest("/Dm/DeleteMessage", "POST", { id: Number(row.getAttribute("data-id")) }).then(function () {
+        dmRemoveMessage(row.getAttribute("data-id"));
+    }).catch(function (err) {
+        showDmError(err.message);
+    });
+}
+
+function dmRegroupMessage(row) {
+    if (row.classList.contains("dm-call-msg")) return;
+    var before = row.previousElementSibling;
+    var grouped = !!before && before.classList.contains("dm-msg") && !before.classList.contains("dm-call-msg") && !row.classList.contains("has-reply") &&
+        before.getAttribute("data-sender") === row.getAttribute("data-sender") &&
+        Number(row.getAttribute("data-time")) - Number(before.getAttribute("data-time")) < 5 * 60 * 1000;
+    row.classList.toggle("compact", grouped);
+}
+
+function dmTidyAfterRemove(before, after) {
+    if (before && before.classList.contains("dm-divider") && !(after && after.classList.contains("dm-msg"))) before.remove();
+    if (after && after.classList.contains("dm-msg")) dmRegroupMessage(after);
+    var wave = document.getElementById("dm-wave-box");
+    if (wave && !document.querySelector("#dm-messages .dm-msg")) wave.hidden = false;
+}
+
+function dmRemoveMessage(id) {
+    var row = document.querySelector('#dm-messages .dm-msg[data-id="' + id + '"]');
+    if (row) {
+        var before = row.previousElementSibling;
+        var after = row.nextElementSibling;
+        row.remove();
+        dmTidyAfterRemove(before, after);
+    }
+    document.querySelectorAll('.dm-msg-reply[data-reply-id="' + id + '"]').forEach(function (quote) { quote.remove(); });
+    document.querySelectorAll('#dm-pins-popover [data-jump="' + id + '"]').forEach(function (card) { card.remove(); });
+    if (dmReply && dmReply.id === Number(id)) dmCancelReply();
+}
+
+function dmRenderReactions(row, reactions) {
+    var body = row.querySelector(".dm-msg-body");
+    var box = body.querySelector(".dm-reactions");
+    if (!reactions || reactions.length === 0) {
+        if (box) box.remove();
+        return;
+    }
+    if (!box) {
+        box = document.createElement("div");
+        box.className = "dm-reactions";
+        body.appendChild(box);
+    }
+    while (box.firstChild) box.removeChild(box.firstChild);
+    reactions.forEach(function (reaction) {
+        var chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "dm-reaction" + (reaction.reacted ? " mine" : "");
+        chip.setAttribute("data-emoji", reaction.emoji);
+        chip.setAttribute("aria-pressed", reaction.reacted ? "true" : "false");
+        var face = document.createElement("span");
+        face.className = "dm-reaction-emoji";
+        nodesForText(reaction.emoji).forEach(function (node) { face.appendChild(node); });
+        var count = document.createElement("span");
+        count.className = "dm-reaction-count";
+        count.textContent = String(reaction.count);
+        chip.appendChild(face);
+        chip.appendChild(count);
+        box.appendChild(chip);
+    });
+    var add = document.createElement("button");
+    add.type = "button";
+    add.className = "dm-reaction-add emoji-open";
+    add.setAttribute("data-act", "reaction-add");
+    add.setAttribute("aria-label", "Add reaction");
+    add.innerHTML = '<i class="fa-regular fa-face-smile"></i>';
+    box.appendChild(add);
+}
+
+function dmReact(row, emoji) {
+    showDmError("");
+    dmRequest("/Dm/React", "POST", { id: Number(row.getAttribute("data-id")), emoji: emoji }).then(function (reply) {
+        dmRenderReactions(row, reply.reactions || []);
+    }).catch(function (err) {
+        showDmError(err.message);
+    });
+}
+
+function dmClosePicker() {
+    dmPicker.mode = "";
+    closeEmojiPanel();
+}
+
+function dmOpenPicker(anchor, mode, row) {
+    var panel = document.getElementById("emoji-panel");
+    if (!panel.hidden && dmPicker.mode === mode && dmPicker.row === row) {
+        dmClosePicker();
+        return;
+    }
+    emojiField = null;
+    dmPicker = { mode: mode, row: row };
+    if (!panel.childElementCount && typeof fillEmojiPanel === "function") {
+        fillEmojiPanel(panel, "emoji", function (choice, emoji) {
+            var img = choice.querySelector("img");
+            if (!img) return;
+            img.alt = countryLabel(emoji) || "";
+            img.src = flagCode(emoji) ? flagSrc(emoji) : twemojiSrc(emoji);
+            if (flagCode(emoji)) {
+                img.onerror = function () {
+                    img.onerror = null;
+                    img.src = twemojiSrc(emoji);
+                };
+            }
+        });
+    }
+    panel.hidden = false;
+    panel.style.position = "fixed";
+    panel.style.right = "auto";
+    panel.style.bottom = "auto";
+    var width = panel.offsetWidth || 340;
+    var height = panel.offsetHeight || 300;
+    var fixed = mode === "reaction" ? document.getElementById("dm-emoji") : null;
+    var rect = (fixed && fixed.offsetParent ? fixed : anchor).getBoundingClientRect();
+    var left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
+    var top = rect.top - height - 8;
+    if (top < 8) top = Math.min(rect.bottom + 8, window.innerHeight - height - 8);
+    panel.style.left = left + "px";
+    panel.style.top = Math.max(8, top) + "px";
+}
+
+function dmCloseMenu() {
+    var menu = document.getElementById("dm-msg-menu");
+    if (menu) menu.hidden = true;
+    menu.removeAttribute("data-row");
+}
+
+function dmOpenMenu(anchor, row) {
+    var menu = document.getElementById("dm-msg-menu");
+    if (!menu.hidden && menu.getAttribute("data-row") === row.getAttribute("data-id")) {
+        dmCloseMenu();
+        return;
+    }
+    dmShowMenu(row);
+    var rect = anchor.getBoundingClientRect();
+    var width = menu.offsetWidth;
+    var height = menu.offsetHeight;
+    var left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
+    var top = rect.bottom + 6;
+    if (top + height > window.innerHeight - 8) top = Math.max(8, rect.top - height - 6);
+    if (top + height > window.innerHeight - 8) top = Math.max(8, window.innerHeight - height - 8);
+    menu.style.left = left + "px";
+    menu.style.top = top + "px";
+}
+
+function dmShowMenu(row) {
+    var menu = document.getElementById("dm-msg-menu");
+    var mine = row.getAttribute("data-mine") === "1";
+    var gated = menu.querySelectorAll("[data-own-only]");
+    for (var i = 0; i < gated.length; i++) gated[i].hidden = !mine;
+    var others = menu.querySelectorAll("[data-other-only]");
+    for (var o = 0; o < others.length; o++) others[o].hidden = mine;
+    menu.setAttribute("data-row", row.getAttribute("data-id"));
+    var pin = menu.querySelector('[data-menu="pin"] span');
+    if (pin) pin.textContent = row.getAttribute("data-pinned") === "1" ? "Unpin Message" : "Pin Message";
+    menu.hidden = false;
+    return menu;
+}
+
+function dmOpenMenuAt(row, x, y) {
+    if (dmPicker.mode) dmClosePicker();
+    var menu = dmShowMenu(row);
+    var width = menu.offsetWidth;
+    var height = menu.offsetHeight;
+    var left = Math.max(8, Math.min(x, window.innerWidth - width - 8));
+    var top = Math.max(8, Math.min(y, window.innerHeight - height - 8));
+    menu.style.left = left + "px";
+    menu.style.top = top + "px";
+}
+
+var dmForwardRow = null;
+
+function dmForwardRefresh() {
+    var checked = document.querySelectorAll("#dm-forward-list .dm-forward-check:checked").length;
+    document.getElementById("dm-forward-submit").disabled = checked === 0;
+}
+
+function dmForwardError(text) {
+    var box = document.getElementById("dm-forward-error");
+    box.textContent = text || "";
+    box.hidden = !text;
+}
+
+function dmCloseForward() {
+    document.getElementById("dm-forward-modal").hidden = true;
+    document.getElementById("dm-forward-list").textContent = "";
+    document.getElementById("dm-forward-preview").textContent = "";
+    document.getElementById("dm-forward-search").value = "";
+    document.getElementById("dm-forward-note").value = "";
+    dmForwardError("");
+    dmForwardRow = null;
+}
+
+function dmOpenForward(row) {
+    dmForwardRow = row;
+    dmForwardError("");
+    var preview = document.getElementById("dm-forward-preview");
+    preview.textContent = "";
+    nodesForText(dmMessageText(row)).forEach(function (node) { preview.appendChild(node); });
+    var list = document.getElementById("dm-forward-list");
+    list.textContent = "";
+    document.getElementById("dm-forward-submit").disabled = true;
+    document.getElementById("dm-forward-modal").hidden = false;
+    document.getElementById("dm-forward-search").focus();
+    fetch("/Dm/ForwardTargets", {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    }).then(function (response) {
+        if (!response.ok) throw new Error("targets");
+        return response.text();
+    }).then(function (html) {
+        if (dmForwardRow !== row) return;
+        list.innerHTML = html;
+    }).catch(function () {
+        dmForwardError("Could not load your friends. Try again.");
+    });
+}
+
+function dmSubmitForward() {
+    var row = dmForwardRow;
+    if (!row) return;
+    var names = [];
+    document.querySelectorAll("#dm-forward-list .dm-forward-check:checked").forEach(function (box) { names.push(box.value); });
+    if (names.length === 0) return;
+    var button = document.getElementById("dm-forward-submit");
+    button.disabled = true;
+    dmForwardError("");
+    dmRequest("/Dm/Forward", "POST", {
+        id: Number(row.getAttribute("data-id")),
+        userNames: names,
+        note: document.getElementById("dm-forward-note").value.trim()
+    }).then(function () {
+        dmCloseForward();
+    }).catch(function (err) {
+        dmForwardError(err.message);
+        button.disabled = false;
+    });
+}
+
+function dmFilterForward() {
+    var term = document.getElementById("dm-forward-search").value.trim().toLowerCase();
+    document.querySelectorAll("#dm-forward-list .dm-forward-item").forEach(function (item) {
+        item.hidden = term.length > 0 && item.getAttribute("data-name").indexOf(term) === -1 && item.getAttribute("data-key").toLowerCase().indexOf(term) === -1;
+    });
+}
+
+var dmPinRow = null;
+
+function dmClosePinModal() {
+    var modal = document.getElementById("dm-pin-modal");
+    modal.hidden = true;
+    document.getElementById("dm-pin-preview").textContent = "";
+    dmPinRow = null;
+}
+
+function dmSetPinned(row, pinned) {
+    showDmError("");
+    dmRequest("/Dm/Pin", "POST", { id: Number(row.getAttribute("data-id")), pinned: pinned }).then(function (reply) {
+        row.setAttribute("data-pinned", reply.pinnedAt ? "1" : "0");
+        dmRefreshPins();
+    }).catch(function (err) {
+        showDmError(err.message);
+    });
+}
+
+function dmPinsOpen() {
+    return !document.getElementById("dm-pins-popover").hidden;
+}
+
+function dmClosePins() {
+    document.getElementById("dm-pins-popover").hidden = true;
+}
+
+function dmLoadPins() {
+    var popover = document.getElementById("dm-pins-popover");
+    if (!dmPartner) return Promise.resolve();
+    return fetch("/Dm/Pins?name=" + encodeURIComponent(dmPartner.userName), {
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
+    }).then(function (response) {
+        if (!response.ok) throw new Error("pins");
+        return response.text();
+    }).then(function (html) {
+        popover.innerHTML = html;
+        var texts = popover.querySelectorAll(".dm-pin-text");
+        for (var i = 0; i < texts.length; i++) {
+            var edited = texts[i].querySelector(".dm-msg-edited");
+            var text = edited ? texts[i].firstChild.textContent : texts[i].textContent;
+            FLAG_RE.lastIndex = 0;
+            if (!FLAG_RE.test(text)) continue;
+            FLAG_RE.lastIndex = 0;
+            while (texts[i].firstChild) texts[i].removeChild(texts[i].firstChild);
+            nodesForText(text).forEach(function (node) { texts[i].appendChild(node); });
+            if (edited) texts[i].appendChild(edited);
+        }
+    });
+}
+
+function dmRefreshPins() {
+    if (dmPinsOpen()) dmLoadPins().catch(function () {});
+}
+
+function dmTogglePins() {
+    var popover = document.getElementById("dm-pins-popover");
+    if (dmPinsOpen()) {
+        dmClosePins();
+        return;
+    }
+    dmLoadPins().then(function () {
+        var anchor = document.getElementById("dm-pins-toggle").getBoundingClientRect();
+        popover.hidden = false;
+        var width = popover.offsetWidth;
+        var left = Math.max(8, Math.min(anchor.right - width + 40, window.innerWidth - width - 8));
+        popover.style.left = left + "px";
+        popover.style.top = (anchor.bottom + 10) + "px";
+    }).catch(function () {
+        showDmError("Could not load the pinned messages.");
+    });
+}
+
+function dmOpenPinModal(row) {
+    dmPinRow = row;
+    var preview = document.getElementById("dm-pin-preview");
+    preview.textContent = "";
+    var face = document.createElement("img");
+    face.className = "dm-pin-avatar";
+    face.alt = "";
+    face.src = row.querySelector(".dm-msg-avatar").getAttribute("src");
+    var body = document.createElement("div");
+    body.className = "dm-pin-body";
+    var head = document.createElement("div");
+    head.className = "dm-pin-head";
+    var who = document.createElement("strong");
+    who.textContent = row.querySelector(".dm-msg-head strong").textContent;
+    var when = document.createElement("time");
+    when.textContent = row.querySelector(".dm-msg-head time").textContent;
+    head.appendChild(who);
+    head.appendChild(when);
+    var text = document.createElement("div");
+    text.className = "dm-pin-text";
+    nodesForText(dmMessageText(row)).forEach(function (node) { text.appendChild(node); });
+    body.appendChild(head);
+    body.appendChild(text);
+    preview.appendChild(face);
+    preview.appendChild(body);
+    document.getElementById("dm-pin-modal").hidden = false;
+    document.getElementById("dm-pin-confirm").focus();
+}
+
+function dmCopy(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(function () {});
+}
+
+function bindDmMessages() {
+    var box = document.getElementById("dm-messages");
+    var menu = document.getElementById("dm-msg-menu");
+    var panel = document.getElementById("emoji-panel");
+
+    box.addEventListener("click", function (event) {
+        var join = event.target.closest(".dm-call-join");
+        if (join) {
+            event.preventDefault();
+            startDmCall(false);
+            return;
+        }
+        var hint = event.target.closest("[data-edit]");
+        if (hint) {
+            event.preventDefault();
+            var editing = hint.closest(".dm-msg");
+            if (hint.getAttribute("data-edit") === "save") dmSaveEdit(editing);
+            else dmCancelEdit(editing);
+            return;
+        }
+        var quoted = event.target.closest(".dm-msg-reply");
+        if (quoted) {
+            dmJumpTo(quoted.getAttribute("data-reply-id"));
+            return;
+        }
+        var chip = event.target.closest(".dm-reaction");
+        if (chip) {
+            dmReact(chip.closest(".dm-msg"), chip.getAttribute("data-emoji"));
+            return;
+        }
+        var button = event.target.closest(".dm-msg-tools button, .dm-edit-emoji, .dm-reaction-add");
+        if (!button) return;
+        var row = button.closest(".dm-msg");
+        var act = button.getAttribute("data-act");
+        if (act === "react") dmReact(row, button.textContent.trim());
+        else if (act === "picker" || act === "reaction-add") dmOpenPicker(button, "reaction", row);
+        else if (act === "edit-picker") dmOpenPicker(button, "edit", row);
+        else if (act === "edit") dmStartEdit(row);
+        else if (act === "reply") dmStartReply(row);
+        else if (act === "forward") dmOpenForward(row);
+        else if (act === "delete") dmDeleteMessage(row);
+        else if (act === "more") dmOpenMenu(button, row);
+    });
+
+    box.addEventListener("contextmenu", function (event) {
+        var row = event.target.closest(".dm-msg");
+        if (!row || row.classList.contains("dm-call-msg") || event.target.closest(".dm-edit, a, .dm-msg-tools")) return;
+        event.preventDefault();
+        dmOpenMenuAt(row, event.clientX, event.clientY);
+    });
+
+    document.addEventListener("contextmenu", function (event) {
+        if (!event.target.closest("#dm-msg-menu, #dm-messages")) dmCloseMenu();
+    });
+
+    box.addEventListener("keydown", function (event) {
+        var quote = event.target.closest && event.target.closest(".dm-msg-reply");
+        if (quote && (event.key === "Enter" || event.key === " ")) {
+            event.preventDefault();
+            dmJumpTo(quote.getAttribute("data-reply-id"));
+            return;
+        }
+        if (event.target.tagName !== "TEXTAREA") return;
+        var row = event.target.closest(".dm-msg");
+        if (event.key === "Escape") {
+            event.preventDefault();
+            dmCancelEdit(row);
+        } else if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+            event.preventDefault();
+            dmSaveEdit(row);
+        }
+    });
+
+    box.addEventListener("input", function (event) {
+        if (event.target.tagName === "TEXTAREA") dmGrowEditor(event.target);
+    });
+
+    menu.addEventListener("click", function (event) {
+        var item = event.target.closest("[data-menu], [data-act]");
+        if (!item) return;
+        var row = box.querySelector('.dm-msg[data-id="' + menu.getAttribute("data-row") + '"]');
+        var action = item.getAttribute("data-menu");
+        dmCloseMenu();
+        if (!row) return;
+        if (item.getAttribute("data-act") === "react") dmReact(row, item.textContent.trim());
+        else if (action === "edit") dmStartEdit(row);
+        else if (action === "reply") dmStartReply(row);
+        else if (action === "forward") dmOpenForward(row);
+        else if (action === "pin") {
+            if (row.getAttribute("data-pinned") === "1") dmSetPinned(row, false);
+            else dmOpenPinModal(row);
+        }
+        else if (action === "delete") dmDeleteMessage(row);
+        else if (action === "copy-text") dmCopy(dmMessageText(row));
+        else if (action === "copy-id") window.discodeCopy(row.getAttribute("data-public-id") || "", "Message ID");
+        else if (action === "report") { if (window.discodeReport) window.discodeReport({ type: "DirectMessage", id: row.getAttribute("data-id"), label: "message" }); }
+        else if (action === "reaction") dmOpenPicker(row.querySelector('[data-act="picker"]') || row, "reaction", row);
+    });
+
+    panel.addEventListener("click", function (event) {
+        if (!dmPicker.mode) return;
+        var choice = event.target.closest(".emoji-choice");
+        if (!choice) return;
+        if (dmPicker.mode === "edit" && dmPicker.row) {
+            var area = dmPicker.row.querySelector(".dm-edit textarea");
+            if (area) {
+                var emoji = choice.getAttribute("data-emoji") || choice.textContent;
+                var start = area.selectionStart;
+                var end = area.selectionEnd;
+                area.value = area.value.slice(0, start) + emoji + area.value.slice(end);
+                area.setSelectionRange(start + emoji.length, start + emoji.length);
+                dmGrowEditor(area);
+                area.focus();
+            }
+        }
+        if (dmPicker.mode === "reaction" && dmPicker.row) {
+            dmReact(dmPicker.row, choice.getAttribute("data-emoji") || choice.textContent);
+        }
+        dmClosePicker();
+    }, true);
+
+    function dmSyncShift(event) {
+        document.body.classList.toggle("dm-shift", !!event.shiftKey);
+    }
+    document.addEventListener("keydown", dmSyncShift);
+    document.addEventListener("keyup", dmSyncShift);
+    document.addEventListener("mousemove", dmSyncShift);
+    window.addEventListener("blur", function () {
+        document.body.classList.remove("dm-shift");
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest("#dm-msg-menu, .dm-msg-tools [data-act='more']")) dmCloseMenu();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            if (!document.getElementById("dm-forward-modal").hidden) {
+                dmCloseForward();
+                return;
+            }
+            var pinModal = document.getElementById("dm-pin-modal");
+            if (!pinModal.hidden) {
+                dmClosePinModal();
+                return;
+            }
+            if (dmPinsOpen()) {
+                dmClosePins();
+                return;
+            }
+            var busy = !document.getElementById("dm-msg-menu").hidden || dmPicker.mode || document.querySelector(".dm-msg.is-editing");
+            dmCloseMenu();
+            if (dmPicker.mode) dmClosePicker();
+            if (!busy) dmCancelReply();
+        }
+    });
+    document.getElementById("dm-reply-cancel").addEventListener("click", dmCancelReply);
+    document.getElementById("dm-forward-modal").addEventListener("click", function (event) {
+        if (event.target.closest("[data-close]")) dmCloseForward();
+    });
+    document.getElementById("dm-forward-list").addEventListener("change", dmForwardRefresh);
+    document.getElementById("dm-forward-search").addEventListener("input", dmFilterForward);
+    document.getElementById("dm-forward-submit").addEventListener("click", dmSubmitForward);
+    document.getElementById("dm-forward-note").addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            dmSubmitForward();
+        }
+    });
+    document.getElementById("dm-pin-modal").addEventListener("click", function (event) {
+        if (event.target.closest("[data-close]")) dmClosePinModal();
+    });
+    document.getElementById("dm-pin-confirm").addEventListener("click", function () {
+        var row = dmPinRow;
+        dmClosePinModal();
+        if (row) dmSetPinned(row, true);
+    });
+
+    var pinsToggle = document.getElementById("dm-pins-toggle");
+    pinsToggle.addEventListener("click", function (event) {
+        event.stopPropagation();
+        dmTogglePins();
+    });
+    pinsToggle.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            dmTogglePins();
+        }
+    });
+    document.getElementById("dm-pins-popover").addEventListener("click", function (event) {
+        var card = event.target.closest("[data-jump]");
+        if (!card) return;
+        dmClosePins();
+        dmJumpTo(card.getAttribute("data-jump"));
+    });
+    document.addEventListener("click", function (event) {
+        if (dmPinsOpen() && !event.target.closest("#dm-pins-popover, #dm-pins-toggle")) dmClosePins();
+    });
+    document.addEventListener("discode-dm-pinned", function (event) {
+        var data = event.detail;
+        if (!data) return;
+        var row = box.querySelector('.dm-msg[data-id="' + data.messageId + '"]');
+        if (row) row.setAttribute("data-pinned", data.pinnedAt ? "1" : "0");
+        dmRefreshPins();
+    });
+    window.addEventListener("resize", function () {
+        dmClosePins();
+        dmCloseMenu();
+        if (dmPicker.mode) dmClosePicker();
+    });
+    document.querySelector(".dm-scroll").addEventListener("scroll", function () {
+        dmCloseMenu();
+        if (dmPicker.mode) dmClosePicker();
+    });
+
+    document.addEventListener("discode-dm-reaction", function (event) {
+        var data = event.detail;
+        if (!data) return;
+        var row = box.querySelector('.dm-msg[data-id="' + data.messageId + '"]');
+        if (row) dmRenderReactions(row, data.reactions || []);
+    });
+
+    document.addEventListener("discode-dm-deleted", function (event) {
+        if (event.detail) dmRemoveMessage(event.detail.messageId);
+    });
+
+    document.addEventListener("discode-dm-call-updated", function (event) {
+        var data = event.detail;
+        if (!data || !data.message) return;
+        var row = box.querySelector('.dm-call-msg[data-id="' + data.message.id + '"]');
+        if (row) dmFillCallRow(row, data.message);
+    });
+
+    document.addEventListener("discode-dm-edited", function (event) {
+        var data = event.detail;
+        if (!data || !data.message) return;
+        var row = box.querySelector('.dm-msg[data-id="' + data.message.id + '"]');
+        if (row && !row.classList.contains("is-editing")) dmApplyEdit(row, data.message);
+    });
+}
+
 function syncDmPlaceholder() {
     var field = document.getElementById("dm-input");
     var hint = document.getElementById("dm-placeholder");
@@ -607,6 +2535,8 @@ function bindDmInput() {
     syncDmPlaceholder();
     document.getElementById("dm-emoji").addEventListener("mousedown", rememberCaret);
     document.getElementById("dm-emoji").addEventListener("click", function () {
+        dmPicker.mode = "";
+        document.getElementById("emoji-panel").style.position = "";
         openEmojiPanel(this, document.getElementById("dm-input"));
     });
 
@@ -657,7 +2587,7 @@ function bindDmInput() {
     });
 
     document.addEventListener("click", function (event) {
-        if (event.target.closest("#emoji-panel, #dm-emoji")) return;
+        if (event.target.closest("#emoji-panel, #dm-emoji, .emoji-open")) return;
         closeEmojiPanel();
     });
 }
@@ -666,6 +2596,10 @@ if (document.getElementById("dm-chat")) {
     bindDmCall();
     bindDmCompose();
     bindDmInput();
+    bindDmAttach();
+    bindDmPoll();
+    bindDmMessages();
+    dmHydratePolls();
 }
 
 if (document.readyState === "complete") startDmPage();

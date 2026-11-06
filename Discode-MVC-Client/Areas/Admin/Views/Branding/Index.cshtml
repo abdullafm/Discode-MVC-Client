@@ -1,0 +1,100 @@
+@using Discode_MVC_Client.Services
+@{
+    ViewData["Title"] = "Logos";
+    ViewData["Section"] = "branding";
+    var branding = (SiteBranding)ViewData["Branding"]!;
+    var slots = new[]
+    {
+        (Key: "logo", Title: "Site logo", Note: "Shown on the home button, the loading screen and the sign in and register pages. A square image looks best.", Url: branding.LogoUrl, Icon: "fa-brands fa-discord"),
+        (Key: "favicon", Title: "Favicon", Note: "The small icon in the browser tab.", Url: branding.FaviconUrl, Icon: "fa-regular fa-window-maximize")
+    };
+}
+@if (TempData["AdminNotice"] is string notice)
+{
+    <p class="adm-notice"><i class="fa-solid fa-circle-check"></i> @notice</p>
+}
+@if (TempData["AdminWarning"] is string warning)
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @warning</p>
+}
+<div class="adm-brand-grid">
+    @foreach (var slot in slots)
+    {
+        <div class="adm-panel">
+            <h3>@slot.Title</h3>
+            <p class="adm-muted">@slot.Note</p>
+            <div class="adm-brand-preview" data-preview>
+                @if (slot.Url.Length > 0)
+                {
+                    <img src="@slot.Url" alt="@slot.Title">
+                }
+                else
+                {
+                    <i class="@slot.Icon"></i>
+                }
+            </div>
+            <small class="adm-muted">@(slot.Url.Length > 0 ? "Custom image" : "Default")</small>
+
+            <form method="post" enctype="multipart/form-data" asp-area="Admin" asp-controller="Branding" asp-action="Upload" class="adm-brand-upload">
+                <input type="hidden" name="slot" value="@slot.Key">
+                <input type="file" name="file" id="file-@slot.Key" class="adm-file-input" accept="image/*,.ico" required>
+                <label for="file-@slot.Key" class="adm-btn is-outline" data-pick><i class="fa-solid fa-image"></i> Choose image</label>
+                <span class="adm-brand-picked" data-picked hidden>
+                    <span class="adm-brand-filename" data-filename></span>
+                    <button type="submit" class="adm-btn"><i class="fa-solid fa-check"></i> Save</button>
+                    <button type="button" class="adm-btn is-outline" data-cancel><i class="fa-solid fa-xmark"></i> Cancel</button>
+                </span>
+            </form>
+
+            <form method="post" asp-area="Admin" asp-controller="Branding" asp-action="Reset" data-confirm="The built-in image is shown again everywhere." data-confirm-title="Use the default?" data-confirm-button="Use default" data-confirm-tone="warning" data-confirm-icon="fa-rotate-left">
+                <input type="hidden" name="slot" value="@slot.Key">
+                <button type="submit" class="adm-btn is-danger" disabled="@(slot.Url.Length == 0)" title="@(slot.Url.Length == 0 ? "Already using the default" : "")"><i class="fa-solid fa-rotate-left"></i> Default</button>
+            </form>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        window.initBrandForms = function (scope) {
+        (scope || document).querySelectorAll(".adm-brand-upload").forEach(function (form) {
+            if (form._ready) return;
+            form._ready = true;
+            var input = form.querySelector(".adm-file-input");
+            var pick = form.querySelector("[data-pick]");
+            var picked = form.querySelector("[data-picked]");
+            var name = form.querySelector("[data-filename]");
+            var preview = form.closest(".adm-panel").querySelector("[data-preview]");
+            var original = preview.innerHTML;
+            var blob = null;
+
+            function reset() {
+                input.value = "";
+                if (blob) URL.revokeObjectURL(blob);
+                blob = null;
+                preview.innerHTML = original;
+                picked.hidden = true;
+                pick.hidden = false;
+            }
+
+            input.addEventListener("change", function () {
+                var file = input.files && input.files[0];
+                if (!file) { reset(); return; }
+                if (blob) URL.revokeObjectURL(blob);
+                blob = URL.createObjectURL(file);
+                preview.innerHTML = "";
+                var img = document.createElement("img");
+                img.src = blob;
+                img.alt = "";
+                preview.appendChild(img);
+                name.textContent = file.name;
+                pick.hidden = true;
+                picked.hidden = false;
+            });
+
+            form.querySelector("[data-cancel]").addEventListener("click", reset);
+        });
+        };
+        window.initBrandForms(document);
+    </script>
+}

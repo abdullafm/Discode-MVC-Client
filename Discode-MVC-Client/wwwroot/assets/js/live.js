@@ -17,7 +17,7 @@
     var liveStreams = [];
     var liveCategory = "All";
     var heroIndex = 0;
-    var broadcast = null;
+    var hostState = window.discodeHost = window.discodeHost || { current: null };
     var watching = null;
     var notice = "";
     var capture = { camera: null, screen: null, camVideo: makeVideo(), scrVideo: makeVideo(), timer: 0 };
@@ -28,6 +28,25 @@
         video.playsInline = true;
         video.autoplay = true;
         return video;
+    }
+
+    function makeTicker(tick, ms) {
+        try {
+            var source = "var t=setInterval(function(){postMessage(0)}," + ms + ");onmessage=function(e){if(e.data==='stop'){clearInterval(t);close()}}";
+            var url = URL.createObjectURL(new Blob([source], { type: "text/javascript" }));
+            var worker = new Worker(url);
+            worker.onmessage = function () { tick(); };
+            return {
+                stop: function () {
+                    worker.postMessage("stop");
+                    worker.terminate();
+                    URL.revokeObjectURL(url);
+                }
+            };
+        } catch (error) {
+            var id = setInterval(tick, ms);
+            return { stop: function () { clearInterval(id); } };
+        }
     }
 
     function byId(id) {
@@ -104,6 +123,7 @@
         return requestJson("/Home/LiveStreams").then(function (data) {
             liveStreams = Array.isArray(data) ? data : [];
             renderLive();
+            if (typeof openWantedLive === "function") openWantedLive();
         }).catch(function () {});
     }
 
@@ -250,7 +270,10 @@
     function renderLive() {
         var list = byId("live-streams-list");
         var badge = byId("live-count-badge");
-        if (badge) badge.textContent = String(liveStreams.length);
+        if (badge) {
+            badge.textContent = String(liveStreams.length);
+            badge.hidden = liveStreams.length === 0;
+        }
         while (list.firstChild) list.removeChild(list.firstChild);
 
         byId("live-streams-empty").hidden = liveStreams.length > 0;
@@ -276,17 +299,91 @@
 
     /* ---------------- watch dialog ---------------- */
 
-    function appendChat(author, avatar, text) {
+    var replyTarget = null;
+    var chatMenu = null;
+
+    function closeChatMenu() {
+        if (chatMenu && chatMenu.parentNode) chatMenu.parentNode.removeChild(chatMenu);
+        chatMenu = null;
+    }
+
+    function setReply(target) {
+        replyTarget = target;
+        var bar = byId("live-reply-bar");
+        bar.hidden = !target;
+        byId("live-reply-name").textContent = target ? target.user : "";
+        if (target) byId("live-chat-input").focus();
+    }
+
+    function openChatMenu(anchor, line) {
+        closeChatMenu();
+        chatMenu = element("div", "watch-msg-menu");
+        var reply = element("button", "");
+        reply.type = "button";
+        reply.innerHTML = '<i class="fa-solid fa-reply"></i><span>Reply</span>';
+        reply.addEventListener("click", function () {
+            closeChatMenu();
+            setReply({ user: line.getAttribute("data-user"), text: line.getAttribute("data-text") });
+        });
+        chatMenu.appendChild(reply);
+        document.body.appendChild(chatMenu);
+        var rect = anchor.getBoundingClientRect();
+        var width = chatMenu.offsetWidth;
+        var left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
+        var top = rect.bottom + 4;
+        if (top + chatMenu.offsetHeight > window.innerHeight - 8) top = rect.top - chatMenu.offsetHeight - 4;
+        chatMenu.style.left = left + "px";
+        chatMenu.style.top = top + "px";
+    }
+
+    document.addEventListener("click", function (event) {
+        if (chatMenu && !event.target.closest(".watch-msg-menu, .watch-msg-more")) closeChatMenu();
+    });
+
+    byId("live-reply-cancel").addEventListener("click", function () { setReply(null); });
+    byId("live-chat-input").addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && replyTarget) {
+            event.preventDefault();
+            setReply(null);
+        }
+    });
+
+    function appendChat(author, avatar, text, replyUser, replyText) {
         var feed = byId("live-chat-feed");
         var line = element("div", "watch-msg");
+        line.setAttribute("data-user", author);
+        line.setAttribute("data-text", text);
         var face = element("img");
         face.src = avatar || DEFAULT_AVATAR;
         face.alt = "";
         var body = element("div");
+        if (replyUser) {
+            var quote = element("div", "watch-reply");
+            quote.innerHTML = '<i class="fa-solid fa-reply"></i>';
+            quote.appendChild(element("strong", "", replyUser));
+            quote.appendChild(element("span", "", replyText || ""));
+            body.appendChild(quote);
+        }
         body.appendChild(element("strong", "", author));
-        body.appendChild(element("p", "", text));
+        var said = element("p", "", text);
+        if (window.discodeMentions && window.discodeMentions.decorate) window.discodeMentions.decorate(said);
+        body.appendChild(said);
+        if (window.discodeMentions && window.discodeMentions.mentionsMe && window.discodeMentions.mentionsMe(said)) {
+            line.classList.add("is-mentioned");
+            var ping = element("em", "watch-msg-ping", "mentioned you");
+            body.insertBefore(ping, said);
+        }
+        var more = element("button", "watch-msg-more");
+        more.type = "button";
+        more.setAttribute("aria-label", "More");
+        more.innerHTML = '<i class="fa-solid fa-ellipsis"></i>';
+        more.addEventListener("click", function (event) {
+            event.stopPropagation();
+            openChatMenu(more, line);
+        });
         line.appendChild(face);
         line.appendChild(body);
+        line.appendChild(more);
         feed.appendChild(line);
         feed.scrollTop = feed.scrollHeight;
     }
@@ -327,33 +424,162 @@
         }, 2200);
     }
 
-    function setWait(text) {
+    function setWait(text, info) {
         var wait = byId("live-watch-wait");
         wait.hidden = !text;
         byId("live-watch-wait-text").textContent = text || "";
+        var icon = wait.querySelector("i");
+        if (icon) icon.className = info ? "fa-solid fa-tower-broadcast" : "fa-solid fa-circle-notch fa-spin";
     }
 
+    function showHostPreview() {
+        var session = hostState.current;
+        if (!session) return;
+        var video = byId("live-stream-video");
+        var toggle = byId("live-preview-toggle");
+        if (toggle) {
+            toggle.hidden = !session.sharesScreen;
+            toggle.title = session.previewHidden ? "Show my preview" : "Hide my preview";
+            toggle.querySelector("i").className = "fa-solid " + (session.previewHidden ? "fa-eye-slash" : "fa-eye");
+        }
+        // ekranı paylaşırkən öz görüntü yenidən yayına düşə bilər (güzgü effekti): istəsən göz düyməsi ilə gizlət
+        if (session.sharesScreen && session.previewHidden) {
+            video.srcObject = null;
+            setWait("Your preview is hidden so the stream does not repeat itself. Press the eye button to see it again.", true);
+            return;
+        }
+        video.srcObject = session.stream;
+        video.play().catch(function () {});
+        setWait("");
+    }
+
+    byId("live-preview-toggle").addEventListener("click", function () {
+        var session = hostState.current;
+        if (!session) return;
+        session.previewHidden = !session.previewHidden;
+        showHostPreview();
+    });
+
     function showWatchDialog(stream, mine) {
+        if (mine && window.discodeLiveDock) window.discodeLiveDock.hideHost();
+        if (mine) {
+            hub("GetLiveViewers", stream.id).then(function (viewers) {
+                if (currentStreamId() === stream.id) byId("live-viewers-count").textContent = viewerText(viewers.length);
+            }).catch(function () {});
+        }
         var video = byId("live-stream-video");
         byId("live-watch-modal").hidden = false;
         byId("live-watch-title").textContent = stream.title;
         byId("live-streamer-name").textContent = hostName(stream);
+        byId("live-streamer-name").setAttribute("data-username", stream.hostUserName || "");
         byId("live-streamer-avatar").src = stream.hostAvatarUrl || DEFAULT_AVATAR;
         byId("live-viewers-count").textContent = viewerText(stream.viewerCount);
         byId("live-btn-end").hidden = !mine;
+        byId("live-report-btn").hidden = mine;
+        byId("live-preview-toggle").hidden = true;
         byId("live-chat-feed").textContent = "";
         video.muted = mine;
         video.srcObject = null;
         byId("live-mute-btn").querySelector("i").className = "fa-solid " + (mine ? "fa-volume-xmark" : "fa-volume-high");
         setWait(mine ? "" : "Connecting to the stream...");
+        updateGuestButton();
+        updateMinimizeButton();
     }
 
-    function openStream(stream) {
+    function updateMinimizeButton() {
+        byId("live-minimize-btn").hidden = isHostNow() ? false : (!watching || !!myGuest);
+    }
+
+    byId("live-minimize-btn").addEventListener("click", function () {
+        if (isHostNow() && window.discodeLiveDock) {
+            var session = hostState.current;
+            closeViewerList();
+            setReply(null);
+            closeChatMenu();
+            byId("live-stream-video").srcObject = null;
+            byId("live-watch-modal").hidden = true;
+            window.discodeLiveDock.takeHost({ stream: session.stream, title: session.info.title });
+            return;
+        }
+        if (!watching || !watching.pc || myGuest || !window.discodeLiveDock) return;
+        var current = watching;
+        var video = byId("live-stream-video");
+        var info = {
+            streamId: current.stream.id,
+            pc: current.pc,
+            stream: video.srcObject,
+            title: current.stream.title,
+            host: hostName(current.stream),
+            muted: video.muted
+        };
+        watching = null;
+        clearGuest();
+        closeViewerList();
+        setReply(null);
+        closeChatMenu();
+        video.srcObject = null;
+        byId("live-watch-modal").hidden = true;
+        window.discodeLiveDock.take(info);
+    });
+
+    function refreshRoster() {
+        var id = currentStreamId();
+        if (!id) return;
+        hub("GetLiveViewers", id).then(function (viewers) {
+            if (currentStreamId() === id) window.discodeLiveRoster = viewers;
+        }).catch(function () {});
+    }
+
+    byId("live-chat-input").addEventListener("focus", refreshRoster);
+
+    function closeViewerList() {
+        byId("live-viewer-list").hidden = true;
+    }
+
+    function refreshViewerList() {
+        var id = currentStreamId();
+        if (!hostState.current || hostState.current.streamId !== id || byId("live-viewer-list").hidden) return;
+        hub("GetLiveViewers", id).then(function (viewers) {
+            var rows = byId("live-viewer-rows");
+            rows.textContent = "";
+            byId("live-viewer-empty").hidden = viewers.length > 0;
+            viewers.forEach(function (viewer) {
+                var row = element("button", "watch-viewer-row");
+                row.type = "button";
+                var face = element("img");
+                face.alt = "";
+                face.src = viewer.avatarUrl || DEFAULT_AVATAR;
+                var names = element("span");
+                names.appendChild(element("strong", "", viewer.displayName || viewer.userName));
+                names.appendChild(element("small", "", viewer.userName));
+                row.appendChild(face);
+                row.appendChild(names);
+                row.addEventListener("click", function () {
+                    if (window.openUserProfile) window.openUserProfile(viewer.userName, viewer.avatarUrl || "");
+                });
+                rows.appendChild(row);
+            });
+        }).catch(function () {});
+    }
+
+    byId("live-viewers-btn").addEventListener("click", function (event) {
+        event.stopPropagation();
+        var panel = byId("live-viewer-list");
+        if (!hostState.current || hostState.current.streamId !== currentStreamId()) return;
+        panel.hidden = !panel.hidden;
+        refreshViewerList();
+    });
+
+    document.addEventListener("click", function (event) {
+        if (!event.target.closest("#live-viewer-list, #live-viewers-btn")) closeViewerList();
+    });
+
+    function openStream(stream, attempt) {
+        if (window.discodeLiveDock) window.discodeLiveDock.close();
         if (stream.isMine) {
-            if (broadcast && broadcast.streamId === stream.id) {
+            if (hostState.current && hostState.current.streamId === stream.id) {
                 showWatchDialog(stream, true);
-                byId("live-stream-video").srcObject = broadcast.stream;
-                byId("live-stream-video").play().catch(function () {});
+                showHostPreview();
             }
             return;
         }
@@ -365,8 +591,21 @@
             if (!watching || watching.stream.id !== stream.id) return;
             watching.stream = join.stream;
             byId("live-viewers-count").textContent = viewerText(join.stream.viewerCount);
+            if (join.guest) {
+                guest = join.guest;
+                showGuestTile(guest, null, false);
+                wantGuest();
+            }
+            updateGuestButton();
         }).catch(function (err) {
-            if (watching && watching.stream.id === stream.id) setWait(hubMessage(err));
+            if (!watching || watching.stream.id !== stream.id) return;
+            if (/not ready/i.test(String((err && err.message) || "")) && (attempt || 0) < 12) {
+                setTimeout(function () {
+                    if (watching && watching.stream.id === stream.id) openStream(stream, (attempt || 0) + 1);
+                }, 700);
+                return;
+            }
+            setWait(hubMessage(err));
         });
     }
 
@@ -375,27 +614,122 @@
         var current = watching;
         watching = null;
         if (current.pc) current.pc.close();
+        clearGuest();
         hub("LeaveLive", current.stream.id).catch(function () {});
         var video = byId("live-stream-video");
         video.srcObject = null;
     }
 
     function finishClose() {
+        window.discodeLiveRoster = [];
+        closeViewerList();
+        setReply(null);
+        closeChatMenu();
         leaveWatching();
         byId("live-watch-modal").hidden = true;
         byId("live-stream-video").srcObject = null;
     }
 
     function closeWatchDialog() {
-        if (broadcast && !byId("live-watch-modal").hidden && !byId("live-btn-end").hidden) {
+        if (hostState.current && !byId("live-watch-modal").hidden && !byId("live-btn-end").hidden) {
             askConfirm("End your stream?", "You are live. Closing this window will stop the stream for everyone watching.", "End stream").then(function (ok) {
-                if (!ok || !broadcast) return;
+                if (!ok || !hostState.current) return;
                 endBroadcast();
                 finishClose();
             });
             return;
         }
         finishClose();
+    }
+
+    var shareModal = byId("live-share-modal");
+    var shareList = byId("live-share-list");
+    var shareSubmit = byId("live-share-submit");
+
+    function shareError(text) {
+        var box = byId("live-share-error");
+        box.textContent = text || "";
+        box.hidden = !text;
+    }
+
+    function closeShare() {
+        shareModal.hidden = true;
+        shareList.textContent = "";
+        byId("live-share-search").value = "";
+        shareError("");
+    }
+
+    function liveNotice(text) {
+        var note = document.createElement("div");
+        note.className = "story-notice";
+        note.textContent = text;
+        document.body.appendChild(note);
+        setTimeout(function () {
+            if (window.discodeDismiss) window.discodeDismiss(note);
+            else if (note.parentNode) note.parentNode.removeChild(note);
+        }, 3000);
+    }
+
+    byId("live-share-btn").addEventListener("click", function () {
+        if (!currentStreamId()) return;
+        shareError("");
+        shareList.textContent = "";
+        shareSubmit.disabled = true;
+        shareModal.hidden = false;
+        byId("live-share-search").focus();
+        fetch("/Dm/ForwardTargets", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            if (!response.ok) throw new Error("targets");
+            return response.text();
+        }).then(function (html) {
+            shareList.innerHTML = html;
+        }).catch(function () {
+            shareError("Could not load your friends. Try again.");
+        });
+    });
+
+    shareModal.addEventListener("click", function (event) {
+        if (event.target.closest("[data-close]")) closeShare();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !shareModal.hidden) closeShare();
+    });
+    shareList.addEventListener("change", function () {
+        shareSubmit.disabled = shareList.querySelectorAll(".dm-forward-check:checked").length === 0;
+    });
+    byId("live-share-search").addEventListener("input", function () {
+        var term = this.value.trim().toLowerCase();
+        [].forEach.call(shareList.querySelectorAll(".dm-forward-item"), function (item) {
+            item.hidden = term.length > 0 && item.getAttribute("data-name").indexOf(term) === -1 && item.getAttribute("data-key").toLowerCase().indexOf(term) === -1;
+        });
+    });
+    shareSubmit.addEventListener("click", function () {
+        var id = currentStreamId();
+        var names = [];
+        [].forEach.call(shareList.querySelectorAll(".dm-forward-check:checked"), function (box) { names.push(box.value); });
+        if (!id || !names.length) return;
+        shareSubmit.disabled = true;
+        shareError("");
+        requestJson("/Home/InviteToLive", "POST", { id: id, userNames: names }).then(function () {
+            closeShare();
+            liveNotice("Invitation sent.");
+        }).catch(function (error) {
+            shareError((error && error.message) || "Could not send the invitation.");
+            shareSubmit.disabled = false;
+        });
+    });
+
+    var wantedLive = Number(new URLSearchParams(window.location.search).get("live")) || 0;
+
+    function openWantedLive() {
+        if (!wantedLive) return;
+        var id = wantedLive;
+        wantedLive = 0;
+        var found = liveStreams.filter(function (item) { return item.id === id; })[0];
+        if (!found) {
+            liveNotice("This live stream has ended.");
+            return;
+        }
+        openStream(found);
     }
 
     byId("live-watch-close").addEventListener("click", closeWatchDialog);
@@ -413,10 +747,15 @@
         else if (stage.requestFullscreen) stage.requestFullscreen();
     });
 
+    byId("live-report-btn").addEventListener("click", function () {
+        var id = currentStreamId();
+        if (id && window.discodeReport) window.discodeReport({ type: "LiveStream", id: String(id), label: "live stream" });
+    });
+
     byId("live-btn-end").addEventListener("click", function () {
-        if (!broadcast) return;
+        if (!hostState.current) return;
         askConfirm("End your stream?", "Your viewers will be disconnected and the stream will stop.", "End stream").then(function (ok) {
-            if (!ok || !broadcast) return;
+            if (!ok || !hostState.current) return;
             endBroadcast();
             byId("live-watch-modal").hidden = true;
         });
@@ -429,6 +768,12 @@
         var id = currentStreamId();
         if (!text || !id) return;
         input.value = "";
+        if (replyTarget) {
+            var target = replyTarget;
+            setReply(null);
+            hub("SendLiveReply", id, text, target.user, target.text).catch(function () {});
+            return;
+        }
         hub("SendLiveMessage", id, text).catch(function () {});
     });
 
@@ -439,7 +784,7 @@
 
     function currentStreamId() {
         if (watching) return watching.stream.id;
-        if (broadcast) return broadcast.streamId;
+        if (hostState.current) return hostState.current.streamId;
         return 0;
     }
 
@@ -461,13 +806,13 @@
     }
 
     function startPeerFor(viewerConnection) {
-        var streamId = broadcast.streamId;
+        var streamId = hostState.current.streamId;
         var pc = new RTCPeerConnection(ICE);
         var peer = { pc: pc, pending: [] };
-        broadcast.peers[viewerConnection] = peer;
+        hostState.current.peers[viewerConnection] = peer;
 
-        broadcast.stream.getTracks().forEach(function (track) {
-            pc.addTrack(track, broadcast.stream);
+        hostState.current.stream.getTracks().forEach(function (track) {
+            pc.addTrack(track, hostState.current.stream);
         });
         pc.onicecandidate = function (event) {
             if (event.candidate) signal(streamId, viewerConnection, { kind: "ice", candidate: event.candidate });
@@ -488,20 +833,21 @@
             if (!sender.track || sender.track.kind !== "video") return;
             var params = sender.getParameters();
             if (!params.encodings || !params.encodings.length) params.encodings = [{}];
-            params.encodings[0].maxBitrate = 3000000;
-            params.degradationPreference = "maintain-resolution";
+            params.encodings[0].maxBitrate = sender.track.contentHint === "detail" ? 4000000 : 3000000;
+            params.encodings[0].maxFramerate = 30;
+            params.degradationPreference = "balanced";
             sender.setParameters(params).catch(function () {});
         });
     }
 
     function dropPeer(viewerConnection) {
-        if (!broadcast || !broadcast.peers[viewerConnection]) return;
-        broadcast.peers[viewerConnection].pc.close();
-        delete broadcast.peers[viewerConnection];
+        if (!hostState.current || !hostState.current.peers[viewerConnection]) return;
+        hostState.current.peers[viewerConnection].pc.close();
+        delete hostState.current.peers[viewerConnection];
     }
 
     function hostSignal(from, message) {
-        var peer = broadcast.peers[from];
+        var peer = hostState.current.peers[from];
         if (!peer) return;
         if (message.kind === "answer") {
             peer.pc.setRemoteDescription(message.sdp).then(function () {
@@ -524,7 +870,11 @@
             pc.ontrack = function (event) {
                 var video = byId("live-stream-video");
                 video.srcObject = event.streams[0];
-                video.play().catch(function () {});
+                video.play().catch(function () {
+                    video.muted = true;
+                    byId("live-mute-btn").querySelector("i").className = "fa-solid fa-volume-xmark";
+                    video.play().catch(function () {});
+                });
                 setWait("");
             };
             pc.setRemoteDescription(message.sdp).then(function () {
@@ -550,18 +900,43 @@
         } catch (err) {
             return;
         }
-        if (broadcast && broadcast.streamId === data.streamId) hostSignal(data.from, message);
-        else if (watching && watching.stream.id === data.streamId) {
+        if (message.role === "guest") {
+            if (currentStreamId() === data.streamId) guestSignal(data.from, message);
+            return;
+        }
+        if (hostState.current && hostState.current.streamId === data.streamId) return;
+        if (watching && watching.stream.id === data.streamId) {
             viewerSignal(data.from, message);
         }
     });
 
-    document.addEventListener("discode-live-viewer-joined", function (event) {
-        if (broadcast && broadcast.streamId === event.detail.streamId) startPeerFor(event.detail.connectionId);
-    });
+    function keepHostHandlers() {
+        var keep = window.discodeKeepOnce;
+        if (!keep) return;
+        keep("host-signal", "discode-live-signal", function (event) {
+            var data = event.detail;
+            var message;
+            try {
+                message = JSON.parse(data.payload);
+            } catch (err) {
+                return;
+            }
+            if (message.role === "guest") return;
+            if (hostState.current && hostState.current.streamId === data.streamId) hostSignal(data.from, message);
+        });
+        keep("host-joined", "discode-live-viewer-joined", function (event) {
+            if (hostState.current && hostState.current.streamId === event.detail.streamId) startPeerFor(event.detail.connectionId);
+        });
+        keep("host-left", "discode-live-viewer-left", function (event) {
+            dropPeer(event.detail.connectionId);
+        });
+    }
+
+    keepHostHandlers();
 
     document.addEventListener("discode-live-viewer-left", function (event) {
-        dropPeer(event.detail.connectionId);
+        if (guest && guest.connectionId === event.detail.connectionId && currentStreamId() === event.detail.streamId) clearGuest();
+        removeGuestRequest(event.detail.connectionId);
     });
 
     document.addEventListener("discode-live-viewers", function (event) {
@@ -575,6 +950,8 @@
         });
         if (changed) renderLive();
         if (currentStreamId() === data.streamId) byId("live-viewers-count").textContent = viewerText(data.count);
+        refreshViewerList();
+        refreshRoster();
     });
 
     document.addEventListener("discode-live-ended", function (event) {
@@ -585,7 +962,7 @@
             byId("live-stream-video").srcObject = null;
             setWait("This stream has ended.");
         }
-        if (broadcast && broadcast.streamId === id) {
+        if (hostState.current && hostState.current.streamId === id) {
             releaseBroadcast();
             byId("live-watch-modal").hidden = true;
         }
@@ -595,7 +972,7 @@
 
     document.addEventListener("discode-live-message", function (event) {
         var message = event.detail;
-        if (currentStreamId() === message.streamId) appendChat(message.userName, message.avatarUrl, message.text);
+        if (currentStreamId() === message.streamId) appendChat(message.userName, message.avatarUrl, message.text, message.replyToUserName, message.replyToText);
     });
 
     document.addEventListener("discode-live-joined", function (event) {
@@ -606,6 +983,266 @@
 
     document.addEventListener("discode-live-heart", function (event) {
         if (currentStreamId() === event.detail.streamId) spawnHeart();
+    });
+
+    /* ---------------- guests ---------------- */
+
+    var guest = null;
+    var myGuest = null;
+    var guestPending = false;
+    var guestRecv = {};
+    var earlyGuestIce = {};
+
+    function isHostNow() {
+        return !!hostState.current && hostState.current.streamId === currentStreamId();
+    }
+
+    function guestNote(text) {
+        var holder = byId("live-guest-requests");
+        var note = element("div", "watch-guest-note", text);
+        holder.appendChild(note);
+        setTimeout(function () {
+            if (window.discodeDismiss) window.discodeDismiss(note);
+            else if (note.parentNode) note.parentNode.removeChild(note);
+        }, 3500);
+    }
+
+    function guestStatus(text) {
+        var holder = byId("live-guest-requests");
+        var old = holder.querySelector(".watch-guest-status");
+        if (old && old.parentNode) old.parentNode.removeChild(old);
+        if (!text) return;
+        holder.appendChild(element("div", "watch-guest-note watch-guest-status", text));
+    }
+
+    function showGuestTile(info, stream, mine) {
+        byId("live-guest-tile").hidden = false;
+        byId("live-guest-name").textContent = mine ? "You" : (info.displayName || info.userName || "");
+        var video = byId("live-guest-video");
+        video.muted = !!mine;
+        if (stream) {
+            video.srcObject = stream;
+            video.play().catch(function () {});
+        }
+        byId("live-guest-remove").hidden = !(isHostNow() || mine);
+    }
+
+    function updateGuestButton() {
+        var button = byId("live-guest-btn");
+        button.hidden = !watching || isHostNow();
+        button.classList.toggle("is-pending", guestPending);
+        button.classList.toggle("is-guest", !!myGuest);
+        button.disabled = guestPending || (!!guest && !myGuest);
+        updateMinimizeButton();
+        button.title = myGuest ? "Leave as guest" : guestPending ? "Request sent" : guest ? "A guest is already on" : "Request to join";
+    }
+
+    function clearGuest() {
+        Object.keys(guestRecv).forEach(function (key) { guestRecv[key].pc.close(); });
+        guestRecv = {};
+        earlyGuestIce = {};
+        if (myGuest) {
+            Object.keys(myGuest.peers).forEach(function (key) { myGuest.peers[key].pc.close(); });
+            stopTracks(myGuest.stream);
+            myGuest = null;
+        }
+        guest = null;
+        guestPending = false;
+        guestStatus("");
+        byId("live-guest-tile").hidden = true;
+        byId("live-guest-video").srcObject = null;
+        updateGuestButton();
+    }
+
+    function wantGuest() {
+        if (!guest || myGuest) return;
+        signal(currentStreamId(), guest.connectionId, { kind: "want", role: "guest" });
+    }
+
+    function startGuestPeer(target) {
+        var streamId = currentStreamId();
+        var pc = new RTCPeerConnection(ICE);
+        var peer = { pc: pc, pending: [] };
+        if (myGuest.peers[target]) myGuest.peers[target].pc.close();
+        myGuest.peers[target] = peer;
+        myGuest.stream.getTracks().forEach(function (track) {
+            pc.addTrack(track, myGuest.stream);
+        });
+        pc.onicecandidate = function (event) {
+            if (event.candidate) signal(streamId, target, { kind: "ice", role: "guest", candidate: event.candidate });
+        };
+        pc.onconnectionstatechange = function () {
+            if ((pc.connectionState === "failed" || pc.connectionState === "closed") && myGuest && myGuest.peers[target] === peer) {
+                delete myGuest.peers[target];
+            }
+        };
+        pc.createOffer().then(function (offer) {
+            return pc.setLocalDescription(offer);
+        }).then(function () {
+            tuneSenders(pc);
+            signal(streamId, target, { kind: "offer", role: "guest", sdp: pc.localDescription });
+        }).catch(function () {});
+    }
+
+    function guestSignal(from, message) {
+        var streamId = currentStreamId();
+        if (message.kind === "want") {
+            if (!myGuest) return;
+            if (myGuest.stream) startGuestPeer(from);
+            else myGuest.wants.push(from);
+        } else if (message.kind === "offer") {
+            if (guestRecv[from]) guestRecv[from].pc.close();
+            var pc = new RTCPeerConnection(ICE);
+            var peer = { pc: pc, pending: (earlyGuestIce[from] || []).splice(0) };
+            guestRecv[from] = peer;
+            pc.onicecandidate = function (event) {
+                if (event.candidate) signal(streamId, from, { kind: "ice", role: "guest", candidate: event.candidate });
+            };
+            pc.ontrack = function (event) {
+                var video = byId("live-guest-video");
+                video.srcObject = event.streams[0];
+                video.muted = false;
+                video.play().catch(function () {
+                    video.muted = true;
+                    video.play().catch(function () {});
+                });
+                byId("live-guest-tile").hidden = false;
+            };
+            pc.setRemoteDescription(message.sdp).then(function () {
+                flushCandidates(peer);
+                return pc.createAnswer();
+            }).then(function (answer) {
+                return pc.setLocalDescription(answer);
+            }).then(function () {
+                signal(streamId, from, { kind: "answer", role: "guest", sdp: pc.localDescription });
+            }).catch(function () {});
+        } else if (message.kind === "answer") {
+            var sender = myGuest && myGuest.peers[from];
+            if (sender) {
+                sender.pc.setRemoteDescription(message.sdp).then(function () {
+                    flushCandidates(sender);
+                }).catch(function () {});
+            }
+        } else if (message.kind === "ice") {
+            var target = (myGuest && myGuest.peers[from]) || guestRecv[from];
+            if (target) addRemoteCandidate(target, message.candidate);
+            else (earlyGuestIce[from] = earlyGuestIce[from] || []).push(message.candidate);
+        }
+    }
+
+    function becomeGuest() {
+        myGuest = { stream: null, peers: {}, wants: [] };
+        guestPending = false;
+        updateGuestButton();
+        acquireCamera().then(function (stream) {
+            if (!myGuest) {
+                stopTracks(stream);
+                return;
+            }
+            myGuest.stream = stream;
+            showGuestTile(guest || {}, stream, true);
+            myGuest.wants.splice(0).forEach(startGuestPeer);
+        }).catch(function () {
+            guestNote("Your camera or microphone is not available.");
+            hub("EndLiveGuest", currentStreamId()).catch(function () {});
+            clearGuest();
+        });
+    }
+
+    function removeGuestRequest(connectionId) {
+        var card = byId("live-guest-requests").querySelector('[data-connection="' + connectionId + '"]:not(.is-leaving)');
+        if (card && card.parentNode) {
+            if (window.discodeDismiss) window.discodeDismiss(card);
+            else card.parentNode.removeChild(card);
+        }
+    }
+
+    byId("live-guest-btn").addEventListener("click", function () {
+        var id = currentStreamId();
+        if (!id) return;
+        if (myGuest) {
+            hub("EndLiveGuest", id).catch(function () {});
+            return;
+        }
+        guestPending = true;
+        updateGuestButton();
+        hub("RequestLiveGuest", id).then(function () {
+            if (guestPending) guestStatus("Request sent. Waiting for the host to accept...");
+        }).catch(function (err) {
+            guestPending = false;
+            updateGuestButton();
+            guestNote(hubMessage(err));
+        });
+    });
+
+    byId("live-guest-tile").addEventListener("click", function (event) {
+        if (event.target.closest("#live-guest-remove")) return;
+        var video = byId("live-guest-video");
+        if (!myGuest && video.muted) {
+            video.muted = false;
+            video.play().catch(function () {});
+        }
+    });
+
+    byId("live-guest-remove").addEventListener("click", function () {
+        var id = currentStreamId();
+        if (id) hub("EndLiveGuest", id).catch(function () {});
+    });
+
+    document.addEventListener("discode-live-guest-requested", function (event) {
+        var request = event.detail;
+        if (!isHostNow() || hostState.current.streamId !== request.streamId) return;
+        removeGuestRequest(request.connectionId);
+        var card = element("div", "watch-guest-request");
+        card.setAttribute("data-connection", request.connectionId);
+        var face = element("img");
+        face.alt = "";
+        face.src = request.avatarUrl || DEFAULT_AVATAR;
+        var text = element("span", "", (request.displayName || request.userName) + " wants to join");
+        var accept = element("button", "watch-guest-accept", "Accept");
+        accept.type = "button";
+        var decline = element("button", "watch-guest-decline", "Decline");
+        decline.type = "button";
+        accept.addEventListener("click", function () {
+            removeGuestRequest(request.connectionId);
+            hub("RespondLiveGuest", request.streamId, request.connectionId, true).catch(function (err) { guestNote(hubMessage(err)); });
+        });
+        decline.addEventListener("click", function () {
+            removeGuestRequest(request.connectionId);
+            hub("RespondLiveGuest", request.streamId, request.connectionId, false).catch(function () {});
+        });
+        card.appendChild(face);
+        card.appendChild(text);
+        card.appendChild(accept);
+        card.appendChild(decline);
+        byId("live-guest-requests").appendChild(card);
+    });
+
+    document.addEventListener("discode-live-guest-response", function (event) {
+        if (!watching || watching.stream.id !== event.detail.streamId) return;
+        guestStatus("");
+        if (event.detail.accepted) {
+            becomeGuest();
+        } else {
+            guestPending = false;
+            updateGuestButton();
+            guestNote("The host declined your request.");
+        }
+    });
+
+    document.addEventListener("discode-live-guest-started", function (event) {
+        var info = event.detail;
+        if (currentStreamId() !== info.streamId) return;
+        guest = info;
+        updateGuestButton();
+        if (myGuest) return;
+        showGuestTile(info, null, false);
+        wantGuest();
+    });
+
+    document.addEventListener("discode-live-guest-ended", function (event) {
+        if (currentStreamId() !== event.detail.streamId) return;
+        clearGuest();
     });
 
     /* ---------------- Go Live: capture + preview ---------------- */
@@ -679,9 +1316,9 @@
 
     function ensureDrawing() {
         var active = !!(capture.camera || capture.screen);
-        if (active && !capture.timer) capture.timer = setInterval(drawFrame, DRAW_MS);
+        if (active && !capture.timer) capture.timer = makeTicker(drawFrame, DRAW_MS);
         if (!active && capture.timer) {
-            clearInterval(capture.timer);
+            capture.timer.stop();
             capture.timer = 0;
             drawFrame();
         }
@@ -782,10 +1419,10 @@
     });
 
     function openCreateDialog() {
-        if (broadcast) {
-            showWatchDialog(broadcast.info, true);
-            byId("live-stream-video").srcObject = broadcast.stream;
-            byId("live-stream-video").play().catch(function () {});
+        if (window.discodeLiveDock) window.discodeLiveDock.close();
+        if (hostState.current) {
+            showWatchDialog(hostState.current.info, true);
+            showHostPreview();
             return;
         }
         byId("live-create-modal").hidden = false;
@@ -800,7 +1437,7 @@
 
     function closeCreateDialog() {
         byId("live-create-modal").hidden = true;
-        if (!broadcast) {
+        if (!hostState.current) {
             discardCapture();
             refreshSourceUi();
         }
@@ -815,6 +1452,13 @@
     /* ---------------- Go Live: broadcast ---------------- */
 
     function buildOutputStream() {
+        var single = [capture.camera, capture.screen].filter(Boolean);
+        if (single.length === 1) {
+            var direct = new MediaStream(single[0].getTracks());
+            var videoTrack = direct.getVideoTracks()[0];
+            if (videoTrack && "contentHint" in videoTrack) videoTrack.contentHint = single[0] === capture.screen ? "detail" : "motion";
+            return { stream: direct, mixer: null, direct: true };
+        }
         var output = canvas.captureStream(30);
         var audioStreams = [capture.camera, capture.screen].filter(function (stream) {
             return stream && stream.getAudioTracks().length;
@@ -842,16 +1486,19 @@
 
         var out = buildOutputStream();
         hub("StartLive", { title: title, category: category }).then(function (stream) {
-            broadcast = { streamId: stream.id, stream: out.stream, mixer: out.mixer, peers: {}, info: stream, thumbnail: "", snapshotTimer: 0 };
+            hostState.current = { streamId: stream.id, stream: out.stream, mixer: out.mixer, peers: {}, info: stream, thumbnail: "", snapshotTimer: 0, sharesScreen: !!capture.screen, direct: !!out.direct, sources: [capture.camera, capture.screen].filter(Boolean), discard: function () { try { discardCapture(); } catch (error) {} } };
             scheduleSnapshot(5000);
             byId("live-create-modal").hidden = true;
             showWatchDialog(stream, true);
-            var video = byId("live-stream-video");
-            video.srcObject = out.stream;
-            video.play().catch(function () {});
+            showHostPreview();
+            if (out.direct) {
+                out.stream.getVideoTracks()[0].addEventListener("ended", function () {
+                    if (hostState.current && hostState.current.stream === out.stream) endBroadcast();
+                });
+            }
             refreshLive();
         }).catch(function (err) {
-            stopTracks(out.stream);
+            if (!out.direct) stopTracks(out.stream);
             if (out.mixer) out.mixer.close();
             refreshSourceUi(hubMessage(err));
         });
@@ -875,16 +1522,16 @@
     }
 
     function takeSnapshot() {
-        if (!broadcast) return;
-        var current = broadcast;
+        if (!hostState.current) return;
+        var current = hostState.current;
         var shot = document.createElement("canvas");
         shot.width = 640;
         shot.height = 360;
         shot.getContext("2d").drawImage(canvas, 0, 0, shot.width, shot.height);
         shot.toBlob(function (blob) {
-            if (!blob || broadcast !== current) return;
+            if (!blob || hostState.current !== current) return;
             postThumbnail(blob, current.thumbnail).then(function (url) {
-                if (broadcast !== current) {
+                if (hostState.current !== current) {
                     removeThumbnail(url);
                     return;
                 }
@@ -900,25 +1547,30 @@
     }
 
     function scheduleSnapshot(delay) {
-        var current = broadcast;
+        var current = hostState.current;
         if (!current) return;
         current.snapshotTimer = setTimeout(function () {
-            if (broadcast !== current) return;
+            if (hostState.current !== current) return;
             takeSnapshot();
             scheduleSnapshot((10 + Math.random() * 5) * 60 * 1000);
         }, delay);
     }
 
     function releaseBroadcast() {
-        if (!broadcast) return;
-        var current = broadcast;
-        broadcast = null;
+        if (!hostState.current) return;
+        var current = hostState.current;
+        hostState.current = null;
+        clearGuest();
+        byId("live-guest-requests").textContent = "";
         clearTimeout(current.snapshotTimer);
         removeThumbnail(current.thumbnail);
         Object.keys(current.peers).forEach(function (key) { current.peers[key].pc.close(); });
         stopTracks(current.stream);
+        (current.sources || []).forEach(stopTracks);
         if (current.mixer) current.mixer.close();
+        if (current.discard) current.discard();
         discardCapture();
+        if (window.discodeLiveDock) window.discodeLiveDock.hideHost();
         refreshSourceUi();
         byId("live-stream-video").srcObject = null;
     }
@@ -931,4 +1583,6 @@
 
     drawFrame();
     refreshLive();
+
+    if (hostState.current && /[?&]hostlive=/.test(location.search)) openCreateDialog();
 })();

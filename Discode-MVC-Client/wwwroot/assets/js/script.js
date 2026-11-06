@@ -2,6 +2,19 @@
 var micO = false;
 var headO = false;
 
+// Mikrofon / qulaqlıq ikonlarını cari vəziyyətə uyğun qoyur (səhifə dəyişəndə yenidən çağırılır)
+function updateMicHeadphoneIcon() {
+    var micIcon = document.getElementById("mic");
+    var headIcon = document.getElementById("head");
+    var headBtn = document.getElementById("headp-btn");
+    if (micIcon) micIcon.className = micO ? "fa-solid fa-microphone-slash mute" : "fa-solid fa-microphone";
+    if (headIcon) headIcon.className = headO ? "fa-solid fa-headphones mute" : "fa-solid fa-headphones";
+    if (headBtn) {
+        if (headO) headBtn.setAttribute("data-deafened", "true");
+        else headBtn.removeAttribute("data-deafened");
+    }
+}
+
 function fromLogin() {
     try {
         if (sessionStorage.getItem("discode-splash") === "1") {
@@ -79,6 +92,8 @@ function headp() {
     }
 }
 
+updateMicHeadphoneIcon();
+
 function openToggle() {
     if (!window.matchMedia("(max-width: 720px)").matches) return;
     document.querySelector("main").classList.toggle("show-main");
@@ -151,25 +166,7 @@ function openToggle() {
     var livePresence = {};
     var currentTab = activeFilter;
 
-    function friendToken() {
-        var input = document.querySelector("input[name='__RequestVerificationToken']");
-        return input ? input.value : "";
-    }
-
-    function friendPost(action, fields) {
-        var body = new URLSearchParams();
-        Object.keys(fields).forEach(function (key) { body.append(key, fields[key]); });
-        body.append("__RequestVerificationToken", friendToken());
-        return fetch("/Friend/" + action, {
-            method: "POST",
-            credentials: "same-origin",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "X-Requested-With": "XMLHttpRequest"
-            },
-            body: body.toString()
-        });
-    }
+    var friendPost = window.discodeFriends.post;
 
     function reapplyLivePresence() {
         var rows = document.querySelectorAll("#friends-all-list .online-row");
@@ -234,7 +231,7 @@ function openToggle() {
         });
     });
 
-    window.discodeFriends = {
+    Object.assign(window.discodeFriends, {
         reload: refreshFriends,
         reloadFriends: refreshFriends,
         setPresence: function (userId, status) {
@@ -244,14 +241,6 @@ function openToggle() {
                 if (rows[i].getAttribute("data-user-id") === userId) paintRowPresence(rows[i], status);
             }
             paintFriends(currentFilter);
-        },
-        respond: function (requestId, accept) {
-            return friendPost(accept ? "Accept" : "Decline", { id: requestId })
-                .then(function (response) {
-                    if (response.ok) refreshFriends();
-                    return response.ok;
-                })
-                .catch(function () { return false; });
         },
         removeRow: function (row) {
             var requestId = Number(row.getAttribute("data-id") || 0);
@@ -273,47 +262,8 @@ function openToggle() {
                 if (rows[i].getAttribute("data-user") === username) return true;
             }
             return false;
-        },
-        send: function (user, button) {
-            var username = user && (user.username || user.userName || "");
-            var userId = user && (user.id || user.userId || "");
-            if ((!username && !userId) || !button) return;
-            button.disabled = true;
-            friendPost("Send", { userName: username, userId: userId || "" })
-                .then(function (response) {
-                    return response.json().then(function (data) {
-                        return { ok: response.ok, data: data || {} };
-                    }).catch(function () {
-                        return { ok: response.ok, data: {} };
-                    });
-                })
-                .then(function (result) {
-                    var message = result.data && result.data.errors && result.data.errors[0]
-                        ? String(result.data.errors[0])
-                        : "";
-                    var already = !result.ok && message.toLowerCase().indexOf("already") !== -1;
-                    if (!result.ok && !already) {
-                        button.disabled = false;
-                        var span = button.querySelector("span") || button;
-                        var prev = span === button ? button.innerHTML : span.textContent;
-                        if (span === button) button.innerHTML = message || "Couldn't send";
-                        else span.textContent = message || "Couldn't send";
-                        setTimeout(function () {
-                            if (span === button) button.innerHTML = prev;
-                            else span.textContent = prev;
-                        }, 2500);
-                        return;
-                    }
-                    button.classList.add("button-sent");
-                    button.disabled = true;
-                    button.innerHTML = '<i class="fa-solid fa-check"></i><span>Request Sent</span>';
-                    refreshFriends();
-                })
-                .catch(function () {
-                    button.disabled = false;
-                });
         }
-    };
+    });
     paintFriends(currentFilter);
     document.addEventListener("visibilitychange", function () {
         if (!document.hidden && currentTab !== "add") refreshFriends();
@@ -340,6 +290,8 @@ function openToggle() {
             }
             label.textContent = (button.querySelector(".friend-filter-text") || button).textContent.trim();
             syncGlide(button);
+        } else {
+            label.textContent = button.textContent.trim();
         }
 
         var online = document.getElementById("friends-online");
@@ -377,6 +329,11 @@ function openToggle() {
         if (!isCompactFilter()) closeCompactFilter();
         syncGlide(menu.querySelector("button.active"));
     });
+
+    // /Home/Index?tab=add: the page is rendered with the Add Friend section open, so show it as the chosen tab too
+    var addSection = document.getElementById("friends-add");
+    var addButton = menu.querySelector('button[data-filter="add"]');
+    if (addSection && !addSection.hidden && addButton && currentTab !== "add") addButton.click();
 })();
 
 (function () {
@@ -436,12 +393,8 @@ function openToggle() {
 
 (function () {
     var menu = document.getElementById("friend-context");
-    var listIds = ["friends-all-list", "friends-pending-list", "friends-sent-list"];
-    var lists = listIds
-        .map(function (id) { return document.getElementById(id); })
-        .filter(function (list) { return list; });
-    var removeButton = menu ? menu.querySelector("[data-action='remove']") : null;
-    if (!menu || lists.length === 0) return;
+    var listIds = ["friends-all-list", "friends-pending-list", "friends-sent-list", "friends-blocked-list"];
+    if (!menu) return;
     var row = null;
 
     function closeMenu() {
@@ -449,9 +402,24 @@ function openToggle() {
         row = null;
     }
 
+    function kindOf(target) {
+        if (target.closest("#friends-all-list")) return "friends";
+        if (target.closest("#friends-pending-list")) return "received";
+        if (target.closest("#friends-sent-list")) return "sent";
+        return "blocked";
+    }
+
     function openMenu(target, x, y) {
         row = target;
-        if (removeButton) removeButton.hidden = !target.closest("#friends-all-list");
+        var kind = kindOf(target);
+        [].forEach.call(menu.querySelectorAll("[data-for]"), function (item) {
+            item.hidden = item.getAttribute("data-for").split(" ").indexOf(kind) === -1;
+        });
+        var add = menu.querySelector("[data-action='addfriend']");
+        if (add) {
+            add.classList.toggle("is-disabled", kind === "sent");
+            add.title = kind === "sent" ? "Friend request already sent" : "";
+        }
         menu.hidden = false;
         var width = menu.offsetWidth;
         var height = menu.offsetHeight;
@@ -461,22 +429,19 @@ function openToggle() {
         menu.style.top = top + "px";
     }
 
-    lists.forEach(function (list) {
-        list.addEventListener("contextmenu", function (event) {
-            var target = event.target.closest && event.target.closest(".online-row");
-            if (!target) return;
-            event.preventDefault();
-            openMenu(target, event.clientX, event.clientY);
-        });
-    });
-
     document.addEventListener("click", function (event) {
         if (!event.target.closest || !event.target.closest("#friend-context")) closeMenu();
     });
 
     document.addEventListener("contextmenu", function (event) {
-        var inside = event.target.closest && event.target.closest(".online-row");
-        if (!inside || !lists.some(function (list) { return list.contains(inside); })) closeMenu();
+        var target = event.target.closest && event.target.closest(".online-row");
+        var list = target && target.closest(".friends-online-list");
+        if (!target || !list || listIds.indexOf(list.id) === -1) {
+            closeMenu();
+            return;
+        }
+        event.preventDefault();
+        openMenu(target, event.clientX, event.clientY);
     });
 
     document.addEventListener("keydown", function (event) {
@@ -492,6 +457,7 @@ function openToggle() {
         var action = button.getAttribute("data-action");
         var link = row.querySelector(".online-main");
         var href = link ? link.getAttribute("href") : "";
+        if (!href && row.getAttribute("data-user")) href = "/Dm/Index?name=" + encodeURIComponent(row.getAttribute("data-user"));
         if ((action === "message" || action === "voice") && href) {
             if (action === "voice") href += (href.indexOf("?") === -1 ? "?" : "&") + "call=voice";
             if (window.discodeGo) window.discodeGo(href);
@@ -500,6 +466,15 @@ function openToggle() {
         if (action === "profile" && window.openUserProfile) {
             var face = row.querySelector("img");
             window.openUserProfile(row.getAttribute("data-user") || "", face ? face.getAttribute("src") : "");
+        }
+        if (action === "addfriend") {
+            var accept = row.querySelector(".request-accept");
+            if (!accept) return;
+            accept.click();
+        }
+        if (action === "unblock") {
+            var unblock = row.querySelector(".blocked-unblock");
+            if (unblock) unblock.click();
         }
         if (action === "block" && window.discodeFriends) window.discodeFriends.blockRow(row);
         if (action === "remove" && window.discodeFriends) window.discodeFriends.removeRow(row);

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using Discode_MVC_Client.ViewModels.Social;
 
 namespace Discode_MVC_Client.Controllers
 {
@@ -12,13 +13,29 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Open(int id)
+        public async Task<IActionResult> Open(int id, string? tab, int? live)
         {
             var result = await PostAsync($"api/notification/{id}/read", new { });
             if (result.Status == HttpStatusCode.Unauthorized)
                 return await SessionExpiredAsync();
 
+            if (tab == "pending" || tab == "all")
+                return RedirectToAction("Index", "Home", new { tab });
+
+            if (live is > 0)
+                return RedirectToAction("Index", "Social", new { live });
+
             return RedirectToAction("Index", "Social");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Unread()
+        {
+            var result = await GetAsync<List<NotificationUIVM>>("api/notification");
+            if (result.Status == HttpStatusCode.Unauthorized)
+                return Unauthorized();
+
+            return Ok((result.Data ?? new List<NotificationUIVM>()).Where(n => !n.IsRead).Select(n => n.Id));
         }
 
         [HttpPost]

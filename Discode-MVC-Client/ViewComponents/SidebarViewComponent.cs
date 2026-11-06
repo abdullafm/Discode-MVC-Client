@@ -13,9 +13,9 @@ namespace Discode_MVC_Client.ViewComponents
             _httpClientFactory = httpClientFactory;
         }
 
-        public async Task<IViewComponentResult> InvokeAsync(HomeVM home)
+        public async Task<IViewComponentResult> InvokeAsync(HomeUIVM home)
         {
-            var model = new SidebarVM
+            var model = new SidebarUIVM
             {
                 Profile = home.Profile,
                 Update = home.Update,
@@ -27,13 +27,11 @@ namespace Discode_MVC_Client.ViewComponents
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
-                model.Conversations = await client.GetFromJsonAsync<List<ConversationVM>>("api/dm") ?? new List<ConversationVM>();
+                model.Conversations = await client.GetFromJsonAsync<List<ConversationUIVM>>("api/dm") ?? new List<ConversationUIVM>();
             }
-            catch (HttpRequestException)
+            catch (Exception ex) when (ex is HttpRequestException or System.Text.Json.JsonException or IOException or TaskCanceledException)
             {
-            }
-            catch (System.Text.Json.JsonException)
-            {
+                // runs while the page is being drawn, where no exception filter can help: show an empty list instead of a crashed page
             }
 
             return View(model);
