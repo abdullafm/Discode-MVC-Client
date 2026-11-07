@@ -47,6 +47,8 @@
     var leaveSound = new Audio("/assets/css/audio/leave-voice.mp3");
 
     function play(sound) {
+        // the ring and the join/leave sounds are silent in Do Not Disturb or when notification sounds are off
+        if (window.discodeSoundAllowed && !window.discodeSoundAllowed()) return;
         try {
             sound.currentTime = 0;
             var promise = sound.play();

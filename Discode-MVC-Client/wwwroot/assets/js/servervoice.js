@@ -61,6 +61,8 @@
     }
 
     function play(sound) {
+        // the ring and the join/leave sounds are silent in Do Not Disturb or when notification sounds are off
+        if (window.discodeSoundAllowed && !window.discodeSoundAllowed()) return;
         try {
             sound.currentTime = 0;
             var result = sound.play();
@@ -654,19 +656,46 @@
             // heard only by me: never sent to the other person, and not remembered after a reload
             divider();
             var prefs = rtc.getUserAudio(userId);
+            var initialVol = Math.round(prefs.volume * 100);
+
             var volume = document.createElement("div");
             volume.className = "vm-volume";
             var caption = document.createElement("span");
             caption.textContent = "User Volume";
+
+            var trackWrap = document.createElement("div");
+            trackWrap.className = "vm-slider-wrap";
+
+            var bubble = document.createElement("div");
+            bubble.className = "vm-volume-bubble";
+            bubble.textContent = initialVol + "%";
+
             var slider = document.createElement("input");
             slider.type = "range";
             slider.min = "0";
             slider.max = "100";
-            slider.value = String(Math.round(prefs.volume * 100));
+            slider.value = String(initialVol);
             slider.setAttribute("aria-label", "User Volume");
-            slider.addEventListener("input", function () { rtc.setUserAudio(userId, { volume: Number(slider.value) / 100 }); });
+
+            function updateSlider() {
+                var val = Number(slider.value);
+                bubble.textContent = val + "%";
+                slider.style.setProperty("--val", val + "%");
+                bubble.style.left = "calc(" + val + "% + " + ((50 - val) * 0.16) + "px)";
+            }
+
+            slider.addEventListener("input", function () {
+                updateSlider();
+                rtc.setUserAudio(userId, { volume: Number(slider.value) / 100 });
+            });
+
+            updateSlider();
+
+            trackWrap.appendChild(bubble);
+            trackWrap.appendChild(slider);
+
             volume.appendChild(caption);
-            volume.appendChild(slider);
+            volume.appendChild(trackWrap);
             modMenu.appendChild(volume);
             divider();
             line("Mute", { checked: prefs.muted, run: function (button) {
@@ -722,27 +751,26 @@
     // ---------- "Voice Connected" zolağı: serverdən kənarda da görünür ----------
     function globalBar() {
         var bar = document.getElementById("voice-global-bar");
+        if (bar && bar.querySelector(".vgb-mic")) {
+            bar.parentNode.removeChild(bar);
+            bar = null;
+        }
         if (bar) return bar;
         bar = document.createElement("div");
         bar.id = "voice-global-bar";
         bar.className = "voice-global-bar";
         bar.hidden = true;
-        bar.innerHTML = '<button type="button" class="vgb-main" title="Back to the voice channel"><i class="fa-solid fa-signal"></i><span><strong>Voice Connected</strong><small></small></span></button>' +
-            '<button type="button" class="vgb-btn vgb-mic" aria-label="Mute"><i class="fa-solid fa-microphone"></i></button>' +
-            '<button type="button" class="vgb-btn vgb-head" aria-label="Deafen"><i class="fa-solid fa-headphones"></i></button>' +
-            '<button type="button" class="vgb-btn vgb-leave" aria-label="Disconnect"><i class="fa-solid fa-phone-slash"></i></button>';
+        bar.innerHTML = '<div class="vgb-main">' +
+            '<span class="vgb-live" aria-hidden="true"><span></span><span></span><span></span></span>' +
+            '<span><strong>Voice Connected</strong>' +
+            '<button type="button" class="vgb-where" title="Open voice channel"></button></span>' +
+            '<button type="button" class="vgb-btn vgb-leave" aria-label="Disconnect"><i class="fa-solid fa-phone-slash"></i></button></div>';
         document.documentElement.appendChild(bar);
-        bar.querySelector(".vgb-main").addEventListener("click", function () {
+        bar.querySelector(".vgb-where").addEventListener("click", function () {
             if (!state.current) return;
-            var url = "/Server/Index?id=" + state.current.serverId;
+            var url = "/Server/Index?id=" + state.current.serverId + "&channel=" + state.current.channelId;
             if (window.discodeGo) window.discodeGo(url);
             else window.location.href = url;
-        });
-        bar.querySelector(".vgb-mic").addEventListener("click", function () {
-            if (typeof window.mic === "function") window.mic();
-        });
-        bar.querySelector(".vgb-head").addEventListener("click", function () {
-            if (typeof window.headp === "function") window.headp();
         });
         bar.querySelector(".vgb-leave").addEventListener("click", function () {
             leave();
@@ -756,15 +784,11 @@
         var onItsPage = !!current && pageServerId() === current.serverId;
         bar.hidden = !current || onItsPage;
         if (!current) return;
-        bar.querySelector("small").textContent = current.channelName + " / " + current.serverName;
-        var muted = typeof micO !== "undefined" && !!micO;
-        var deaf = typeof headO !== "undefined" && !!headO;
-        bar.querySelector(".vgb-mic").classList.toggle("is-off", muted || deaf);
-        bar.querySelector(".vgb-mic i").className = "fa-solid " + (muted || deaf ? "fa-microphone-slash" : "fa-microphone");
-        bar.querySelector(".vgb-head").classList.toggle("is-off", deaf);
+        bar.querySelector(".vgb-where").textContent = current.channelName + " / " + current.serverName;
     }
 
     document.addEventListener("discode-mic-changed", paintGlobalBar);
+    document.addEventListener("discode-page-ready", paintGlobalBar);
     document.addEventListener("discode-server-channels-rendered", paint);
     document.addEventListener("discode-server-channels-changed", function () { window.setTimeout(load, 400); });
     document.addEventListener("discode-server-roles-changed", function () { window.setTimeout(load, 400); });

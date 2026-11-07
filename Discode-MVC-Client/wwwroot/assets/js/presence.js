@@ -56,6 +56,8 @@
         return !(notify && (notify.sound === false || notify.all === false));
     }
 
+    window.discodeSoundAllowed = soundAllowed;
+
     function playNotifySound() {
         if (!soundAllowed()) return;
         var now = Date.now();
