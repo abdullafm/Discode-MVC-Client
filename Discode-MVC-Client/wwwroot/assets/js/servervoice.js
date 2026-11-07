@@ -61,8 +61,6 @@
     }
 
     function play(sound) {
-        // the ring and the join/leave sounds are silent in Do Not Disturb or when notification sounds are off
-        if (window.discodeSoundAllowed && !window.discodeSoundAllowed()) return;
         try {
             sound.currentTime = 0;
             var result = sound.play();
