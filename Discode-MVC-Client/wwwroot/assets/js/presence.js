@@ -48,12 +48,11 @@
     var notifySound = new Audio("/assets/css/audio/notification.mp3");
     var lastSoundAt = 0;
 
-    // no sound while the status is Do Not Disturb, or when the person turned notification sounds off in the settings
+    // no message sound or incoming ring while the status is Do Not Disturb
     function soundAllowed() {
         var panel = document.getElementById("user-panel");
         if (panel && panel.getAttribute("data-status") === "dnd") return false;
-        var notify = window.discodeSettings && window.discodeSettings.notify;
-        return !(notify && (notify.sound === false || notify.all === false));
+        return true;
     }
 
     window.discodeSoundAllowed = soundAllowed;
