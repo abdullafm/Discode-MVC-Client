@@ -459,7 +459,19 @@
     document.addEventListener("discode-server-channels-changed", function () { window.setTimeout(function () { loadViewers(true); }, 300); });
     document.addEventListener("discode-server-roles-changed", function () { window.setTimeout(function () { loadViewers(true); }, 300); });
 
+    // my own timeout (if any) is told to the chat, which swaps the box for the "Timed Out" bar
+    function publishSelfTimeout() {
+        var until = 0;
+        for (var i = 0; i < serverMembers.length; i++) {
+            if (serverMembers[i] && serverMembers[i].isSelf && serverMembers[i].timeoutUntil) until = new Date(serverMembers[i].timeoutUntil).getTime() || 0;
+        }
+        if (window.discodeSelfTimeout === until) return;
+        window.discodeSelfTimeout = until;
+        document.dispatchEvent(new CustomEvent("discode-self-timeout"));
+    }
+
     function paintServerMembers() {
+        publishSelfTimeout();
         var list = document.getElementById("server-member-list");
         if (!list) return;
         var me = localMe();

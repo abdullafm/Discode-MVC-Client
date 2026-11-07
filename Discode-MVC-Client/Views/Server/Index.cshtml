@@ -51,6 +51,14 @@
                 <button type="button" id="group-reply-cancel" aria-label="Cancel reply"><i class="fa-solid fa-circle-xmark"></i></button>
             </div>
             <p class="server-announce-lock server-chat-lock" id="server-chat-lock" hidden>You do not have permission to send messages in this channel.</p>
+            <div class="timeout-bar" id="server-timeout-bar" role="status" hidden>
+                <i class="fa-solid fa-hourglass-half timeout-bar-icon"></i>
+                <div class="timeout-bar-text">
+                    <strong>Timed Out</strong>
+                    <span>You can not chat, reply, react, or join voice channels during timeout.</span>
+                </div>
+                <span class="timeout-bar-clock" id="server-timeout-clock">00h 00m 00s</span>
+            </div>
             <form class="dm-compose" id="group-compose" hidden>
                 <button type="button" id="group-attach" aria-label="Add"><i class="fa-solid fa-plus"></i></button>
                 <input type="file" id="group-file" multiple hidden>

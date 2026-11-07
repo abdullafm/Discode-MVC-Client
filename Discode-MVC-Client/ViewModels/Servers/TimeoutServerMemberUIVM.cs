@@ -5,5 +5,7 @@ namespace Discode_MVC_Client.ViewModels.Servers
         public int ServerId { get; set; }
         public string UserId { get; set; } = string.Empty;
         public int Minutes { get; set; }
+        public int Seconds { get; set; }
+        public string? Reason { get; set; }
     }
 }

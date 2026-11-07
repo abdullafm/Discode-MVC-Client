@@ -155,6 +155,82 @@
         });
     }
 
+    // Discord-style timeout dialog: pick how long (seconds up to a week) and why (the reason is only in the audit log)
+    function timeoutModal(member) {
+        var choices = [[60, "60 secs"], [300, "5 mins"], [600, "10 mins"], [3600, "1 hour"], [86400, "1 day"], [604800, "1 week"]];
+        var picked = 60;
+        var shade = element("div", "server-delete-modal");
+        var form = element("form", "server-delete-card timeout-card");
+        var head = element("div", "server-delete-head");
+        head.appendChild(element("h2", "", "Timeout " + member.displayName));
+        var close = element("button");
+        close.type = "button";
+        close.setAttribute("aria-label", "Close");
+        close.appendChild(element("i", "fa-solid fa-xmark"));
+        head.appendChild(close);
+        form.appendChild(head);
+        form.appendChild(element("p", "", "Members who are timed out can't send messages, react to messages, or join voice channels while it lasts."));
+        form.appendChild(element("label", "", "Duration"));
+        var segment = element("div", "timeout-segment");
+        choices.forEach(function (choice) {
+            var option = element("button", "timeout-option" + (choice[0] === picked ? " is-picked" : ""), choice[1]);
+            option.type = "button";
+            option.addEventListener("click", function () {
+                picked = choice[0];
+                Array.prototype.forEach.call(segment.children, function (node) { node.classList.toggle("is-picked", node === option); });
+            });
+            segment.appendChild(option);
+        });
+        form.appendChild(segment);
+        form.appendChild(element("label", "", "Reason"));
+        var reason = document.createElement("textarea");
+        reason.maxLength = 300;
+        reason.rows = 3;
+        reason.placeholder = "Enter a reason. This will only be visible in the Audit Log and will not be shown to the member.";
+        form.appendChild(reason);
+        var problem = element("p", "confirm-error");
+        problem.hidden = true;
+        form.appendChild(problem);
+        var actions = element("div", "server-delete-actions");
+        var cancel = element("button", "", "Cancel");
+        cancel.type = "button";
+        var go = element("button", "confirm-danger", "Timeout");
+        go.type = "submit";
+        actions.appendChild(cancel);
+        actions.appendChild(go);
+        form.appendChild(actions);
+        shade.appendChild(form);
+        document.body.appendChild(shade);
+
+        function dismiss() {
+            document.removeEventListener("keydown", onKey);
+            if (shade.parentNode) shade.parentNode.removeChild(shade);
+        }
+
+        function onKey(event) {
+            if (event.key === "Escape") dismiss();
+        }
+
+        document.addEventListener("keydown", onKey);
+        close.addEventListener("click", dismiss);
+        cancel.addEventListener("click", dismiss);
+        shade.addEventListener("mousedown", function (event) {
+            if (event.target === shade) dismiss();
+        });
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            go.disabled = true;
+            postJson("/Server/Timeout", { serverId: Number(serverId), userId: member.id, minutes: 0, seconds: picked, reason: reason.value.trim() }).then(function () {
+                dismiss();
+                load();
+            }).catch(function (error) {
+                go.disabled = false;
+                problem.textContent = error.message;
+                problem.hidden = false;
+            });
+        });
+    }
+
     function postJson(url, body) {
         return fetch(url, {
             method: "POST",
@@ -255,8 +331,8 @@
             list.appendChild(rolesItem);
             list.appendChild(sub);
         }
-        if (!member.isSelf && !member.isOwner && member.canModerate) {
-            if ((perms & 65536) === 65536) {
+        if (!member.isSelf && !member.isOwner && member.canTimeout) {
+            {
                 if (member.timeoutUntil) {
                     add("Remove Timeout from " + member.displayName, function () {
                         postJson("/Server/Timeout", { serverId: Number(serverId), userId: member.id, minutes: 0 }).then(load).catch(function (error) {
@@ -264,18 +340,11 @@
                         });
                     });
                 } else {
-                    add("Timeout " + member.displayName, function () {
-                        confirmAction({
-                            title: "Timeout " + member.displayName,
-                            text: "They won't be able to send messages or react until the timeout ends.",
-                            confirm: "Timeout",
-                            url: "/Server/Timeout",
-                            duration: true,
-                            member: member
-                        });
-                    }, true);
+                    add("Timeout " + member.displayName, function () { timeoutModal(member); }, true);
                 }
             }
+        }
+        if (!member.isSelf && !member.isOwner && member.canModerate) {
             if ((perms & 16384) === 16384) {
                 add("Kick " + member.displayName, function () {
                     confirmAction({

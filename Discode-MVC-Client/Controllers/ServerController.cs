@@ -222,7 +222,7 @@ namespace Discode_MVC_Client.Controllers
         [ValidateAntiForgeryToken]
         public Task<IActionResult> Timeout([FromBody] TimeoutServerMemberUIVM model)
         {
-            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/members/{Uri.EscapeDataString(model.UserId ?? string.Empty)}/timeout", new { minutes = model.Minutes }));
+            return Forward(client => client.PutAsJsonAsync($"api/server/{model.ServerId}/members/{Uri.EscapeDataString(model.UserId ?? string.Empty)}/timeout", new { minutes = model.Minutes, seconds = model.Seconds, reason = model.Reason }));
         }
 
         [HttpPost]

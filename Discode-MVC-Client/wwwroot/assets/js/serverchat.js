@@ -411,9 +411,40 @@
     };
     window.GroupParts.init(context);
 
+    // ---------- timed out: the box is replaced by a bar with the time left ----------
+    var timeoutBar = document.getElementById("server-timeout-bar");
+    var timeoutClock = document.getElementById("server-timeout-clock");
+    var timeoutTimer = 0;
+
+    function timeoutLeft() {
+        return Math.max(0, Math.ceil(((window.discodeSelfTimeout || 0) - Date.now()) / 1000));
+    }
+
+    function two(n) {
+        return (n < 10 ? "0" : "") + n;
+    }
+
+    function tickTimeout() {
+        var left = timeoutLeft();
+        if (!left) {
+            window.clearInterval(timeoutTimer);
+            timeoutTimer = 0;
+            window.discodeSelfTimeout = 0;
+            paintAccess();
+            return;
+        }
+        var days = Math.floor(left / 86400);
+        var clock = (days ? days + "d " : "") + two(Math.floor(left % 86400 / 3600)) + "h " + two(Math.floor(left % 3600 / 60)) + "m " + two(left % 60) + "s";
+        if (timeoutClock) timeoutClock.textContent = clock;
+    }
+
     function paintAccess() {
         context.canDeleteAny = (perms() & 512) === 512;
-        var allowed = canSend();
+        var timedOut = timeoutLeft() > 0;
+        if (timeoutBar) timeoutBar.hidden = !channelId || !timedOut;
+        if (timedOut && !timeoutTimer) timeoutTimer = window.setInterval(tickTimeout, 1000);
+        if (timedOut) tickTimeout();
+        var allowed = canSend() && !timedOut;
         var pollItem = document.querySelector('#group-attach-menu [data-act="poll"]');
         if (pollItem) pollItem.hidden = !canPoll();
         compose.hidden = !channelId || !allowed;
@@ -489,6 +520,8 @@
             loadMessages(generation);
         }
     };
+
+    document.addEventListener("discode-self-timeout", function () { if (channelId) paintAccess(); });
 
     document.addEventListener("discode-server-mentions", function (event) {
         var data = event.detail || {};
