@@ -38,9 +38,7 @@
         span.title = title;
         span.setAttribute("role", "img");
         span.setAttribute("aria-label", title);
-        span.innerHTML = kind === "nitro"
-            ? '<img src="/assets/img/badge-nitro.png" alt="" aria-hidden="true">'
-            : '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#dc-badge-' + kind + '"></use></svg>';
+        span.innerHTML = '<img src="/assets/img/badge-' + kind + '.png" alt="" aria-hidden="true">';
         return span;
     }
 
