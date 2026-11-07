@@ -1196,3 +1196,5 @@ html.theme-dark .boost-person { background: #1e1f22; }
 .nitro-badges-small .nitro-badge { width: 16px; height: 16px; }
 html.theme-dark .nitro-badges { background: rgba(255, 255, 255, 0.08); }
 .dm-profile-card .nitro-badges, .me-profile-id > .nitro-badges, .member-pop-body > .nitro-badges { display: inline-flex; margin: 0; }
+
+.nitro-badge img { width: 100%; height: 100%; display: block; object-fit: contain; border-radius: 4px; }
