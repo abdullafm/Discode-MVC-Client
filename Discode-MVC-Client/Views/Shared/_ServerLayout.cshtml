@@ -444,7 +444,7 @@
                     style="background:#80848e"></span>Invisible<small>You will appear offline</small></button>
         </div>
         <div class="me-pop d-none" id="me-pop">
-            <div class="me-banner" style="@(string.IsNullOrEmpty(Model.Profile.BannerUrl) ? "" : "background-image:url('" + Model.Profile.BannerUrl + "')")"></div>
+            <div class="me-banner" style="@(string.IsNullOrEmpty(Model.Profile.BannerUrl) ? "" : "background-image:url('" + Model.Profile.BannerUrl + "') !important")"></div>
             <div class="me-head">
                 <div class="me-avatar">
                     <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
@@ -469,7 +469,7 @@
                 <button type="button" class="me-profile-close" id="me-profile-close" aria-label="Close"><i
                         class="fa-solid fa-xmark"></i></button>
                 <div class="me-profile-side">
-                    <div class="me-profile-banner" id="me-profile-banner" style="@(string.IsNullOrEmpty(Model.Profile.BannerUrl) ? "" : "background-image:url('" + Model.Profile.BannerUrl + "')")">
+                    <div class="me-profile-banner" id="me-profile-banner" style="@(string.IsNullOrEmpty(Model.Profile.BannerUrl) ? "" : "background-image:url('" + Model.Profile.BannerUrl + "') !important")">
                         <label class="me-banner-edit" id="me-banner-edit" aria-label="Change banner" title="Change banner">
                             <input id="me-banner-file" type="file" accept="image/*">
                             <i class="fa-solid fa-pen" aria-hidden="true"></i>

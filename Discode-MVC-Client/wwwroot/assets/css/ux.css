@@ -1136,9 +1136,9 @@ html.theme-dark .timeout-bar-text span { color: #b5bac1; }
 .member-pop-body > .nitro-badges { display: flex; margin: 2px 0 6px; }
 
 .me-banner.has-image, .me-profile-banner.has-image, .mini-banner.has-image, .dm-banner.has-image {
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
 }
 .me-profile-banner { position: relative; }
 .me-banner-edit, .me-banner-remove {

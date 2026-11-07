@@ -61,7 +61,7 @@
             var card = marks[i].closest(".mini-profile, .dm-profile");
             var target = card ? card.querySelector(".mini-banner, .dm-banner") : null;
             if (!target) continue;
-            target.style.backgroundImage = url ? "url('" + url.replace(/'/g, "%27") + "')" : "";
+            target.style.setProperty("background-image", url ? "url('" + url.replace(/'/g, "%27") + "')" : "", "important");
             target.classList.toggle("has-image", !!url);
         }
     };
