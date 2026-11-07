@@ -1221,5 +1221,7 @@ html.theme-dark .nitro-badges { background: rgba(255, 255, 255, 0.08); }
 .me-profile:not(.visitor-view) .me-banner-edit:hover i { opacity: 1; }
 .me-banner-remove { z-index: 2; right: 12px; }
 /* the profile block overlaps the lower part of the banner: let the banner get the pointer there */
-.me-profile:not(.visitor-view) .me-profile-id, .me-profile:not(.visitor-view) .me-profile-top { pointer-events: none; }
-.me-profile:not(.visitor-view) .me-profile-id > *, .me-profile:not(.visitor-view) .me-profile-top > * { pointer-events: auto; }
+.me-profile:not(.visitor-view) .me-profile-id { pointer-events: none; }
+.me-profile:not(.visitor-view) .me-profile-id > * { pointer-events: auto; }
+.me-profile:not(.visitor-view) .me-profile-id > .me-profile-top { pointer-events: none; }
+.me-profile:not(.visitor-view) .me-profile-top > * { pointer-events: auto; }
