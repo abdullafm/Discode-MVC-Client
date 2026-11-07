@@ -51,8 +51,6 @@
     var watcher = null;
 
     function play(sound) {
-        // the ring and the join/leave sounds are silent in Do Not Disturb or when notification sounds are off
-        if (window.discodeSoundAllowed && !window.discodeSoundAllowed()) return;
         try {
             sound.currentTime = 0;
             var promise = sound.play();
@@ -69,7 +67,8 @@
 
     function startRing(volume) {
         ringtone.volume = volume;
-        play(ringtone);
+        // only an incoming ring (full volume) is silenced by Do Not Disturb, the caller's own ringback is not
+        if (volume < 1 || !window.discodeSoundAllowed || window.discodeSoundAllowed()) play(ringtone);
     }
 
     function invoke() {
