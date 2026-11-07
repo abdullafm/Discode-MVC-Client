@@ -571,7 +571,7 @@
                 </div>
             </div>
         </div>
-        <div class="set-status d-none" id="set-status">
+        <div class="set-status d-none" id="set-status" data-clear-at="@(Model.Profile.CustomStatusClearAt?.ToUniversalTime().ToString("o"))">
             <form class="set-status-card" id="set-status-form">
                 <div class="set-status-head">
                     <h2>Set your status</h2>

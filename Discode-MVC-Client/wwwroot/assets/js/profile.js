@@ -10,6 +10,17 @@
     var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
 
     var state = { status: "online" };
+    // set when the status dialog is saved: how many minutes the status stays (sent once with the next save)
+    var pendingClear = null;
+
+    // the emoji is part of the status text that is saved, so it shows everywhere the status shows
+    function composeStatus() {
+        var input = document.getElementById("set-status-input");
+        var text = ((input && input.value) || "").trim();
+        var emoji = state.emoji || "";
+        if (!text && !emoji) return "";
+        return emoji ? emoji + (text ? " " + text : "") : text;
+    }
 
     function nodeText(sel) {
         var el = typeof sel === "string" ? document.querySelector(sel) : sel;
@@ -54,6 +65,8 @@
             return;
         }
         saveInFlight = true;
+        var sentClear = pendingClear;
+        pendingClear = null;
 
         var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
         var pub = document.getElementById("account-public");
@@ -71,11 +84,13 @@
                 avatarUrl: savedAvatarUrl || profileValue("Update_AvatarUrl"),
                 bannerUrl: savedBannerUrl,
                 bio: profileValue("me-bio"),
-                customStatus: profileValue("set-status-input"),
+                customStatus: composeStatus(),
+                statusClearMinutes: sentClear,
                 pronouns: profileValue("set-pronouns-input"),
                 isPublic: !!(pub && pub.classList.contains("on"))
             })
         }).then(function (res) {
+            if (!res.ok && sentClear !== null && pendingClear === null) pendingClear = sentClear;
             if (res.ok) {
                 var el = document.querySelector(".home-error");
                 if (el) el.hidden = true;
@@ -392,13 +407,41 @@
     var setEmoji = document.getElementById("set-emoji");
     var setWhen = document.getElementById("set-when");
     var setWhenBtn = document.getElementById("set-status-when");
+    var EMOJI_LEAD = /^((?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:\uFE0F|\u200D\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s*/u;
+    // a saved status starts with its emoji: the emoji goes to the picker, the words stay in the box
+    (function () {
+        var found = EMOJI_LEAD.exec(setInput.value);
+        if (found) {
+            state.emoji = found[1];
+            setInput.value = setInput.value.slice(found[0].length);
+        }
+        var until = Date.parse(setStatus.getAttribute("data-clear-at") || "");
+        if (until > Date.now()) {
+            state.clear = "keep";
+            state.clearAt = until;
+        }
+    })();
     var pickedEmoji = state.emoji || "😀";
     var pickedClear = state.clear || "tomorrow";
+    var emojiTouched = false;
+
+    function clearMinutes(key) {
+        if (key === "keep") return null;
+        if (key === "none") return 0;
+        if (key === "today") {
+            var end = new Date();
+            end.setHours(23, 59, 59, 999);
+            return Math.max(1, Math.ceil((end.getTime() - Date.now()) / 60000));
+        }
+        if (key === "tomorrow") return 24 * 60;
+        return Number(key) || 0;
+    }
 
     function clearLabel(key) {
         var now = new Date();
         var clock = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
         if (key === "none") return "Don't clear";
+        if (key === "keep") return "Clears at " + new Date(state.clearAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
         if (key === "30") return "Clear in 30 minutes";
         if (key === "60") return "Clear in 1 hour";
         if (key === "240") return "Clear in 4 hours";
@@ -424,6 +467,7 @@
             button.textContent = item;
             button.addEventListener("click", function () {
                 pickedEmoji = item;
+                emojiTouched = true;
                 setEmoji.classList.add("d-none");
                 previewStatus();
             });
@@ -433,6 +477,7 @@
 
     function openSetStatus() {
         pickedEmoji = state.emoji || "😀";
+        emojiTouched = false;
         pickedClear = state.clear || "tomorrow";
         previewStatus();
         fillEmoji();
@@ -443,7 +488,7 @@
     }
 
     function applyCustomStatus() {
-        var status = setInput.value.trim();
+        var status = composeStatus();
         var bubble = document.getElementById("me-status-bubble");
         var bubbleText = document.getElementById("me-status-bubble-text");
         var chip = document.getElementById("me-chip");
@@ -460,6 +505,25 @@
         paintPop();
         document.dispatchEvent(new CustomEvent("discode-presence"));
     }
+
+    // the server emptied my status (its "clear after" time came), or I changed it on another device: show what is saved
+    function syncOwnStatus() {
+        if (!setStatus.classList.contains("d-none")) return;
+        fetch("/Home/UserProfile?name=" + encodeURIComponent(meHandle()), { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            return response.ok ? response.json() : null;
+        }).then(function (data) {
+            if (!data || !setStatus.classList.contains("d-none")) return;
+            var saved = data.customStatus || "";
+            if (saved === composeStatus()) return;
+            var found = EMOJI_LEAD.exec(saved);
+            state.emoji = found ? found[1] : "";
+            setInput.value = found ? saved.slice(found[0].length) : saved;
+            state.clear = "";
+            applyCustomStatus();
+        }).catch(function () {});
+    }
+
+    document.addEventListener("discode-profile-changed", function () { syncOwnStatus(); });
 
     function closeSetStatus() {
         applyCustomStatus();
@@ -494,8 +558,9 @@
     });
     document.getElementById("set-status-form").addEventListener("submit", function (event) {
         event.preventDefault();
-        state.emoji = pickedEmoji;
+        if (emojiTouched || state.emoji) state.emoji = pickedEmoji;
         state.clear = pickedClear;
+        pendingClear = clearMinutes(pickedClear);
         closeSetStatus();
     });
 
