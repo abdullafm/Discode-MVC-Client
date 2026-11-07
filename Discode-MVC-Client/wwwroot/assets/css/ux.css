@@ -1203,3 +1203,20 @@ html.theme-dark .nitro-badges { background: rgba(255, 255, 255, 0.08); }
 .handle-row > p, .handle-row > .me-handle, .handle-row > .member-pop-handle { margin: 0 !important; padding: 0 !important; line-height: 22px; }
 .handle-row > .nitro-badges { align-self: center; padding: 2px 5px; margin: 0 !important; }
 .handle-row > .nitro-badges .nitro-badge { width: 18px; height: 18px; }
+
+/* the whole banner is the edit button: a dark veil and a pencil on hover, like the avatar */
+.me-profile:not(.visitor-view) .me-banner-edit {
+    inset: 0;
+    top: 0;
+    right: 0;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    background: rgba(0, 0, 0, 0);
+    opacity: 1;
+    transition: background 0.15s ease;
+}
+.me-profile:not(.visitor-view) .me-banner-edit i { font-size: 26px; opacity: 0; transition: opacity 0.15s ease; }
+.me-profile:not(.visitor-view) .me-banner-edit:hover { background: rgba(0, 0, 0, 0.55); }
+.me-profile:not(.visitor-view) .me-banner-edit:hover i { opacity: 1; }
+.me-banner-remove { z-index: 2; right: 12px; }
