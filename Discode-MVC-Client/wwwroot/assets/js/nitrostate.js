@@ -52,6 +52,13 @@
         holder.hidden = !hasNitro && !isBooster;
     };
 
+    // paints a banner picture so that no theme rule can change how it fills the area
+    window.discodeSetBanner = function (element, cssUrl) {
+        if (!element) return;
+        if (cssUrl) element.style.setProperty("background", cssUrl + " center / cover no-repeat", "important");
+        else element.style.removeProperty("background");
+    };
+
     // a banner sits in a different place on every page: the markup carries it as data, this paints it
     window.discodePaintBanners = function (root) {
         var scope = root || document;
@@ -61,7 +68,7 @@
             var card = marks[i].closest(".mini-profile, .dm-profile");
             var target = card ? card.querySelector(".mini-banner, .dm-banner") : null;
             if (!target) continue;
-            target.style.setProperty("background-image", url ? "url('" + url.replace(/'/g, "%27") + "')" : "", "important");
+            window.discodeSetBanner(target, url ? "url('" + url.replace(/'/g, "%27") + "')" : "");
             target.classList.toggle("has-image", !!url);
         }
     };

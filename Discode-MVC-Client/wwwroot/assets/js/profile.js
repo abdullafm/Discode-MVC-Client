@@ -569,7 +569,7 @@
     function paintBannerOf(url) {
         var targets = document.querySelectorAll("#me-profile-banner, #me-pop .me-banner");
         for (var i = 0; i < targets.length; i++) {
-            targets[i].style.setProperty("background-image", url ? "url('" + url.replace(/'/g, "%27") + "')" : "", "important");
+            window.discodeSetBanner(targets[i], url ? "url('" + url.replace(/'/g, "%27") + "')" : "");
             targets[i].classList.toggle("has-image", !!url);
         }
         var remove = document.getElementById("me-banner-remove");
@@ -586,7 +586,7 @@
     function paintVisitorPerks(data) {
         var banner = document.getElementById("me-profile-banner");
         if (banner) {
-            banner.style.setProperty("background-image", data.bannerUrl ? "url('" + data.bannerUrl.replace(/'/g, "%27") + "')" : "", "important");
+            window.discodeSetBanner(banner, data.bannerUrl ? "url('" + data.bannerUrl.replace(/'/g, "%27") + "')" : "");
             banner.classList.toggle("has-image", !!data.bannerUrl);
         }
         if (window.discodeBadges) window.discodeBadges(document.getElementById("me-badges"), !!data.hasNitro, !!data.isBooster);
