@@ -18,13 +18,11 @@
 
     // the badges are drawn once here and used everywhere with <use>
     var SPRITE = '<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>' +
-        '<linearGradient id="dc-grad-nitro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8fd3ff"/><stop offset="1" stop-color="#5865f2"/></linearGradient>' +
-        '<linearGradient id="dc-grad-boost" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8bf2"/><stop offset="1" stop-color="#a855f7"/></linearGradient>' +
-        '<symbol id="dc-badge-nitro" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11.5" fill="url(#dc-grad-nitro)"/>' +
-        '<path d="M6.3 12.4a5.7 5.7 0 0 1 5.7-5.7c2 0 3.7 1 4.7 2.6l-2.1 1.2a3.4 3.4 0 0 0-2.6-1.4 3.3 3.3 0 0 0 0 6.6 3.4 3.4 0 0 0 2.6-1.4l2.1 1.2a5.7 5.7 0 0 1-4.7 2.6 5.7 5.7 0 0 1-5.7-5.7z" fill="#fff"/>' +
-        '<circle cx="12" cy="12.4" r="1.9" fill="#fff"/></symbol>' +
-        '<symbol id="dc-badge-boost" viewBox="0 0 24 24"><path d="M12 1.2l9.6 5.5v10.6L12 22.8l-9.6-5.5V6.7z" fill="url(#dc-grad-boost)"/>' +
-        '<path d="M12 6l4.6 6.4h-3.1V18h-3V12.4H7.4z" fill="#fff"/></symbol></defs></svg>';
+        '<linearGradient id="dc-grad-nitro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9fb4d4"/><stop offset="1" stop-color="#6f86c9"/></linearGradient>' +
+        '<linearGradient id="dc-grad-boost" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb347"/><stop offset="1" stop-color="#f2465f"/></linearGradient>' +
+        '<symbol id="dc-badge-nitro" viewBox="0 0 24 24"><path d="M12 2.5a9.5 9.5 0 1 0 0 19 9.5 9.5 0 0 0 0-19z" fill="none" stroke="url(#dc-grad-nitro)" stroke-width="2.6"/>' +
+        '<circle cx="12" cy="12" r="3.4" fill="url(#dc-grad-nitro)"/><path d="M12 12h9.5" stroke="url(#dc-grad-nitro)" stroke-width="2.6" stroke-linecap="round"/></symbol>' +
+        '<symbol id="dc-badge-boost" viewBox="0 0 24 24"><path d="M12 1.5c1.6 3 4.9 4.8 4.9 9.2 0 1.5-.6 2.8-1.5 3.8l3.6 1.6-2.2 4.4-3.1-1.6L12 22.5l-1.7-4.1-3.1 1.6L5 15.6l3.6-1.6c-.9-1-1.5-2.3-1.5-3.8C7.1 6.3 10.4 4.5 12 1.5z" fill="url(#dc-grad-boost)"/><circle cx="12" cy="10.8" r="2" fill="#fff"/></symbol></defs></svg>';
 
     function ensureSprite() {
         if (document.getElementById("dc-grad-nitro") || !document.body) return;

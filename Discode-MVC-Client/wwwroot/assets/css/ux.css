@@ -1185,3 +1185,14 @@ html.theme-dark .boost-person { background: #1e1f22; }
 .adm-inline-form input[type="text"], .adm-inline-form input[type="number"] { height: 36px; padding: 0 10px; border: 1px solid rgba(128, 132, 142, 0.4); border-radius: 8px; background: transparent; color: inherit; font: inherit; }
 .adm-inline-form input[type="number"] { width: 90px; }
 .adm-btn-danger { background: #da373c !important; color: #fff !important; }
+
+.handle-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.handle-row > p { margin: 0; }
+.handle-row > .nitro-badges { margin: 0; }
+.nitro-badges { padding: 3px 6px; border-radius: 8px; background: rgba(128, 132, 142, 0.18); gap: 6px; }
+.nitro-badges[hidden] { display: none !important; }
+.nitro-badge { width: 22px; height: 22px; }
+.nitro-badges-small { padding: 0 3px; background: none; }
+.nitro-badges-small .nitro-badge { width: 16px; height: 16px; }
+html.theme-dark .nitro-badges { background: rgba(255, 255, 255, 0.08); }
+.dm-profile-card .nitro-badges, .me-profile-id > .nitro-badges, .member-pop-body > .nitro-badges { display: inline-flex; margin: 0; }
