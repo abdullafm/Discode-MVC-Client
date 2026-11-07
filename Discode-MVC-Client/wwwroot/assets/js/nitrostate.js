@@ -20,8 +20,8 @@
     var SPRITE = '<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>' +
         '<linearGradient id="dc-grad-nitro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7f9fe0"/><stop offset="1" stop-color="#4c6cb8"/></linearGradient>' +
         '<linearGradient id="dc-grad-boost" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb347"/><stop offset="1" stop-color="#f2465f"/></linearGradient>' +
-        '<symbol id="dc-badge-nitro" viewBox="0 0 24 24"><path d="M1.800 5.800H13a8.600 8.600 0 1 1 0 17.200 8.600 8.600 0 0 1-6-2.400c2.400-.300 3.800-1.600 4-3.500H5.200c-.500-1.400-1.800-2.500-3.400-3.200z" fill="url(#dc-grad-nitro)" stroke="#2f3f66" stroke-width="1.600" stroke-linejoin="round"/>' +
-        '<circle cx="13.500" cy="14.400" r="3.200" fill="#2f3f66"/></symbol>' +
+        '<symbol id="dc-badge-nitro" viewBox="0 0 24 24"><path d="M2 6.200H13.500a7.900 7.900 0 1 1 0 15.800 7.900 7.900 0 0 1-6.600-3.500H9.500L6 14.800 2 11.200z" fill="url(#dc-grad-nitro)" stroke="#2f3f66" stroke-width="1.600" stroke-linejoin="round"/>' +
+        '<circle cx="14" cy="14.100" r="3.300" fill="#2f3f66"/></symbol>' +
         '<symbol id="dc-badge-boost" viewBox="0 0 24 24"><path d="M12 1.5c1.6 3 4.9 4.8 4.9 9.2 0 1.5-.6 2.8-1.5 3.8l3.6 1.6-2.2 4.4-3.1-1.6L12 22.5l-1.7-4.1-3.1 1.6L5 15.6l3.6-1.6c-.9-1-1.5-2.3-1.5-3.8C7.1 6.3 10.4 4.5 12 1.5z" fill="url(#dc-grad-boost)"/><circle cx="12" cy="10.8" r="2" fill="#fff"/></symbol></defs></svg>';
 
     function ensureSprite() {
