@@ -1,0 +1,143 @@
+@model AdminNitroListVM
+@{
+    ViewData["Title"] = "Nitro";
+    ViewData["Section"] = "nitro";
+    var isSuper = User.IsInRole("SuperAdmin");
+    string Money(int? cents, string currency) => cents is null ? "" : (cents.Value / 100m).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " " + currency.ToUpperInvariant();
+    string KindLabel(string kind) => System.Text.RegularExpressions.Regex.Replace(kind, "(?<=[a-z])(?=[A-Z])", " ");
+    string KindClass(string kind) => kind switch
+    {
+        "PaymentFailed" or "Expired" or "RevokedByAdmin" => "is-banned",
+        "Canceled" => "is-timeout",
+        _ => ""
+    };
+}
+@if (TempData["AdminNotice"] is string notice)
+{
+    <p class="adm-notice"><i class="fa-solid fa-circle-check"></i> @notice</p>
+}
+@if (TempData["AdminWarning"] is string warning)
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @warning</p>
+}
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Error</p>
+}
+
+<div class="adm-tabs">
+    <a class="@(Model.Tab == "events" ? "on" : "")" asp-area="Admin" asp-controller="Nitro" asp-action="Index" asp-route-tab="events" asp-route-search="@Model.Search">Log <span>@Model.TotalEvents</span></a>
+    <a class="@(Model.Tab == "members" ? "on" : "")" asp-area="Admin" asp-controller="Nitro" asp-action="Index" asp-route-tab="members" asp-route-search="@Model.Search">Members with Nitro <span>@Model.ActiveCount active</span></a>
+</div>
+
+@if (isSuper)
+{
+    <div class="adm-panel">
+        <h3>Give or take away Nitro</h3>
+        <p class="adm-muted">Nitro given here does not use Stripe. Someone who pays through Stripe has to cancel there.</p>
+        <form method="post" class="adm-inline-form" asp-area="Admin" asp-controller="Nitro" asp-action="Grant">
+            <input type="hidden" name="tab" value="@Model.Tab">
+            <input type="text" name="userName" placeholder="User name" maxlength="64" autocomplete="off" required>
+            <input type="number" name="days" value="30" min="1" max="3650" aria-label="Days" required>
+            <button type="submit" class="adm-btn"><i class="fa-solid fa-gift"></i> Give Nitro</button>
+        </form>
+    </div>
+}
+
+<div class="adm-list-head">
+    <form method="get" class="adm-search" asp-area="Admin" asp-controller="Nitro" asp-action="Index">
+        <input type="hidden" name="tab" value="@Model.Tab">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" name="search" value="@Model.Search" placeholder="Search by user name or name" autocomplete="off">
+    </form>
+    <span class="adm-count">@(Model.Tab == "members" ? Model.TotalSubscriptions + " subscribers" : Model.TotalEvents + " events")</span>
+</div>
+
+<div class="adm-table-wrap">
+    @if (Model.Tab == "events")
+    {
+        <table class="adm-table">
+            <thead>
+                <tr><th>When</th><th>Member</th><th>What happened</th><th>Amount</th><th>Source</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var entry in Model.Events)
+                {
+                    <tr>
+                        <td class="adm-muted">@entry.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td><a class="adm-link" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@entry.UserId">@(string.IsNullOrWhiteSpace(entry.DisplayName) ? entry.UserName : entry.DisplayName)</a><small class="adm-muted"> @@@entry.UserName</small></td>
+                        <td><span class="adm-chip @KindClass(entry.Kind)">@KindLabel(entry.Kind)</span> <span class="adm-muted">@entry.Details</span>@if (!string.IsNullOrEmpty(entry.ActorName)) { <small class="adm-muted"> by @entry.ActorName</small> }</td>
+                        <td>@Money(entry.AmountCents, entry.Currency)</td>
+                        <td class="adm-muted">@(entry.Source == "admin" ? "Admin" : "Stripe")</td>
+                    </tr>
+                }
+                @if (Model.Events.Count == 0)
+                {
+                    <tr><td colspan="5" class="adm-muted">Nothing has happened yet.</td></tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <table class="adm-table">
+            <thead>
+                <tr><th>Member</th><th>Status</th><th>Source</th><th>Since</th><th>Runs until</th><th>Boosts</th>@if (isSuper) { <th></th> }</tr>
+            </thead>
+            <tbody>
+                @foreach (var sub in Model.Subscriptions)
+                {
+                    <tr>
+                        <td>
+                            <div class="adm-person">
+                                <img src="@(string.IsNullOrWhiteSpace(sub.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : sub.AvatarUrl)" alt="">
+                                <span><strong><a class="adm-link" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@sub.UserId">@(string.IsNullOrWhiteSpace(sub.DisplayName) ? sub.UserName : sub.DisplayName)</a></strong><small>@sub.UserName</small></span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="adm-chip @(sub.IsActive ? "" : "is-banned")">@(sub.IsActive ? "Active" : "Ended")</span>
+                            @if (sub.IsActive && sub.CancelAtPeriodEnd) { <span class="adm-chip is-timeout">Cancelled</span> }
+                            @if (sub.IsActive && sub.Status == "PastDue") { <span class="adm-chip is-timeout">Payment late</span> }
+                        </td>
+                        <td class="adm-muted">@(sub.Source == "admin" ? "Admin" : "Stripe")</td>
+                        <td class="adm-muted">@sub.StartedAt.ToString("yyyy-MM-dd")</td>
+                        <td class="adm-muted">@sub.CurrentPeriodEnd.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@sub.Boosts</td>
+                        @if (isSuper)
+                        {
+                            <td>
+                                @if (sub.IsActive && sub.Source == "admin")
+                                {
+                                    <form method="post" asp-area="Admin" asp-controller="Nitro" asp-action="Revoke">
+                                        <input type="hidden" name="userName" value="@sub.UserName">
+                                        <input type="hidden" name="tab" value="members">
+                                        <button type="submit" class="adm-btn adm-btn-danger">Take away</button>
+                                    </form>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+                @if (Model.Subscriptions.Count == 0)
+                {
+                    <tr><td colspan="@(isSuper ? 7 : 6)" class="adm-muted">Nobody has Nitro yet.</td></tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <div class="adm-pager">
+        @if (Model.Page > 1)
+        {
+            <a asp-area="Admin" asp-controller="Nitro" asp-action="Index" asp-route-tab="@Model.Tab" asp-route-search="@Model.Search" asp-route-page="@(Model.Page - 1)">Previous</a>
+        }
+        <span>Page @Model.Page of @Model.TotalPages</span>
+        @if (Model.Page < Model.TotalPages)
+        {
+            <a asp-area="Admin" asp-controller="Nitro" asp-action="Index" asp-route-tab="@Model.Tab" asp-route-search="@Model.Search" asp-route-page="@(Model.Page + 1)">Next</a>
+        }
+    </div>
+}

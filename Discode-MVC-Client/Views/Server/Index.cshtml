@@ -201,7 +201,7 @@
                                 <input id="server-profile-name" type="text" maxlength="100"
                                        placeholder="Server Name">
                                 <label for="server-icon-file">Icon</label>
-                                <p class="server-profile-hint">We recommend an image of at least 512x512.</p>
+                                <p class="server-profile-hint">We recommend an image of at least 512x512. An animated (GIF) icon needs 14 boosts.</p>
                                 <div class="server-icon-row">
                                     <span class="server-icon-face" id="server-icon-face">
                                         <img alt=""
@@ -272,6 +272,19 @@
                                 <div>
                                     <h2>Boost Perks</h2>
                                 </div>
+                            </div>
+                            <div class="boost-status" id="boost-status">
+                                <div class="boost-status-head">
+                                    <strong id="boost-count">0 / 14 boosts</strong>
+                                    <span id="boost-state">Perks are locked</span>
+                                </div>
+                                <div class="boost-bar" role="progressbar" aria-valuemin="0" aria-valuemax="14" aria-valuenow="0"><span id="boost-bar-fill"></span></div>
+                                <p class="boost-note" id="boost-help"></p>
+                                <div class="boost-actions">
+                                    <button type="button" class="boost-invite-save" id="boost-add"><i class="fa-solid fa-rocket"></i> Boost this server</button>
+                                    <button type="button" class="boost-drop-remove" id="boost-remove" hidden>Remove my boost</button>
+                                </div>
+                                <div class="boost-people" id="boost-people"></div>
                             </div>
                             <div class="boost-perk">
                                 <div>
@@ -816,6 +829,7 @@
     </div>
     <div class="member-pop-body">
         <h2 id="member-pop-name"></h2>
+        <span class="nitro-badges" id="member-pop-badges" hidden></span>
         <p class="member-pop-handle" id="member-pop-handle"></p>
         <p class="member-pop-about" id="member-pop-about" hidden></p>
         <div class="member-pop-roles" id="member-pop-roles"></div>

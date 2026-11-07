@@ -62,6 +62,7 @@
             if (mine !== token || !card) return;
             var body = card.querySelector(".mini-body");
             body.innerHTML = html;
+            if (window.discodePaintBanners) window.discodePaintBanners(card);
             var since = body.querySelector("#dm-since");
             if (since) {
                 if (since.previousElementSibling) since.previousElementSibling.remove();

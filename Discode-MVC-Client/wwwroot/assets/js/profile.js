@@ -69,6 +69,7 @@
                 displayName: profileValue("me-display-input", meName()),
                 userName: profileValue("me-handle-name") || profileValue("settings-username") || meHandle(),
                 avatarUrl: savedAvatarUrl || profileValue("Update_AvatarUrl"),
+                bannerUrl: savedBannerUrl,
                 bio: profileValue("me-bio"),
                 customStatus: profileValue("set-status-input"),
                 pronouns: profileValue("set-pronouns-input"),
@@ -563,6 +564,134 @@
     }
 
     var savedAvatarUrl = profileValue("Update_AvatarUrl");
+    var savedBannerUrl = profile.getAttribute("data-banner") || "";
+
+    function paintBannerOf(url) {
+        var targets = document.querySelectorAll("#me-profile-banner, #me-pop .me-banner");
+        for (var i = 0; i < targets.length; i++) {
+            targets[i].style.backgroundImage = url ? "url('" + url.replace(/'/g, "%27") + "')" : "";
+            targets[i].classList.toggle("has-image", !!url);
+        }
+        var remove = document.getElementById("me-banner-remove");
+        if (remove) remove.hidden = !url;
+    }
+
+    function paintOwnPerks() {
+        if (profile.classList.contains("visitor-view")) return;
+        var state = window.discodeNitro || {};
+        paintBannerOf(savedBannerUrl);
+        if (window.discodeBadges) window.discodeBadges(document.getElementById("me-badges"), !!state.hasNitro, !!state.isBooster);
+    }
+
+    function paintVisitorPerks(data) {
+        var banner = document.getElementById("me-profile-banner");
+        if (banner) {
+            banner.style.backgroundImage = data.bannerUrl ? "url('" + data.bannerUrl.replace(/'/g, "%27") + "')" : "";
+            banner.classList.toggle("has-image", !!data.bannerUrl);
+        }
+        if (window.discodeBadges) window.discodeBadges(document.getElementById("me-badges"), !!data.hasNitro, !!data.isBooster);
+    }
+
+    // Nitro ran out: the server took the banner and the animated avatar away, the page forgets them too
+    document.addEventListener("discode-nitro-state", function () {
+        if (!hasNitro()) {
+            savedBannerUrl = "";
+            if (/\.gif(\?|$)/i.test(savedAvatarUrl || "")) {
+                savedAvatarUrl = "";
+                applyOwnPhoto(DEFAULT_AVATAR);
+            }
+        }
+        paintOwnPerks();
+    });
+    new MutationObserver(function () {
+        if (!profile.classList.contains("d-none")) paintOwnPerks();
+    }).observe(profile, { attributes: true, attributeFilter: ["class"] });
+    paintOwnPerks();
+
+    var bannerFile = document.getElementById("me-banner-file");
+    if (bannerFile) {
+        bannerFile.addEventListener("click", function (event) {
+            if (!hasNitro()) {
+                event.preventDefault();
+                goNitro();
+            }
+        });
+        bannerFile.addEventListener("change", function () {
+            var file = bannerFile.files && bannerFile.files[0];
+            bannerFile.value = "";
+            if (!file || file.type.indexOf("image/") !== 0) return;
+            if (file.size > 8 * 1024 * 1024) { showProfileError("Choose an image that is at most 8 MB."); return; }
+            var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
+            var data = new FormData();
+            data.append("file", file, file.name || "banner");
+            fetch("/Home/UploadBanner", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "RequestVerificationToken": tokenInput ? tokenInput.value : "", "X-Requested-With": "XMLHttpRequest" },
+                body: data
+            }).then(function (res) {
+                if (!res.ok) return uploadFailure(res);
+                return res.json();
+            }).then(function (body) {
+                savedBannerUrl = body.bannerUrl;
+                paintOwnPerks();
+                saveProfile();
+            }).catch(function (error) {
+                showProfileError(error && error.message && error.message !== "upload" ? error.message : "Could not save the banner.");
+            });
+        });
+    }
+
+    var bannerRemove = document.getElementById("me-banner-remove");
+    if (bannerRemove) {
+        bannerRemove.addEventListener("click", function () {
+            savedBannerUrl = "";
+            paintOwnPerks();
+            saveProfile();
+        });
+    }
+
+    function goNitro() {
+        if (window.discodeGo) window.discodeGo("/Nitro/Index");
+        else window.location.href = "/Nitro/Index";
+    }
+
+    function hasNitro() {
+        return !!(window.discodeNitro && window.discodeNitro.hasNitro);
+    }
+
+    function uploadFailure(response) {
+        return response.json().catch(function () { return {}; }).then(function (body) {
+            throw new Error((body && body.errors && body.errors[0]) || "upload");
+        });
+    }
+
+    function sendAvatar(blob, filename) {
+        var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
+        var data = new FormData();
+        data.append("file", blob, filename);
+        if (tokenInput) data.append("__RequestVerificationToken", tokenInput.value);
+        fetch("/Home/UploadAvatar", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "RequestVerificationToken": tokenInput ? tokenInput.value : "",
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            body: data
+        }).then(function (res) {
+            if (!res.ok) return uploadFailure(res);
+            return res.json();
+        }).then(function (data) {
+            savedAvatarUrl = data.avatarUrl;
+            var hidden = document.getElementById("Update_AvatarUrl");
+            if (hidden) hidden.value = data.avatarUrl;
+            applyOwnPhoto(data.avatarUrl);
+            saveProfile();
+        }).catch(function (error) {
+            showProfileError(error && error.message && error.message !== "upload" ? error.message : "Could not save the photo.");
+        });
+    }
 
     var avatarFile = document.getElementById("me-avatar-file");
     if (avatarFile) {
@@ -570,6 +699,12 @@
             var file = avatarFile.files && avatarFile.files[0];
             avatarFile.value = "";
             if (!file || file.type.indexOf("image/") !== 0) return;
+            // an animated avatar (Nitro) is sent as it is: the canvas below would flatten it to one still picture
+            if (file.type === "image/gif" && hasNitro()) {
+                if (file.size > 8 * 1024 * 1024) { showProfileError("Choose an animated image that is at most 8 MB."); return; }
+                sendAvatar(file, "avatar.gif");
+                return;
+            }
             var reader = new FileReader();
             reader.onload = function () {
                 var image = new Image();
@@ -584,31 +719,7 @@
                     var ctx = canvas.getContext("2d");
                     ctx.drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
                     canvas.toBlob(function (blob) {
-                        if (!blob) return;
-                        var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
-                        var data = new FormData();
-                        data.append("file", blob, "avatar.jpg");
-                        if (tokenInput) data.append("__RequestVerificationToken", tokenInput.value);
-                        fetch("/Home/UploadAvatar", {
-                            method: "POST",
-                            credentials: "same-origin",
-                            headers: {
-                                "RequestVerificationToken": tokenInput ? tokenInput.value : "",
-                                "X-Requested-With": "XMLHttpRequest"
-                            },
-                            body: data
-                        }).then(function (res) {
-                            if (!res.ok) throw new Error("upload");
-                            return res.json();
-                        }).then(function (data) {
-                            savedAvatarUrl = data.avatarUrl;
-                            var hidden = document.getElementById("Update_AvatarUrl");
-                            if (hidden) hidden.value = data.avatarUrl;
-                            applyOwnPhoto(data.avatarUrl);
-                            saveProfile();
-                        }).catch(function () {
-                            showProfileError("Could not save the photo.");
-                        });
+                        if (blob) sendAvatar(blob, "avatar.jpg");
                     }, "image/jpeg", 0.85);
                 };
                 image.src = reader.result;
@@ -802,6 +913,7 @@
         if (face) face.src = data.avatarUrl || DEFAULT_AVATAR;
         var joined = formatJoined(data.memberSince);
         if (since && joined) since.textContent = joined;
+        paintVisitorPerks(data);
         paintPerson({ pronouns: data.pronouns || "", bio: data.bio || "", status: data.customStatus || "", emoji: "" });
         setPrivateView(!!data.isPrivate, displayName);
         if (!data.isPrivate && friendsPanelOpen()) renderFriends();
@@ -1070,6 +1182,7 @@
             if (nameInput) nameInput.value = meName();
             if (viewName) viewName.hidden = true;
         } else if (viewName) {
+        if (!self) paintVisitorPerks({}); else paintOwnPerks();
             viewName.hidden = false;
             viewName.textContent = viewing;
         }

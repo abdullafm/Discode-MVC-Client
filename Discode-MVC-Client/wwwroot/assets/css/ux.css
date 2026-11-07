@@ -1124,3 +1124,64 @@ html.theme-dark .timeout-bar-text span { color: #b5bac1; }
 @media (max-width: 600px) { .timeout-bar { flex-wrap: wrap; } .timeout-segment { flex-wrap: wrap; } .timeout-option { flex: 1 0 33%; } }
 
 .timeout-card p, .timeout-card label { text-align: left; }
+
+/* ---------- Nitro: badges, banners, boosts ---------- */
+.nitro-badges { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; margin: 0 4px; }
+.nitro-badges[hidden] { display: none; }
+.nitro-badge { display: inline-flex; width: 20px; height: 20px; }
+.nitro-badge svg { width: 100%; height: 100%; display: block; }
+.nitro-badges-small .nitro-badge { width: 16px; height: 16px; }
+.dm-profile-card .nitro-badges { display: flex; margin: 4px 0 0; }
+.me-profile-id > .nitro-badges { display: flex; margin: 8px 0 0; }
+.member-pop-body > .nitro-badges { display: flex; margin: 2px 0 6px; }
+
+.me-banner.has-image, .me-profile-banner.has-image, .mini-banner.has-image, .dm-banner.has-image {
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.me-profile-banner { position: relative; }
+.me-banner-edit, .me-banner-remove {
+    position: absolute;
+    top: 10px;
+    right: 48px;
+    width: 30px;
+    height: 30px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    cursor: pointer;
+}
+.me-banner-remove { right: 84px; }
+.me-banner-edit input { display: none; }
+.me-profile:not(.visitor-view) .me-banner-edit { display: inline-flex; }
+.me-profile:not(.visitor-view) .me-banner-remove:not([hidden]) { display: inline-flex; }
+.me-banner-edit:hover, .me-banner-remove:hover { background: rgba(0, 0, 0, 0.75); }
+
+.boost-status { padding: 16px; margin-bottom: 16px; border-radius: 10px; background: #f2f3f5; color: #060607; }
+.boost-status-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.boost-status-head strong { font-size: 18px; }
+.boost-status-head span { color: #4d5058; font-size: 13px; }
+.boost-bar { height: 10px; border-radius: 6px; background: #d9dbe0; overflow: hidden; }
+.boost-bar span { display: block; height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, #ff8bf2, #a855f7); transition: width 0.3s ease; }
+.boost-actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.boost-actions button:disabled { opacity: 0.55; cursor: default; }
+.boost-people { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.boost-person { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 4px; border-radius: 14px; background: #e3e5e8; font-size: 13px; }
+.boost-person img { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; }
+.boost-perk.is-locked > div:first-child { opacity: 0.85; }
+.boost-perk.is-locked .boost-drop, .boost-perk.is-locked .boost-invite-row { opacity: 0.5; pointer-events: none; }
+.boost-note.is-error { color: #da373c; }
+html.theme-dark .boost-status { background: #2b2d31; color: #f2f3f5; }
+html.theme-dark .boost-status-head span { color: #b5bac1; }
+html.theme-dark .boost-bar { background: #1e1f22; }
+html.theme-dark .boost-person { background: #1e1f22; }
+
+.adm-inline-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.adm-inline-form input[type="text"], .adm-inline-form input[type="number"] { height: 36px; padding: 0 10px; border: 1px solid rgba(128, 132, 142, 0.4); border-radius: 8px; background: transparent; color: inherit; font: inherit; }
+.adm-inline-form input[type="number"] { width: 90px; }
+.adm-btn-danger { background: #da373c !important; color: #fff !important; }

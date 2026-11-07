@@ -146,6 +146,9 @@
     document.addEventListener("discode-server-roles-changed", function () { refreshMembers(null); });
     document.addEventListener("discode-roles-ready", function () {
         var button = currentMemberButton();
+    // somebody boosted, or lost Nitro: the badges in the member list follow
+    document.addEventListener("discode-server-boost-changed", refreshMembers);
+    document.addEventListener("discode-nitro-changed", function () { window.setTimeout(function () { refreshMembers(null); }, 500); });
         if (button) fillMemberPop(button);
     });
     document.addEventListener("discode-hub-connected", function () { window.setTimeout(function () { refreshMembers(null); }, 400); });
@@ -501,6 +504,8 @@
                     self: true,
                     voice: raw.voice,
                     inVoice: raw.inVoice,
+                    hasNitro: raw.hasNitro,
+                    isBooster: raw.isBooster,
                     voiceChannel: raw.voiceChannel,
                     channel: raw.channel
                 };
@@ -526,6 +531,8 @@
                 handle: people[p].username || people[p].userName || people[p].handle || "",
                 about: people[p].about || people[p].bio || ""
             };
+                nitro: people[p].hasNitro === true,
+                booster: people[p].isBooster === true,
             if (presence === "offline") offline.push(row);
             else online.push(row);
         }
@@ -558,6 +565,8 @@
                 if (item.statusText) button.setAttribute("data-note", item.statusText);
                 var face = document.createElement("span");
                 face.className = "server-member-face";
+                if (item.nitro) button.setAttribute("data-nitro", "1");
+                if (item.booster) button.setAttribute("data-booster", "1");
                 var img = document.createElement("img");
                 img.src = item.photo;
                 img.alt = "";
@@ -584,6 +593,12 @@
                 copy.appendChild(line);
                 if (item.voice) {
                     var voice = document.createElement("small");
+                if ((item.nitro || item.booster) && window.discodeBadges) {
+                    var perks = document.createElement("span");
+                    perks.className = "nitro-badges nitro-badges-small";
+                    window.discodeBadges(perks, item.nitro, item.booster);
+                    line.appendChild(perks);
+                }
                     voice.className = "server-member-voice";
                     var speaker = document.createElement("i");
                     speaker.className = "fa-solid fa-volume-high";
@@ -784,6 +799,8 @@
         var handleEl = document.getElementById("member-pop-handle");
         if (handleEl) handleEl.textContent = handle;
         var aboutEl = document.getElementById("member-pop-about");
+        var perkHolder = document.getElementById("member-pop-badges");
+        if (perkHolder && window.discodeBadges) window.discodeBadges(perkHolder, button.getAttribute("data-nitro") === "1", button.getAttribute("data-booster") === "1");
         if (aboutEl) {
             aboutEl.hidden = !about;
             aboutEl.textContent = about;
@@ -1290,6 +1307,59 @@
             event.stopPropagation();
             var button = event.target.closest("button");
             if (!button) return;
+    var boostBtn = document.getElementById("server-menu-boost");
+    if (boostBtn) {
+        boostBtn.addEventListener("click", function () {
+            var settingsBtn = document.getElementById("server-settings-open");
+            if (settingsBtn && !settingsBtn.hidden) {
+                settingsBtn.click();
+                var panel = document.querySelector(".server-settings-nav [data-panel='boost']");
+                if (panel) panel.click();
+                return;
+            }
+            closeMenu();
+            if (window.discodeGo) window.discodeGo("/Nitro/Index");
+            else window.location.href = "/Nitro/Index";
+        });
+    }
+
+    var showAllBtn = document.getElementById("server-menu-show-all");
+    if (showAllBtn) {
+        showAllBtn.addEventListener("click", function () {
+            if (!currentServer) return;
+            saveServerPref({ showAllChannels: currentServer.showAllChannels === false });
+        });
+    }
+
+    var hideMuted = document.getElementById("server-menu-hide-muted");
+    if (hideMuted) {
+        hideMuted.addEventListener("change", function () {
+            var box = hideMuted.querySelector("input");
+            saveServerPref({ hideMutedChannels: !!(box && box.checked) });
+        });
+    }
+
+    var notifyBtn = document.getElementById("server-menu-notify");
+    if (notifyBtn) {
+        notifyBtn.addEventListener("click", function () { openUserSettings("notifications"); });
+    }
+
+    var privacyBtn = document.getElementById("server-menu-privacy");
+    if (privacyBtn) {
+        privacyBtn.addEventListener("click", function () {
+            openUserSettings(document.querySelector("[data-settings-tab='privacy']") ? "privacy" : "account");
+        });
+    }
+
+    var profileBtn = document.getElementById("server-menu-profile");
+    if (profileBtn) {
+        profileBtn.addEventListener("click", function () {
+            closeMenu();
+            var handle = document.getElementById("me-handle-name");
+            if (window.openUserProfile && handle) window.openUserProfile(handle.textContent.trim(), "");
+        });
+    }
+
             closeChannelMenu();
             if (isOwner && button.getAttribute("data-create") === "channel") openChannelModal();
             if (isOwner && button.getAttribute("data-create") === "category") openCategoryModal();
@@ -2172,7 +2242,7 @@
             inviteRoom.textContent = roomName ? roomName : room ? "#" + room.textContent.trim() : "the server";
         }
         if (inviteCopy) inviteCopy.textContent = "Copy";
-        if (inviteLink && currentServer && currentServer.inviteCode) inviteLink.value = window.location.origin + "/" + currentServer.inviteCode;
+        if (inviteLink && currentServer && (currentServer.customLink || currentServer.inviteCode)) inviteLink.value = window.location.origin + "/" + (currentServer.customLink || currentServer.inviteCode);
         loadInviteFriends();
         closeMenu();
         closeChannelMenu();
@@ -2183,7 +2253,7 @@
     var inviteSearch = document.getElementById("invite-search");
 
     function inviteUrl() {
-        return currentServer && currentServer.inviteCode ? window.location.origin + "/" + currentServer.inviteCode : "";
+        return currentServer && (currentServer.customLink || currentServer.inviteCode) ? window.location.origin + "/" + (currentServer.customLink || currentServer.inviteCode) : "";
     }
 
     function inviteRow(friend) {

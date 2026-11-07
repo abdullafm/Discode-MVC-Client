@@ -529,7 +529,15 @@ function focusDmInput() {
 var dmFiles = [];
 var dmFileCounter = 0;
 var DM_MAX_FILES = 10;
-var DM_MAX_BYTES = 25 * 1024 * 1024;
+// how big a file may be depends on the account: 5 MB, or 2 GB with Nitro
+function dmMaxBytes() {
+    return window.discodeNitro ? window.discodeNitro.maxFileBytes : 5 * 1024 * 1024;
+}
+
+function dmTooBigText(name) {
+    var nitro = window.discodeNitro && window.discodeNitro.hasNitro;
+    return name + " is larger than " + window.discodeBytesLabel(dmMaxBytes()) + "." + (nitro ? "" : " Nitro lets you send files up to 2 GB.");
+}
 
 function dmFileKind(type, name) {
     var kind = String(type || "").toLowerCase();
@@ -672,8 +680,8 @@ function dmAddFiles(files) {
             showDmError("You can send at most " + DM_MAX_FILES + " files at once.");
             break;
         }
-        if (file.size > DM_MAX_BYTES) {
-            showDmError(file.name + " is larger than 25 MB.");
+        if (file.size > dmMaxBytes()) {
+            showDmError(dmTooBigText(file.name));
             continue;
         }
         var item = {
@@ -1173,6 +1181,7 @@ function dmRefreshProfile() {
     }).then(function (html) {
         var holder = document.getElementById("dm-profile-info");
         if (holder) holder.innerHTML = html;
+        if (window.discodePaintBanners) window.discodePaintBanners();
         dmSyncPartnerMessages();
     }).catch(function () {});
 }
@@ -1881,7 +1890,7 @@ function dmStartEdit(row) {
     box.className = "dm-edit";
     box.innerHTML =
         '<div class="dm-edit-box">' +
-        '<textarea rows="1" maxlength="2000" aria-label="Edit message"></textarea>' +
+        '<textarea rows="1" maxlength="50000" aria-label="Edit message"></textarea>' +
         '<button type="button" class="dm-edit-emoji emoji-open" data-act="edit-picker" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>' +
         '</div>' +
         '<p class="dm-edit-hint">escape to <a href="#" data-edit="cancel">cancel</a> \u2022 enter to <a href="#" data-edit="save">save</a></p>';

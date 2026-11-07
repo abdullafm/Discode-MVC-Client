@@ -303,7 +303,10 @@ var ctx = null;
 var files = [];
 var fileCounter = 0;
 var MAX_FILES = 10;
-var MAX_BYTES = 25 * 1024 * 1024;
+// how big a file may be depends on the account: 5 MB, or 2 GB with Nitro
+function maxFileBytes() {
+    return window.discodeNitro ? window.discodeNitro.maxFileBytes : 5 * 1024 * 1024;
+}
 var emojiField = null;
 var savedRange = null;
 var picker = { row: null };
@@ -423,8 +426,8 @@ function addFiles(list) {
             ctx.showError("You can send at most " + MAX_FILES + " files at once.");
             break;
         }
-        if (file.size > MAX_BYTES) {
-            ctx.showError(file.name + " is larger than 25 MB.");
+        if (file.size > maxFileBytes()) {
+            ctx.showError(file.name + " is larger than " + window.discodeBytesLabel(maxFileBytes()) + "." + (window.discodeNitro && window.discodeNitro.hasNitro ? "" : " Nitro lets you send files up to 2 GB."));
             continue;
         }
         var item = {
@@ -1220,7 +1223,7 @@ function startEdit(row) {
     var box = document.createElement("div");
     box.className = "dm-edit";
     box.innerHTML =
-        '<div class="dm-edit-box"><textarea rows="1" maxlength="2000" aria-label="Edit message"></textarea></div>' +
+        '<div class="dm-edit-box"><textarea rows="1" maxlength="50000" aria-label="Edit message"></textarea></div>' +
         '<p class="dm-edit-hint">escape to <a href="#" data-edit="cancel">cancel</a> \u2022 enter to <a href="#" data-edit="save">save</a></p>';
     holder.hidden = true;
     holder.parentNode.insertBefore(box, holder.nextSibling);

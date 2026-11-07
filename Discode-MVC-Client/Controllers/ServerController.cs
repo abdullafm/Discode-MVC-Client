@@ -260,6 +260,32 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.GetAsync($"api/server/{id}"));
         }
 
+        [HttpGet]
+        public Task<IActionResult> BoostInfo(int id)
+        {
+            return Forward(client => client.GetAsync($"api/server/{id}/boost"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Boost([FromBody] BoostServerUIVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Server not found." } }));
+
+            return Forward(client => client.PostAsJsonAsync($"api/server/{model.Id}/boost", new { }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Unboost([FromBody] BoostServerUIVM model)
+        {
+            if (model is null || model.Id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Server not found." } }));
+
+            return Forward(client => client.DeleteAsync($"api/server/{model.Id}/boost"));
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public Task<IActionResult> Create([FromBody] CreateServerUIVM model)
@@ -292,6 +318,9 @@ namespace Discode_MVC_Client.Controllers
             {
                 if (!model.Icon.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase) || model.Icon.Length > 5_000_000)
                     return BadRequest(new { errors = new[] { "Choose an image that is at most 5 MB." } });
+
+                if (string.Equals(model.Icon.ContentType, "image/gif", StringComparison.OrdinalIgnoreCase) && !await PerksUnlockedAsync(model.Id))
+                    return StatusCode(403, new { errors = new[] { "An animated server icon needs 14 boosts." } });
 
                 var folder = Path.Combine(_environment.WebRootPath, "uploads", "servers");
                 Directory.CreateDirectory(folder);
@@ -326,6 +355,9 @@ namespace Discode_MVC_Client.Controllers
 
                 if (!model.Banner.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase) || model.Banner.Length > 8_000_000)
                     return BadRequest(new { errors = new[] { "Choose an image that is at most 8 MB." } });
+
+                if (!await PerksUnlockedAsync(model.Id))
+                    return StatusCode(403, new { errors = new[] { "A server banner needs 14 boosts." } });
 
                 var folder = Path.Combine(_environment.WebRootPath, "uploads", "servers");
                 Directory.CreateDirectory(folder);
@@ -452,6 +484,29 @@ namespace Discode_MVC_Client.Controllers
             }
 
             return "{}";
+        }
+
+        // a server's banner, animated icon and short link are what its 14 boosts unlock
+        private async Task<bool> PerksUnlockedAsync(int serverId)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                using var response = await client.GetAsync($"api/server/{serverId}/boost");
+                if (!response.IsSuccessStatusCode)
+                    return false;
+
+                using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                return document.RootElement.TryGetProperty("perksUnlocked", out var open) && open.ValueKind == JsonValueKind.True;
+            }
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
+            {
+                return false;
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
         }
 
         private async Task<IActionResult> Forward(Func<HttpClient, Task<HttpResponseMessage>> send)

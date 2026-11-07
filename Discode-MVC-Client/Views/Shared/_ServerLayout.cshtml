@@ -8,6 +8,7 @@
     <script src="~/assets/js/nav.js" asp-append-version="true"></script>
     <script src="~/assets/js/livedock.js" asp-append-version="true"></script>
     <script src="~/assets/js/timezone.js" asp-append-version="true"></script>
+    <script src="~/assets/js/nitrostate.js" asp-append-version="true"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discord | Server</title>
@@ -443,7 +444,7 @@
                     style="background:#80848e"></span>Invisible<small>You will appear offline</small></button>
         </div>
         <div class="me-pop d-none" id="me-pop">
-            <div class="me-banner"></div>
+            <div class="me-banner" style="@(string.IsNullOrEmpty(Model.Profile.BannerUrl) ? "" : "background-image:url('" + Model.Profile.BannerUrl + "')")"></div>
             <div class="me-head">
                 <div class="me-avatar">
                     <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
@@ -462,18 +463,25 @@
                         id="me-status-label">Online</span><i class="fa-solid fa-chevron-right"></i></button>
             </div>
         </div>
-        <div class="me-profile d-none" id="me-profile">
+        <div class="me-profile d-none" id="me-profile" data-banner="@Model.Profile.BannerUrl" data-nitro="@(Model.Profile.HasNitro ? "1" : "0")" data-booster="@(Model.Profile.IsBooster ? "1" : "0")">
             <div class="me-profile-card" role="dialog" aria-label="Profile">
                 <div class="me-private-head" id="me-private-head" hidden><i class="fa-solid fa-lock"></i> <span>Private Profile</span></div>
                 <button type="button" class="me-profile-close" id="me-profile-close" aria-label="Close"><i
                         class="fa-solid fa-xmark"></i></button>
                 <div class="me-profile-side">
-                    <div class="me-profile-banner"></div>
+                    <div class="me-profile-banner" id="me-profile-banner" style="@(string.IsNullOrEmpty(Model.Profile.BannerUrl) ? "" : "background-image:url('" + Model.Profile.BannerUrl + "')")">
+                        <label class="me-banner-edit" id="me-banner-edit" aria-label="Change banner" title="Change banner">
+                            <input id="me-banner-file" type="file" accept="image/*">
+                            <i class="fa-solid fa-camera" aria-hidden="true"></i>
+                        </label>
+                        <button type="button" class="me-banner-remove" id="me-banner-remove" aria-label="Remove banner" title="Remove banner" hidden><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                     <div class="me-profile-id">
                         <div class="me-profile-top">
                             <div class="me-profile-avatar">
                                 <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
                                 <label class="me-avatar-edit" aria-label="Change avatar">
+                        <div class="nitro-badges" id="me-badges" hidden></div>
                                     <input id="me-avatar-file" type="file" accept="image/*">
                                     <i class="fa-solid fa-pen" aria-hidden="true"></i>
                                 </label>

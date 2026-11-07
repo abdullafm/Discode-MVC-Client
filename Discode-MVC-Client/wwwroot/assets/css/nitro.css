@@ -146,3 +146,20 @@
         opacity: 0.35;
     }
 }
+
+.nitro-view { overflow-y: auto; flex-direction: column; }
+.nitro-view #nitro-hero { flex: none; display: flex; }
+.nitro-flash { margin: 14px 0 0; padding: 10px 14px; border-radius: 8px; background: rgba(255, 255, 255, 0.12); color: #fff; font-size: 14px; max-width: 460px; }
+.nitro-flash.is-ok { background: rgba(35, 165, 89, 0.3); }
+.nitro-flash.is-error { background: rgba(218, 55, 60, 0.35); }
+.nitro-flash[hidden] { display: none; }
+.nitro-btn:disabled { opacity: 0.6; cursor: default; }
+.nitro-perks { padding: 36px 24px 48px; color: #f2f3f5; }
+.nitro-perks h2 { margin: 0 0 18px; font-size: 22px; text-align: center; }
+.nitro-perk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; max-width: 1000px; margin: 0 auto; }
+.nitro-perk { padding: 18px; border-radius: 14px; background: #17121f; border: 1px solid rgba(255, 255, 255, 0.08); }
+.nitro-perk h3 { margin: 10px 0 6px; font-size: 16px; }
+.nitro-perk p { margin: 0; color: #b5bac1; font-size: 14px; line-height: 1.4; }
+.nitro-perk-icon { display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center; border-radius: 12px; background: linear-gradient(135deg, #5865f2, #a855f7); color: #fff; font-size: 18px; }
+.nitro-perk-boost { background: linear-gradient(135deg, #ff8bf2, #a855f7); }
+.nitro-boost-line { margin: 22px auto 0; max-width: 1000px; text-align: center; color: #b5bac1; }

@@ -439,6 +439,14 @@
                     document.dispatchEvent(new CustomEvent("discode-server-voice-changed", { detail: data }));
                 });
 
+                connection.on("NitroChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-nitro-changed", { detail: data }));
+                });
+
+                connection.on("ServerBoostChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-boost-changed", { detail: data }));
+                });
+
                 connection.on("ServerRolesChanged", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-server-roles-changed", { detail: data }));
                 });

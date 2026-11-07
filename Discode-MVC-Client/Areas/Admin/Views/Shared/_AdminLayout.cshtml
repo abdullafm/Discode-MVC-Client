@@ -11,6 +11,7 @@
     <script src="~/assets/js/nav.js"></script>
     <script src="~/assets/js/livedock.js" asp-append-version="true"></script>
     <script src="~/assets/js/timezone.js"></script>
+    <script src="~/assets/js/nitrostate.js" asp-append-version="true"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discode Admin</title>
@@ -73,6 +74,7 @@
                 <a class="discover-cat @(section == "live" ? "on" : "")" href="@Url.Action("Index", "Live", new { area = "Admin" })"><i class="fa-solid fa-tower-broadcast"></i> Live</a>
                 <a class="discover-cat @(section == "content" ? "on" : "")" href="@Url.Action("Index", "Content", new { area = "Admin" })"><i class="fa-solid fa-newspaper"></i> Content</a>
                 <a class="discover-cat @(section == "reports" ? "on" : "")" href="@Url.Action("Index", "Reports", new { area = "Admin" })"><i class="fa-solid fa-flag"></i> Reports</a>
+                <a class="discover-cat @(section == "nitro" ? "on" : "")" href="@Url.Action("Index", "Nitro", new { area = "Admin" })"><i class="fa-solid fa-gem"></i> Nitro</a>
                 @if (User.IsInRole("SuperAdmin"))
                 {
                     <a class="discover-cat @(section == "branding" ? "on" : "")" href="@Url.Action("Index", "Branding", new { area = "Admin" })"><i class="fa-solid fa-image"></i> Logos</a>
@@ -113,6 +115,7 @@
                 <a class="discover-cat @(section == "live" ? "on" : "")" href="@Url.Action("Index", "Live", new { area = "Admin" })">Live</a>
                 <a class="discover-cat @(section == "content" ? "on" : "")" href="@Url.Action("Index", "Content", new { area = "Admin" })">Content</a>
                 <a class="discover-cat @(section == "reports" ? "on" : "")" href="@Url.Action("Index", "Reports", new { area = "Admin" })">Reports</a>
+                <a class="discover-cat @(section == "nitro" ? "on" : "")" href="@Url.Action("Index", "Nitro", new { area = "Admin" })">Nitro</a>
                 @if (User.IsInRole("SuperAdmin"))
                 {
                     <a class="discover-cat @(section == "branding" ? "on" : "")" href="@Url.Action("Index", "Branding", new { area = "Admin" })">Logos</a>
