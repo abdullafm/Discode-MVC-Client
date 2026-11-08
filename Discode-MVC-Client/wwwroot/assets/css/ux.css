@@ -1473,3 +1473,6 @@ html.theme-dark .settings-close:hover, html.theme-dark #settings-close:hover { b
 .me-profile-top .me-status-bubble:has(.bio-split) { position: absolute; left: 112px; top: 58px; margin: 0; align-self: auto; }
 .me-status-bubble:has(.bio-split)::before, .dm-profile-bubble:has(.bio-split)::before, .member-pop-chip:has(.bio-split)::before { bottom: auto !important; top: 8px; }
 .me-status-bubble:has(.bio-split)::after, .dm-profile-bubble:has(.bio-split)::after, .member-pop-chip:has(.bio-split)::after { bottom: auto !important; top: 2px; }
+.me-head:has(.me-chip .bio-split) { position: relative; }
+.me-head .me-chip:has(.bio-split) { position: absolute; left: 104px; top: 28px; margin: 0; }
+.member-pop-chip:has(.bio-split) { top: 46px; }
