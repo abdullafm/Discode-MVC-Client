@@ -236,10 +236,15 @@ function dmLiveCard(message) {
     return card;
 }
 
+// the body of a message: its markup (bold, links, code...) is shown, the flags of countries become pictures
+function formatNodes(text) {
+    return window.discodeFormat ? window.discodeFormat.nodes(text, nodesForText) : nodesForText(text);
+}
+
 function messageNodes(text) {
     var holder = document.createElement("div");
     holder.className = "dm-msg-text";
-    nodesForText(text).forEach(function (node) { holder.appendChild(node); });
+    formatNodes(text).forEach(function (node) { holder.appendChild(node); });
     return holder;
 }
 
@@ -495,8 +500,9 @@ function showDmPage() {
         FLAG_RE.lastIndex = 0;
         if (!FLAG_RE.test(text)) continue;
         FLAG_RE.lastIndex = 0;
+        if (!flagged && !(window.discodeFormat && window.discodeFormat.hasMarkup(text))) continue;
         while (texts[j].firstChild) texts[j].removeChild(texts[j].firstChild);
-        nodesForText(text).forEach(function (node) { texts[j].appendChild(node); });
+        formatNodes(text).forEach(function (node) { texts[j].appendChild(node); });
         if (edited) texts[j].appendChild(edited);
     }
     var faces = document.querySelectorAll("#dm-messages .dm-reaction-emoji");
@@ -1706,6 +1712,7 @@ function fieldValue(el) {
             if (child.nodeType === 3) parts.push(child.textContent);
             else if (child.nodeName === "IMG") parts.push(child.getAttribute("data-emoji") || "");
             else if (child.nodeName === "BR") parts.push("\n");
+            else if (child.nodeType === 1 && child.hasAttribute("data-raw")) parts.push(child.getAttribute("data-raw"));
             else if (child.nodeType === 1) {
                 if (/^(DIV|P)$/.test(child.nodeName) && parts.length && parts[parts.length - 1] !== "\n") parts.push("\n");
                 walk(child);
@@ -1910,7 +1917,7 @@ function dmApplyEdit(row, message) {
     dmCancelEdit(row);
     var holder = row.querySelector(".dm-msg-text");
     while (holder.firstChild) holder.removeChild(holder.firstChild);
-    nodesForText(message.text).forEach(function (node) { holder.appendChild(node); });
+    formatNodes(message.text).forEach(function (node) { holder.appendChild(node); });
     if (message.editedAt) holder.appendChild(dmEditedLabel());
 }
 

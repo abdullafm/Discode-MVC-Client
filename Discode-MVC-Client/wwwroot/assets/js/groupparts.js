@@ -64,6 +64,7 @@ function fieldValue(el) {
             if (child.nodeType === 3) parts.push(child.textContent);
             else if (child.nodeName === "IMG") parts.push(child.getAttribute("data-emoji") || "");
             else if (child.nodeName === "BR") parts.push("\n");
+            else if (child.nodeType === 1 && child.hasAttribute("data-raw")) parts.push(child.getAttribute("data-raw"));
             else if (child.nodeType === 1) {
                 if (/^(DIV|P)$/.test(child.nodeName) && parts.length && parts[parts.length - 1] !== "\n") parts.push("\n");
                 walk(child);
@@ -102,6 +103,11 @@ function nodesForText(text) {
     return nodes;
 }
 
+
+// the body of a message: its markup (bold, links, code...) is shown, the flags of countries become pictures
+function formatNodes(text) {
+    return window.discodeFormat ? window.discodeFormat.nodes(text, nodesForText) : nodesForText(text);
+}
 
 function dmFileKind(type, name) {
     var kind = String(type || "").toLowerCase();
@@ -1258,7 +1264,7 @@ function applyEdited(row, message) {
     var holder = row.querySelector(".dm-msg-text");
     if (!holder) return;
     while (holder.firstChild) holder.removeChild(holder.firstChild);
-    nodesForText(message.text).forEach(function (node) { holder.appendChild(node); });
+    formatNodes(message.text).forEach(function (node) { holder.appendChild(node); });
     if (message.editedAt) {
         var label = document.createElement("span");
         label.className = "dm-msg-edited";
@@ -1331,7 +1337,7 @@ window.GroupParts = {
     jump: jumpTo,
     takeFiles: takeFiles,
     giveBack: giveBack,
-    textNodes: nodesForText,
+    textNodes: formatNodes,
     decorate: function (row, body, message) {
         if (message.attachments && message.attachments.length) body.appendChild(dmBuildAttachments(message.attachments));
         if (message.isPoll && message.poll) {

@@ -50,7 +50,7 @@
         var nodes = [];
         while (walker.nextNode()) nodes.push(walker.currentNode);
         nodes.forEach(function (node) {
-            if (node.parentNode.closest && node.parentNode.closest(".mention")) return;
+            if (node.parentNode.closest && node.parentNode.closest(".mention, code, pre")) return;
             var text = node.nodeValue;
             if (text.indexOf("@") === -1) return;
             var pattern = /@([A-Za-z0-9_.\-]+)/g;

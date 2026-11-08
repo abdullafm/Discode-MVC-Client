@@ -10,6 +10,7 @@ builder.Services.AddControllersWithViews(options =>
 });
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<Discode_MVC_Client.Services.ILinkPreviewService, Discode_MVC_Client.Services.LinkPreviewService>();
 builder.Services.AddScoped<Discode_MVC_Client.Services.BrandingProvider>();
 builder.Services.AddTransient<BearerTokenHandler>();
 
