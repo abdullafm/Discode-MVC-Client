@@ -1463,3 +1463,8 @@ html.theme-dark .settings-close:hover, html.theme-dark #settings-close:hover { b
 .bio-open .bio-tools span.bio-tool { overflow: visible; white-space: nowrap; }
 .bio-open::before { bottom: auto !important; top: 8px; }
 .bio-open::after { bottom: auto !important; top: 2px; }
+.bio-split { display: block; min-width: 0; overflow: hidden; }
+.bio-split .bio-emoji { display: block; font-size: 20px; line-height: 1.2; margin-bottom: 2px; }
+.bio-split .bio-rest { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.me-status-bubble.has-bio .bio-split, .dm-profile-bubble .bio-split, .member-pop-chip .bio-split { max-width: 100%; }
+.bio-open .bio-split { overflow: visible; }

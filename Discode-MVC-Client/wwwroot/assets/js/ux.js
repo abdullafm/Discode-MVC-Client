@@ -451,12 +451,38 @@
     document.addEventListener("discode-page-ready", buildModernSelects);
 })();
 
-// profile bios: hovering a status bubble opens the whole text (emoji on its own line); on my own bubble a pencil and a bin appear
+// profile bios: the status bubble shows the emoji on its own line with the words under it (one line, "..." when long);
+// hovering opens the whole text downwards; on my own bubble a pencil and a bin appear
 (function () {
     var BUBBLES = ".me-status-bubble, .me-chip, .dm-profile-bubble, .member-pop-chip";
     var LEAD = /^((?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:️|‍\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s*/u;
+    var TEXTS = "#me-status-bubble-text, #me-chip-text, .dm-profile-bubble > span, .member-pop-chip > span";
 
     function room(bubble) {
+    function split(span) {
+        if (span.firstElementChild && span.firstElementChild.classList.contains("bio-emoji")) return;
+        var full = span.textContent;
+        var found = LEAD.exec(full);
+        if (!found || found[0].length >= full.length) {
+            span.classList.remove("bio-split");
+            return;
+        }
+        span.textContent = "";
+        var emoji = document.createElement("span");
+        emoji.className = "bio-emoji";
+        emoji.textContent = found[1];
+        var rest = document.createElement("span");
+        rest.className = "bio-rest";
+        rest.textContent = full.slice(found[0].length);
+        span.appendChild(emoji);
+        span.appendChild(rest);
+        span.classList.add("bio-split");
+    }
+
+    function splitAll() {
+        [].forEach.call(document.querySelectorAll(TEXTS), split);
+    }
+
         var node = bubble.parentElement;
         while (node && node !== document.body) {
             var o = getComputedStyle(node).overflowX;
@@ -466,34 +492,15 @@
         return window.innerWidth;
     }
 
-    function textNode(bubble) {
-        return bubble.querySelector("span:not(.bio-tools):not(.bio-tool)");
-    }
-
     function open(bubble) {
-        var span = textNode(bubble);
-        if (!span || bubble.classList.contains("bio-open")) return;
-        var full = span.textContent;
-        if (!full.trim() || (bubble.matches(".me-status-bubble, .me-chip") && !bubble.classList.contains("has-bio"))) return;
-        bubble.setAttribute("data-full", full);
-        var found = LEAD.exec(full);
-        if (found && found[0].length < full.length) {
-            span.textContent = "";
-            var emoji = document.createElement("span");
-            emoji.className = "bio-emoji";
-            emoji.textContent = found[1];
-            var rest = document.createElement("span");
-            rest.className = "bio-rest";
-            rest.textContent = full.slice(found[0].length);
-            span.appendChild(emoji);
-            span.appendChild(rest);
-        }
+        if (bubble.classList.contains("bio-open")) return;
+        if (bubble.matches(".me-status-bubble, .me-chip") && !bubble.classList.contains("has-bio")) return;
         var available = room(bubble) - bubble.getBoundingClientRect().left - 14;
         bubble.style.setProperty("--bio-max", Math.max(168, Math.min(260, available)) + "px");
         bubble.classList.add("bio-open");
-    }
-
-    function close(bubble) {
+        var before = bubble.getBoundingClientRect();
+        var pos = getComputedStyle(bubble).position;
+        var baseMargin = parseFloat(getComputedStyle(bubble).marginBottom) || 0;
         // it grows downwards: the top edge stays where it was and the space it takes in the layout stays the same
         if (pos === "absolute") {
             var holder = bubble.offsetParent;
@@ -502,21 +509,20 @@
             bubble.style.setProperty("bottom", "auto", "important");
         } else {
             var grew = bubble.getBoundingClientRect().height - before.height;
-            if (grew > 0) bubble.style.setProperty("margin-bottom", (-grew) + "px", "important");
+            if (grew > 0) bubble.style.setProperty("margin-bottom", (baseMargin - grew) + "px", "important");
         }
-        if (!bubble.classList.contains("bio-open")) return;
-        var span = textNode(bubble);
-        var full = bubble.getAttribute("data-full");
-        if (span && full !== null && span.textContent.replace(/\s+/g, "") === full.replace(/\s+/g, "")) span.textContent = full;
-        bubble.removeAttribute("data-full");
-        bubble.style.removeProperty("--bio-max");
-        bubble.classList.remove("bio-open");
     }
 
         bubble.style.removeProperty("margin-bottom");
+    function close(bubble) {
+        if (!bubble.classList.contains("bio-open")) return;
+        bubble.style.removeProperty("--bio-max");
         bubble.style.removeProperty("top");
         bubble.style.removeProperty("bottom");
     function tools(bubble) {
+        bubble.classList.remove("bio-open");
+    }
+
         if (bubble.id !== "me-status-bubble" || bubble.querySelector(".bio-tools")) return;
         var box = document.createElement("span");
         box.className = "bio-tools";
@@ -546,3 +552,13 @@
         document.dispatchEvent(new CustomEvent("discode-clear-status"));
     }, true);
 })();
+
+    var queued = false;
+    new MutationObserver(function () {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(function () { queued = false; splitAll(); });
+    }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+    splitAll();
+    document.addEventListener("DOMContentLoaded", splitAll);
+    document.addEventListener("discode-page-ready", splitAll);
