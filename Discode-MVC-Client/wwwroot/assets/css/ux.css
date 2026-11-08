@@ -1446,3 +1446,10 @@ html.theme-dark #notify-unread-badge.notify-unread-badge { background: #5865f2 !
 .settings-close:hover { color: #1e1f22; }
 html.theme-dark .settings-close, html.theme-dark #settings-close { background: #3a3c43 !important; color: #b5bac1 !important; }
 html.theme-dark .settings-close:hover, html.theme-dark #settings-close:hover { background: #4e5058 !important; color: #ffffff !important; }
+
+/* profile bios: the whole text shows while the pointer is on the bubble */
+.me-status-bubble, .me-chip, .dm-profile-bubble, .member-pop-chip { transition: max-width .15s ease; }
+.me-status-bubble:hover, .me-chip:hover, .dm-profile-bubble:hover { max-width: 280px; z-index: 5; }
+.me-status-bubble:hover span, .me-chip:hover span, .dm-profile-bubble:hover span { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+.member-pop-chip:hover { max-width: 260px; z-index: 5; }
+.member-pop-chip:hover span { max-width: 224px; -webkit-line-clamp: unset; display: block; overflow: visible; }
