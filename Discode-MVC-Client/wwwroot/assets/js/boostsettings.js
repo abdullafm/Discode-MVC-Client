@@ -136,6 +136,8 @@
                 box.appendChild(move);
                 if (openMenu === server.serverId) {
                     var menu = el("div", "mb-menu");
+                    menu.setAttribute("role", "menu");
+                    menu.appendChild(el("div", "mb-menu-head", "Move a boost from"));
                     others.forEach(function (from) {
                         var row = el("button", "mb-menu-item");
                         row.type = "button";
