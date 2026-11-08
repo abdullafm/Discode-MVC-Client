@@ -83,6 +83,7 @@
                 userName: profileValue("me-handle-name") || profileValue("settings-username") || meHandle(),
                 avatarUrl: savedAvatarUrl || profileValue("Update_AvatarUrl"),
                 bannerUrl: savedBannerUrl,
+                bannerColor: savedBannerColor,
                 bio: profileValue("me-bio"),
                 customStatus: composeStatus(),
                 statusClearMinutes: sentClear,
@@ -624,17 +625,18 @@
 
     function applyOwnPhoto(src) {
         ownPhoto = src;
-        var faces = document.querySelectorAll("#user-panel .avatar img, #server-voice-face, #call-avatar, .call-phone-faces img, #me-pop .me-avatar img, #me-profile .me-profile-avatar img, .set-status-person > img, .settings-me img, #dm-messages .dm-msg[data-mine=\"1\"] .dm-msg-avatar");
+        var faces = document.querySelectorAll("#user-panel .avatar img, #me-edit-avatar-preview, #server-voice-face, #call-avatar, .call-phone-faces img, #me-pop .me-avatar img, #me-profile .me-profile-avatar img, .set-status-person > img, .settings-me img, #dm-messages .dm-msg[data-mine=\"1\"] .dm-msg-avatar");
         for (var i = 0; i < faces.length; i++) faces[i].src = src;
     }
 
     var savedAvatarUrl = profileValue("Update_AvatarUrl");
     var savedBannerUrl = profile.getAttribute("data-banner") || "";
+    var savedBannerColor = profile.getAttribute("data-color") || "";
 
     function paintBannerOf(url) {
-        var targets = document.querySelectorAll("#me-profile-banner, #me-pop .me-banner");
+        var targets = document.querySelectorAll("#me-profile-banner, #me-pop .me-banner, #me-edit-banner-preview");
         for (var i = 0; i < targets.length; i++) {
-            window.discodeSetBanner(targets[i], url ? "url('" + url.replace(/'/g, "%27") + "')" : "");
+            window.discodeSetBanner(targets[i], url ? "url('" + url.replace(/'/g, "%27") + "')" : "", savedBannerColor);
             targets[i].classList.toggle("has-image", !!url);
         }
         var remove = document.getElementById("me-banner-remove");
@@ -651,7 +653,7 @@
     function paintVisitorPerks(data) {
         var banner = document.getElementById("me-profile-banner");
         if (banner) {
-            window.discodeSetBanner(banner, data.bannerUrl ? "url('" + data.bannerUrl.replace(/'/g, "%27") + "')" : "");
+            window.discodeSetBanner(banner, data.bannerUrl ? "url('" + data.bannerUrl.replace(/'/g, "%27") + "')" : "", data.bannerColor || "");
             banner.classList.toggle("has-image", !!data.bannerUrl);
         }
         if (window.discodeBadges) window.discodeBadges(document.getElementById("me-badges"), !!data.hasNitro, !!data.isBooster);
@@ -1188,6 +1190,131 @@
             if (nameInput) nameInput.blur();
         });
     }
+
+    // ---------- the editor beside the big profile: a place for name, avatar, banner and banner colour
+    (function () {
+        var panel = document.getElementById("me-edit-panel");
+        if (!panel) return;
+        var name = document.getElementById("me-edit-name");
+        var colors = document.getElementById("me-edit-colors");
+        var picker = document.getElementById("me-edit-color-input");
+        var nitroText = document.getElementById("me-edit-nitro-text");
+        var nitroGo = document.getElementById("me-edit-nitro-go");
+        var nitroBox = document.getElementById("me-edit-nitro");
+        var bannerChange = document.getElementById("me-edit-banner-change");
+
+        function paintPanel() {
+            if (profile.classList.contains("visitor-view")) return;
+            if (name && document.activeElement !== name) name.value = meName();
+            var avatar = document.getElementById("me-edit-avatar-preview");
+            if (avatar && ownPhoto) avatar.src = ownPhoto;
+            var remove = document.getElementById("me-edit-avatar-remove");
+            if (remove) remove.hidden = !ownPhoto || ownPhoto.indexOf("img-icon-profile") >= 0;
+            var removeBanner = document.getElementById("me-edit-banner-remove");
+            if (removeBanner) removeBanner.hidden = !savedBannerUrl;
+            var current = (savedBannerColor || "").toLowerCase();
+            [].forEach.call(colors.querySelectorAll("button[data-color]"), function (swatch) {
+                swatch.classList.toggle("on", swatch.getAttribute("data-color") === current);
+            });
+            var reset = document.getElementById("me-edit-color-reset");
+            if (reset) reset.hidden = !current;
+            if (picker && current) picker.value = current;
+            var nitro = !!(window.discodeNitro && window.discodeNitro.hasNitro);
+            if (bannerChange) bannerChange.classList.toggle("is-locked", !nitro);
+            if (nitroBox) nitroBox.classList.toggle("is-active", nitro);
+            if (nitroText) {
+                nitroText.textContent = "";
+                if (nitro) {
+                    nitroText.textContent = "You have Nitro: animated avatar and banner are unlocked.";
+                } else {
+                    nitroText.appendChild(document.createTextNode("Level up your look only with "));
+                    var link = document.createElement("a");
+                    link.href = "/Nitro/Index";
+                    link.textContent = "Nitro";
+                    nitroText.appendChild(link);
+                }
+            }
+            if (nitroGo) nitroGo.hidden = nitro;
+            paintBannerOf(savedBannerUrl);
+        }
+
+        function setColor(next) {
+            savedBannerColor = next;
+            paintBannerOf(savedBannerUrl);
+            paintPanel();
+            saveProfile();
+        }
+
+        if (name) {
+            name.addEventListener("input", function () {
+                if (nameInput) nameInput.value = name.value;
+            });
+            name.addEventListener("change", function () {
+                if (nameInput) {
+                    nameInput.value = name.value;
+                    commitDisplay();
+                    name.value = meName();
+                }
+            });
+            name.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    name.blur();
+                }
+            });
+        }
+
+        document.getElementById("me-edit-avatar-change").addEventListener("click", function () {
+            var file = document.getElementById("me-avatar-file");
+            if (file) file.click();
+        });
+        document.getElementById("me-edit-avatar-remove").addEventListener("click", function () {
+            savedAvatarUrl = "";
+            var hidden = document.getElementById("Update_AvatarUrl");
+            if (hidden) hidden.value = "";
+            applyOwnPhoto(DEFAULT_AVATAR);
+            paintPanel();
+            saveProfile();
+        });
+        bannerChange.addEventListener("click", function () {
+            var file = document.getElementById("me-banner-file");
+            if (file) file.click();
+        });
+        document.getElementById("me-edit-banner-remove").addEventListener("click", function () {
+            savedBannerUrl = "";
+            paintOwnPerks();
+            paintPanel();
+            saveProfile();
+        });
+        colors.addEventListener("click", function (event) {
+            var swatch = event.target.closest("button[data-color]");
+            if (swatch) setColor(swatch.getAttribute("data-color"));
+        });
+        document.getElementById("me-edit-color-reset").addEventListener("click", function () { setColor(""); });
+        if (picker) {
+            picker.addEventListener("input", function () { savedBannerColor = picker.value.toLowerCase(); paintBannerOf(savedBannerUrl); });
+            picker.addEventListener("change", function () { setColor(picker.value.toLowerCase()); });
+        }
+
+        // collapse to a thin strip, and a button for narrow screens where the panel opens over the profile
+        document.getElementById("me-edit-collapse").addEventListener("click", function () {
+            profile.classList.toggle("edit-collapsed");
+            panel.classList.toggle("is-collapsed", profile.classList.contains("edit-collapsed"));
+        });
+        var toggle = document.getElementById("me-edit-toggle");
+        if (toggle) toggle.addEventListener("click", function () { profile.classList.toggle("edit-open"); });
+
+        document.addEventListener("discode-nitro-state", paintPanel);
+        var wasShown = !profile.classList.contains("d-none");
+        new MutationObserver(function () {
+            var shown = !profile.classList.contains("d-none");
+            // the profile just opened: start with the drawer closed (touching the class list only when needed, it wakes this observer)
+            if (shown && !wasShown && profile.classList.contains("edit-open")) profile.classList.remove("edit-open");
+            if (shown) paintPanel();
+            wasShown = shown;
+        }).observe(profile, { attributes: true, attributeFilter: ["class"] });
+        paintPanel();
+    })();
     var msgBtn = document.getElementById("me-msg");
     if (msgBtn) {
         msgBtn.addEventListener("click", function () {

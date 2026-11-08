@@ -446,7 +446,7 @@
                     style="background:#80848e"></span>Invisible<small>You will appear offline</small></button>
         </div>
         <div class="me-pop d-none" id="me-pop">
-            <div class="me-banner" style="@(string.IsNullOrEmpty(Model.Profile.BannerUrl) ? "" : "background:url('" + Model.Profile.BannerUrl + "') center / cover no-repeat !important")"></div>
+            <div class="me-banner" style="@(!string.IsNullOrEmpty(Model.Profile.BannerUrl) ? "background:url('" + Model.Profile.BannerUrl + "') center / cover no-repeat !important" : !string.IsNullOrEmpty(Model.Profile.BannerColor) ? "background:" + Model.Profile.BannerColor + " !important" : "")"></div>
             <div class="me-head">
                 <div class="me-avatar">
                     <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
@@ -465,13 +465,68 @@
                         id="me-status-label">Online</span><i class="fa-solid fa-chevron-right"></i></button>
             </div>
         </div>
-        <div class="me-profile d-none" id="me-profile" data-banner="@Model.Profile.BannerUrl" data-nitro="@(Model.Profile.HasNitro ? "1" : "0")" data-booster="@(Model.Profile.IsBooster ? "1" : "0")">
+        <div class="me-profile d-none" id="me-profile" data-color="@Model.Profile.BannerColor" data-banner="@Model.Profile.BannerUrl" data-nitro="@(Model.Profile.HasNitro ? "1" : "0")" data-booster="@(Model.Profile.IsBooster ? "1" : "0")">
+        <aside class="me-edit-panel" id="me-edit-panel" aria-label="Edit profile">
+            <header class="me-edit-head">
+                <h3>Main Profile</h3>
+                <button type="button" id="me-edit-collapse" aria-label="Hide the editor"><i class="fa-solid fa-angles-left"></i></button>
+            </header>
+            <div class="me-edit-body">
+                <section>
+                    <h4>Display Name</h4>
+                    <input type="text" id="me-edit-name" maxlength="32" autocomplete="off" aria-label="Display name">
+                </section>
+                <section>
+                    <h4>Avatar</h4>
+                    <div class="me-edit-row">
+                        <img id="me-edit-avatar-preview" class="me-edit-avatar" alt="" src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)">
+                        <div class="me-edit-actions">
+                            <button type="button" class="me-edit-btn" id="me-edit-avatar-change">Change Avatar</button>
+                            <button type="button" class="me-edit-link" id="me-edit-avatar-remove">Remove Avatar</button>
+                        </div>
+                    </div>
+                    <p class="me-edit-hint">An animated (GIF) avatar needs Nitro.</p>
+                </section>
+                <section>
+                    <h4>Banner</h4>
+                    <div class="me-edit-banner" id="me-edit-banner-preview"></div>
+                    <div class="me-edit-actions is-row">
+                        <button type="button" class="me-edit-btn" id="me-edit-banner-change"><i class="fa-solid fa-gem"></i> Change Banner</button>
+                        <button type="button" class="me-edit-link" id="me-edit-banner-remove">Remove</button>
+                    </div>
+                    <p class="me-edit-hint">A banner picture needs Nitro.</p>
+                </section>
+                <section>
+                    <h4>Banner Color</h4>
+                    <div class="me-edit-colors" id="me-edit-colors" role="listbox" aria-label="Banner color">
+                        <button type="button" data-color="#5865f2" style="background:#5865f2" aria-label="Blurple"></button>
+                        <button type="button" data-color="#3ba55d" style="background:#3ba55d" aria-label="Green"></button>
+                        <button type="button" data-color="#faa61a" style="background:#faa61a" aria-label="Yellow"></button>
+                        <button type="button" data-color="#ed4245" style="background:#ed4245" aria-label="Red"></button>
+                        <button type="button" data-color="#eb459e" style="background:#eb459e" aria-label="Pink"></button>
+                        <button type="button" data-color="#9b59b6" style="background:#9b59b6" aria-label="Purple"></button>
+                        <button type="button" data-color="#1abc9c" style="background:#1abc9c" aria-label="Teal"></button>
+                        <button type="button" data-color="#e67e22" style="background:#e67e22" aria-label="Orange"></button>
+                        <button type="button" data-color="#34495e" style="background:#34495e" aria-label="Slate"></button>
+                        <button type="button" data-color="#000000" style="background:#000000" aria-label="Black"></button>
+                        <label class="me-edit-custom" aria-label="Pick any color" title="Pick any color"><input type="color" id="me-edit-color-input" value="#5865f2"><i class="fa-solid fa-eye-dropper"></i></label>
+                        <button type="button" class="me-edit-reset" id="me-edit-color-reset" aria-label="Default color" title="Default color"><i class="fa-solid fa-rotate-left"></i></button>
+                    </div>
+                </section>
+            </div>
+                <button type="button" class="me-edit-toggle" id="me-edit-toggle" aria-label="Customize profile"><i class="fa-solid fa-palette"></i></button>
+            <div class="me-edit-nitro" id="me-edit-nitro">
+                <span class="me-edit-lock"><i class="fa-solid fa-lock"></i></span>
+                <p id="me-edit-nitro-text">Level up your look only with <a href="/Nitro/Index">Nitro</a></p>
+                <a class="me-edit-btn is-nitro" id="me-edit-nitro-go" href="/Nitro/Index">Nitro Preview</a>
+            </div>
+        </aside>
             <div class="me-profile-card" role="dialog" aria-label="Profile">
                 <div class="me-private-head" id="me-private-head" hidden><i class="fa-solid fa-lock"></i> <span>Private Profile</span></div>
                 <button type="button" class="me-profile-close" id="me-profile-close" aria-label="Close"><i
                         class="fa-solid fa-xmark"></i></button>
                 <div class="me-profile-side">
-                    <div class="me-profile-banner" id="me-profile-banner" style="@(string.IsNullOrEmpty(Model.Profile.BannerUrl) ? "" : "background:url('" + Model.Profile.BannerUrl + "') center / cover no-repeat !important")">
+                    <div class="me-profile-banner" id="me-profile-banner" style="@(!string.IsNullOrEmpty(Model.Profile.BannerUrl) ? "background:url('" + Model.Profile.BannerUrl + "') center / cover no-repeat !important" : !string.IsNullOrEmpty(Model.Profile.BannerColor) ? "background:" + Model.Profile.BannerColor + " !important" : "")">
                         <label class="me-banner-edit" id="me-banner-edit" aria-label="Change banner" title="Change banner">
                             <input id="me-banner-file" type="file" accept="image/*">
                             <i class="fa-solid fa-pen" aria-hidden="true"></i>

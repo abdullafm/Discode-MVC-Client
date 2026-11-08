@@ -53,7 +53,7 @@
     };
 
     // paints a banner picture so that no theme rule can change how it fills the area
-    window.discodeSetBanner = function (element, cssUrl) {
+    window.discodeSetBanner = function (element, cssUrl, color) {
         if (!element) return;
         if (cssUrl) element.style.setProperty("background", cssUrl + " center / cover no-repeat", "important");
         else element.style.removeProperty("background");
@@ -68,7 +68,7 @@
             var card = marks[i].closest(".mini-profile, .dm-profile");
             var target = card ? card.querySelector(".mini-banner, .dm-banner") : null;
             if (!target) continue;
-            window.discodeSetBanner(target, url ? "url('" + url.replace(/'/g, "%27") + "')" : "");
+            window.discodeSetBanner(target, url ? "url('" + url.replace(/'/g, "%27") + "')" : "", marks[i].getAttribute("data-color") || "");
             target.classList.toggle("has-image", !!url);
         }
     };

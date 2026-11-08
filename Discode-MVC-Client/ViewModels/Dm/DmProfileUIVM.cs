@@ -9,6 +9,7 @@ namespace Discode_MVC_Client.ViewModels.Dm
         public string Status { get; set; } = "offline";
         public string Bio { get; set; } = string.Empty;
         public string BannerUrl { get; set; } = string.Empty;
+        public string BannerColor { get; set; } = string.Empty;
         public bool HasNitro { get; set; }
         public bool IsBooster { get; set; }
         public string Pronouns { get; set; } = string.Empty;
