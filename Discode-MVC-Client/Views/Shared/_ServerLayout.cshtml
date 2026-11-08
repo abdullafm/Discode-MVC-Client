@@ -734,6 +734,11 @@
                         <div>
                             <strong class="me-display">@Model.Profile.DisplayName</strong>
                             <span>Edit Profiles</span>
+                        <p>Server Boosts</p>
+                        <ul>
+                            <li><button type="button" data-settings-tab="boosts"><i class="fa-solid fa-gem"></i>
+                                    <span>Server Boosts</span></button></li>
+                        </ul>
                         </div>
                     </div>
                     <nav class="settings-tabs" aria-label="Settings">
@@ -798,6 +803,12 @@
                     </section>
                     <section id="settings-messages" hidden>
                         <div class="settings-panel">
+                    <section id="settings-boosts" hidden>
+                        <div class="settings-panel mb-panel" id="mb-root">
+                            <h2>Server Boosts</h2>
+                            <p class="settings-note" id="mb-loading">Loading...</p>
+                        </div>
+                    </section>
                             <h2>Messaging Permissions</h2>
                         </div>
                     </section>
@@ -956,6 +967,7 @@
         <script src="~/assets/js/emoji.js" asp-append-version="true"></script>
         <script src="~/assets/js/serverchannels.js" asp-append-version="true"></script>
         <script src="~/assets/js/servervoice.js" asp-append-version="true"></script>
+        <script src="~/assets/js/boostsettings.js" asp-append-version="true"></script>
         <script src="~/assets/js/servervoicertc.js" asp-append-version="true"></script>
         <script src="~/assets/js/serveroverwrites.js" asp-append-version="true"></script>
         <script src="~/assets/js/groupparts.js" asp-append-version="true"></script>

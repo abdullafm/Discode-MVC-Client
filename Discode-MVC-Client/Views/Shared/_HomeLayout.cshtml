@@ -389,6 +389,11 @@
                             <li><button type="button" class="on" data-settings-tab="account"><i
                                         class="fa-solid fa-user"></i> <span data-i18n="Account Info">Account Info</span></button></li>
                         </ul>
+                        <p>Server Boosts</p>
+                        <ul>
+                            <li><button type="button" data-settings-tab="boosts"><i class="fa-solid fa-gem"></i>
+                                    <span>Server Boosts</span></button></li>
+                        </ul>
                         <p data-i18n="Appearance">Experience</p>
                         <ul>
                             <li><button type="button" data-settings-tab="appearance"><i class="fa-solid fa-palette"></i>
@@ -445,6 +450,12 @@
                     <section id="settings-messages" hidden>
                         <div class="settings-panel">
                             <h2>Messaging Permissions</h2>
+                        </div>
+                    </section>
+                    <section id="settings-boosts" hidden>
+                        <div class="settings-panel mb-panel" id="mb-root">
+                            <h2>Server Boosts</h2>
+                            <p class="settings-note" id="mb-loading">Loading...</p>
                         </div>
                     </section>
                     <section id="settings-appearance" hidden>
@@ -636,6 +647,7 @@
         <script src="~/assets/js/groupmenu.js" asp-append-version="true"></script>
         <script src="~/assets/js/profile.js" asp-append-version="true"></script>
         <script src="~/assets/js/call.js" asp-append-version="true"></script>
+        <script src="~/assets/js/boostsettings.js" asp-append-version="true"></script>
         <script src="~/assets/js/mentions.js" asp-append-version="true"></script>
         <script src="~/assets/js/messagesearch.js" asp-append-version="true"></script>
         <script src="~/assets/js/ignore.js" asp-append-version="true"></script>

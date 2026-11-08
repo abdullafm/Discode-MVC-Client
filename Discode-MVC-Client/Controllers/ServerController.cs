@@ -266,6 +266,23 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.GetAsync($"api/server/{id}/boost"));
         }
 
+        // the Server Boosts page of the settings
+        [HttpGet]
+        public Task<IActionResult> MyBoosts()
+        {
+            return Forward(client => client.GetAsync("api/boost/mine"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> MoveBoost([FromBody] MoveBoostUIVM model)
+        {
+            if (model is null || model.FromServerId <= 0 || model.ToServerId <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a server." } }));
+
+            return Forward(client => client.PostAsJsonAsync("api/boost/move", new { fromServerId = model.FromServerId, toServerId = model.ToServerId }));
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public Task<IActionResult> Boost([FromBody] BoostServerUIVM model)
