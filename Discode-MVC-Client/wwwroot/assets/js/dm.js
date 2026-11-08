@@ -479,6 +479,7 @@ function showDmPage() {
     var userName = chat ? chat.getAttribute("data-user-name") : "";
     if (!userName) return;
     dmPartner = { userName: userName, userId: chat.getAttribute("data-user-id") };
+    if (window.discodeChat) window.discodeChat.open("dm", userName, document.getElementById("dm-messages"));
     dmOngoingCall = Number(chat.getAttribute("data-ongoing-call")) || 0;
     dmRefreshJoinLinks();
     dmCheckIdleNote();

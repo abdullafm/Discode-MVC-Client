@@ -487,6 +487,7 @@
         open: function (button) {
             var id = Number(button.getAttribute("data-id")) || 0;
             if (!id) {
+            if (window.discodeChat) window.discodeChat.close();
                 channelId = 0;
                 scroller.hidden = true;
                 compose.hidden = true;
@@ -516,6 +517,7 @@
             if (introTitle) introTitle.textContent = channelKind === "announce" ? "Welcome to " + channelName + "!" : "Welcome to #" + channelName + "!";
             if (introText) introText.textContent = channelKind === "announce" ? "This is the start of the " + channelName + " channel." : "This is the start of the #" + channelName + " channel.";
             if (introBadge) introBadge.className = "fa-solid " + (channelKind === "announce" ? "fa-bullhorn" : "fa-hashtag");
+            if (window.discodeChat) window.discodeChat.open("channel", serverId + ":" + channelId, box);
             paintAccess();
             loadMessages(generation);
         }

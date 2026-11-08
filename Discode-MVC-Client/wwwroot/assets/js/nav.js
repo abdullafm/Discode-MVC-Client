@@ -4,7 +4,7 @@
     var origAdd = EventTarget.prototype.addEventListener;
     var origRemove = EventTarget.prototype.removeEventListener;
 
-    var keepers = /\/(calls|groupcalls|presence|livedock|i18n|theme|timezone|nav|servervoice|servervoicertc|nitrostate|messageformat)\.js|signalr/i;
+    var keepers = /\/(calls|groupcalls|presence|livedock|i18n|theme|timezone|nav|servervoice|servervoicertc|nitrostate|messageformat|chatstate)\.js|signalr/i;
     var swapping = false;
     var lateReady = [];
 

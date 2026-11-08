@@ -1264,3 +1264,17 @@ html.theme-dark .fmt-spoiler { background: #1e1f22; }
 html.theme-dark .dm-embed { background: #2b2d31; color: #dbdee1; }
 html.theme-dark .dm-embed-site { color: #a3a6aa; }
 html.theme-dark .dm-embed-title { color: #00a8fc; }
+
+/* ---------- typing indicator and the NEW line ---------- */
+.typing-bar { min-height: 20px; padding: 0 16px 2px; font-size: 13px; line-height: 20px; color: #5c5e66; display: flex; align-items: center; gap: 6px; visibility: hidden; }
+.typing-bar.is-on { visibility: visible; }
+.typing-bar strong { color: inherit; font-weight: 700; }
+.typing-dots { display: inline-flex; align-items: center; gap: 3px; }
+.typing-dots i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; animation: typing-bounce 1.2s infinite ease-in-out; }
+.typing-dots i:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing-bounce { 0%, 60%, 100% { opacity: 0.35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
+html.theme-dark .typing-bar { color: #b5bac1; }
+
+.dm-new-line { position: relative; display: flex; align-items: center; height: 0; margin: 14px 16px 10px; border-top: 1px solid #f23f43; }
+.dm-new-line span { position: absolute; right: 0; top: -9px; padding: 0 5px; border-radius: 3px; background: #f23f43; color: #fff; font-size: 10px; font-weight: 700; line-height: 16px; letter-spacing: 0.03em; }

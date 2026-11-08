@@ -447,6 +447,10 @@
                     document.dispatchEvent(new CustomEvent("discode-server-voice-changed", { detail: data }));
                 });
 
+                connection.on("UserTyping", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-typing", { detail: data }));
+                });
+
                 connection.on("NitroChanged", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-nitro-changed", { detail: data }));
                 });

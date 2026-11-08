@@ -286,6 +286,7 @@
     }
 
     function loadMessages() {
+        if (window.discodeChat) window.discodeChat.open("group", String(groupId), box);
         return request("/Group/Messages?id=" + groupId).then(function (list) {
             loaded = Array.isArray(list) ? list.slice() : [];
             hasMore = loaded.length >= PAGE_SIZE;
