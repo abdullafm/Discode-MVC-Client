@@ -475,6 +475,14 @@
                     document.dispatchEvent(new CustomEvent("discode-live-guest-requested", { detail: guest }));
                 });
 
+                connection.on("LiveModeratorChanged", function (streamId, isModerator) {
+                    document.dispatchEvent(new CustomEvent("discode-live-moderator", { detail: { streamId: streamId, isModerator: isModerator } }));
+                });
+
+                connection.on("LiveMuteChanged", function (streamId, muted, until) {
+                    document.dispatchEvent(new CustomEvent("discode-live-mute", { detail: { streamId: streamId, muted: muted, until: until } }));
+                });
+
                 connection.on("GuestInvited", function (invite) {
                     document.dispatchEvent(new CustomEvent("discode-live-guest-invited", { detail: invite }));
                 });

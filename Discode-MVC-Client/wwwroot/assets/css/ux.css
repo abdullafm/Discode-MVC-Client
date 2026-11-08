@@ -1507,3 +1507,26 @@ body.server-dragging .server-tip { display: none !important; }
 .watch-viewer-invite:hover:not(:disabled) { background: #4752c4; }
 .watch-viewer-invite:disabled { opacity: .5; cursor: default; }
 .watch-guest-request button { white-space: nowrap; }
+
+/* live: moderators and the chat mute list */
+#live-viewer-list { width: 340px; }
+.watch-viewer-tabs { display: flex; gap: 6px; margin: 0 0 8px; }
+.watch-viewer-tabs button { flex: 1; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: #b5bac1; font: inherit; font-size: 12px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+.watch-viewer-tabs button.on { background: rgba(88, 101, 242, 0.35); color: #fff; }
+.watch-viewer-tabs button[hidden] { display: none; }
+.watch-viewer-act { flex: none; width: 30px; height: 30px; border: 0; border-radius: 50%; background: rgba(128, 132, 142, 0.35); color: #fff; font-size: 12px; cursor: pointer; }
+.watch-viewer-act:hover:not(:disabled) { background: rgba(128, 132, 142, 0.6); }
+.watch-viewer-act.is-on { background: #5865f2; }
+.watch-viewer-act:disabled { opacity: .5; cursor: default; }
+.watch-viewer-act .fa-comment-slash:hover { color: #f23f43; }
+.watch-mod-badge { margin-left: 6px; padding: 1px 5px; border-radius: 4px; background: #23a559; color: #fff; font-size: 10px; font-style: normal; font-weight: 800; letter-spacing: .04em; vertical-align: middle; }
+.live-mute-card { width: min(420px, calc(100vw - 32px)); }
+.live-mute-options { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 12px; }
+.live-mute-options button { padding: 8px 12px; border: 2px solid transparent; border-radius: 8px; background: rgba(128, 132, 142, 0.2); color: inherit; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.live-mute-options button:hover { background: rgba(128, 132, 142, 0.34); }
+.live-mute-options button.on { border-color: #5865f2; background: rgba(88, 101, 242, 0.18); }
+.live-mute-custom { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 13px; }
+.live-mute-custom label { opacity: .8; }
+.live-mute-custom input { width: 72px; padding: 7px 9px; border: 1px solid rgba(128, 132, 142, 0.5); border-radius: 6px; background: transparent; color: inherit; font: inherit; }
+.live-mute-custom select { padding: 7px 9px; border: 1px solid rgba(128, 132, 142, 0.5); border-radius: 6px; background: transparent; color: inherit; font: inherit; }
+#live-chat-input:disabled { opacity: .6; cursor: not-allowed; }

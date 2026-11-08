@@ -233,7 +233,10 @@
                             <div class="watch-top-right">
                                 <button type="button" class="watch-viewers" id="live-viewers-btn"><i class="fa-solid fa-eye"></i> <b id="live-viewers-count">0</b></button>
                                 <div class="watch-viewer-list" id="live-viewer-list" hidden>
-                                    <h4>Watching now</h4>
+                                    <div class="watch-viewer-tabs">
+                                        <button type="button" class="on" data-tab="watching">Watching now</button>
+                                        <button type="button" data-tab="muted" id="live-muted-tab" hidden>Muted</button>
+                                    </div>
                                     <div id="live-viewer-rows"></div>
                                     <p id="live-viewer-empty" hidden>Nobody is watching yet.</p>
                                 </div>
@@ -274,6 +277,36 @@
                             <button type="submit" id="live-chat-submit" aria-label="Send"><i class="fa-solid fa-paper-plane"></i></button>
                         </form>
                     </aside>
+                </div>
+            </div>
+
+            <!-- Mute somebody in the chat: for a while or for good -->
+            <div class="dm-modal" id="live-mute-modal" role="dialog" aria-modal="true" aria-labelledby="live-mute-title" hidden>
+                <div class="dm-modal-backdrop" data-close></div>
+                <div class="dm-modal-card live-mute-card">
+                    <button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>
+                    <h2 id="live-mute-title">Mute in chat</h2>
+                    <p class="dm-modal-text" id="live-mute-text"></p>
+                    <div class="live-mute-options" id="live-mute-options">
+                        <button type="button" data-minutes="10" class="on">10 minutes</button>
+                        <button type="button" data-minutes="60">1 hour</button>
+                        <button type="button" data-minutes="1440">1 day</button>
+                        <button type="button" data-minutes="10080">7 days</button>
+                        <button type="button" data-minutes="0">For good</button>
+                    </div>
+                    <div class="live-mute-custom">
+                        <label for="live-mute-custom">Or choose the time</label>
+                        <input type="number" id="live-mute-custom" min="1" max="999" placeholder="30" autocomplete="off">
+                        <select id="live-mute-unit" aria-label="Unit">
+                            <option value="1">minutes</option>
+                            <option value="60">hours</option>
+                            <option value="1440">days</option>
+                        </select>
+                    </div>
+                    <p class="dm-forward-error" id="live-mute-error" hidden></p>
+                    <div class="dm-forward-send">
+                        <button type="button" id="live-mute-submit">Mute</button>
+                    </div>
                 </div>
             </div>
 
