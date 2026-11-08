@@ -1479,3 +1479,10 @@ html.theme-dark .settings-close:hover, html.theme-dark #settings-close:hover { b
 /* less empty space above the message box (the typing line already keeps a gap) */
 .dm-scroll, .group-scroll { padding-bottom: 0; }
 .dm-messages, .group-messages { padding-bottom: 4px; }
+
+/* dragging a server icon */
+.server-drop-bar { width: 38px; height: 4px; margin: -8px 0; border-radius: 2px; background: #5865f2; flex: none; pointer-events: none; }
+.server-chip.is-dragging { opacity: 0.3; }
+.server-chip.server-drag-ghost { position: fixed; z-index: 400; margin: 0; pointer-events: none; opacity: 0.95; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); transform: scale(1.08); }
+body.server-dragging, body.server-dragging * { cursor: grabbing !important; user-select: none !important; }
+body.server-dragging .server-tip { display: none !important; }
