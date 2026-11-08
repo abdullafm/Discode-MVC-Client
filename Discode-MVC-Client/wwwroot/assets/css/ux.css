@@ -1476,3 +1476,6 @@ html.theme-dark .settings-close:hover, html.theme-dark #settings-close:hover { b
 .me-head:has(.me-chip .bio-split) { position: relative; }
 .me-head .me-chip:has(.bio-split) { position: absolute; left: 104px; top: 28px; margin: 0; }
 .member-pop-chip:has(.bio-split) { top: 46px; }
+/* less empty space above the message box (the typing line already keeps a gap) */
+.dm-scroll, .group-scroll { padding-bottom: 0; }
+.dm-messages, .group-messages { padding-bottom: 4px; }
