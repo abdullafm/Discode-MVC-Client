@@ -494,6 +494,16 @@
     }
 
     function close(bubble) {
+        // it grows downwards: the top edge stays where it was and the space it takes in the layout stays the same
+        if (pos === "absolute") {
+            var holder = bubble.offsetParent;
+            var base = holder ? holder.getBoundingClientRect().top : 0;
+            bubble.style.setProperty("top", (before.top - base) + "px", "important");
+            bubble.style.setProperty("bottom", "auto", "important");
+        } else {
+            var grew = bubble.getBoundingClientRect().height - before.height;
+            if (grew > 0) bubble.style.setProperty("margin-bottom", (-grew) + "px", "important");
+        }
         if (!bubble.classList.contains("bio-open")) return;
         var span = textNode(bubble);
         var full = bubble.getAttribute("data-full");
@@ -503,6 +513,9 @@
         bubble.classList.remove("bio-open");
     }
 
+        bubble.style.removeProperty("margin-bottom");
+        bubble.style.removeProperty("top");
+        bubble.style.removeProperty("bottom");
     function tools(bubble) {
         if (bubble.id !== "me-status-bubble" || bubble.querySelector(".bio-tools")) return;
         var box = document.createElement("span");

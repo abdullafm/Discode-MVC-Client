@@ -1461,3 +1461,5 @@ html.theme-dark .settings-close:hover, html.theme-dark #settings-close:hover { b
 .bio-open span.bio-emoji, .bio-open span.bio-rest { display: block; overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
 .bio-open .bio-tool i, .me-status-bubble.has-bio .bio-tool i { display: inline-block !important; color: inherit; }
 .bio-open .bio-tools span.bio-tool { overflow: visible; white-space: nowrap; }
+.bio-open::before { bottom: auto !important; top: 8px; }
+.bio-open::after { bottom: auto !important; top: 2px; }
