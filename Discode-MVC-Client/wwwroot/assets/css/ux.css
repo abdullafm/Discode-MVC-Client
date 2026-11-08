@@ -1419,3 +1419,10 @@ html.theme-dark #mb-root .mb-menu-item .mb-menu-note { color: #b5bac1 !important
 #mb-root .mb-menu-item:hover:not(:disabled) .mb-menu-name, #mb-root .mb-menu-item:hover:not(:disabled) .mb-menu-note, html.theme-dark #mb-root .mb-menu-item:hover:not(:disabled) .mb-menu-name, html.theme-dark #mb-root .mb-menu-item:hover:not(:disabled) .mb-menu-note { color: #fff !important; }
 #mb-root .mb-card-gem { background: none; padding: 0; overflow: hidden; }
 #mb-root .mb-card-gem img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
+/* the boost gem is an svg now */
+#mb-root .mb-gem { display: inline-flex; width: 1.2em; height: 1.2em; flex: none; }
+#mb-root .mb-gem svg { width: 100%; height: 100%; }
+#mb-root .mb-sub .mb-gem { margin-right: 4px; color: #8a8d94; }
+#mb-root .mb-sub .mb-gem.is-on { color: #d946ef; }
+#mb-root .mb-slot .mb-gem { width: 18px; height: 18px; }
+.mb-nav-gem { width: 1.1em; height: 1.1em; flex: none; vertical-align: -0.15em; margin-right: 4px; }
