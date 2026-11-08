@@ -192,7 +192,10 @@
         // the Nitro card: how many boosts there are and what is going on with them
         var card = el("div", "mb-card" + (data.hasNitro ? " has-nitro" : ""));
         var mark = el("span", "mb-card-gem");
-        mark.appendChild(gem());
+        var picture = el("img");
+        picture.alt = "";
+        picture.src = "/assets/img/boost-gem.png";
+        mark.appendChild(picture);
         var text = el("div", "mb-card-text");
         if (data.hasNitro) {
             text.appendChild(el("strong", "", data.free + " of " + data.slots + " boosts available"));
