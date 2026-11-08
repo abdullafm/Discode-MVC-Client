@@ -84,8 +84,20 @@
         return holder;
     }
 
+    // my boosts on the other servers, one entry per server (two boosts on the same server are one entry that moves one of them)
     function mineElsewhere(serverId) {
-        return data.boosts.filter(function (boost) { return boost.serverId !== serverId; });
+        var byServer = {};
+        data.boosts.forEach(function (boost) {
+            if (boost.serverId === serverId) return;
+            var group = byServer[boost.serverId];
+            if (!group) {
+                group = byServer[boost.serverId] = { serverId: boost.serverId, serverName: boost.serverName, count: 0, canMove: false, movableAt: boost.movableAt };
+            }
+            group.count += 1;
+            if (boost.canMove) group.canMove = true;
+            if (new Date(boost.movableAt) < new Date(group.movableAt)) group.movableAt = boost.movableAt;
+        });
+        return Object.keys(byServer).map(function (key) { return byServer[key]; });
     }
 
     function actionFor(server) {
@@ -127,7 +139,7 @@
                     others.forEach(function (from) {
                         var row = el("button", "mb-menu-item");
                         row.type = "button";
-                        var title = el("span", "mb-menu-name", "From " + from.serverName);
+                        var title = el("span", "mb-menu-name", "From " + from.serverName + (from.count > 1 ? " (" + from.count + " boosts)" : ""));
                         var note = el("span", "mb-menu-note", from.canMove ? "Move now" : "Can move in " + left(from.movableAt));
                         row.appendChild(title);
                         row.appendChild(note);
