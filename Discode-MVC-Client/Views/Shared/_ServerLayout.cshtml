@@ -472,11 +472,11 @@
                 <button type="button" id="me-edit-collapse" aria-label="Hide the editor"><i class="fa-solid fa-angles-left"></i></button>
             </header>
             <div class="me-edit-body">
-                <section>
+                <div class="me-edit-sec">
                     <h4>Display Name</h4>
                     <input type="text" id="me-edit-name" maxlength="32" autocomplete="off" aria-label="Display name">
-                </section>
-                <section>
+                </div>
+                <div class="me-edit-sec">
                     <h4>Avatar</h4>
                     <div class="me-edit-row">
                         <img id="me-edit-avatar-preview" class="me-edit-avatar" alt="" src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)">
@@ -485,18 +485,17 @@
                             <button type="button" class="me-edit-link" id="me-edit-avatar-remove">Remove Avatar</button>
                         </div>
                     </div>
-                    <p class="me-edit-hint">An animated (GIF) avatar needs Nitro.</p>
-                </section>
-                <section>
+                    <p class="me-edit-hint" id="me-edit-avatar-hint">An animated (GIF) avatar needs Nitro.</p>
+                </div>
+                <div class="me-edit-sec" id="me-edit-banner-section" hidden>
                     <h4>Banner</h4>
                     <div class="me-edit-banner" id="me-edit-banner-preview"></div>
                     <div class="me-edit-actions is-row">
                         <button type="button" class="me-edit-btn" id="me-edit-banner-change"><i class="fa-solid fa-gem"></i> Change Banner</button>
                         <button type="button" class="me-edit-link" id="me-edit-banner-remove">Remove</button>
                     </div>
-                    <p class="me-edit-hint">A banner picture needs Nitro.</p>
-                </section>
-                <section>
+                </div>
+                <div class="me-edit-sec" id="me-edit-color-section">
                     <h4>Banner Color</h4>
                     <div class="me-edit-colors" id="me-edit-colors" role="listbox" aria-label="Banner color">
                         <button type="button" data-color="#5865f2" style="background:#5865f2" aria-label="Blurple"></button>
@@ -509,16 +508,11 @@
                         <button type="button" data-color="#e67e22" style="background:#e67e22" aria-label="Orange"></button>
                         <button type="button" data-color="#34495e" style="background:#34495e" aria-label="Slate"></button>
                         <button type="button" data-color="#000000" style="background:#000000" aria-label="Black"></button>
+                <button type="button" class="me-edit-toggle" id="me-edit-toggle" aria-label="Customize profile"><i class="fa-solid fa-palette"></i></button>
                         <label class="me-edit-custom" aria-label="Pick any color" title="Pick any color"><input type="color" id="me-edit-color-input" value="#5865f2"><i class="fa-solid fa-eye-dropper"></i></label>
                         <button type="button" class="me-edit-reset" id="me-edit-color-reset" aria-label="Default color" title="Default color"><i class="fa-solid fa-rotate-left"></i></button>
                     </div>
-                </section>
-            </div>
-                <button type="button" class="me-edit-toggle" id="me-edit-toggle" aria-label="Customize profile"><i class="fa-solid fa-palette"></i></button>
-            <div class="me-edit-nitro" id="me-edit-nitro">
-                <span class="me-edit-lock"><i class="fa-solid fa-lock"></i></span>
-                <p id="me-edit-nitro-text">Level up your look only with <a href="/Nitro/Index">Nitro</a></p>
-                <a class="me-edit-btn is-nitro" id="me-edit-nitro-go" href="/Nitro/Index">Nitro Preview</a>
+                </div>
             </div>
         </aside>
             <div class="me-profile-card" role="dialog" aria-label="Profile">

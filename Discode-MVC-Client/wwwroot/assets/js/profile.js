@@ -1198,10 +1198,10 @@
         var name = document.getElementById("me-edit-name");
         var colors = document.getElementById("me-edit-colors");
         var picker = document.getElementById("me-edit-color-input");
-        var nitroText = document.getElementById("me-edit-nitro-text");
-        var nitroGo = document.getElementById("me-edit-nitro-go");
-        var nitroBox = document.getElementById("me-edit-nitro");
         var bannerChange = document.getElementById("me-edit-banner-change");
+        var bannerSection = document.getElementById("me-edit-banner-section");
+        var colorSection = document.getElementById("me-edit-color-section");
+        var avatarHint = document.getElementById("me-edit-avatar-hint");
 
         function paintPanel() {
             if (profile.classList.contains("visitor-view")) return;
@@ -1220,21 +1220,9 @@
             if (reset) reset.hidden = !current;
             if (picker && current) picker.value = current;
             var nitro = !!(window.discodeNitro && window.discodeNitro.hasNitro);
-            if (bannerChange) bannerChange.classList.toggle("is-locked", !nitro);
-            if (nitroBox) nitroBox.classList.toggle("is-active", nitro);
-            if (nitroText) {
-                nitroText.textContent = "";
-                if (nitro) {
-                    nitroText.textContent = "You have Nitro: animated avatar and banner are unlocked.";
-                } else {
-                    nitroText.appendChild(document.createTextNode("Level up your look only with "));
-                    var link = document.createElement("a");
-                    link.href = "/Nitro/Index";
-                    link.textContent = "Nitro";
-                    nitroText.appendChild(link);
-                }
-            }
-            if (nitroGo) nitroGo.hidden = nitro;
+            if (bannerSection) bannerSection.hidden = !nitro;
+            if (colorSection) colorSection.hidden = nitro;
+            if (avatarHint) avatarHint.hidden = nitro;
             paintBannerOf(savedBannerUrl);
         }
 
