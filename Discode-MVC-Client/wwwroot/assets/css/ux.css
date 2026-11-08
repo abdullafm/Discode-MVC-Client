@@ -1343,3 +1343,7 @@ html.theme-dark .me-edit-colors button.on { border-color: #313338; }
 .me-edit-btn { white-space: nowrap; }
 .me-edit-body .me-edit-sec { display: block; }
 .me-edit-body .me-edit-sec[hidden] { display: none; }
+
+/* a long status in the member card wraps inside its bubble instead of running out of it */
+.member-pop-chip { max-width: 170px; }
+.member-pop-chip span { min-width: 0; max-width: 132px; white-space: normal; overflow-wrap: anywhere; word-break: break-all; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
