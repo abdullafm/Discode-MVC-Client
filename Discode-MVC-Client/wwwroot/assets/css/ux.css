@@ -1247,7 +1247,7 @@ html.theme-dark .nitro-badges { background: rgba(255, 255, 255, 0.08); }
 .fmt-spoiler * { opacity: 0; }
 .fmt-spoiler.is-revealed { background: rgba(128, 132, 142, 0.25); color: inherit; cursor: text; }
 .fmt-spoiler.is-revealed * { opacity: 1; }
-html.theme-dark .fmt-link { color: #00a8fc; }
+html.theme-dark .fmt-link, html.theme-dark .dm-msg-text .fmt-link { color: #00a8fc !important; }
 html.theme-dark .fmt-spoiler { background: #1e1f22; }
 
 .dm-embed { position: relative; display: block; max-width: 440px; margin: 6px 0 2px; padding: 10px 12px; border-left: 4px solid #5865f2; border-radius: 4px; background: #f2f3f5; color: #2e3338; }

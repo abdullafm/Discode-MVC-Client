@@ -310,6 +310,7 @@
         if (data.type === "image") {
             var link = document.createElement("a");
             link.className = "dm-embed-photo";
+            link.setAttribute("aria-label", "Open image");
             link.href = data.url;
             link.target = "_blank";
             link.rel = "noopener noreferrer";
