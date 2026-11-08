@@ -1426,3 +1426,17 @@ html.theme-dark #mb-root .mb-menu-item .mb-menu-note { color: #b5bac1 !important
 #mb-root .mb-sub .mb-gem.is-on { color: #d946ef; }
 #mb-root .mb-slot .mb-gem { width: 18px; height: 18px; }
 .mb-nav-gem { width: 1.1em; height: 1.1em; flex: none; vertical-align: -0.15em; margin-right: 4px; }
+
+/* QA pass: contrast, tap targets, hover feedback */
+.dm-att-info strong { color: #0067e0; }
+html.theme-dark .dm-att-info strong { color: #00a8fc; }
+body .conversation-sidebar .direct-messages .friend-list .group-row-text span { color: #5c5f66; }
+html.theme-dark body .conversation-sidebar .direct-messages .friend-list .group-row-text span, html.theme-dark .conversation-sidebar .direct-messages .friend-list .group-row-text span { color: #a3a6aa; }
+html.theme-dark #notify-unread-badge.notify-unread-badge { background: #5865f2 !important; color: #ffffff !important; }
+#settings-open { transition: color .12s, transform .12s; }
+#settings-open:hover { color: #5865f2; transform: rotate(30deg); }
+.me-edit-colors button[data-color] { transition: transform .12s, box-shadow .12s; }
+.me-edit-colors button[data-color]:hover { transform: scale(1.12); box-shadow: 0 0 0 2px rgba(88,101,242,.55); }
+@media (max-width: 500px) {
+    #dm-attach, #dm-emoji, #group-attach, #group-emoji { min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
+}
