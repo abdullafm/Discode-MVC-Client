@@ -1468,3 +1468,7 @@ html.theme-dark .settings-close:hover, html.theme-dark #settings-close:hover { b
 .bio-split .bio-rest { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .me-status-bubble.has-bio .bio-split, .dm-profile-bubble .bio-split, .member-pop-chip .bio-split { max-width: 100%; }
 .bio-open .bio-split { overflow: visible; }
+/* the bubble starts under the banner line, never on the banner */
+.me-profile-top .me-status-bubble:has(.bio-split) { position: absolute; left: 112px; top: 58px; margin: 0; align-self: auto; }
+.me-status-bubble:has(.bio-split)::before, .dm-profile-bubble:has(.bio-split)::before, .member-pop-chip:has(.bio-split)::before { bottom: auto !important; top: 8px; }
+.me-status-bubble:has(.bio-split)::after, .dm-profile-bubble:has(.bio-split)::after, .member-pop-chip:has(.bio-split)::after { bottom: auto !important; top: 2px; }
