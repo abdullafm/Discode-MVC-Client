@@ -254,6 +254,7 @@
                         <div class="watch-guest-requests" id="live-guest-requests"></div>
                         <div class="watch-controls">
                             <button type="button" class="watch-icon-btn" id="live-mute-btn" title="Sound"><i class="fa-solid fa-volume-high"></i></button>
+                            <button type="button" class="watch-icon-btn" id="live-media-btn" title="Microphone, headphones, camera and screen" aria-label="Stream controls" hidden><i class="fa-solid fa-sliders"></i></button>
                             <button type="button" class="watch-icon-btn" id="live-guest-btn" title="Request to join" hidden><i class="fa-solid fa-user-plus"></i></button>
                             <button type="button" class="watch-icon-btn" id="live-preview-toggle" title="Hide my preview" hidden><i class="fa-solid fa-eye"></i></button>
                             <button type="button" class="watch-icon-btn" id="live-share-btn" title="Invite friends"><i class="fa-solid fa-share-nodes"></i></button>
@@ -273,6 +274,39 @@
                             <button type="submit" id="live-chat-submit" aria-label="Send"><i class="fa-solid fa-paper-plane"></i></button>
                         </form>
                     </aside>
+                </div>
+            </div>
+
+            <!-- Stream controls: the host and a guest switch the microphone, headphones, camera and screen -->
+            <div class="dm-modal" id="live-media-modal" role="dialog" aria-modal="true" aria-labelledby="live-media-title" hidden>
+                <div class="dm-modal-backdrop" data-close></div>
+                <div class="dm-modal-card live-media-card">
+                    <button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>
+                    <h2 id="live-media-title">Stream controls</h2>
+                    <p class="dm-modal-text" id="live-media-sub"></p>
+                    <div class="live-media-list">
+                        <button type="button" class="live-media-row" data-media="mic">
+                            <i class="fa-solid fa-microphone"></i>
+                            <span><strong>Microphone</strong><small data-state></small></span>
+                            <em class="live-switch" aria-hidden="true"></em>
+                        </button>
+                        <button type="button" class="live-media-row" data-media="deaf">
+                            <i class="fa-solid fa-headphones"></i>
+                            <span><strong>Headphones</strong><small data-state></small></span>
+                            <em class="live-switch" aria-hidden="true"></em>
+                        </button>
+                        <button type="button" class="live-media-row" data-media="camera">
+                            <i class="fa-solid fa-video"></i>
+                            <span><strong>Camera</strong><small data-state></small></span>
+                            <em class="live-switch" aria-hidden="true"></em>
+                        </button>
+                        <button type="button" class="live-media-row" data-media="screen">
+                            <i class="fa-solid fa-display"></i>
+                            <span><strong>Share screen</strong><small data-state></small></span>
+                            <em class="live-switch" aria-hidden="true"></em>
+                        </button>
+                    </div>
+                    <p class="dm-forward-error" id="live-media-error" hidden></p>
                 </div>
             </div>
 

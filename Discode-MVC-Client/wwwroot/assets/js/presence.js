@@ -475,6 +475,14 @@
                     document.dispatchEvent(new CustomEvent("discode-live-guest-requested", { detail: guest }));
                 });
 
+                connection.on("GuestInvited", function (invite) {
+                    document.dispatchEvent(new CustomEvent("discode-live-guest-invited", { detail: invite }));
+                });
+
+                connection.on("GuestInviteAnswered", function (streamId, accepted, name) {
+                    document.dispatchEvent(new CustomEvent("discode-live-guest-invite-answered", { detail: { streamId: streamId, accepted: accepted, name: name } }));
+                });
+
                 connection.on("GuestResponse", function (streamId, accepted) {
                     document.dispatchEvent(new CustomEvent("discode-live-guest-response", { detail: { streamId: streamId, accepted: accepted } }));
                 });
