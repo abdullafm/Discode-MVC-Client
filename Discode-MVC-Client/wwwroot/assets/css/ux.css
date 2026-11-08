@@ -1311,7 +1311,8 @@ html.theme-dark .typing-bar { color: #b5bac1; }
 .me-edit-reset { width: 30px; height: 30px; border: 0; border-radius: 6px; background: rgba(128, 132, 142, 0.25); color: inherit; cursor: pointer; }
 .me-edit-reset[hidden] { display: none; }
 .me-edit-panel.is-collapsed { width: 44px; }
-.me-edit-panel.is-collapsed .me-edit-head h3, .me-edit-panel.is-collapsed .me-edit-body, .me-edit-panel.is-collapsed .me-edit-panel.is-collapsed .me-edit-head { justify-content: center; padding: 14px 0; }
+.me-edit-panel.is-collapsed .me-edit-head h3, .me-edit-panel.is-collapsed .me-edit-body { display: none; }
+.me-edit-panel.is-collapsed .me-edit-head { justify-content: center; padding: 14px 0; }
 .me-edit-panel.is-collapsed .me-edit-head i { transform: rotate(180deg); }
 .me-profile.edit-collapsed:not(.visitor-view) .me-profile-card { width: min(920px, calc(100vw - 100px)); }
 .me-edit-toggle { position: absolute; top: 12px; right: 56px; z-index: 3; display: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: rgba(0, 0, 0, 0.55); color: #fff; cursor: pointer; }
