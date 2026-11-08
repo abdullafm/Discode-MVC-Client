@@ -1447,9 +1447,17 @@ html.theme-dark #notify-unread-badge.notify-unread-badge { background: #5865f2 !
 html.theme-dark .settings-close, html.theme-dark #settings-close { background: #3a3c43 !important; color: #b5bac1 !important; }
 html.theme-dark .settings-close:hover, html.theme-dark #settings-close:hover { background: #4e5058 !important; color: #ffffff !important; }
 
-/* profile bios: the whole text shows while the pointer is on the bubble */
-.me-status-bubble, .me-chip, .dm-profile-bubble, .member-pop-chip { transition: max-width .15s ease; }
-.me-status-bubble:hover, .me-chip:hover, .dm-profile-bubble:hover { max-width: 280px; z-index: 5; }
-.me-status-bubble:hover span, .me-chip:hover span, .dm-profile-bubble:hover span { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
-.member-pop-chip:hover { max-width: 260px; z-index: 5; }
-.member-pop-chip:hover span { max-width: 224px; -webkit-line-clamp: unset; display: block; overflow: visible; }
+/* bio bubble: open state like Discord (emoji above the words, pencil and bin on my own) */
+.bio-open { max-width: var(--bio-max, 240px) !important; z-index: 6; align-items: flex-start !important; border-radius: 16px !important; }
+.bio-open > span:not(.bio-tools) { display: block; overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.35; -webkit-line-clamp: unset; max-width: none; }
+.bio-emoji { display: block; font-size: 22px; line-height: 1.25; margin-bottom: 2px; }
+.bio-rest { display: block; }
+.bio-tools { display: none; position: absolute; right: 0; top: -38px; padding: 4px 6px; gap: 2px; border-radius: 18px; background: #2b2d31; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+.bio-open .bio-tools { display: inline-flex; }
+.bio-tool { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; color: #dbdee1; font-size: 14px; cursor: pointer; }
+.bio-tool:hover { background: rgba(255,255,255,.14); color: #fff; }
+.bio-tool[data-act="clear"]:hover { color: #f23f43; }
+.me-profile.visitor-view .bio-tools, .bio-tools:empty { display: none !important; }
+.bio-open span.bio-emoji, .bio-open span.bio-rest { display: block; overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; word-break: break-word; max-width: 100%; }
+.bio-open .bio-tool i, .me-status-bubble.has-bio .bio-tool i { display: inline-block !important; color: inherit; }
+.bio-open .bio-tools span.bio-tool { overflow: visible; white-space: nowrap; }

@@ -538,6 +538,15 @@
         if (profile.classList.contains("visitor-view")) return;
         openSetStatus();
     });
+    // the bin on my status bubble empties the status at once
+    document.addEventListener("discode-clear-status", function () {
+        if (profile.classList.contains("visitor-view")) return;
+        state.emoji = "";
+        state.clear = "";
+        pendingClear = null;
+        setInput.value = "";
+        closeSetStatus();
+    });
     document.getElementById("set-status-close").addEventListener("click", closeSetStatus);
     setStatus.addEventListener("click", function (event) {
         if (event.target === setStatus) closeSetStatus();

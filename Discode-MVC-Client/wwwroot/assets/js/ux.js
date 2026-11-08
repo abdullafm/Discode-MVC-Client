@@ -451,3 +451,85 @@
     document.addEventListener("discode-page-ready", buildModernSelects);
 })();
 
+// profile bios: hovering a status bubble opens the whole text (emoji on its own line); on my own bubble a pencil and a bin appear
+(function () {
+    var BUBBLES = ".me-status-bubble, .me-chip, .dm-profile-bubble, .member-pop-chip";
+    var LEAD = /^((?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:️|‍\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s*/u;
+
+    function room(bubble) {
+        var node = bubble.parentElement;
+        while (node && node !== document.body) {
+            var o = getComputedStyle(node).overflowX;
+            if (o !== "visible") return node.getBoundingClientRect().right;
+            node = node.parentElement;
+        }
+        return window.innerWidth;
+    }
+
+    function textNode(bubble) {
+        return bubble.querySelector("span:not(.bio-tools):not(.bio-tool)");
+    }
+
+    function open(bubble) {
+        var span = textNode(bubble);
+        if (!span || bubble.classList.contains("bio-open")) return;
+        var full = span.textContent;
+        if (!full.trim() || (bubble.matches(".me-status-bubble, .me-chip") && !bubble.classList.contains("has-bio"))) return;
+        bubble.setAttribute("data-full", full);
+        var found = LEAD.exec(full);
+        if (found && found[0].length < full.length) {
+            span.textContent = "";
+            var emoji = document.createElement("span");
+            emoji.className = "bio-emoji";
+            emoji.textContent = found[1];
+            var rest = document.createElement("span");
+            rest.className = "bio-rest";
+            rest.textContent = full.slice(found[0].length);
+            span.appendChild(emoji);
+            span.appendChild(rest);
+        }
+        var available = room(bubble) - bubble.getBoundingClientRect().left - 14;
+        bubble.style.setProperty("--bio-max", Math.max(168, Math.min(260, available)) + "px");
+        bubble.classList.add("bio-open");
+    }
+
+    function close(bubble) {
+        if (!bubble.classList.contains("bio-open")) return;
+        var span = textNode(bubble);
+        var full = bubble.getAttribute("data-full");
+        if (span && full !== null && span.textContent.replace(/\s+/g, "") === full.replace(/\s+/g, "")) span.textContent = full;
+        bubble.removeAttribute("data-full");
+        bubble.style.removeProperty("--bio-max");
+        bubble.classList.remove("bio-open");
+    }
+
+    function tools(bubble) {
+        if (bubble.id !== "me-status-bubble" || bubble.querySelector(".bio-tools")) return;
+        var box = document.createElement("span");
+        box.className = "bio-tools";
+        box.innerHTML = '<span class="bio-tool" data-act="edit" role="button" tabindex="0" aria-label="Edit status"><i class="fa-solid fa-pen"></i></span>' +
+            '<span class="bio-tool" data-act="clear" role="button" tabindex="0" aria-label="Clear status"><i class="fa-solid fa-trash-can"></i></span>';
+        bubble.appendChild(box);
+    }
+
+    document.addEventListener("mouseover", function (event) {
+        var bubble = event.target.closest && event.target.closest(BUBBLES);
+        if (!bubble) return;
+        tools(bubble);
+        open(bubble);
+    });
+
+    document.addEventListener("mouseout", function (event) {
+        var bubble = event.target.closest && event.target.closest(BUBBLES);
+        if (!bubble || (event.relatedTarget && bubble.contains(event.relatedTarget))) return;
+        close(bubble);
+    });
+
+    document.addEventListener("click", function (event) {
+        var tool = event.target.closest && event.target.closest(".bio-tool[data-act='clear']");
+        if (!tool) return;
+        event.preventDefault();
+        event.stopPropagation();
+        document.dispatchEvent(new CustomEvent("discode-clear-status"));
+    }, true);
+})();
