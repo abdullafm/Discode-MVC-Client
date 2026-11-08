@@ -1440,3 +1440,9 @@ html.theme-dark #notify-unread-badge.notify-unread-badge { background: #5865f2 !
 @media (max-width: 500px) {
     #dm-attach, #dm-emoji, #group-attach, #group-emoji { min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
 }
+
+/* settings close button: visible X in dark theme and on hover */
+.settings-close { color: #4d5058; }
+.settings-close:hover { color: #1e1f22; }
+html.theme-dark .settings-close, html.theme-dark #settings-close { background: #3a3c43 !important; color: #b5bac1 !important; }
+html.theme-dark .settings-close:hover, html.theme-dark #settings-close:hover { background: #4e5058 !important; color: #ffffff !important; }
