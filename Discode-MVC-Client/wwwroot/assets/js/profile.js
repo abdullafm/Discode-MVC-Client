@@ -1219,6 +1219,7 @@
             var reset = document.getElementById("me-edit-color-reset");
             if (reset) reset.hidden = !current;
             if (picker && current) picker.value = current;
+            // the banner colour is for everybody, the banner picture only with Nitro
             var nitro = !!(window.discodeNitro && window.discodeNitro.hasNitro);
             if (bannerSection) bannerSection.hidden = !nitro;
             if (colorSection) colorSection.hidden = nitro;
