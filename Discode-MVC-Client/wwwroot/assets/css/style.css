@@ -8909,3 +8909,17 @@ html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend
 .server-home img.site-logo {
     border-radius: 12px;
 }
+
+.server-nav .server-home:has(img.site-logo),
+html.theme-dark .server-nav .server-home:has(img.site-logo) {
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: hidden;
+}
+
+.server-nav .server-home img.site-logo {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    border-radius: inherit;
+}
