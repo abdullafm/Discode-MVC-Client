@@ -1585,3 +1585,4 @@ body.server-dragging .server-tip { display: none !important; }
 
 /* on somebody else's profile the bubble can be hovered (it was click-through, so it never opened) */
 .me-profile.visitor-view .me-status-bubble { pointer-events: auto !important; cursor: default; }
+.bio-tools-on .bio-tools { display: inline-flex; }

@@ -494,9 +494,20 @@
     }
 
     function open(bubble) {
-        if (bubble.classList.contains("bio-open")) return;
+    // the text only opens when it is cut ("..."): a short status has nothing more to show
+    function isCut(bubble) {
+        var line = bubble.querySelector(".bio-rest") || bubble.querySelector("span:not(.bio-tools):not(.bio-tool)");
+        return !!line && line.scrollWidth > line.clientWidth + 1;
+    }
+
+        if (bubble.classList.contains("bio-open") || bubble.classList.contains("bio-tools-on")) return;
         if (bubble.matches(".me-status-bubble, .me-chip") && !bubble.classList.contains("has-bio")) return;
         var available = room(bubble) - bubble.getBoundingClientRect().left - 14;
+        if (!isCut(bubble)) {
+            // my own short status still gets its pencil and bin
+            if (bubble.id === "me-status-bubble") bubble.classList.add("bio-tools-on");
+            return;
+        }
         bubble.style.setProperty("--bio-max", Math.max(168, Math.min(260, available)) + "px");
         bubble.classList.add("bio-open");
         var before = bubble.getBoundingClientRect();
@@ -516,6 +527,7 @@
 
         bubble.style.removeProperty("margin-bottom");
     function close(bubble) {
+        bubble.classList.remove("bio-tools-on");
         if (!bubble.classList.contains("bio-open")) return;
         bubble.style.removeProperty("--bio-max");
         bubble.style.removeProperty("top");
