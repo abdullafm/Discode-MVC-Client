@@ -206,3 +206,13 @@ main.friends-view.nitro-view, .nitro-view { overflow-y: auto !important; overflo
 .nitro-view .nitro-perk p { font-size: 14px; line-height: 1.45; }
 .nitro-view .nitro-perks h2 { font-size: 20px; }
 .nitro-view .nitro-gift { background: #2b2d31; border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; }
+
+/* phones: the top of the live window has two rows, the Nitro gift card lines up with the perk cards, the astronaut stays off the text */
+@media (max-width: 520px) {
+    .watch-top { flex-wrap: wrap; row-gap: 10px; padding: 12px 12px 40px !important; }
+    .watch-host { flex: 1 1 100%; }
+    .watch-host > div { min-width: 0; }
+    .watch-top-right { width: 100%; justify-content: flex-end; }
+    .nitro-wumpus { display: none; }
+}
+.nitro-view .nitro-gift { margin-left: auto; margin-right: auto; max-width: 1200px; box-sizing: border-box; }
