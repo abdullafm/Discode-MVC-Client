@@ -481,6 +481,8 @@ function showDmPage() {
     dmPartner = { userName: userName, userId: chat.getAttribute("data-user-id") };
     if (window.discodeChat) window.discodeChat.open("dm", userName, document.getElementById("dm-messages"));
     dmOngoingCall = Number(chat.getAttribute("data-ongoing-call")) || 0;
+    // the first picture of the profile comes from the chat and has no badges or banner: load the full one
+    dmRefreshProfile();
     dmRefreshJoinLinks();
     dmCheckIdleNote();
     if (/[?&]call=1(&|$)/.test(location.search)) dmAutoCall(0);

@@ -42,6 +42,7 @@ namespace Discode_MVC_Client.Mappers
                 BannerColor = profile.BannerColor,
                 HasNitro = profile.HasNitro,
                 IsBooster = profile.IsBooster,
+                StaffRole = profile.StaffRole,
                 Pronouns = profile.Pronouns,
                 CustomStatus = profile.CustomStatus,
                 IsPrivate = profile.IsPrivate,

@@ -13,6 +13,7 @@ namespace Discode_MVC_Client.ViewModels.Account
         public string BannerColor { get; set; } = string.Empty;
         public bool HasNitro { get; set; }
         public bool IsBooster { get; set; }
+        public string StaffRole { get; set; } = string.Empty;
         public string Pronouns { get; set; } = string.Empty;
         public string CustomStatus { get; set; } = string.Empty;
         public DateTime? CustomStatusClearAt { get; set; }

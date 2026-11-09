@@ -22,9 +22,11 @@
     <h2 id="dm-profile-name">@(Model.HasChat ? Model.Name : "")</h2>
     <div class="handle-row">
     <p id="dm-profile-handle">@Model.UserName@if (!string.IsNullOrWhiteSpace(Model.Pronouns)) { <text> • @Model.Pronouns</text> }</p>
-    @if (Model.HasNitro || Model.IsBooster)
+    @if (Model.HasNitro || Model.IsBooster || !string.IsNullOrEmpty(Model.StaffRole))
     {
         <span class="nitro-badges">
+            @if (Model.StaffRole == "superadmin") { <span class="nitro-badge nitro-badge-superadmin" title="Super admin"><img src="~/assets/img/badge-superadmin.png" alt="" aria-hidden="true"></span> }
+            else if (Model.StaffRole == "admin") { <span class="nitro-badge nitro-badge-admin" title="Admin"><img src="~/assets/img/badge-admin.png" alt="" aria-hidden="true"></span> }
             @if (Model.HasNitro) { <span class="nitro-badge nitro-badge-nitro" title="Nitro subscriber"><img src="~/assets/img/badge-nitro.png" alt="" aria-hidden="true"></span> }
             @if (Model.IsBooster) { <span class="nitro-badge nitro-badge-boost" title="Boosting a server"><img src="~/assets/img/badge-boost.png" alt="" aria-hidden="true"></span> }
         </span>

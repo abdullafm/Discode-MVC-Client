@@ -4,7 +4,7 @@
     window.discodeNitroLoaded = true;
 
     var FREE = {
-        hasNitro: false, isBooster: false, source: "", expiresAt: null, cancelAtPeriodEnd: false, canManageBilling: false,
+        hasNitro: false, isBooster: false, staffRole: "", source: "", expiresAt: null, cancelAtPeriodEnd: false, canManageBilling: false,
         boostSlots: 0, boostsUsed: 0, maxMessageLength: 2000, maxFileBytes: 5 * 1024 * 1024, priceCents: 299, currency: "usd"
     };
 
@@ -43,13 +43,16 @@
     }
 
     // puts the Nitro / Boost badges of a person into a holder element
-    window.discodeBadges = function (holder, hasNitro, isBooster) {
+    // (staffRole: "admin" and "superadmin" get their badge by themselves, in front of the others)
+    window.discodeBadges = function (holder, hasNitro, isBooster, staffRole) {
         if (!holder) return;
         ensureSprite();
         holder.textContent = "";
+        if (staffRole === "superadmin") holder.appendChild(badge("superadmin", "Super admin"));
+        else if (staffRole === "admin") holder.appendChild(badge("admin", "Admin"));
         if (hasNitro) holder.appendChild(badge("nitro", "Nitro subscriber"));
         if (isBooster) holder.appendChild(badge("boost", "Boosting a server"));
-        holder.hidden = !hasNitro && !isBooster;
+        holder.hidden = !hasNitro && !isBooster && !staffRole;
     };
 
     // paints a banner picture so that no theme rule can change how it fills the area

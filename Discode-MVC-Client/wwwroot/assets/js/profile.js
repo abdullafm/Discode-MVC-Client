@@ -656,7 +656,7 @@
         if (profile.classList.contains("visitor-view")) return;
         var state = window.discodeNitro || {};
         paintBannerOf(savedBannerUrl);
-        if (window.discodeBadges) window.discodeBadges(document.getElementById("me-badges"), !!state.hasNitro, !!state.isBooster);
+        if (window.discodeBadges) window.discodeBadges(document.getElementById("me-badges"), !!state.hasNitro, !!state.isBooster, state.staffRole || "");
     }
 
     function paintVisitorPerks(data) {
@@ -665,7 +665,7 @@
             window.discodeSetBanner(banner, data.bannerUrl ? "url('" + data.bannerUrl.replace(/'/g, "%27") + "')" : "", data.bannerColor || "");
             banner.classList.toggle("has-image", !!data.bannerUrl);
         }
-        if (window.discodeBadges) window.discodeBadges(document.getElementById("me-badges"), !!data.hasNitro, !!data.isBooster);
+        if (window.discodeBadges) window.discodeBadges(document.getElementById("me-badges"), !!data.hasNitro, !!data.isBooster, data.staffRole || "");
     }
 
     // Nitro ran out: the server took the banner and the animated avatar away, the page forgets them too

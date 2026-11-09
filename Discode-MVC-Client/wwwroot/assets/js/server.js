@@ -506,6 +506,7 @@
                     inVoice: raw.inVoice,
                     hasNitro: raw.hasNitro,
                     isBooster: raw.isBooster,
+                    staffRole: raw.staffRole,
                     voiceChannel: raw.voiceChannel,
                     channel: raw.channel
                 };
@@ -523,6 +524,9 @@
                 status: presence,
                 owner: isServerCreator(people[p]),
                 voice: memberInVoice(people[p]),
+                nitro: people[p].hasNitro === true,
+                booster: people[p].isBooster === true,
+                staff: people[p].staffRole || "",
                 statusText: people[p].statusText || people[p].customStatus || people[p].activity || "",
                 self: people[p].self === true,
                 id: people[p].id || people[p].userId || "",
@@ -531,8 +535,6 @@
                 handle: people[p].username || people[p].userName || people[p].handle || "",
                 about: people[p].about || people[p].bio || ""
             };
-                nitro: people[p].hasNitro === true,
-                booster: people[p].isBooster === true,
             if (presence === "offline") offline.push(row);
             else online.push(row);
         }
@@ -567,6 +569,7 @@
                 face.className = "server-member-face";
                 if (item.nitro) button.setAttribute("data-nitro", "1");
                 if (item.booster) button.setAttribute("data-booster", "1");
+                if (item.staff) button.setAttribute("data-staff", item.staff);
                 var img = document.createElement("img");
                 img.src = item.photo;
                 img.alt = "";
@@ -590,15 +593,15 @@
                     crown.setAttribute("aria-label", "Server owner");
                     line.appendChild(crown);
                 }
+                if ((item.nitro || item.booster || item.staff) && window.discodeBadges) {
+                    var perks = document.createElement("span");
+                    perks.className = "nitro-badges nitro-badges-small";
+                    window.discodeBadges(perks, item.nitro, item.booster, item.staff);
+                    line.appendChild(perks);
+                }
                 copy.appendChild(line);
                 if (item.voice) {
                     var voice = document.createElement("small");
-                if ((item.nitro || item.booster) && window.discodeBadges) {
-                    var perks = document.createElement("span");
-                    perks.className = "nitro-badges nitro-badges-small";
-                    window.discodeBadges(perks, item.nitro, item.booster);
-                    line.appendChild(perks);
-                }
                     voice.className = "server-member-voice";
                     var speaker = document.createElement("i");
                     speaker.className = "fa-solid fa-volume-high";
@@ -800,7 +803,7 @@
         if (handleEl) handleEl.textContent = handle;
         var aboutEl = document.getElementById("member-pop-about");
         var perkHolder = document.getElementById("member-pop-badges");
-        if (perkHolder && window.discodeBadges) window.discodeBadges(perkHolder, button.getAttribute("data-nitro") === "1", button.getAttribute("data-booster") === "1");
+        if (perkHolder && window.discodeBadges) window.discodeBadges(perkHolder, button.getAttribute("data-nitro") === "1", button.getAttribute("data-booster") === "1", button.getAttribute("data-staff") || "");
         if (aboutEl) {
             aboutEl.hidden = !about;
             aboutEl.textContent = about;
