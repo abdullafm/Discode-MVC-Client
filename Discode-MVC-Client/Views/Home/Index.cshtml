@@ -323,7 +323,7 @@
                             <h3 data-i18n="Quick Search">Quick Search</h3>
                             <p data-i18n="Find users by username instantly">Find users by username instantly</p>
                         </div>
-                        <form asp-controller="Home" asp-action="Index" method="get" class="inline-search-wrapper" id="inline-search-form">
+                        <form asp-controller="Home" asp-action="Index" method="get" class="inline-search-wrapper" id="inline-search-form" data-no-nav>
                             <input type="hidden" name="tab" value="add">
                             <i class="fa-solid fa-magnifying-glass inline-search-icon"></i>
                             <input type="text" id="inline-search-input" name="search" value="@Model.Search" placeholder="Search users..." autocomplete="off">

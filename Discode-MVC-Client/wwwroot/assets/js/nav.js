@@ -232,6 +232,7 @@
     listen(document, "submit", function (event) {
         var form = event.target;
         if (!form || !form.action || (form.method && form.method.toLowerCase() === "post")) return;
+        if (form.hasAttribute("data-no-nav")) return;
         var url;
         try {
             url = new URL(form.action, location.href);
@@ -240,7 +241,12 @@
         }
         if (!isAppPage(url)) return;
         event.preventDefault();
-        go(url.pathname + url.search);
+        var fields = new URLSearchParams();
+        new FormData(form).forEach(function (value, key) {
+            if (typeof value === "string") fields.append(key, value);
+        });
+        var query = fields.toString();
+        go(url.pathname + (query ? "?" + query : ""));
     }, true);
 
     listen(window, "popstate", function () {
