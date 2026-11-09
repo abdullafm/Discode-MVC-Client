@@ -4,7 +4,6 @@ var GROUP_LIMIT = 10;
 var picked = [];
 var already = [];
 
-// Settings, pins: everything that used to sit in the browser's localStorage lives on the account now
 function postJson(url, body) {
     var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
     return fetch(url, {
@@ -30,7 +29,6 @@ function loadPins() {
     return pinKeys;
 }
 
-// a pinned person is identified by their user name, the display name is not unique
 function pinKey(item) {
     return String(item.getAttribute("data-dm") || rowName(item)).toLowerCase();
 }
@@ -598,7 +596,6 @@ document.addEventListener("visibilitychange", function () {
         paintNotify();
     });
 
-    // the page is already drawn in the saved theme by the server; here only the switch is set and a change is saved
     function applyTheme(theme, animate) {
         var dark = theme === "dark";
         if (animate && window.discodeSetTheme) window.discodeSetTheme(dark);
@@ -957,7 +954,6 @@ document.addEventListener("visibilitychange", function () {
         else window.location.href = url;
     }
 
-    // drag a server icon up or down to put the list in the order you like; the order is kept on the account (like the roles)
     (function enableServerDrag() {
         var nav = list.closest(".server-nav") || list.parentElement;
         var drag = null;

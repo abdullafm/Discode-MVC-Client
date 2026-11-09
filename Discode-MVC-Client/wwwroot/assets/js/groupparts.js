@@ -104,7 +104,6 @@ function nodesForText(text) {
 }
 
 
-// the body of a message: its markup (bold, links, code...) is shown, the flags of countries become pictures
 function formatNodes(text) {
     return window.discodeFormat ? window.discodeFormat.nodes(text, nodesForText) : nodesForText(text);
 }
@@ -309,7 +308,6 @@ var ctx = null;
 var files = [];
 var fileCounter = 0;
 var MAX_FILES = 10;
-// how big a file may be depends on the account: 5 MB, or 2 GB with Nitro
 function maxFileBytes() {
     return window.discodeNitro ? window.discodeNitro.maxFileBytes : 5 * 1024 * 1024;
 }
@@ -1043,10 +1041,8 @@ function showMenu(row) {
     for (var i = 0; i < gated.length; i++) gated[i].hidden = !mine;
     var others = menu.querySelectorAll("[data-other-only]");
     for (var o = 0; o < others.length; o++) others[o].hidden = row.getAttribute("data-mine") === "1";
-    // Edit: only the author, only where the chat can edit, only a message that has text
     var editable = menu.querySelectorAll("[data-needs-edit]");
     for (var e = 0; e < editable.length; e++) editable[e].hidden = !(ctx.edit && row.getAttribute("data-mine") === "1" && row.querySelector(".dm-msg-text"));
-    // Pin: only where the chat can pin and I may (Manage Messages); the label follows the message
     var pinnable = menu.querySelectorAll("[data-needs-pin]");
     for (var q = 0; q < pinnable.length; q++) {
         pinnable[q].hidden = !(ctx.pin && ctx.canPin && ctx.canPin());
@@ -1197,7 +1193,6 @@ function bindForward() {
 }
 
 
-// ---------- edit your own message (the chat gives ctx.edit(messageId, text) -> Promise<message>) ----------
 function cancelEdit(row) {
     var editor = row.querySelector(".dm-edit");
     if (editor) editor.remove();
@@ -1360,7 +1355,6 @@ window.GroupParts = {
         renderReactions(row, message.reactions || []);
         row.setAttribute("data-pinned", message.pinnedAt ? "1" : "0");
         if (ctx.onPinsChanged) ctx.onPinsChanged();
-        // somebody (the author, on another device) edited the text
         var holder = row.querySelector(".dm-msg-text");
         if (holder && !row.classList.contains("is-editing") && message.text !== undefined && message.text !== plainText(row)) applyEdited(row, message);
         var card = row.querySelector(".dm-poll");

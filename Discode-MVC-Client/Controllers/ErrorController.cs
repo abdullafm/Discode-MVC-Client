@@ -5,8 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Discode_MVC_Client.Controllers
 {
-    // Reached three ways: UseExceptionHandler (an unhandled crash), UseStatusCodePagesWithReExecute (404, 403, ...)
-    // and ApiFailureFilter (the API could not be reached). It must work for signed-out users too.
     [AllowAnonymous]
     [Route("Error")]
     public class ErrorController : Controller
@@ -16,12 +14,9 @@ namespace Discode_MVC_Client.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Show(int? code)
         {
-            // an exception handler re-executes with the failure attached; a status page re-executes with the code in the URL
             var crashed = HttpContext.Features.Get<IExceptionHandlerPathFeature>() is not null;
             var status = crashed ? StatusCodes.Status500InternalServerError : code ?? StatusCodes.Status500InternalServerError;
 
-            // scripts that called us get the bare status back, exactly as before: they never want an HTML page, and a body
-            // they do not read would keep the browser's request open
             if (!AcceptsHtml())
             {
                 return StatusCode(status);

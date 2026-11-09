@@ -1,6 +1,5 @@
 namespace Discode_MVC_Client.ViewModels.Account
 {
-    // null = leave as it is
     public class SaveSettingsUIVM
     {
         public string? Theme { get; set; }

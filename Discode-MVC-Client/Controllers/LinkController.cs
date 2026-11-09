@@ -20,7 +20,6 @@ namespace Discode_MVC_Client.Controllers
             _cache = cache;
         }
 
-        // the card under a message that has a link: a title, a text and a picture of the page
         [HttpGet]
         public async Task<IActionResult> Preview(string? url, CancellationToken cancel)
         {
@@ -29,7 +28,6 @@ namespace Discode_MVC_Client.Controllers
                 return Ok(new LinkPreview());
             }
 
-            // one person can not make the server fetch pages without end
             var key = "linkrate:" + (User.FindFirstValue(ClaimTypes.NameIdentifier) ?? HttpContext.Connection.RemoteIpAddress?.ToString() ?? "x");
             var used = _cache.GetOrCreate(key, entry =>
             {

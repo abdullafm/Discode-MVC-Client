@@ -2,9 +2,6 @@
     "use strict";
     if (window.discodeFormat) return;
 
-    // ---------- Discord-style message formatting (bold, italic, underline, strikethrough, spoiler, code, quote, heading, list, links)
-    // Everything is built with DOM nodes (never innerHTML), so a message can not inject markup.
-
     var ESCAPABLE = "\\*_~`|>[]()#-<";
     var URL_START = /^https?:\/\/[^\s<>"'`]+/i;
     var HAS_MARKUP = /[*_~`|>\[<]|https?:\/\/|^#{1,3} |^[-*] /m;
@@ -14,7 +11,6 @@
     }
 
     function trimUrl(url) {
-        // a sentence's closing punctuation is not part of the address; a closing ")" only when it has no "(" of its own
         for (;;) {
             var last = url.charAt(url.length - 1);
             if (/[.,!?;:'"\]]/.test(last)) { url = url.slice(0, -1); continue; }
@@ -132,7 +128,6 @@
                 for (var p = 0; p < PAIRS.length && !matched; p++) {
                     var d = PAIRS[p][0];
                     if (text.substr(i, d.length) !== d) continue;
-                    // _italic_ must stand on word edges (snake_case stays as it is); * must not open before a space
                     if (d === "_" && (isWord(text.charAt(i - 1)))) continue;
                     var after = text.charAt(i + d.length);
                     if (!after || /\s/.test(after)) continue;
@@ -249,7 +244,6 @@
         return out;
     }
 
-    // the nodes of a message body: a plain message stays exactly as it was, a message with markup is wrapped and keeps its original text
     function nodes(text, plain) {
         var plainFn = plain || function (t) { return [document.createTextNode(t)]; };
         text = String(text == null ? "" : text);
@@ -260,7 +254,6 @@
         wrap.setAttribute("data-raw", text);
 
         var parts = text.split("```");
-        // every odd part that has a closing fence after it is a code block; a last fence that never closes is plain text
         for (var i = 0; i < parts.length; i++) {
             if (i % 2 === 1 && i < parts.length - 1) {
                 wrap.appendChild(codeBlock(parts[i]));
@@ -275,7 +268,6 @@
         return [wrap];
     }
 
-    // spoilers open on a click
     document.addEventListener("click", function (event) {
         var spoiler = event.target.closest && event.target.closest(".fmt-spoiler");
         if (!spoiler) return;
@@ -286,11 +278,9 @@
         }
     }, true);
 
-    // ---------- link previews under the message
     var cache = {};
     var YOUTUBE = /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i;
 
-    // a link to a post of this site becomes a post card
     function ownPostId(url) {
         try {
             var parsed = new URL(url, window.location.origin);
@@ -302,7 +292,6 @@
         }
     }
 
-    // a gift link of this site (/gift/<code>)
     function ownGiftCode(url) {
         try {
             var parsed = new URL(url, window.location.origin);
@@ -525,7 +514,6 @@
             if (!node) return;
             var again = row.querySelector(".dm-msg-text");
             if (again && again.parentNode) again.parentNode.insertBefore(node, again.nextSibling);
-            // a message that is only a shared post shows just the card
             if (again && (node.classList.contains("dm-post-embed") || node.classList.contains("dm-gift-embed")) && again.textContent.trim() === url) again.classList.add("is-card-only");
         });
     }

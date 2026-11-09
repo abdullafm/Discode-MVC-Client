@@ -126,7 +126,6 @@ body .friends-view.dm-view {
     flex-direction: column;
 }
 
-/* push short conversations to the bottom without cutting off the top of long ones */
 .dm-scroll > * {
     flex-shrink: 0;
 }
@@ -794,7 +793,6 @@ section#dm-profile.no-motion .dm-profile {
     }
 }
 
-/* Dokunmatik cihazlarda min. 44px hedef */
 @media (pointer: coarse) {
     .dm-bar-tools button {
         width: 44px;
@@ -821,10 +819,6 @@ section#dm-profile.no-motion .dm-profile {
         min-height: 44px;
     }
 }
-
-/* ============================================================
-   DIRECT MESSAGES (real conversation)
-   ============================================================ */
 
 .dm-messages {
     display: flex;
@@ -920,7 +914,6 @@ section#dm-profile.no-motion .dm-profile {
 .dm-status.dnd { background: #f23f43; }
 .dm-status.offline { background: #80848e; }
 
-/* The placeholder is its own element so clicking it always lands in the real input */
 .dm-compose .rich-text[data-empty="1"]:before {
     content: none;
 }

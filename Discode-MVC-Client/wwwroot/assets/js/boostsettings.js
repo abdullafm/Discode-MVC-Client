@@ -1,7 +1,6 @@
 (function () {
     "use strict";
 
-    // The "Server Boosts" page of the settings: my boosts, the servers I am in, and moving a boost after a day.
     var root = document.getElementById("mb-root");
     if (!root) return;
 
@@ -21,7 +20,6 @@
         return node;
     }
 
-    // the boost gem: one shape that takes the colour of the text around it
     var GEM = '<svg aria-hidden="true" role="img" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M11.02 1.36c.56-.48 1.4-.48 1.96 0l6.48 5.45c.34.29.54.71.54 1.16v8.23c-.05.38-.24.74-.54 1l-6.48 5.44c-.53.45-1.3.48-1.86.09l-.1-.09-6.48-5.45c-.3-.25-.49-.6-.53-1L4 16.04V7.97c0-.45.2-.87.54-1.16l6.48-5.45ZM6.36 7.89a1 1 0 0 0-.36.76v6.7c0 .29.13.57.36.76l5 4.2a1 1 0 0 0 1.28 0l5-4.2a1 1 0 0 0 .36-.77V8.65a1 1 0 0 0-.36-.76l-5-4.2a1 1 0 0 0-1.28 0l-5 4.2Z"></path><path fill="currentColor" d="M11.36 6.3a1 1 0 0 1 1.28 0l3 2.52a1 1 0 0 1 .36.76v4.84a1 1 0 0 1-.36.76l-3 2.53a1 1 0 0 1-1.28 0l-3-2.53a1 1 0 0 1-.36-.76V9.58a1 1 0 0 1 .36-.76l3-2.53Z"></path></svg>';
 
     function gem(cls) {
@@ -30,7 +28,6 @@
         return holder;
     }
 
-    // "5h 12m", "42m"
     function left(when) {
         var ms = new Date(when).getTime() - Date.now();
         if (ms <= 0) return "now";
@@ -87,7 +84,6 @@
         return holder;
     }
 
-    // my boosts on the other servers, one entry per server (two boosts on the same server are one entry that moves one of them)
     function mineElsewhere(serverId) {
         var byServer = {};
         data.boosts.forEach(function (boost) {
@@ -192,7 +188,6 @@
             return;
         }
 
-        // the Nitro card: how many boosts there are and what is going on with them
         var card = el("div", "mb-card" + (data.hasNitro ? " has-nitro" : ""));
         var mark = el("span", "mb-card-gem");
         var picture = el("img");
@@ -298,11 +293,9 @@
         }
     });
 
-    // somebody boosted, or Nitro changed: the open page follows
     ["discode-server-boost-changed", "discode-nitro-state"].forEach(function (name) {
         document.addEventListener(name, function () { if (visible()) load(); });
     });
 
-    // the "free in 5h" labels move on while the page is open
     timer = window.setInterval(function () { if (visible() && data && !openMenu) paint(); }, 60000);
 })();

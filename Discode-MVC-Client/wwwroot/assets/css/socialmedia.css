@@ -1331,7 +1331,6 @@ html:not(.theme-dark) .story-modal-close:hover {
     }
 }
 
-/* Geniş ekranda akış sıkışmasın: tüm alanı kullan */
 @media screen and (min-width: 1600px) {
     .social-stage {
         align-items: stretch;
@@ -1348,7 +1347,6 @@ html:not(.theme-dark) .story-modal-close:hover {
     }
 }
 
-/* Dokunmatik cihazlarda min. 44px hedef */
 @media (pointer: coarse) {
     .tool-btn,
     .line-btn,
@@ -1367,10 +1365,6 @@ html:not(.theme-dark) .story-modal-close:hover {
         min-height: 44px;
     }
 }
-
-/* ============================================================
-   INSTAGRAM STYLE LIVE STREAM & BROADCASTER SYSTEM
-   ============================================================ */
 
 :root {
     --ig-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
@@ -1414,7 +1408,6 @@ html:not(.theme-dark) .story-modal-close:hover {
     100% { opacity: 0; transform: translateY(-10px) scale(0.95); }
 }
 
-/* Explore Live Drawer */
 .explore-live-toggle {
     border: 1px solid #d8dbe1;
     background: rgba(255, 255, 255, 0.92);
@@ -2216,17 +2209,11 @@ html.theme-dark .explore-posts-divider h3 {
     color: #949ba4;
 }
 
-/* ============================================================
-   INSTAGRAM-STYLE LIVE STORY BUBBLES  (Friends Tab #story-row)
-   ============================================================ */
-
-/* Wider bubble column to accommodate badge below */
 .story-bubble.is-live {
     width: 80px;
     gap: 2px;
 }
 
-/* Glowing gradient ring — thick 3px padding, vivid pulse */
 .story-bubble.is-live .story-ring {
     width: 76px;
     height: 76px;
@@ -2238,7 +2225,6 @@ html.theme-dark .explore-posts-divider h3 {
     animation: igRingPulse 1.8s infinite;
 }
 
-/* The photo inside fills the ring fully */
 .story-bubble.is-live .story-ring img {
     border: 2.5px solid #18191c;
     width: 100%;
@@ -2252,7 +2238,6 @@ html:not(.theme-dark) .story-bubble.is-live .story-ring img {
     border-color: #fff;
 }
 
-/* CANLI badge — sits below the ring circle, not overlapping it */
 .story-live-badge {
     display: inline-flex;
     align-items: center;
@@ -2274,10 +2259,6 @@ html:not(.theme-dark) .story-live-badge {
     border-color: #fff;
 }
 
-/* ============================================================
-   AUTHENTIC INSTAGRAM LIVE VIEWER (9:16 VERTICAL PHONE FRAME)
-   ============================================================ */
-
 .ig-live-modal {
     position: fixed;
     inset: 0;
@@ -2298,7 +2279,6 @@ html:not(.theme-dark) .story-live-badge {
     backdrop-filter: blur(14px);
 }
 
-/* Vertical Phone Frame Container */
 .ig-live-dialog {
     position: relative;
     width: 100%;
@@ -2332,7 +2312,6 @@ html:not(.theme-dark) .story-live-badge {
     display: block;
 }
 
-/* Instagram Vignette Overlays */
 .ig-top-vignette {
     position: absolute;
     top: 0;
@@ -2355,7 +2334,6 @@ html:not(.theme-dark) .story-live-badge {
     z-index: 3;
 }
 
-/* Top Header Bar */
 .ig-live-header {
     position: absolute;
     top: 16px;
@@ -2494,7 +2472,6 @@ html:not(.theme-dark) .story-live-badge {
     transform: scale(1.1);
 }
 
-/* Stream Topic Tag */
 .ig-topic-tag {
     position: absolute;
     top: 66px;
@@ -2514,7 +2491,6 @@ html:not(.theme-dark) .story-live-badge {
     text-overflow: ellipsis;
 }
 
-/* Floating Join Toast */
 .ig-join-toast {
     position: absolute;
     bottom: 250px;
@@ -2532,7 +2508,6 @@ html:not(.theme-dark) .story-live-badge {
     pointer-events: none;
 }
 
-/* Instagram Floating Comments Feed */
 .ig-comments-feed {
     position: absolute;
     bottom: 70px;
@@ -2593,7 +2568,6 @@ html:not(.theme-dark) .story-live-badge {
     word-break: break-word;
 }
 
-/* Floating Hearts Zone */
 .ig-floating-hearts-zone {
     position: absolute;
     bottom: 74px;
@@ -2615,7 +2589,6 @@ html:not(.theme-dark) .story-live-badge {
     filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
 }
 
-/* Instagram Bottom Action Bar */
 .ig-bottom-bar {
     position: absolute;
     bottom: 0;
@@ -2706,7 +2679,6 @@ html:not(.theme-dark) .story-live-badge {
     transform: scale(1.08);
 }
 
-/* The Big Instagram Heart Button */
 .ig-heart-btn {
     width: 44px;
     height: 44px;
@@ -2727,10 +2699,6 @@ html:not(.theme-dark) .story-live-badge {
 .ig-heart-btn:active {
     transform: scale(1.28);
 }
-
-/* ============================================================
-   GO LIVE CREATION MODAL - INSTAGRAM THEME
-   ============================================================ */
 
 .live-modal {
     position: fixed;
@@ -2888,7 +2856,6 @@ html:not(.theme-dark) .live-form-group select {
     gap: 12px;
 }
 
-/* Source Selection */
 .live-source-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -2928,7 +2895,6 @@ html:not(.theme-dark) .live-source-card.active,
     color: #e1306c;
 }
 
-/* Preview Box (Vertical 9:16 Feel) */
 .live-preview-box {
     position: relative;
     width: 100%;
@@ -3050,7 +3016,6 @@ html.theme-dark body .live-source-card span {
     box-shadow: 0 6px 20px rgba(225, 48, 108, 0.6);
 }
 
-/* Mobile Responsive */
 @media screen and (max-width: 600px) {
     .social-bar {
         padding: 0 12px;
@@ -3154,10 +3119,6 @@ html.theme-dark body .like-btn span {
     filter: blur(36px) saturate(1.4);
     opacity: 0.55;
 }
-
-/* ============================================================
-   LIVE WATCH DIALOG (stream + chat)
-   ============================================================ */
 
 .watch-dialog {
     position: relative;
@@ -3491,10 +3452,6 @@ html.theme-dark body .watch-msg strong {
     color: #c6cad1 !important;
 }
 
-/* ============================================================
-   CONFIRM DIALOG
-   ============================================================ */
-
 .confirm-dialog {
     position: relative;
     z-index: 10;
@@ -3772,10 +3729,6 @@ html.theme-dark body .views-empty {
     color: #949ba4 !important;
 }
 
-/* ============================================================
-   STORY EDITOR TOOL DROPDOWN
-   ============================================================ */
-
 .story-tool-dropdown {
     position: relative;
 }
@@ -3867,10 +3820,6 @@ html.theme-dark body .story-tool-trigger span,
 html.theme-dark body .story-tool-menu button span {
     color: inherit !important;
 }
-
-/* ============================================================
-   STORY EDITOR TOOL PANEL (text / draw / sticker)
-   ============================================================ */
 
 .story-edit-panel {
     display: block;
@@ -3990,10 +3939,6 @@ html.theme-dark body .story-edit-panel #story-text-add {
     color: #fff !important;
 }
 
-/* ============================================================
-   INSTAGRAM-STYLE TEXT MODE
-   ============================================================ */
-
 #story-editor.text-mode .story-edit-top,
 #story-editor.text-mode .story-filters,
 #story-editor.text-mode .story-share {
@@ -4106,10 +4051,6 @@ html.theme-dark body #story-editor.text-mode .story-edit-panel #story-text-add {
     height: 34px;
 }
 
-/* ============================================================
-   STORY DRAW BRUSH SIZE
-   ============================================================ */
-
 #story-tool-draw {
     position: relative;
 }
@@ -4162,10 +4103,6 @@ html.theme-dark body #story-editor.text-mode .story-edit-panel #story-text-add {
 .story-edit-panel #story-text {
     user-select: text;
 }
-
-/* ============================================================
-   STORY TEXT STYLES
-   ============================================================ */
 
 .story-text-styles {
     display: none;
@@ -4269,10 +4206,6 @@ html.theme-dark body #story-editor.text-mode .story-text-styles button.on {
 .story-text-styles {
     touch-action: pan-x;
 }
-
-/* ============================================================
-   STORY STICKER PICKER (emojis from the backend)
-   ============================================================ */
 
 #story-tool-sticker {
     display: block;
@@ -4857,7 +4790,6 @@ button.watch-viewers {
     display: none;
 }
 
-/* Post akisi ve yazma ekrani: kart tasarimi */
 .social-panel {
     background: #f2f3f5;
 }
@@ -5047,7 +4979,6 @@ html.theme-dark .post-composer {
     font-weight: 700;
 }
 
-/* Post sahibinin adi, yaninda kicik "Friends" nisani, altinda vaxt */
 .post-name {
     display: grid;
     grid-template-columns: auto auto 1fr;
@@ -5080,14 +5011,12 @@ html.theme-dark .post-composer {
     display: none;
 }
 
-/* Gizlenen menyu dugmeleri display qaydalari ile yeniden gorunmesin */
 .delete-pop button[hidden],
 .delete-pop [data-edit-post][hidden],
 .delete-pop [data-edit-comment][hidden] {
     display: none !important;
 }
 
-/* ===== Live: sade ve muasir gorunus (struktur ve is mantigi eyni) ===== */
 .live-drawer-header {
     position: static;
     align-items: center;
@@ -5263,7 +5192,6 @@ html.theme-dark .btn-start-stream:hover {
     box-shadow: 0 0 0 1px rgba(128, 132, 142, 0.25);
 }
 
-/* Yayim baslatma pencereleri */
 .live-create-dialog {
     max-width: 520px;
     padding: 30px 30px 26px;
@@ -5424,7 +5352,6 @@ html:not(.theme-dark) .live-source-card.active,
     opacity: 0.4;
 }
 
-/* ===== Canli yayim pencere: video merkezli, sade ve muasir gorunus ===== */
 .watch-dialog {
     width: min(1280px, 96vw);
     height: min(88vh, 760px);
@@ -5642,7 +5569,6 @@ html:not(.theme-dark) .live-source-card.active,
     transform: scale(0.94);
 }
 
-/* ===== Şərhlər: düyməyə basanda bölmə açılır / bağlanır ===== */
 .post:not(.comments-open) .comment-list,
 .post:not(.comments-open) .comment-form,
 .post:not(.comments-open) .reply-chip {

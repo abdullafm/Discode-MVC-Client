@@ -1,8 +1,6 @@
 (function () {
     "use strict";
 
-    // Pəncərələrdə (server yarat, ad dəyiş, kanal yarat...) mətn yazıb Enter basanda əsas düymə işləsin.
-    // Hər pəncərənin öz Enter qaydası varsa ona toxunmuruq (defaultPrevented).
     var MODALS = [
         "#server-modal", "#name-modal", "#pass-modal", "#channel-modal", "#channel-edit", "#category-modal",
         "#server-delete-modal", "#group-edit-modal", "#dm-forward-modal", "#group-forward-modal",
@@ -11,7 +9,6 @@
 
     var PRIMARY = /(done|create|confirm|save|submit|post|invite|join|apply|continue|ok)/i;
     var NOT_PRIMARY = /(cancel|close|back|copy|emoji|eye|-open|reset|search)/i;
-    // Enter bu sahələrdə ya yeni sətir yazır, ya da axtarış edir
     var SKIP_TYPES = /^(search|file|checkbox|radio|range|color|hidden|button|submit)$/i;
 
     function visible(node) {
@@ -30,7 +27,6 @@
         });
         if (!buttons.length) return null;
 
-        // iki panel varsa (server yarat / server qoşul) girişə ən yaxın paneldəki düyməni seç
         var panel = input.parentElement;
         while (panel && panel !== root) {
             var near = buttons.filter(function (button) { return panel.contains(button); });
@@ -42,8 +38,6 @@
     }
 
 
-    // ---------- açılıb-bağlanan panellər: CSS ilə yumşalmayanlar üçün (!important gizlədənlər) ----------
-    // el.hidden = true olanda element 150 ms solaraq çəkilir, el.hidden = false olanda yumşaq gəlir
     var ANIMATED = [
         ".role-more-menu", ".color-picker", ".member-pop", ".member-pop-menu", ".member-pop-role-menu", ".server-save-bar",
         ".server-voice-dock", ".photo-preview", ".story-reply", ".live-hero", ".live-chips", ".inline-search-results-card",
@@ -130,7 +124,6 @@
         button.click();
     });
 
-    // Boş yerə vurub bağlanan pəncərələr üçün Escape: yalnız öz düyməsi olanlara
     document.addEventListener("keydown", function (event) {
         if (event.key !== "Escape" || event.defaultPrevented) return;
 
@@ -146,7 +139,6 @@
         }
     });
 
-    // Telefonda ayarlar tabları sürüşür: seçilən tab görünən yerə gəlsin
     document.addEventListener("click", function (event) {
         var tab = event.target.closest && event.target.closest(".settings-nav button, .server-settings-nav button");
         if (!tab || !window.matchMedia("(max-width: 720px)").matches) return;
@@ -156,7 +148,6 @@
             strip.scrollTo({ left: Math.max(0, offset - (strip.clientWidth - tab.offsetWidth) / 2), behavior: "smooth" });
         }
     });
-    // ---------- dar ekranda ayarlar tabları açılan siyahıya (dropdown) çevrilir ----------
     function buildTabSelect(strip, selector, inside) {
         if (!strip || strip.getAttribute("data-ux-select")) return;
         var buttons = [].slice.call(strip.querySelectorAll(selector));
@@ -261,7 +252,6 @@
         }
         refresh();
 
-        // tab başqa yerdən dəyişəndə (məsələn kod ilə) yazı da dəyişsin
         new MutationObserver(refresh).observe(strip, { attributes: true, attributeFilter: ["class"], subtree: true });
     }
 
@@ -272,9 +262,6 @@
     buildAllTabSelects();
     document.addEventListener("DOMContentLoaded", buildAllTabSelects);
 
-    // ---------- <select> yerinə müasir açılan siyahı (data-modern-select) ----------
-    // Native siyahı brauzerin standart (mavi, kobud) görünüşünü verir. Burada select gizlənir, amma dəyəri, change hadisəsi
-    // və option-ları əvvəlki kimi işləyir: server.js dəyəri kodla qoyanda da yazı yenilənir.
     function modernSelect(select) {
         if (!select || select.getAttribute("data-msel")) return;
         select.setAttribute("data-msel", "1");
@@ -431,7 +418,6 @@
             }
         });
 
-        // option-lar kodla dəyişəndə (kateqoriya siyahısı yenidən doldurulanda) və dəyər kodla qoyulanda yazı yenilənir
         new MutationObserver(refresh).observe(select, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["disabled"] });
         var native = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
         Object.defineProperty(select, "value", {
@@ -451,8 +437,6 @@
     document.addEventListener("discode-page-ready", buildModernSelects);
 })();
 
-// profile bios: the status bubble shows the emoji on its own line with the words under it (one line, "..." when long);
-// hovering opens the whole text downwards; on my own bubble a pencil and a bin appear
 (function () {
     var BUBBLES = ".me-status-bubble, .me-chip, .dm-profile-bubble, .member-pop-chip";
     var LEAD = /^((?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:️|‍\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s*/u;
@@ -486,7 +470,6 @@
         var node = bubble.parentElement;
         while (node && node !== document.body) {
             var o = getComputedStyle(node).overflowX;
-            // a floating profile card is the edge too, even when it does not clip
             if (o !== "visible" || node.matches(".mini-profile, .member-pop, .me-pop")) return node.getBoundingClientRect().right;
             node = node.parentElement;
         }
@@ -494,7 +477,6 @@
     }
 
     function open(bubble) {
-    // the text only opens when it is cut ("..."): a short status has nothing more to show
     function isCut(bubble) {
         var line = bubble.querySelector(".bio-rest") || bubble.querySelector("span:not(.bio-tools):not(.bio-tool)");
         return !!line && line.scrollWidth > line.clientWidth + 1;
@@ -504,7 +486,6 @@
         if (bubble.matches(".me-status-bubble, .me-chip") && !bubble.classList.contains("has-bio")) return;
         var available = room(bubble) - bubble.getBoundingClientRect().left - 14;
         if (!isCut(bubble)) {
-            // my own short status still gets its pencil and bin
             if (bubble.id === "me-status-bubble") bubble.classList.add("bio-tools-on");
             return;
         }
@@ -513,7 +494,6 @@
         var before = bubble.getBoundingClientRect();
         var pos = getComputedStyle(bubble).position;
         var baseMargin = parseFloat(getComputedStyle(bubble).marginBottom) || 0;
-        // it grows downwards: the top edge stays where it was and the space it takes in the layout stays the same
         if (pos === "absolute") {
             var holder = bubble.offsetParent;
             var base = holder ? holder.getBoundingClientRect().top : 0;
@@ -576,9 +556,7 @@
     document.addEventListener("DOMContentLoaded", splitAll);
     document.addEventListener("discode-page-ready", splitAll);
 
-// a small clipboard button after a user name (the small card of my own profile, the member card, the DM profile): copies the user name
 (function () {
-    // inside: the button goes into the element (its text is rewritten by other code only as a whole)
     var TARGETS = [{ sel: "#me-pop .me-handle", inside: true }, { sel: "#member-pop-handle" }, { sel: "#dm-profile-handle" }];
 
     function nameOf(target) {
@@ -651,7 +629,6 @@
     document.addEventListener("discode-page-ready", decorate);
 })();
 
-// the badges (staff, Nitro, boost) also show in the small card of my own profile
 (function () {
     function paint() {
         var handle = document.querySelector("#me-pop .me-handle");

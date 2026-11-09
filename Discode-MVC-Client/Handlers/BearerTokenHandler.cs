@@ -34,7 +34,6 @@ namespace Discode_MVC_Client.Handlers
             var response = await base.SendAsync(request, cancellationToken);
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && context is not null && context.User.Identity?.IsAuthenticated == true && !context.Response.HasStarted)
             {
-                // the API no longer accepts this token (kicked or banned): drop the web session so the next page asks for a login
                 await context.SignOutAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
             }
 

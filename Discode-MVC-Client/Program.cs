@@ -53,7 +53,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// 404, 403, ... on a page request show the Discode error page; script requests keep the bare status they had
 app.UseStatusCodePagesWithReExecute("/Error/{0}");
 
 app.UseHttpsRedirection();

@@ -530,7 +530,6 @@ body .conversation-sidebar .user-panel[data-status="idle"] .avatar::after {
 }
 
 body .conversation-sidebar .user-panel[data-status="dnd"] .avatar::after {
-    /* a plain red dot, the same as the one in the profile card above it (no white bar inside) */
     background-color: #f23f43;
 }
 
@@ -667,7 +666,6 @@ body .conversation-sidebar .user-panel .user-controls i.fa-headphones.mute {
     transition: all 0s;
     color: #d9373c;
     animation: tilt .2s;
-    /* inline-block + position:relative = ::after çalışır */
     display: inline-block;
     position: relative;
 }
@@ -684,7 +682,6 @@ body .conversation-sidebar .user-panel .user-controls i.fa-headphones.mute::afte
     transform: translate(-50%, -50%) rotate(-45deg);
 }
 
-/* Eski wrapper stilleri temizle */
 .headp-wrap { all: unset; }
 .headp-slash { display: none !important; }
 
@@ -854,7 +851,6 @@ html.theme-dark .notify-count {
     border-color: #18181b !important;
 }
 
-/* Notification Panel Container */
 .notify-panel {
     position: absolute;
     top: calc(100% + 10px);
@@ -890,7 +886,6 @@ html.theme-dark .notify-panel {
     pointer-events: auto;
 }
 
-/* Header */
 .notify-header {
     display: flex;
     align-items: center;
@@ -967,7 +962,6 @@ html.theme-dark .notify-mark-read-btn:hover {
     color: #f2f3f5;
 }
 
-/* List Wrapper & Scrollbar */
 .notify-list-wrap {
     max-height: 400px;
     overflow-y: auto;
@@ -976,7 +970,6 @@ html.theme-dark .notify-mark-read-btn:hover {
 }
 
 
-/* Notification Item */
 .notify-item {
     position: relative;
     display: flex;
@@ -1017,7 +1010,6 @@ html.theme-dark .notify-item.unread:hover {
     background: rgba(88, 101, 242, 0.18);
 }
 
-/* Avatar & Mini Action Badge */
 .notify-avatar-wrap {
     position: relative;
     width: 40px;
@@ -1087,7 +1079,6 @@ html.theme-dark .notify-badge-icon {
     color: #ffffff;
 }
 
-/* Content */
 .notify-content {
     flex: 1;
     min-width: 0;
@@ -1174,7 +1165,6 @@ html.theme-dark .notify-time {
     flex: none;
 }
 
-/* Actions */
 .notify-actions {
     flex: none;
     display: flex;
@@ -1268,7 +1258,6 @@ html.theme-dark .notify-btn-dismiss:hover {
     font-size: 12px;
 }
 
-/* Empty State */
 .notify-empty {
     padding: 36px 20px;
     text-align: center;
@@ -1511,7 +1500,6 @@ html.theme-dark body .friend-badge {
     box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
 }
 
-/* Dark mode styles for friend filter */
 html.theme-dark .friend-filter-menu {
     background: transparent;
     border: none;
@@ -1557,8 +1545,6 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
     background: #059669;
     box-shadow: 0 2px 4px rgba(16, 185, 129, 0.4);
 }
-
-/* Inline Search Container (for Add Friend section) */
 
 .inline-search-header {
     margin-bottom: 16px;
@@ -1637,7 +1623,6 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
     color: #f23f43;
 }
 
-/* Inline Results Table - Single Unified Card */
 .inline-search-results-card {
     margin-top: 16px;
     width: 100%;
@@ -1703,7 +1688,6 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
     padding-right: 16px;
 }
 
-/* User cell */
 .inline-search-user-cell {
     display: flex;
     align-items: center;
@@ -1757,7 +1741,6 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
     text-overflow: ellipsis;
 }
 
-/* Status cell */
 .inline-search-status-cell {
     font-size: 12px;
     color: #b9bbbe;
@@ -1792,7 +1775,6 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
     font-weight: 500;
 }
 
-/* Action cell */
 .inline-search-action-cell button {
     display: inline-flex;
     align-items: center;
@@ -1863,7 +1845,6 @@ html.theme-dark body .inline-search-action-cell button span {
     color: #fff !important;
 }
 
-/* Loading state - inside single card */
 .inline-search-loading {
     align-items: center;
     justify-content: center;
@@ -1896,7 +1877,6 @@ html.theme-dark body .inline-search-action-cell button span {
     }
 }
 
-/* No results - inside single card */
 .inline-search-no-results {
     flex-direction: column;
     align-items: center;
@@ -1925,8 +1905,6 @@ html.theme-dark body .inline-search-action-cell button span {
     color: #fff;
     font-weight: 600;
 }
-
-/* Light mode for inline search */
 
 html:not(.theme-dark) .inline-search-header h3 {
     color: #18181b;
@@ -2011,7 +1989,6 @@ html:not(.theme-dark) .inline-search-no-results span {
     color: #18181b;
 }
 
-/* Dropdown Menu Header: 'Friends Online' with 2 people icon */
 .friend-menu-header {
     display: flex;
     align-items: center;
@@ -2036,7 +2013,6 @@ html:not(.theme-dark) .inline-search-no-results span {
     letter-spacing: -0.01em;
 }
 
-/* Selection list */
 .friend-menu-list {
     display: flex;
     flex-direction: column;
@@ -2085,7 +2061,6 @@ html:not(.theme-dark) .inline-search-no-results span {
     gap: 10px;
 }
 
-/* Green dot for Online */
 .friend-status-dot.online {
     width: 8px;
     height: 8px;
@@ -2109,7 +2084,6 @@ html.theme-dark .friend-status-dot.online {
     flex-shrink: 0;
 }
 
-/* Checkmark on the far right for active item */
 .friend-menu-check {
     font-size: 12px;
     color: #23a55a;
@@ -2122,7 +2096,6 @@ html.theme-dark .friend-status-dot.online {
     display: inline-block;
 }
 
-/* Blocked item with red-orange text and red-orange blocked sign */
 .friend-menu-item.blocked-item {
     color: #da373c;
 }
@@ -2145,7 +2118,6 @@ html.theme-dark .friend-status-dot.online {
     color: #da373c;
 }
 
-/* Footer: larger vibrant green rounded-rectangle button spanning width */
 .friend-menu-footer {
     margin-top: 8px;
     padding-top: 8px;
@@ -7424,7 +7396,6 @@ body.call-resizing {
     }
 }
 
-/* ===== RESPONSIVE EKLERI ===== */
 @media screen and (min-width: 721px) and (max-width: 1100px) {
     body .conversation-sidebar {
         width: min(220px, 28vw);
@@ -7458,7 +7429,6 @@ body.call-resizing {
     }
 }
 
-/* Private profile view for non-friends */
 .me-profile.private-view .me-profile-card {
     padding-top: 48px;
     box-sizing: border-box;
@@ -7522,7 +7492,6 @@ html.theme-dark body .me-profile .me-actions button span {
     color: #fff !important;
 }
 
-/* Friend request card shown on the profile of someone who sent you a request */
 .me-request {
     margin-top: 16px;
     padding: 12px 16px;
@@ -7622,7 +7591,6 @@ html.theme-dark .me-request-buttons button:hover {
     margin: 0 auto;
 }
 
-/* Direct message rows in the sidebar */
 body .conversation-sidebar .direct-messages .friend-list .friend-item[data-presence="online"] .avatar::after {
     border-color: #23a559;
 }
@@ -7917,10 +7885,6 @@ a.notify-content {
     animation: pop-fade-in 0.22s ease both;
 }
 
-/* Do not animate main: opacity/animation on this flex parent
-   turns it into a containing block, so position:fixed overlays
-   (server settings, etc.) only cover the main column. */
-
 .stream-menu,
 .story-notice,
 .call-dock-card,
@@ -8018,7 +7982,6 @@ html.theme-dark body .server-ctx .server-ctx-check.on {
     display: block;
 }
 
-/* Tema gecisi: yumusak degissin, goz yormasin */
 ::view-transition-old(root),
 ::view-transition-new(root) {
     animation-duration: 0.45s;
@@ -8032,7 +7995,6 @@ html.theme-fade *::after {
     transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, fill 0.4s ease, stroke 0.4s ease, box-shadow 0.4s ease !important;
 }
 
-/* Tema secimi: onizlemeli kartlar */
 .theme-choices {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 200px));
@@ -8152,7 +8114,6 @@ html.theme-dark .theme-choice:has(input:checked) > span:last-child::after {
     box-shadow: inset 0 0 0 3px #313338;
 }
 
-/* Dark rejimde Pending dugmeleri: qebul yasil, red qirmizi olsun */
 html.theme-dark .online-row:hover .request-accept:hover {
     background: #23a559 !important;
     color: #ffffff !important;
@@ -8164,7 +8125,6 @@ html.theme-dark .online-row:hover .blocked-unblock:hover {
     color: #ffffff !important;
 }
 
-/* ===== Hover animasyonlari: renk, kenar, golge ve acilis gecisleri yumusak olsun ===== */
 *,
 *::before,
 *::after {
@@ -8210,7 +8170,6 @@ li,
     animation: hover-reveal 0.16s ease both;
 }
 
-/* Zeng, ses ve canli yayim panelleri yavas deyil, tez acilsin */
 .call-stage,
 .call-person,
 .call-screen-video,
@@ -8225,7 +8184,6 @@ li,
     transition-duration: 0.16s !important;
 }
 
-/* ===== Ayarlar > Account: kartli sade gorunus ve Public / Private secici ===== */
 #settings-account .settings-panel > h2 {
     margin-bottom: 6px;
     font-size: 24px;
@@ -8294,7 +8252,6 @@ html.theme-dark #settings-account .notify-row {
     font-size: 13px;
 }
 
-/* Public / Private ikili secici */
 #account-public.notify-switch,
 #account-public.notify-switch.on {
     display: flex;
@@ -8386,7 +8343,6 @@ html.theme-dark #account-public .vis-opt span {
     color: #9aa0aa;
 }
 
-/* ===== Profil pəncərəsində Geri / İrəli ===== */
 .me-profile-nav {
     position: absolute;
     top: 12px;
@@ -8435,7 +8391,6 @@ html.theme-dark .me-profile-close:hover {
     background: #3a3c43;
 }
 
-/* ===== Ayarlar > Language & Time: modern gorunus ===== */
 #settings-language .settings-panel > h2 {
     margin-bottom: 6px;
     font-size: 24px;
@@ -8601,7 +8556,6 @@ html.theme-dark #settings-language .time-format label:has(input:checked) {
     color: #ffffff !important;
 }
 
-/* ===== Dil secimi: tema secimi kimi kartlar ===== */
 .lang-choices {
     grid-template-columns: repeat(auto-fit, minmax(150px, 200px));
 }
@@ -8689,7 +8643,6 @@ html #settings-language #lang-select-list.lang-choices button.lang-choice > span
     width: 100%;
 }
 
-/* ===== Dil secimi: modern dropdown ===== */
 html #settings-language .lang-picker {
     position: relative;
     max-width: 420px;
@@ -8858,7 +8811,6 @@ html.theme-dark #settings-language .lang-opt .lang-opt-sub {
     font-weight: 500;
 }
 
-/* ===== Status ikonlari: her yerde eyni dolu nöqte ===== */
 body .conversation-sidebar .direct-messages .friend-list .friend-item .avatar::after,
 html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend-item .avatar::after,
 html.theme-dark .friend-item .avatar::after {
@@ -8932,7 +8884,6 @@ html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend
     background-color: #f23f43 !important;
 }
 
-/* ===== Adminin seçdiyi logo ===== */
 .home-loader img.site-logo {
     width: 60px !important;
     height: 60px !important;

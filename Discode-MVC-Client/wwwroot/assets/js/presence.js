@@ -48,7 +48,6 @@
     var notifySound = new Audio("/assets/css/audio/notification.mp3");
     var lastSoundAt = 0;
 
-    // no message sound or incoming ring while the status is Do Not Disturb
     function soundAllowed() {
         var panel = document.getElementById("user-panel");
         if (panel && panel.getAttribute("data-status") === "dnd") return false;

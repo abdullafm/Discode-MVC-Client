@@ -51,14 +51,12 @@ namespace Discode_MVC_Client.Controllers
             return View(ToHome(fallback));
         }
 
-        // the live status: the pages ask for it to know the person's limits and badges
         [HttpGet]
         public Task<IActionResult> Status()
         {
             return Forward(client => client.GetAsync("api/nitro"));
         }
 
-        // opens the Stripe payment page: the browser is sent to the address it answers with
         [HttpPost]
         [ValidateAntiForgeryToken]
         public Task<IActionResult> Subscribe()
@@ -71,7 +69,6 @@ namespace Discode_MVC_Client.Controllers
             }));
         }
 
-        // Stripe sends the buyer back here after paying
         [HttpGet]
         public async Task<IActionResult> Success(string? session_id)
         {
@@ -92,8 +89,6 @@ namespace Discode_MVC_Client.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ---- gifts: one month of Nitro for a friend, paid once
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public Task<IActionResult> GiftCheckout()
@@ -106,7 +101,6 @@ namespace Discode_MVC_Client.Controllers
             }));
         }
 
-        // Stripe sends the buyer back here after paying for a gift: the link is shown on the Nitro page
         [HttpGet]
         public async Task<IActionResult> GiftSuccess(string? session_id)
         {
@@ -162,14 +156,12 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.PostAsJsonAsync("api/nitro/gift/" + Uri.EscapeDataString(model.Code.Trim()) + "/redeem", new { }));
         }
 
-        // the link people send each other: it opens the page with the gift window
         [HttpGet("/gift/{code}")]
         public IActionResult Gift(string code)
         {
             return Redirect("/Home/Index?gift=" + Uri.EscapeDataString(code ?? string.Empty));
         }
 
-        // Stripe's own page to change the card, cancel or resume
         [HttpPost]
         [ValidateAntiForgeryToken]
         public Task<IActionResult> Manage()

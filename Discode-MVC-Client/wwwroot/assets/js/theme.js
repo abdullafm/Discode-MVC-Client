@@ -1,5 +1,4 @@
 "use strict";
-// the saved theme is put on <html> by the server (account setting), nothing is read from the browser here
 
 window.discodeSetTheme = function (dark) {
     var root = document.documentElement;

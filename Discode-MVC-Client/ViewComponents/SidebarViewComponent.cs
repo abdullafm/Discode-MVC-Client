@@ -31,7 +31,6 @@ namespace Discode_MVC_Client.ViewComponents
             }
             catch (Exception ex) when (ex is HttpRequestException or System.Text.Json.JsonException or IOException or TaskCanceledException)
             {
-                // runs while the page is being drawn, where no exception filter can help: show an empty list instead of a crashed page
             }
 
             return View(model);

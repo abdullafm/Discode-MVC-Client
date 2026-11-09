@@ -178,7 +178,6 @@ namespace Discode_MVC_Client.Controllers
             if (file is null || file.Length == 0 || !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
                 return BadRequest(new { errors = new[] { "Choose an image file." } });
 
-            // an animated (GIF) avatar is kept as it is and is a Nitro perk; every other picture is the small still image the page made
             var animated = string.Equals(file.ContentType, "image/gif", StringComparison.OrdinalIgnoreCase);
             if (animated)
             {
@@ -200,7 +199,6 @@ namespace Discode_MVC_Client.Controllers
             using (var stream = System.IO.File.Create(path))
                 await file.CopyToAsync(stream);
 
-            // the other kind of picture of this person is no longer used
             var other = Path.Combine(folder, userId + (animated ? ".jpg" : ".gif"));
             if (System.IO.File.Exists(other))
                 System.IO.File.Delete(other);
@@ -208,7 +206,6 @@ namespace Discode_MVC_Client.Controllers
             return Ok(new { avatarUrl = "/uploads/avatars/" + userId + extension + "?v=" + DateTime.UtcNow.Ticks });
         }
 
-        // the profile banner is a Nitro perk
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(9_000_000)]
@@ -349,7 +346,6 @@ namespace Discode_MVC_Client.Controllers
             return GetPosts("api/post/user/" + Uri.EscapeDataString(name.Trim()));
         }
 
-        // theme and notification switches belong to the account, not to the browser
         [HttpPost]
         [ValidateAntiForgeryToken]
         public Task<IActionResult> SaveSettings([FromBody] SaveSettingsUIVM model)
@@ -364,7 +360,6 @@ namespace Discode_MVC_Client.Controllers
             }));
         }
 
-        // people pinned to the top of the DM list
         [HttpGet]
         public Task<IActionResult> Pins()
         {
@@ -416,7 +411,6 @@ namespace Discode_MVC_Client.Controllers
             return ForwardToApi(client => client.PostAsJsonAsync($"api/post/{model.Id}/share", new { userNames = model.UserNames, note = model.Note ?? string.Empty }));
         }
 
-        // one post, for the card in a chat message and for the window a shared link opens
         [HttpGet]
         public Task<IActionResult> PostCard(int id)
         {

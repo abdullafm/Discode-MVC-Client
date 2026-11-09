@@ -18,7 +18,6 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
             _branding = branding;
         }
 
-        // the logos are for a SuperAdmin only: an Admin who opens the address is sent back to the dashboard
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             if (!User.IsInRole("SuperAdmin"))

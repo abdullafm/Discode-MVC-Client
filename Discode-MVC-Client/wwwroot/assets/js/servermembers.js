@@ -155,7 +155,6 @@
         });
     }
 
-    // Discord-style timeout dialog: pick how long (seconds up to a week) and why (the reason is only in the audit log)
     function timeoutModal(member) {
         var choices = [[60, "60 secs"], [300, "5 mins"], [600, "10 mins"], [3600, "1 hour"], [86400, "1 day"], [604800, "1 week"]];
         var picked = 60;

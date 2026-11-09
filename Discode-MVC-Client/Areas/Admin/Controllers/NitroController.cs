@@ -60,7 +60,6 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
             return Request.Headers.XRequestedWith == "XMLHttpRequest" ? PartialView(model) : View(model);
         }
 
-        // giving and taking Nitro away by hand is for the SuperAdmin only (the API refuses everybody else too)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Grant(string? userName, int days, string? tab, string? back)
@@ -77,7 +76,6 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
             return Back(back, tab);
         }
 
-        // a gift link nobody paid for, made by a SuperAdmin: the link is shown in the notice
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MakeGift(int days)
@@ -139,7 +137,6 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
             return Back(back, tab);
         }
 
-        // the wait before a person can move a boost: longer (hours above 0) or shorter (below 0)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> BoostTime(string? userName, int hours, string? back)

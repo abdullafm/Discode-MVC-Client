@@ -2,9 +2,6 @@
     "use strict";
     if (window.discodeChat) return;
 
-    // What the open chat knows about itself: "X is typing..." and the "NEW" line where my unread messages start.
-    // A chat (direct, group or server channel) tells it that it was opened with open(kind, key, box).
-
     var ctx = null;            // { kind, key, box, lastRead, observer }
     var typers = {};
     var bar = null;
@@ -19,7 +16,6 @@
         return field ? field.value : "";
     }
 
-    // ---------- where I stopped reading
     function loadMarker(mine) {
         return fetch("/Chat/ReadMarker?kind=" + encodeURIComponent(mine.kind) + "&key=" + encodeURIComponent(mine.key), {
             credentials: "same-origin",
@@ -108,7 +104,6 @@
                     var row = node.classList && node.classList.contains("dm-msg") ? node : (node.querySelector ? node.querySelector(".dm-msg") : null);
                     if (!row) return;
                     anything = true;
-                    // somebody who wrote a message is not typing any more
                     var sender = row.getAttribute("data-sender");
                     if (sender && typers[sender.toLowerCase()]) {
                         delete typers[sender.toLowerCase()];
@@ -121,7 +116,6 @@
         mine.observer.observe(mine.box, { childList: true, subtree: true });
     }
 
-    // ---------- who is typing
     function composeOf() {
         return document.getElementById("dm-compose") || document.getElementById("group-compose");
     }
@@ -185,7 +179,6 @@
         paintTyping();
     });
 
-    // my own typing: told to the others at most every few seconds, and only while there is something in the box
     document.addEventListener("input", function (event) {
         if (!ctx || !event.target.closest || !event.target.closest("#dm-input, #group-input")) return;
         var box = event.target.closest("#dm-input, #group-input");

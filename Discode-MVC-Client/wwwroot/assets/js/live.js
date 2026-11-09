@@ -117,8 +117,6 @@
         return stream.hostDisplayName || stream.hostUserName;
     }
 
-    /* ---------------- list ---------------- */
-
     function refreshLive() {
         return requestJson("/Home/LiveStreams").then(function (data) {
             liveStreams = Array.isArray(data) ? data : [];
@@ -297,8 +295,6 @@
         });
     }
 
-    /* ---------------- watch dialog ---------------- */
-
     var replyTarget = null;
     var chatMenu = null;
 
@@ -454,7 +450,6 @@
             toggle.title = session.previewHidden ? "Show my preview" : "Hide my preview";
             toggle.querySelector("i").className = "fa-solid " + (session.previewHidden ? "fa-eye-slash" : "fa-eye");
         }
-        // ekranı paylaşırkən öz görüntü yenidən yayına düşə bilər (güzgü effekti): istəsən göz düyməsi ilə gizlət
         if (session.sharesScreen && session.previewHidden) {
             video.srcObject = null;
             setWait("Your preview is hidden so the stream does not repeat itself. Press the eye button to see it again.", true);
@@ -686,8 +681,6 @@
         refreshViewerList();
     });
 
-    /* ---------------- mute somebody in the chat ---------------- */
-
     var muteModal = byId("live-mute-modal");
     var muteTarget = null;
 
@@ -758,8 +751,6 @@
     document.addEventListener("keydown", function (event) {
         if (event.key === "Escape" && !muteModal.hidden) muteModal.hidden = true;
     });
-
-    /* ---------------- what a muted person and a new moderator see ---------------- */
 
     var muteTimer = 0;
 
@@ -1023,8 +1014,6 @@
         return 0;
     }
 
-    /* ---------------- WebRTC (signalling goes through SignalR) ---------------- */
-
     function signal(streamId, target, message) {
         return hub("SendSignal", streamId, target, JSON.stringify(message)).catch(function () {});
     }
@@ -1220,8 +1209,6 @@
         if (currentStreamId() === event.detail.streamId) spawnHeart();
     });
 
-    /* ---------------- guests ---------------- */
-
     var guest = null;
     var myGuest = null;
     var guestPending = false;
@@ -1378,7 +1365,6 @@
                 stopTracks(stream);
                 return;
             }
-            // what we send is its own stream: the camera, or the screen while it is shared
             myGuest.cam = stream;
             myGuest.screen = null;
             myGuest.stream = new MediaStream(stream.getTracks());
@@ -1488,8 +1474,6 @@
         clearGuest();
     });
 
-    /* ---------------- the host invites a viewer ---------------- */
-
     function removeInviteCard() {
         var old = byId("live-guest-requests").querySelector(".watch-guest-invite");
         if (old && old.parentNode) old.parentNode.removeChild(old);
@@ -1528,8 +1512,6 @@
         if (!isHostNow() || hostState.current.streamId !== data.streamId) return;
         guestNote((data.name || "The viewer") + (data.accepted ? " joined the stream." : " declined the invitation."));
     });
-
-    /* ---------------- stream controls: microphone, headphones, camera, screen ---------------- */
 
     var media = { deaf: false, wasMuted: false, busy: false };
     var mediaModal = byId("live-media-modal");
@@ -1618,7 +1600,6 @@
         if (!isHostNow()) byId("live-mute-btn").querySelector("i").className = "fa-solid " + (stream.muted ? "fa-volume-xmark" : "fa-volume-high");
     }
 
-    // the host changed what is shared: the stream is rebuilt and every viewer is offered the new one
     function rebuildBroadcast() {
         var session = hostState.current;
         if (!session) return;
@@ -1802,8 +1783,6 @@
         if (event.key === "Escape" && !mediaModal.hidden) mediaModal.hidden = true;
     });
 
-    /* ---------------- Go Live: capture + preview ---------------- */
-
     var statusBox = byId("live-preview-status");
     var canvas = byId("live-create-preview-canvas");
     var drawing = canvas.getContext("2d");
@@ -1872,7 +1851,6 @@
     }
 
     function ensureDrawing() {
-        // while live without a direct stream the canvas is the picture everybody sees, so it keeps drawing
         var active = !!(capture.camera || capture.screen || (hostState.current && !hostState.current.direct));
         if (active && !capture.timer) capture.timer = makeTicker(drawFrame, DRAW_MS);
         if (!active && capture.timer) {
@@ -1917,7 +1895,6 @@
                 if (capture.screen === stream) {
                     releaseSource("screen");
                     refreshSourceUi();
-                    // sharing stopped from the browser bar while live: the stream goes on without the screen
                     if (hostState.current) {
                         rebuildBroadcast();
                         renderMedia();
@@ -2015,8 +1992,6 @@
     byId("explore-go-live-btn").addEventListener("click", openCreateDialog);
     byId("empty-go-live-btn").addEventListener("click", openCreateDialog);
 
-    /* ---------------- Go Live: broadcast ---------------- */
-
     function buildOutputStream() {
         var single = [capture.camera, capture.screen].filter(Boolean);
         if (single.length === 1 && !capture.mic) {
@@ -2059,7 +2034,6 @@
             showHostPreview();
             if (out.direct) {
                 out.stream.getVideoTracks()[0].addEventListener("ended", function () {
-                    // the camera (or its source) went away; a screen that stopped is handled where it was captured
                 if (hostState.current && hostState.current.stream === out.stream && capture.camera) endBroadcast();
                 });
             }

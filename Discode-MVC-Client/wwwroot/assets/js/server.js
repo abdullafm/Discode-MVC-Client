@@ -29,7 +29,6 @@
         if (role === "member" || owner === "false" || owner === "0") return false;
         if (role === "owner" || owner === "true" || owner === "1") return true;
 
-        // a real server: whether I may manage it comes from the API (loadServer / refreshMembers set it), until then no
         if (openId && openId.toLowerCase() !== "azaan") return false;
 
         return pageCanManage();
@@ -66,7 +65,6 @@
         return wrap.hasAttribute("data-can-manage");
     }
 
-    // Dynamic server name from query param if provided (e.g. ?name=T O P L U M #YIKILMIYOR)
     var urlServerName = new URLSearchParams(window.location.search).get("name");
     if (urlServerName) {
         var st = document.getElementById("server-title");
@@ -106,12 +104,10 @@
             if (openNow !== lastManage || manageChannelsAllowed(openNow) !== isOwner) setManage(openNow);
             serverMembers = server.members;
             paintServerMembers();
-            // a new member is not in the list of people who may see this channel yet: ask again, otherwise they stay hidden until a reload
             loadViewers(true);
         }).catch(function () {});
     }
 
-    // who can be @mentioned in this server's chat: mentions.js reads it exactly as it does for a group
     Object.defineProperty(window, "discodeGroupInfo", {
         configurable: true,
         get: function () {
@@ -120,7 +116,6 @@
             });
             return { members: people };
         },
-        // the group page assigns its own value after a page change: let it
         set: function (value) {
             Object.defineProperty(window, "discodeGroupInfo", { value: value, writable: true, configurable: true });
         }
@@ -146,7 +141,6 @@
     document.addEventListener("discode-server-roles-changed", function () { refreshMembers(null); });
     document.addEventListener("discode-roles-ready", function () {
         var button = currentMemberButton();
-    // somebody boosted, or lost Nitro: the badges in the member list follow
     document.addEventListener("discode-server-boost-changed", refreshMembers);
     document.addEventListener("discode-nitro-changed", function () { window.setTimeout(function () { refreshMembers(null); }, 500); });
         if (button) fillMemberPop(button);
@@ -462,7 +456,6 @@
     document.addEventListener("discode-server-channels-changed", function () { window.setTimeout(function () { loadViewers(true); }, 300); });
     document.addEventListener("discode-server-roles-changed", function () { window.setTimeout(function () { loadViewers(true); }, 300); });
 
-    // my own timeout (if any) is told to the chat, which swaps the box for the "Timed Out" bar
     function publishSelfTimeout() {
         var until = 0;
         for (var i = 0; i < serverMembers.length; i++) {
@@ -780,11 +773,9 @@
             ? ((handleNode && handleNode.textContent.trim()) || "anonymou5")
             : (button.getAttribute("data-handle") || name.toLowerCase().replace(/\s+/g, ""));
         var bioInput = document.getElementById("me-bio");
-        // About (the bio): my own comes from my profile form, somebody else's from the member list
         var profileAbout = self
             ? ((bioInput && bioInput.value.trim()) || button.getAttribute("data-bio") || "")
             : (button.getAttribute("data-bio") || "");
-        // the status line above it (the chip): mine too is the status the list shows, not a value kept in the browser
         var custom = button.getAttribute("data-note") || "";
         var about = profileAbout;
         var statusLine = custom;
@@ -811,7 +802,6 @@
         var chip = document.getElementById("member-pop-chip");
         var chipText = document.getElementById("member-pop-chip-text");
         if (chip && chipText) {
-            // somebody who is offline shows no status bubble (their status is only for when they are around); my own stays so I can edit it
             var offline = (button.getAttribute("data-status") || "offline") === "offline";
             var showChip = self || (!!statusLine && !offline);
             chip.hidden = !showChip;
@@ -895,7 +885,6 @@
                 openMemberPop(button);
             });
         }
-        // profilin şəklinə basanda böyük profil pəncərəsi açılır (qrup və DM-dəki kimi)
         var popAvatar = document.querySelector("#member-pop .member-pop-avatar");
         if (popAvatar) {
             popAvatar.setAttribute("title", "View Full Profile");
@@ -1150,7 +1139,6 @@
             if (edit) {
                 var row = edit.closest(".server-channel-row");
                 var target = row ? row.querySelector(".server-channel") : null;
-                // holding Shift turns the gear into a trash can: delete (with the usual confirmation) instead of edit
                 if (isOwner && target) {
                     if (event.shiftKey) openRemove("channel", target);
                     else openChannelEdit(target);
@@ -1210,7 +1198,6 @@
     var memberButtons = document.querySelectorAll(".server-members-toggle");
     for (var i = 0; i < memberButtons.length; i++) memberButtons[i].addEventListener("click", toggleMembers);
 
-    // Close members panel when clicking backdrop in mobile mode
     var backdrop = document.getElementById("members-backdrop");
     if (backdrop) {
         backdrop.addEventListener("click", function () {
@@ -1279,7 +1266,6 @@
 
     if (canManage && channelSide && channelMenu) {
         channelSide.addEventListener("contextmenu", function (event) {
-            // a person in a voice channel has their own menu (servervoice.js): not the category's
             if (event.target.closest(".server-voice-user")) return;
             var row = event.target.closest(".server-channel-row");
             var channel = row ? row.querySelector(".server-channel") : null;
@@ -1763,9 +1749,7 @@
             chat.classList.remove("has-room");
         }
         if (voice) voice.hidden = true;
-        // the real message list, intro and composer live in serverchat.js: they must go too
         if (window.discodeServerChat && window.discodeServerChat.close) window.discodeServerChat.close();
-        // silinən kanalın mesajları və adı ekranda qalmasın
         var staleMessages = document.getElementById("server-messages");
         if (staleMessages) staleMessages.hidden = true;
         if (roomName) roomName.textContent = "";
@@ -1775,7 +1759,6 @@
         if (emptyRoom) emptyRoom.hidden = false;
     }
 
-    // Kanal siyahısı yenilənəndə (məsələn kanal silinəndə, hətta başqası silsə də) açıq otaq hələ də var?
     function reconcileRoom() {
         if (!channelList || roomKind === "settings") return;
         var all = channelList.querySelectorAll(".server-channel");
@@ -2164,7 +2147,6 @@
         }
     }
 
-    // Shift held over a channel row: the gear shows as a trash can (see .shift-down in server.css)
     function setShiftDown(down) {
         document.body.classList.toggle("shift-down", !!down && isOwner);
     }
@@ -2888,7 +2870,6 @@
         var inviteRow = closeInvite.closest(".server-voice-invite");
         if (inviteRow) {
             inviteRow.hidden = true;
-            // stays closed while I am in this channel: a mute, an unmute or anyone joining redraws the list but must not bring it back
             inviteRow.setAttribute("data-dismissed", "1");
         }
         return true;

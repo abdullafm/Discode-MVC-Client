@@ -108,7 +108,6 @@ namespace Discode_MVC_Client.Controllers
             return ForwardToApi(client => client.PutAsJsonAsync($"api/dm/messages/{model.Id}/poll-votes", new { optionIds = model.OptionIds ?? new List<int>() }));
         }
 
-        // 5 MB for everybody, up to 2 GB with Nitro: the filter looks at the account before the file is read
         [HttpPost]
         [ValidateAntiForgeryToken]
         [TypeFilter(typeof(Filters.AttachmentLimitFilter))]

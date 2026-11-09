@@ -102,7 +102,6 @@
                 next();
                 return;
             }
-            // server səs modulu bir dəfə yüklənir və səhifələr arasında canlı qalır
             if ((/\/servervoice\.js/i.test(src) && window.discodeVoice) || (/\/servervoicertc\.js/i.test(src) && window.discodeVoiceRtc)) {
                 next();
                 return;

@@ -10,10 +10,8 @@
     var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
 
     var state = { status: "online" };
-    // set when the status dialog is saved: how many minutes the status stays (sent once with the next save)
     var pendingClear = null;
 
-    // the emoji is part of the status text that is saved, so it shows everywhere the status shows
     function composeStatus() {
         var input = document.getElementById("set-status-input");
         var text = ((input && input.value) || "").trim();
@@ -409,7 +407,6 @@
     var setWhen = document.getElementById("set-when");
     var setWhenBtn = document.getElementById("set-status-when");
     var EMOJI_LEAD = /^((?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:\uFE0F|\u200D\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s*/u;
-    // a saved status starts with its emoji: the emoji goes to the picker, the words stay in the box
     (function () {
         var found = EMOJI_LEAD.exec(setInput.value);
         if (found) {
@@ -507,7 +504,6 @@
         document.dispatchEvent(new CustomEvent("discode-presence"));
     }
 
-    // the server emptied my status (its "clear after" time came), or I changed it on another device: show what is saved
     function syncOwnStatus() {
         if (!setStatus.classList.contains("d-none")) return;
         fetch("/Home/UserProfile?name=" + encodeURIComponent(meHandle()), { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
@@ -538,7 +534,6 @@
         if (profile.classList.contains("visitor-view")) return;
         openSetStatus();
     });
-    // the bin on my status bubble empties the status at once
     document.addEventListener("discode-clear-status", function () {
         if (profile.classList.contains("visitor-view")) return;
         state.emoji = "";
@@ -668,7 +663,6 @@
         if (window.discodeBadges) window.discodeBadges(document.getElementById("me-badges"), !!data.hasNitro, !!data.isBooster, data.staffRole || "");
     }
 
-    // Nitro ran out: the server took the banner and the animated avatar away, the page forgets them too
     document.addEventListener("discode-nitro-state", function () {
         if (!hasNitro()) {
             savedBannerUrl = "";
@@ -775,7 +769,6 @@
             var file = avatarFile.files && avatarFile.files[0];
             avatarFile.value = "";
             if (!file || file.type.indexOf("image/") !== 0) return;
-            // an animated avatar (Nitro) is sent as it is: the canvas below would flatten it to one still picture
             if (file.type === "image/gif" && hasNitro()) {
                 if (file.size > 8 * 1024 * 1024) { showProfileError("Choose an animated image that is at most 8 MB."); return; }
                 sendAvatar(file, "avatar.gif");
@@ -1200,7 +1193,6 @@
         });
     }
 
-    // ---------- the editor beside the big profile: a place for name, avatar, banner and banner colour
     (function () {
         var panel = document.getElementById("me-edit-panel");
         if (!panel) return;
@@ -1228,7 +1220,6 @@
             var reset = document.getElementById("me-edit-color-reset");
             if (reset) reset.hidden = !current;
             if (picker && current) picker.value = current;
-            // the banner colour is for everybody, the banner picture only with Nitro
             var nitro = !!(window.discodeNitro && window.discodeNitro.hasNitro);
             if (bannerSection) bannerSection.hidden = !nitro;
             if (colorSection) colorSection.hidden = nitro;
@@ -1294,7 +1285,6 @@
             picker.addEventListener("change", function () { setColor(picker.value.toLowerCase()); });
         }
 
-        // collapse to a thin strip, and a button for narrow screens where the panel opens over the profile
         document.getElementById("me-edit-collapse").addEventListener("click", function () {
             profile.classList.toggle("edit-collapsed");
             panel.classList.toggle("is-collapsed", profile.classList.contains("edit-collapsed"));
@@ -1306,7 +1296,6 @@
         var wasShown = !profile.classList.contains("d-none");
         new MutationObserver(function () {
             var shown = !profile.classList.contains("d-none");
-            // the profile just opened: start with the drawer closed (touching the class list only when needed, it wakes this observer)
             if (shown && !wasShown && profile.classList.contains("edit-open")) profile.classList.remove("edit-open");
             if (shown) paintPanel();
             wasShown = shown;

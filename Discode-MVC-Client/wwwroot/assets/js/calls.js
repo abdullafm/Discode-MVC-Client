@@ -67,7 +67,6 @@
 
     function startRing(volume) {
         ringtone.volume = volume;
-        // only an incoming ring (full volume) is silenced by Do Not Disturb, the caller's own ringback is not
         if (volume < 1 || !window.discodeSoundAllowed || window.discodeSoundAllowed()) play(ringtone);
     }
 
@@ -133,7 +132,6 @@
     function setAudio(next, source) {
         if (next.muted === audioState.muted && next.deafened === audioState.deafened) return;
         audioState = next;
-        // server səs otağı da bu vəziyyəti öyrənsin (hansı səhifədə olursan ol)
         document.dispatchEvent(new CustomEvent("discode-mic-changed", { detail: { muted: next.muted, deafened: next.deafened } }));
         if (source !== "sidebar") paintSidebar();
         if (source !== "stage") paintStage();

@@ -3,7 +3,6 @@
 
     if (window.discodeVoice) return;
 
-    // Səs modulu səhifə dəyişəndə də canlı qalır: kanal siyahısı yalnız server səhifəsində var
     function listEl() {
         return document.getElementById("server-channel-list");
     }
@@ -35,7 +34,6 @@
 
     var cachedToken = "";
 
-    // anti-forgery token bəzi səhifələrdə (məs. Social) yoxdur: gördüyümüz sonuncunu saxlayırıq
     function token() {
         var field = document.querySelector("input[name='__RequestVerificationToken']");
         if (field && field.value) cachedToken = field.value;
@@ -68,7 +66,6 @@
         } catch (e) {}
     }
 
-    // what the person chose with their own buttons
     function localAudio() {
         return {
             muted: typeof micO !== "undefined" && !!micO,
@@ -76,7 +73,6 @@
         };
     }
 
-    // a moderator's server mute / deafen always wins over the buttons
     function serverFlags() {
         var c = state.current;
         return { muted: !!(c && (c.isServerMuted || c.isServerDeafened)), deafened: !!(c && c.isServerDeafened) };
@@ -92,12 +88,10 @@
         return effective(local.muted, local.deafened);
     }
 
-    // səhifədə göstərilən server üçün cari səs otağı
     function mine() {
         return state.current && state.current.serverId === pageServerId() ? state.current : null;
     }
 
-    // qoşulduğum otaq harada olursa olsun (başqa səhifədə də)
     function here() {
         return state.current || null;
     }
@@ -366,7 +360,6 @@
             voiceServerId = state.current ? state.current.serverId : 0;
             remote = null;
             if (state.current && state.current.serverId !== viewId) {
-                // başqa serverə baxıram, amma səsdəyəm: öz otağımın siyahısı da lazımdır
                 return request("/ServerVoice/State?serverId=" + state.current.serverId).then(function (other) {
                     remote = shape(other);
                 }).catch(function () {});
@@ -428,7 +421,6 @@
         push(now.muted, now.deafened);
     }
 
-    // the room told us a moderator changed our state: apply it to the microphone / speakers now, and show it on the buttons
     function obeyModerator() {
         var f = serverFlags();
         document.body.classList.toggle("voice-server-muted", f.muted && !f.deafened);
@@ -452,18 +444,15 @@
         if (!detail.serverId || Number(detail.serverId) === viewServerId() || Number(detail.serverId) === voiceServerId) load();
     });
 
-    // yeni səhifə açılanda (server səhifəsinə qayıdanda) siyahı yenidən çəkilir
     document.addEventListener("discode-page-ready", function () {
         load();
         paintGlobalBar();
     });
 
-    // başqa səhifələrdə mikrofon / qulaqlıq düymələri də otağa bildirilir
     document.addEventListener("discode-mic-changed", function (event) {
         var detail = event.detail || {};
         if (!state.current) return;
         var f = serverFlags();
-        // trying to unmute / undeafen while a moderator holds it: stays muted, say why
         if ((f.muted && !detail.muted) || (f.deafened && !detail.deafened)) {
             tell(f.deafened ? "A moderator deafened you in this server." : "A moderator muted you in this server.");
         }
@@ -474,7 +463,6 @@
         if (window.discodeServerFlash) window.discodeServerFlash(text);
     }
 
-    // what happened to me: shown as a message; a disconnect also closes my side of the call (the room list no longer has me)
     document.addEventListener("discode-server-voice-moderated", function (event) {
         var kind = (event.detail || {}).kind;
         var text = {
@@ -489,7 +477,6 @@
         load();
     });
 
-    // ---------- a camera / screen tile can be zoomed (click again, Escape or the other tile to leave), like in DM and group calls ----------
     var focusKey = "";
 
     function tileKey(tile) {
@@ -507,7 +494,6 @@
         var target = null;
         if (focusKey) {
             tiles.forEach(function (tile) { if (tileKey(tile) === focusKey) target = tile; });
-            // the zoomed person turned the video off or left: back to the grid
             if (!target || !tileHasVideo(target)) {
                 focusKey = "";
                 target = null;
@@ -517,7 +503,6 @@
         var index = 0;
         tiles.forEach(function (tile) {
             var isTarget = tile === target;
-            // like DM and group calls: while one tile is zoomed, only the others that actually have video (a camera or a screen) stay as small tiles
             var mini = !!target && !isTarget && tileHasVideo(tile);
             tile.classList.toggle("is-focused", isTarget);
             tile.classList.toggle("is-mini", mini);
@@ -558,7 +543,6 @@
         watchCall();
     });
 
-    // tiles change by themselves (somebody starts a camera, a screen share ends): keep the zoom in step
     var callWatcher = null;
     function watchCall() {
         var call = document.getElementById("server-voice-call");
@@ -570,7 +554,6 @@
     }
     watchCall();
 
-    // ---------- right click on someone in a voice channel: server mute / deafen / disconnect ----------
     var modMenu = null;
 
     function closeModMenu() {
@@ -651,7 +634,6 @@
         }
 
         if (!mineSelf && rtc && rtc.getUserAudio) {
-            // heard only by me: never sent to the other person, and not remembered after a reload
             divider();
             var prefs = rtc.getUserAudio(userId);
             var initialVol = Math.round(prefs.volume * 100);
@@ -704,7 +686,6 @@
         }
 
         if (state.canModerate) {
-            // a moderator may server-mute / deafen themselves too; Disconnect is only for other people
             divider();
             line("Server Mute", { danger: true, checked: !!user.isServerMuted, run: function () {
                 act("/ServerVoice/Moderate", { serverId: serverId, userId: userId, serverMuted: !user.isServerMuted });
@@ -746,7 +727,6 @@
     });
     window.addEventListener("blur", closeModMenu);
 
-    // ---------- "Voice Connected" zolağı: serverdən kənarda da görünür ----------
     function globalBar() {
         var bar = document.getElementById("voice-global-bar");
         if (bar && bar.querySelector(".vgb-mic")) {

@@ -8,7 +8,6 @@ namespace Discode_MVC_Client.Services
 {
     public class LinkPreview
     {
-        // "image" (the address is a picture), "link" (a page with a title or a picture) or "none"
         public string Type { get; set; } = "none";
         public string Url { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
@@ -23,9 +22,6 @@ namespace Discode_MVC_Client.Services
         Task<LinkPreview> GetAsync(string address, CancellationToken cancel);
     }
 
-    // Looks at a web page for the card shown under a message. The address comes from a stranger, so this is careful:
-    // only public internet addresses are contacted (not this machine, not the local network), every redirect is checked again,
-    // and the answer is small and quick.
     public class LinkPreviewService : ILinkPreviewService
     {
         private const int MaxBytes = 400 * 1024;
@@ -83,7 +79,6 @@ namespace Discode_MVC_Client.Services
                 _gate.Release();
             }
 
-            // a failure is remembered for a short while only, so that a page that is down is not asked again at once
             _cache.Set(key, result, result.Type == "none" ? TimeSpan.FromMinutes(5) : TimeSpan.FromHours(6));
             return result;
         }
@@ -101,7 +96,6 @@ namespace Discode_MVC_Client.Services
                 return false;
             }
 
-            // no passwords in the address, only the usual ports
             if (!string.IsNullOrEmpty(parsed.UserInfo) || (parsed.Port != 80 && parsed.Port != 443))
             {
                 return false;
@@ -146,7 +140,6 @@ namespace Discode_MVC_Client.Services
             return false;
         }
 
-        // the address of the connection is chosen here and checked, so the name can not be switched to a private address afterwards
         private static async ValueTask<Stream> ConnectToPublicAddressAsync(SocketsHttpConnectionContext context, CancellationToken cancel)
         {
             var host = context.DnsEndPoint.Host;
@@ -185,7 +178,6 @@ namespace Discode_MVC_Client.Services
             return host is "youtube.com" or "www.youtube.com" or "m.youtube.com" or "youtu.be";
         }
 
-        // YouTube answers a program with a consent page, its own oEmbed address gives the title and the picture
         private async Task<LinkPreview> FetchYouTubeAsync(Uri video, CancellationToken cancel)
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, "https://www.youtube.com/oembed?format=json&url=" + Uri.EscapeDataString(video.AbsoluteUri));

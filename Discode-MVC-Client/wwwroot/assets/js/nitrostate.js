@@ -10,13 +10,11 @@
 
     window.discodeNitro = Object.assign({}, FREE);
 
-    // "5 MB", "2 GB"
     window.discodeBytesLabel = function (bytes) {
         if (bytes >= 1024 * 1024 * 1024) return Math.round(bytes / (1024 * 1024 * 1024) * 10) / 10 + " GB";
         return Math.round(bytes / (1024 * 1024) * 10) / 10 + " MB";
     };
 
-    // the badges are drawn once here and used everywhere with <use>
     var SPRITE = '<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>' +
         '<linearGradient id="dc-grad-nitro" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7f9fe0"/><stop offset="1" stop-color="#4c6cb8"/></linearGradient>' +
         '<linearGradient id="dc-grad-boost" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb347"/><stop offset="1" stop-color="#f2465f"/></linearGradient>' +
@@ -42,8 +40,6 @@
         return span;
     }
 
-    // puts the Nitro / Boost badges of a person into a holder element
-    // (staffRole: "admin" and "superadmin" get their badge by themselves, in front of the others)
     window.discodeBadges = function (holder, hasNitro, isBooster, staffRole) {
         if (!holder) return;
         ensureSprite();
@@ -55,14 +51,12 @@
         holder.hidden = !hasNitro && !isBooster && !staffRole;
     };
 
-    // paints a banner picture so that no theme rule can change how it fills the area
     window.discodeSetBanner = function (element, cssUrl, color) {
         if (!element) return;
         if (cssUrl) element.style.setProperty("background", cssUrl + " center / cover no-repeat", "important");
         else element.style.removeProperty("background");
     };
 
-    // a banner sits in a different place on every page: the markup carries it as data, this paints it
     window.discodePaintBanners = function (root) {
         var scope = root || document;
         var marks = scope.querySelectorAll(".dm-banner-data");
@@ -95,7 +89,6 @@
     });
 })();
 
-// ---------- a Nitro gift: the window that opens from a gift link or from the Claim button of a chat card
 (function () {
     "use strict";
     var modal = null;

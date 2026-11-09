@@ -2,7 +2,6 @@
 var micO = false;
 var headO = false;
 
-// Mikrofon / qulaqlıq ikonlarını cari vəziyyətə uyğun qoyur (səhifə dəyişəndə yenidən çağırılır)
 function updateMicHeadphoneIcon() {
     var micIcon = document.getElementById("mic");
     var headIcon = document.getElementById("head");
@@ -330,7 +329,6 @@ function openToggle() {
         syncGlide(menu.querySelector("button.active"));
     });
 
-    // /Home/Index?tab=add: the page is rendered with the Add Friend section open, so show it as the chosen tab too
     var addSection = document.getElementById("friends-add");
     var addButton = menu.querySelector('button[data-filter="add"]');
     if (addSection && !addSection.hidden && addButton && currentTab !== "add") addButton.click();

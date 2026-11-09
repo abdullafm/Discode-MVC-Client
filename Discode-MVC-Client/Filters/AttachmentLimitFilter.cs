@@ -5,8 +5,6 @@ using System.Text.Json;
 
 namespace Discode_MVC_Client.Filters
 {
-    // Runs before the upload is read: a file bigger than this account may send is turned away at once
-    // (5 MB, or 2 GB with Nitro) instead of being received first
     public class AttachmentLimitFilter : IAsyncResourceFilter
     {
         public const string LimitKey = "attachment-limits";
@@ -28,7 +26,6 @@ namespace Discode_MVC_Client.Filters
             }
             catch (Exception failure) when (ApiFailure.IsTransient(failure))
             {
-                // the service is down: the free limit is the safe one, the upload itself will fail too
             }
             catch (JsonException)
             {
@@ -36,7 +33,6 @@ namespace Discode_MVC_Client.Filters
 
             context.HttpContext.Items[LimitKey] = limits;
 
-            // the request is the file plus a little form text
             if (context.HttpContext.Request.ContentLength is long length && length > limits.MaxFileBytes + 1_000_000)
             {
                 context.Result = new JsonResult(new { errors = new[] { TooBig(limits) } }) { StatusCode = 400 };

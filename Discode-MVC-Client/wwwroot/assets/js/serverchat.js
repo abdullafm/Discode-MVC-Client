@@ -155,7 +155,6 @@
         if (force || atBottom || message.senderUserName === meName) scroller.scrollTop = scroller.scrollHeight;
     }
 
-    // ---------- pinned messages of this channel (the thumbtack in the bar), like the DM's pins ----------
     var pinsPopover = document.getElementById("server-pins-popover");
     var pinsToggle = document.getElementById("server-pins-toggle");
 
@@ -411,7 +410,6 @@
     };
     window.GroupParts.init(context);
 
-    // ---------- timed out: the box is replaced by a bar with the time left ----------
     var timeoutBar = document.getElementById("server-timeout-bar");
     var timeoutClock = document.getElementById("server-timeout-clock");
     var timeoutTimer = 0;
@@ -473,7 +471,6 @@
         watching: function (sentServer, sentChannel) {
             return !chat.hidden && !scroller.hidden && sentServer === serverId && sentChannel === channelId;
         },
-        // the open channel is gone (deleted, last one): no messages, intro or composer of it may stay on screen
         close: function () {
             channelId = 0;
             generation += 1;

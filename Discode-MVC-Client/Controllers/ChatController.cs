@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Discode_MVC_Client.Controllers
 {
-    // Where I stopped reading a chat (so the page can show the NEW line); the chats keep it for me on the account
     [Authorize]
     public class ChatController : Controller
     {

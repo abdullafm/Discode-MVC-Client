@@ -1,8 +1,3 @@
-/*
-  Ortaq hərəkət qaydaları: pəncərələr, menyular, panellər və xəta mətnləri
-  artıq birdən açılıb-bağlanmır, yumşaq görünür və yumşaq yox olur.
-  Hamısı :where() ilə yazılıb: səhifənin öz animasiyası olan yerə toxunmur.
-*/
 
 :root {
     --ux-fast: 0.16s;
@@ -10,7 +5,6 @@
     --ux-ease: cubic-bezier(0.22, 0.8, 0.3, 1);
 }
 
-/* ---------- 1) tam ekran pəncərələr: fon solur, kart yumşaq böyüyür ---------- */
 :where(.channel-modal, .dm-modal, .group-edit-modal, .live-modal, .name-modal, .new-msg,
        .server-delete-modal, .server-modal, .settings, .adm-modal-layer, .members-backdrop) {
     transition: opacity var(--ux-base) var(--ux-ease);
@@ -57,7 +51,6 @@
     }
 }
 
-/* ---------- 2) menyular və açılan kiçik panellər ---------- */
 :where(.channel-menu, .dm-attach-menu, .dm-msg-menu, .dm-pins-popover, .dm-poll-emojis, .emoji-panel,
        .friend-context, .friend-more, .me-status-menu, .member-pop-menu, .member-pop-role-menu,
        .msg-search-panel, .role-more-menu, .row-menu, .server-menu, .story-delete, .story-edit-panel,
@@ -96,7 +89,6 @@
     }
 }
 
-/* ---------- 3) zolaqlar və bildirişlər: aşağıdan/yuxarıdan süzülür ---------- */
 :where(.incoming-call, .call-answer-bar, .sidebar-call, .server-save-bar, .server-voice-bar, .server-voice-dock,
        .dm-reply-bar, .watch-reply-bar, .reply-chip, .dm-attach-tray, .story-reply, .inline-search-results-card,
        .live-hero, .live-chips, .photo-preview, .me-request) {
@@ -129,7 +121,6 @@
     }
 }
 
-/* ---------- 4) xəta və boş vəziyyət mətnləri: yumşaq düşür ---------- */
 @keyframes ux-drop {
     from { opacity: 0; transform: translateY(-6px); }
     to { opacity: 1; transform: none; }
@@ -149,18 +140,15 @@
     animation: ux-drop var(--ux-base) var(--ux-ease) both;
 }
 
-/* ---------- 5) tablar və bölmələr: növbəti panel yumşaq gəlir ---------- */
 :where(.settings-panel, .server-settings-panel, .social-panel, .story-editor, .story-viewer,
        .friends-online, .friends-add, .friends-empty, .active-now, .role-panel, .me-block) {
     animation: ux-rise var(--ux-base) var(--ux-ease) both;
 }
 
-/* ---------- 7) açılan bölmələr (details) yumşaq açılır ---------- */
 details[open] > :not(summary) {
     animation: ux-drop var(--ux-base) var(--ux-ease) both;
 }
 
-/* ---------- 8) üstünə gələndə reaksiya verməyən düymələr ---------- */
 :is(#name-modal-done, #pass-modal-done, #server-create-done, #server-join-done, #dm-poll-post, #group-poll-post,
     #dm-forward-submit, #group-forward-submit, #live-share-submit, #live-create-submit):not(:disabled):hover {
     filter: brightness(1.1);
@@ -197,7 +185,6 @@ details[open] > :not(summary) {
     transition: filter 0.15s ease, background-color 0.15s ease, transform 0.15s ease, color 0.15s ease;
 }
 
-/* admin */
 .adm-btn:not(:disabled):hover {
     filter: brightness(1.08);
     transform: translateY(-1px);
@@ -227,13 +214,11 @@ details[open] > :not(summary) {
     transition: filter 0.15s ease;
 }
 
-/* ---------- 9) kiçik ekranda pəncərə ekrandan çıxmasın ---------- */
 .dm-modal-card {
     max-width: calc(100vw - 32px);
     max-height: calc(100dvh - 32px);
 }
 
-/* ---------- 10) boş siyahı mətnləri (dostlar) ---------- */
 .friends-hint {
     display: none;
     margin: 56px 16px 0;
@@ -258,7 +243,6 @@ details[open] > :not(summary) {
     display: block;
 }
 
-/* ---------- 11) rəsmi Discode hesabı: zəng və cavab yoxdur ---------- */
 .dm-bar-tools.is-system #dm-call,
 .dm-bar-tools.is-system #dm-video,
 .dm-bar-tools.is-system #dm-add {
@@ -279,7 +263,6 @@ details[open] > :not(summary) {
     margin-right: 6px;
 }
 
-/* ---------- 12) telefonda başlıq daha az sıxılsın ---------- */
 @media (max-width: 480px) {
     .group-bar .group-bar-tools button,
     .group-bar .group-bar-tools > i {
@@ -296,12 +279,10 @@ details[open] > :not(summary) {
     }
 }
 
-/* canlı yayın sayğacı: yayın yoxdursa göstərilməsin */
 .explore-live-toggle-count[hidden] {
     display: none;
 }
 
-/* ---------- 13) server ayarları: telefonda yan menyu üfüqi tablara çevrilir ---------- */
 @media (max-width: 720px) {
     .server-settings-nav {
         display: flex;
@@ -344,14 +325,12 @@ details[open] > :not(summary) {
     display: none !important;
 }
 
-/* admin: üst-üstə düşən formalar arasında boşluq */
 .adm-panel > form + form,
 .adm-panel > form + .adm-action-row,
 .adm-panel > form + .adm-danger-zone {
     margin-top: 20px;
 }
 
-/* ---------- 14) tablar dar ekranda dropdown olur ---------- */
 .ux-select {
     display: none;
 }
@@ -513,7 +492,6 @@ details[open] > :not(summary) {
     }
 }
 
-/* ---------- 15) server üzv kartı: şəkil böyük profili açır ---------- */
 .member-pop-avatar {
     cursor: pointer;
 }
@@ -531,7 +509,6 @@ details[open] > :not(summary) {
     display: none;
 }
 
-/* ---------- 16) "Voice Connected": səsdəykən başqa səhifələrə keçəndə də görünür ---------- */
 .voice-global-bar {
     position: fixed;
     left: 80px;
@@ -640,7 +617,6 @@ html.theme-dark .voice-global-bar {
     }
 }
 
-/* ---- voice moderation: server mute / deafen shown in red, right-click menu on a person in a voice channel ---- */
 .voice-mod-menu p {
     margin: 0;
     padding: 6px 8px 8px;
@@ -674,7 +650,6 @@ html.theme-dark .voice-global-bar {
     color: #da373c !important;
 }
 
-/* ---------- müasir açılan siyahı (select yerinə) ---------- */
 .msel-native {
     display: none !important;
 }
@@ -725,7 +700,6 @@ html.theme-dark .voice-global-bar {
     border-radius: 6px;
 }
 
-/* a select that stands on its own (not inside an input box) gets its own box */
 .msel-boxed .msel-btn {
     padding: 8px 12px;
     border-radius: 8px;
@@ -822,7 +796,6 @@ html.theme-dark .msel-menu {
     border-color: #1e1f22;
 }
 
-/* ---- right click on a person in voice: the Discord-style menu ---- */
 .voice-mod-menu {
     width: 240px;
     padding: 6px;
@@ -885,7 +858,6 @@ html.theme-dark .msel-menu {
     opacity: 1;
 }
 
-/* a red (danger) row turns solid red on hover: its box turns white so it stays visible */
 .voice-mod-menu button.is-danger:hover .vm-check {
     border-color: #fff;
     opacity: 1;
@@ -916,7 +888,6 @@ html.theme-dark .msel-menu {
     cursor: pointer;
 }
 
-/* dark theme: every label of the voice user menu is plain white (the danger rows only turn red on hover) */
 html.theme-dark body .voice-mod-menu button,
 html.theme-dark body .voice-mod-menu button.is-danger,
 html.theme-dark body .voice-mod-menu button small,
@@ -930,7 +901,6 @@ html.theme-dark body .voice-mod-menu button > i {
     opacity: 1;
 }
 
-/* ---- zoom a camera / screen tile in a server voice channel ---- */
 .server-voice-tile.has-cam,
 .server-voice-tile.has-screen,
 .server-voice-tile.is-screen {
@@ -963,7 +933,6 @@ html.theme-dark body .voice-mod-menu button > i {
     object-fit: contain;
 }
 
-/* everybody else: small tiles stacked at the bottom right, a click moves the zoom to them */
 .server-voice-call.has-focus > .server-voice-tile.is-mini {
     position: absolute;
     right: 24px;
@@ -1002,7 +971,6 @@ html.theme-dark body .voice-mod-menu button > i {
     }
 }
 
-/* ---- touch: the small header icons and the "mark all as read" button get a thumb-sized hit area ---- */
 @media (pointer: coarse), (max-width: 720px) {
     .dm-bar-tools > i[role="button"],
     .group-bar-tools > i[role="button"] {
@@ -1021,7 +989,6 @@ html.theme-dark body .voice-mod-menu button > i {
     }
 }
 
-/* ---- phone: a visible way back to the conversation list (it holds the DM list, Nitro, Media and the settings gear) ---- */
 .phone-list-btn {
     display: none;
 }
@@ -1048,7 +1015,6 @@ html.theme-dark body .voice-mod-menu button > i {
     }
 }
 
-/* Discord-style thin rounded scrollbars */
 html,
 body,
 * {
@@ -1097,7 +1063,6 @@ html.theme-dark *::-webkit-scrollbar-thumb:hover {
     background-color: #80848e;
 }
 
-/* ---------- timeout dialog + the "Timed Out" bar ---------- */
 .timeout-segment { display: flex; border: 1px solid #c7ccd1; border-radius: 4px; overflow: hidden; margin-bottom: 16px; }
 .timeout-option { flex: 1; min-height: 40px; padding: 0 4px; border: 0; border-right: 1px solid #c7ccd1; background: transparent; color: #4d5058; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .timeout-option:last-child { border-right: 0; }
@@ -1125,7 +1090,6 @@ html.theme-dark .timeout-bar-text span { color: #b5bac1; }
 
 .timeout-card p, .timeout-card label { text-align: left; }
 
-/* ---------- Nitro: badges, banners, boosts ---------- */
 .nitro-badges { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; margin: 0 4px; }
 .nitro-badges[hidden] { display: none; }
 .nitro-badge { display: inline-flex; width: 20px; height: 20px; }
@@ -1204,7 +1168,6 @@ html.theme-dark .nitro-badges { background: rgba(255, 255, 255, 0.08); }
 .handle-row > .nitro-badges { align-self: center; padding: 2px 5px; margin: 0 !important; }
 .handle-row > .nitro-badges .nitro-badge { width: 18px; height: 18px; }
 
-/* the whole banner is the edit button: a dark veil and a pencil on hover, like the avatar */
 .me-profile:not(.visitor-view) .me-banner-edit {
     inset: 0;
     top: 0;
@@ -1220,13 +1183,11 @@ html.theme-dark .nitro-badges { background: rgba(255, 255, 255, 0.08); }
 .me-profile:not(.visitor-view) .me-banner-edit:hover { background: rgba(0, 0, 0, 0.55); }
 .me-profile:not(.visitor-view) .me-banner-edit:hover i { opacity: 1; }
 .me-banner-remove { z-index: 2; right: 12px; }
-/* the profile block overlaps the lower part of the banner: let the banner get the pointer there */
 .me-profile:not(.visitor-view) .me-profile-id { pointer-events: none; }
 .me-profile:not(.visitor-view) .me-profile-id > * { pointer-events: auto; }
 .me-profile:not(.visitor-view) .me-profile-id > .me-profile-top { pointer-events: none; }
 .me-profile:not(.visitor-view) .me-profile-top > * { pointer-events: auto; }
 
-/* ---------- message formatting and link previews ---------- */
 .fmt { white-space: pre-wrap; }
 .fmt strong { font-weight: 700; }
 .fmt u { text-decoration: underline; }
@@ -1265,7 +1226,6 @@ html.theme-dark .dm-embed { background: #2b2d31; color: #dbdee1; }
 html.theme-dark .dm-embed-site { color: #a3a6aa; }
 html.theme-dark .dm-embed-title { color: #00a8fc; }
 
-/* ---------- typing indicator and the NEW line ---------- */
 .typing-bar { min-height: 20px; padding: 0 16px 2px; font-size: 13px; line-height: 20px; color: #5c5e66; display: flex; align-items: center; gap: 6px; visibility: hidden; }
 .typing-bar.is-on { visibility: visible; }
 .typing-bar strong { color: inherit; font-weight: 700; }
@@ -1279,7 +1239,6 @@ html.theme-dark .typing-bar { color: #b5bac1; }
 .dm-new-line { position: relative; display: flex; align-items: center; height: 0; margin: 14px 16px 10px; border-top: 1px solid #f23f43; }
 .dm-new-line span { position: absolute; right: 0; top: -9px; padding: 0 5px; border-radius: 3px; background: #f23f43; color: #fff; font-size: 10px; font-weight: 700; line-height: 16px; letter-spacing: 0.03em; }
 
-/* ---------- the editor panel on the left of the big profile ---------- */
 .me-edit-panel { display: flex; flex-direction: column; width: 300px; height: min(620px, calc(100vh - 32px)); margin-right: 12px; flex: none; overflow: hidden; border-radius: 8px; background: #fff; color: #060607; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.3); }
 .me-profile.visitor-view .me-edit-panel, .me-profile.visitor-view .me-edit-toggle { display: none; }
 .me-profile:not(.visitor-view) .me-profile-card { width: min(920px, calc(100vw - 356px)); }
@@ -1329,7 +1288,6 @@ html.theme-dark .me-edit-colors button.on { border-color: #313338; }
 
 .me-edit-body .me-edit-sec + section { border-top: 1px solid rgba(128, 132, 142, 0.2); }
 
-/* spacing of the editor: nothing touches the next thing, the name box is small */
 .me-edit-body { padding: 6px 16px 16px; }
 .me-edit-body .me-edit-sec { padding: 14px 0; }
 .me-edit-body .me-edit-sec[hidden] { display: none; }
@@ -1345,11 +1303,9 @@ html.theme-dark .me-edit-colors button.on { border-color: #313338; }
 .me-edit-body .me-edit-sec { display: block; }
 .me-edit-body .me-edit-sec[hidden] { display: none; }
 
-/* a long status in the member card wraps inside its bubble instead of running out of it */
 .member-pop-chip { max-width: 170px; }
 .member-pop-chip span { min-width: 0; max-width: 132px; white-space: normal; overflow-wrap: anywhere; word-break: break-all; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
 
-/* ---------- Settings > Server Boosts ---------- */
 .mb-panel { max-width: 760px; }
 .mb-intro { margin: 4px 0 16px; font-size: 14px; line-height: 1.45; opacity: 0.85; }
 .mb-flash { margin: 0 0 12px; padding: 10px 12px; border-radius: 6px; background: rgba(35, 165, 89, 0.18); font-size: 14px; }
@@ -1401,7 +1357,6 @@ html.theme-dark .mb-menu { background: #111214; color: #f2f3f5; }
 html.theme-dark .mb-link { color: #00a8fc; }
 @media (max-width: 640px) { .mb-row { flex-wrap: wrap; } .mb-actions { width: 100%; justify-content: flex-end; } }
 
-/* the move menu is a real dropdown: clear text, a header, a highlight under the pointer */
 #mb-root .mb-menu { min-width: 270px; padding: 6px; border: 1px solid rgba(128, 132, 142, 0.35); }
 #mb-root .mb-menu-head { padding: 6px 10px 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.7; }
 #mb-root .mb-menu-item { color: #060607; opacity: 1; }
@@ -1420,7 +1375,6 @@ html.theme-dark #mb-root .mb-menu-item .mb-menu-note { color: #b5bac1 !important
 #mb-root .mb-menu-item:hover:not(:disabled) .mb-menu-name, #mb-root .mb-menu-item:hover:not(:disabled) .mb-menu-note, html.theme-dark #mb-root .mb-menu-item:hover:not(:disabled) .mb-menu-name, html.theme-dark #mb-root .mb-menu-item:hover:not(:disabled) .mb-menu-note { color: #fff !important; }
 #mb-root .mb-card-gem { background: none; padding: 0; overflow: hidden; }
 #mb-root .mb-card-gem img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
-/* the boost gem is an svg now */
 #mb-root .mb-gem { display: inline-flex; width: 1.2em; height: 1.2em; flex: none; }
 #mb-root .mb-gem svg { width: 100%; height: 100%; }
 #mb-root .mb-sub .mb-gem { margin-right: 4px; color: #8a8d94; }
@@ -1428,7 +1382,6 @@ html.theme-dark #mb-root .mb-menu-item .mb-menu-note { color: #b5bac1 !important
 #mb-root .mb-slot .mb-gem { width: 18px; height: 18px; }
 .mb-nav-gem { width: 1.1em; height: 1.1em; flex: none; vertical-align: -0.15em; margin-right: 4px; }
 
-/* QA pass: contrast, tap targets, hover feedback */
 .dm-att-info strong { color: #0067e0; }
 html.theme-dark .dm-att-info strong { color: #00a8fc; }
 body .conversation-sidebar .direct-messages .friend-list .group-row-text span { color: #5c5f66; }
@@ -1442,13 +1395,11 @@ html.theme-dark #notify-unread-badge.notify-unread-badge { background: #5865f2 !
     #dm-attach, #dm-emoji, #group-attach, #group-emoji { min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
 }
 
-/* settings close button: visible X in dark theme and on hover */
 .settings-close { color: #4d5058; }
 .settings-close:hover { color: #1e1f22; }
 html.theme-dark .settings-close, html.theme-dark #settings-close { background: #3a3c43 !important; color: #b5bac1 !important; }
 html.theme-dark .settings-close:hover, html.theme-dark #settings-close:hover { background: #4e5058 !important; color: #ffffff !important; }
 
-/* bio bubble: open state like Discord (emoji above the words, pencil and bin on my own) */
 .bio-open { max-width: var(--bio-max, 240px) !important; z-index: 6; align-items: flex-start !important; border-radius: 16px !important; }
 .bio-open > span:not(.bio-tools) { display: block; overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.35; -webkit-line-clamp: unset; max-width: none; }
 .bio-emoji { display: block; font-size: 22px; line-height: 1.25; margin-bottom: 2px; }
@@ -1469,25 +1420,21 @@ html.theme-dark .settings-close:hover, html.theme-dark #settings-close:hover { b
 .bio-split .bio-rest { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .me-status-bubble.has-bio .bio-split, .dm-profile-bubble .bio-split, .member-pop-chip .bio-split { max-width: 100%; }
 .bio-open .bio-split { overflow: visible; }
-/* the bubble starts under the banner line, never on the banner */
 .me-profile-top .me-status-bubble:has(.bio-split) { position: absolute; left: 112px; top: 58px; margin: 0; align-self: auto; }
 .me-status-bubble:has(.bio-split)::before, .dm-profile-bubble:has(.bio-split)::before, .member-pop-chip:has(.bio-split)::before { bottom: auto !important; top: 8px; }
 .me-status-bubble:has(.bio-split)::after, .dm-profile-bubble:has(.bio-split)::after, .member-pop-chip:has(.bio-split)::after { bottom: auto !important; top: 2px; }
 .me-head:has(.me-chip .bio-split) { position: relative; }
 .me-head .me-chip:has(.bio-split) { position: absolute; left: 104px; top: 28px; margin: 0; }
 .member-pop-chip:has(.bio-split) { top: 46px; }
-/* less empty space above the message box (the typing line already keeps a gap) */
 .dm-scroll, .group-scroll { padding-bottom: 0; }
 .dm-messages, .group-messages { padding-bottom: 4px; }
 
-/* dragging a server icon */
 .server-drop-bar { width: 38px; height: 4px; margin: -8px 0; border-radius: 2px; background: #5865f2; flex: none; pointer-events: none; }
 .server-chip.is-dragging { opacity: 0.3; }
 .server-chip.server-drag-ghost { position: fixed; z-index: 400; margin: 0; pointer-events: none; opacity: 0.95; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4); transform: scale(1.08); }
 body.server-dragging, body.server-dragging * { cursor: grabbing !important; user-select: none !important; }
 body.server-dragging .server-tip { display: none !important; }
 
-/* live: stream controls (microphone, headphones, camera, screen) and inviting a viewer */
 #live-media-btn[hidden] { display: none; }
 .live-media-card { width: min(400px, calc(100vw - 32px)); }
 .live-media-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
@@ -1508,7 +1455,6 @@ body.server-dragging .server-tip { display: none !important; }
 .watch-viewer-invite:disabled { opacity: .5; cursor: default; }
 .watch-guest-request button { white-space: nowrap; }
 
-/* live: moderators and the chat mute list */
 #live-viewer-list { width: 340px; }
 .watch-viewer-tabs { display: flex; gap: 6px; margin: 0 0 8px; }
 .watch-viewer-tabs button { flex: 1; padding: 6px 8px; border: 0; border-radius: 6px; background: transparent; color: #b5bac1; font: inherit; font-size: 12px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
@@ -1531,7 +1477,6 @@ body.server-dragging .server-tip { display: none !important; }
 .live-mute-custom select { padding: 7px 9px; border: 1px solid rgba(128, 132, 142, 0.5); border-radius: 6px; background: transparent; color: inherit; font: inherit; }
 #live-chat-input:disabled { opacity: .6; cursor: not-allowed; }
 
-/* sharing a post: the card in a chat, the friend picker note, the window a shared link opens */
 .dm-post-embed { display: flex; flex-direction: column; gap: 8px; max-width: 380px; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(128, 132, 142, 0.35); background: rgba(128, 132, 142, 0.12); }
 .dm-post-embed-head { display: flex; align-items: center; gap: 10px; }
 .dm-post-embed-head img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
@@ -1553,7 +1498,6 @@ body.server-dragging .server-tip { display: none !important; }
 .post-view-meta { margin: 0; font-size: 13px; opacity: .7; }
 .dm-msg-text.is-card-only { display: none; }
 
-/* Nitro gift: the window and the card in a chat */
 .gift-card { width: min(440px, calc(100vw - 32px)); text-align: center; }
 .gift-art { width: 100%; border-radius: 10px; margin-bottom: 14px; }
 .gift-card h2 { margin: 0 0 8px; }
@@ -1574,20 +1518,15 @@ body.server-dragging .server-tip { display: none !important; }
 .dm-gift-art { width: 100%; height: 100%; min-height: 110px; border-radius: 8px; object-fit: cover; }
 @media (max-width: 520px) { .dm-gift-embed { grid-template-columns: 1fr; } .dm-gift-art { max-height: 140px; } }
 
-/* a short window must not squash the server icons: the list scrolls instead */
 .server-nav .server-chip { flex: none; }
 
-/* an opened bio bubble that is positioned absolutely keeps its width instead of shrinking to the space that is left (it grew as a thin tall column) */
 .dm-profile-bubble.bio-open, .member-pop-chip.bio-open, .me-status-bubble.bio-open, .me-chip.bio-open { width: max-content; min-width: 140px; }
 
-/* the small profile card: the bubble starts under the banner and stays inside the card */
 .mini-profile .dm-profile-bubble:has(.bio-split) { top: 38px; bottom: auto; left: 86px; }
 
-/* on somebody else's profile the bubble can be hovered (it was click-through, so it never opened) */
 .me-profile.visitor-view .me-status-bubble { pointer-events: auto !important; cursor: default; }
 .bio-tools-on .bio-tools { display: inline-flex; }
 
-/* the small copy button after a user name */
 .copy-handle { display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; padding: 2px 4px; border: 0; border-radius: 4px; background: transparent; color: inherit; opacity: .55; font-size: 12px; cursor: pointer; vertical-align: middle; }
 .copy-handle:hover { opacity: 1; background: rgba(128, 132, 142, 0.2); }
 .copy-handle[hidden] { display: none; }

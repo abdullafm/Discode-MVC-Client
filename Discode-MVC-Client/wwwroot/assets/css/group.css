@@ -683,7 +683,6 @@ section#group-members.no-motion .group-members {
     }
 }
 
-/* Dokunmatik cihazlarda min. 44px hedef */
 @media (pointer: coarse) {
     .group-bar-tools button {
         width: 44px;
@@ -1830,7 +1829,6 @@ html.theme-dark body .dm-invite-banned-copy strong {
     color: #f23f42 !important;
 }
 
-/* Server ikonu: hover adi ve @everyone / @here sayaci */
 .server-chip {
     position: relative;
     overflow: visible;
@@ -1908,7 +1906,6 @@ html.theme-dark .server-badge {
     transform: translateY(-50%) rotate(45deg);
 }
 
-/* Sekil qoyulanda gizlenen qrup ikonu Font Awesome display qaydasi ile geri gelmesin */
 .group-avatar i[hidden],
 .group-mark i[hidden],
 .group-badge i[hidden],

@@ -7,8 +7,6 @@ using System.Text.Json;
 
 namespace Discode_MVC_Client.Filters
 {
-    // Every controller talks to the API over HTTP. When that call fails (API down, slow, or an answer that is not JSON)
-    // the user must get a clear message, not a stack trace or an empty page. One filter covers every controller and area.
     public class ApiFailureFilter : IExceptionFilter
     {
         private readonly ILogger<ApiFailureFilter> _logger;
@@ -35,7 +33,6 @@ namespace Discode_MVC_Client.Filters
                 : PageResult(status.Value, message, context.HttpContext);
         }
 
-        // rendered in place (not redirected) so that "Try again" reloads the page the user was on
         private static ViewResult PageResult(int status, string message, HttpContext http)
         {
             var model = new ErrorUIVM
@@ -71,7 +68,6 @@ namespace Discode_MVC_Client.Filters
             }
         }
 
-        // fetch/XHR from the page scripts, and the admin live refresh, expect JSON; a browser navigation expects a page
         private static bool WantsJson(HttpRequest request)
         {
             if (request.Headers.XRequestedWith == "XMLHttpRequest" || request.Headers.ContainsKey("X-Admin-Refresh"))

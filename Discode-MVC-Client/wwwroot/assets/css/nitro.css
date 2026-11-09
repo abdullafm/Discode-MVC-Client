@@ -164,7 +164,6 @@
 .nitro-perk-boost { background: linear-gradient(135deg, #ff8bf2, #a855f7); }
 .nitro-boost-line { margin: 22px auto 0; max-width: 1000px; text-align: center; color: #b5bac1; }
 
-/* the page keeps its own dark colour in both themes and the perks are laid out evenly */
 .nitro-view, html.theme-dark .nitro-view { background: #07040c !important; }
 .nitro-view .nitro-perks { background: #07040c; padding: 56px 24px 64px; }
 .nitro-view .nitro-perks h2 { margin: 0 0 24px; color: #fff; }
@@ -180,7 +179,6 @@
 .nitro-view .nitro-perks { display: block; }
 main.nitro-view > section.nitro-perks { display: block !important; }
 
-/* Gift Nitro: the card on the Nitro page */
 .nitro-gift { display: flex; align-items: center; gap: 28px; margin: 28px 16px 8px; padding: 22px 24px; border-radius: 14px; background: rgba(128, 132, 142, 0.14); }
 .nitro-gift-art { width: 260px; max-width: 38%; border-radius: 10px; flex: none; }
 .nitro-gift-copy { flex: 1; min-width: 0; }
@@ -200,7 +198,6 @@ main.nitro-view > section.nitro-perks { display: block !important; }
 @media (max-width: 720px) { .nitro-gift { flex-direction: column; align-items: stretch; } .nitro-gift-art { max-width: 100%; width: 100%; } }
 .nitro-gift-copy h2 { text-align: left; }
 
-/* the Nitro page scrolls, and its perk cards are plain cards like the rest of the site */
 main.friends-view.nitro-view, .nitro-view { overflow-y: auto !important; overflow-x: hidden; }
 .nitro-view .nitro-perk { gap: 6px; padding: 18px 20px; border-radius: 8px; background: #2b2d31; border: 1px solid rgba(255, 255, 255, 0.06); transition: background-color .15s ease, border-color .15s ease, transform .15s ease; cursor: default; }
 .nitro-view .nitro-perk:hover { background: #313338; border-color: #5865f2; transform: translateY(-2px); }

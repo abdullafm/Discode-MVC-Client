@@ -29,9 +29,6 @@
         return emoji.shortcodes.split(" ").filter(Boolean).map(function (code) { return ":" + code + ":"; }).join(" ");
     }
 
-    // Builds the emoji picker from the backend. `decorate(choice, character)` is optional; when it is
-    // given every choice contains an <img> that the page fills in (for example with Twemoji pictures).
-    // `options.skip` is an optional list of category names to leave out.
     window.fillEmojiPanel = function (panel, prefix, decorate, options) {
         var skip = (options && options.skip) || [];
         panel.textContent = "";

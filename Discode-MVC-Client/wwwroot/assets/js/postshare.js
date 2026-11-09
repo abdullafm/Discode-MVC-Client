@@ -1,8 +1,6 @@
 "use strict";
 
-// Send a post to friends (it lands in their direct messages like on Instagram) and open a shared post
 (function () {
-    // (pages are swapped without a reload: this script runs again on every page and its listeners are dropped with the page)
     var modal = null;
     var postId = 0;
 
@@ -113,7 +111,6 @@
         open(Number(share.getAttribute("data-share-post")));
     }, true);
 
-    // ---------- the window a shared link opens: /Social/Index?post=12
     var viewer = null;
 
     function closeViewer() {

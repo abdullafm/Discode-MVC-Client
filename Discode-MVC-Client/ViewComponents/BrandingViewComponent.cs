@@ -6,7 +6,6 @@ using System.Net;
 
 namespace Discode_MVC_Client.ViewComponents
 {
-    // <vc:branding kind="logo" /> and <vc:branding kind="favicon" />: the admin-chosen image or the built-in one
     public class BrandingViewComponent : ViewComponent
     {
         private readonly BrandingProvider _branding;

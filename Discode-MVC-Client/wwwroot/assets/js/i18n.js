@@ -61,7 +61,6 @@
         var tag = el.tagName.toLowerCase();
         if (tag === "script" || tag === "style" || tag === "svg" || tag === "code" || tag === "pre") return;
 
-        // 1. Check data-i18n attribute
         var i18nAttr = el.getAttribute("data-i18n");
         if (i18nAttr) {
             var trans = (targetLang === "en") ? i18nAttr : translateText(i18nAttr, targetLang);
@@ -70,7 +69,6 @@
             }
         }
 
-        // 2. Check input/textarea placeholders
         if (tag === "input" || tag === "textarea") {
             var ph = el.getAttribute("placeholder");
             if (ph) {
@@ -85,14 +83,12 @@
             }
         }
 
-        // 3. Check data-i18n-placeholder
         var phCustom = el.getAttribute("data-i18n-placeholder");
         if (phCustom) {
             var phTrans2 = (targetLang === "en") ? phCustom : translateText(phCustom, targetLang);
             if (phTrans2) el.setAttribute("placeholder", phTrans2);
         }
 
-        // 4. Translate direct text nodes (safely without breaking nested icons/elements)
         var childNodes = el.childNodes;
         for (var i = 0; i < childNodes.length; i++) {
             var node = childNodes[i];
@@ -134,19 +130,16 @@
     function syncLanguageUI(lang) {
         var info = FLAG_MAP[lang] || FLAG_MAP["en"];
 
-        // 1. Update flag in settings input field
         var fieldFlag = document.getElementById("lang-field-flag");
         if (fieldFlag) {
             fieldFlag.src = "https://flagcdn.com/w40/" + info.flag + ".png";
         }
 
-        // 2. Update search input in settings
         var langName = document.getElementById("lang-current-name");
         if (langName) {
             langName.textContent = info.native;
         }
 
-        // 3. Update active item in settings lang list
         var langList = document.getElementById("lang-select-list");
         if (langList) {
             var buttons = langList.querySelectorAll("button");

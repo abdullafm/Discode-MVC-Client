@@ -266,7 +266,6 @@ namespace Discode_MVC_Client.Controllers
             return Forward(client => client.GetAsync($"api/server/{id}/boost"));
         }
 
-        // the Server Boosts page of the settings
         [HttpGet]
         public Task<IActionResult> MyBoosts()
         {
@@ -503,7 +502,6 @@ namespace Discode_MVC_Client.Controllers
             return "{}";
         }
 
-        // a server's banner, animated icon and short link are what its 14 boosts unlock
         private async Task<bool> PerksUnlockedAsync(int serverId)
         {
             try

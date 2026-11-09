@@ -259,7 +259,6 @@ function mapPosts(list) {
     });
 }
 
-// Şərh düyməsi: şərhlər və yazı sahəsi birlikdə yumşaq açılır / bağlanır
 function slideBlock(block, opening, done) {
     if (!block || !block.animate) {
         if (done) done();
@@ -503,7 +502,6 @@ function showReplyChip(card, post) {
     }
 }
 
-// Feed yenilənəndə dəyişməyən postlar olduğu kimi qalır (şəkil və video yenidən yüklənib qaralmasın)
 function postSignature(post) {
     return JSON.stringify([
         post.id, post.author, post.avatar, post.text, post.image, post.visibility, post.edited,
@@ -710,7 +708,6 @@ function renderFeed() {
         }
         place(card);
     });
-    // artıq feeddə olmayan postlar silinir
     [].slice.call(list.children).forEach(function (node) {
         var nodeId = node.getAttribute && node.getAttribute("data-post");
         if (nodeId && !used[nodeId]) list.removeChild(node);

@@ -277,7 +277,6 @@
             var cleaned = inviteInput.value.replace(/[^A-Za-z0-9_-]/g, "");
             if (cleaned !== inviteInput.value) inviteInput.value = cleaned;
             inviteDirty = !!server && cleaned !== (server.customLink || "");
-            // an empty box is how the custom link is removed
             if (inviteSave) inviteSave.disabled = !inviteDirty || (cleaned.length > 0 && cleaned.length < 3) || !perksOpen();
             say(inviteNote, cleaned ? window.location.origin + "/" + cleaned : window.location.origin + "/" + (server && server.inviteCode || ""), "");
         });
@@ -430,7 +429,6 @@
         presenceTimer = window.setTimeout(load, 600);
     });
 
-    // ---------- boosts: the progress, the perks they open and who gave them
     var boostCount = document.getElementById("boost-count");
     var boostState = document.getElementById("boost-state");
     var boostFill = document.getElementById("boost-bar-fill");

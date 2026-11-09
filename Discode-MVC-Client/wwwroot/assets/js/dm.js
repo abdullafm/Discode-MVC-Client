@@ -94,7 +94,6 @@ document.addEventListener("error", function (event) {
     }
 }, true);
 
-// messages drawn by the server: their story thumbnail may have failed before this script ran, so look at the ones already finished
 function markGoneStoryThumbs() {
     [].forEach.call(document.querySelectorAll(".dm-story-reply img"), function (image) {
         if (image.complete && image.naturalWidth === 0 && image.parentNode) image.parentNode.classList.add("is-gone");
@@ -236,7 +235,6 @@ function dmLiveCard(message) {
     return card;
 }
 
-// the body of a message: its markup (bold, links, code...) is shown, the flags of countries become pictures
 function formatNodes(text) {
     return window.discodeFormat ? window.discodeFormat.nodes(text, nodesForText) : nodesForText(text);
 }
@@ -481,7 +479,6 @@ function showDmPage() {
     dmPartner = { userName: userName, userId: chat.getAttribute("data-user-id") };
     if (window.discodeChat) window.discodeChat.open("dm", userName, document.getElementById("dm-messages"));
     dmOngoingCall = Number(chat.getAttribute("data-ongoing-call")) || 0;
-    // the first picture of the profile comes from the chat and has no badges or banner: load the full one
     dmRefreshProfile();
     dmRefreshJoinLinks();
     dmCheckIdleNote();
@@ -538,7 +535,6 @@ function focusDmInput() {
 var dmFiles = [];
 var dmFileCounter = 0;
 var DM_MAX_FILES = 10;
-// how big a file may be depends on the account: 5 MB, or 2 GB with Nitro
 function dmMaxBytes() {
     return window.discodeNitro ? window.discodeNitro.maxFileBytes : 5 * 1024 * 1024;
 }
@@ -1271,7 +1267,6 @@ function dmPanelPhoto() {
 }
 
 function dmMyPhoto() {
-    // there is no /api/me endpoint (it answered 404 on every DM page): my photo is the one in my panel
     return Promise.resolve(dmPanelPhoto());
 }
 

@@ -13,7 +13,6 @@
         box.textContent = message || "";
     }
 
-    // asks the site for an address (Stripe's pages) and goes there
     function go(url, button) {
         fail("");
         button.disabled = true;
@@ -37,7 +36,6 @@
     var manage = document.getElementById("nitro-manage");
     if (manage) manage.addEventListener("click", function () { go("/Nitro/Manage", manage); });
 
-    // ---------- gifts
     var giftBuy = document.getElementById("nitro-gift-buy");
     if (giftBuy) giftBuy.addEventListener("click", function () { go("/Nitro/GiftCheckout", giftBuy); });
 
@@ -184,7 +182,6 @@
         }).catch(function () {});
     }
 
-    // when Nitro starts or ends somewhere else (the webhook, an admin) the page shows it
     document.addEventListener("discode-nitro-changed", function () {
         window.setTimeout(function () { if (window.location.pathname.toLowerCase().indexOf("/nitro") === 0) window.location.reload(); }, 600);
     });
