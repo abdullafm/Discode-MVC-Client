@@ -1582,3 +1582,6 @@ body.server-dragging .server-tip { display: none !important; }
 
 /* the small profile card: the bubble starts under the banner and stays inside the card */
 .mini-profile .dm-profile-bubble:has(.bio-split) { top: 38px; bottom: auto; left: 86px; }
+
+/* on somebody else's profile the bubble can be hovered (it was click-through, so it never opened) */
+.me-profile.visitor-view .me-status-bubble { pointer-events: auto !important; cursor: default; }
