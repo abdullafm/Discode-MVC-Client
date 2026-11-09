@@ -576,12 +576,13 @@
     document.addEventListener("DOMContentLoaded", splitAll);
     document.addEventListener("discode-page-ready", splitAll);
 
-// a small clipboard button after a user name (member card, own and other profiles, DM profile): copies the user name
+// a small clipboard button after a user name (the small card of my own profile, the member card, the DM profile): copies the user name
 (function () {
-    var TARGETS = ["#me-handle-name", "#member-pop-handle", "#dm-profile-handle"];
+    // inside: the button goes into the element (its text is rewritten by other code only as a whole)
+    var TARGETS = [{ sel: "#me-pop .me-handle", inside: true }, { sel: "#member-pop-handle" }, { sel: "#dm-profile-handle" }];
 
     function nameOf(target) {
-        var text = (target.textContent || "").trim();
+        var text = [].filter.call(target.childNodes, function (node) { return node.nodeType === 3; }).map(function (node) { return node.textContent; }).join("").trim();
         if (target.id === "dm-profile-handle") text = text.split("•")[0].trim();
         return text.replace(/^@/, "");
     }
@@ -613,10 +614,10 @@
     }
 
     function decorate() {
-        TARGETS.forEach(function (selector) {
-            var target = document.querySelector(selector);
+        TARGETS.forEach(function (entry) {
+            var target = document.querySelector(entry.sel);
             if (!target) return;
-            var next = target.nextElementSibling;
+            var next = entry.inside ? target.querySelector(":scope > .copy-handle") : target.nextElementSibling;
             var name = nameOf(target);
             if (next && next.classList.contains("copy-handle")) {
                 next.hidden = !name;
@@ -634,7 +635,8 @@
                 event.stopPropagation();
                 copy(nameOf(target), button);
             });
-            target.insertAdjacentElement("afterend", button);
+            if (entry.inside) target.appendChild(button);
+            else target.insertAdjacentElement("afterend", button);
         });
     }
 
