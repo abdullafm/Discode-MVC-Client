@@ -2148,3 +2148,12 @@ html.theme-dark .adm-chip.is-timeout {
 .adm-stat { flex: 1; min-width: 180px; padding: 14px 16px; border-radius: 10px; border: 1px solid rgba(128, 132, 142, 0.3); background: rgba(128, 132, 142, 0.08); }
 .adm-stat span { display: block; font-size: 12px; opacity: .7; }
 .adm-stat strong { display: block; margin-top: 4px; font-size: 22px; }
+
+/* Nitro admin: room between the blocks so nothing sits inside another */
+.adm-stats { margin-bottom: 20px; }
+.adm-tabs { margin-bottom: 18px; }
+.adm-panel { margin-bottom: 18px; }
+.adm-panel p { margin: 0 0 14px; line-height: 1.5; }
+.adm-panel .adm-inline-form { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 4px; }
+.adm-list-head { margin: 24px 0 14px; }
+.adm-table-wrap { margin-top: 0; }
