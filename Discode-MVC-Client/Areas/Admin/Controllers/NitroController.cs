@@ -18,7 +18,7 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
                 Search = term,
                 ActiveOnly = activeOnly,
                 Page = Math.Max(1, page),
-                Tab = string.Equals(tab, "members", StringComparison.OrdinalIgnoreCase) ? "members" : "events"
+                Tab = string.Equals(tab, "members", StringComparison.OrdinalIgnoreCase) ? "members" : string.Equals(tab, "gifts", StringComparison.OrdinalIgnoreCase) ? "gifts" : "events"
             };
 
             try
@@ -34,6 +34,16 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
                     model.TotalSubscriptions = result.TotalSubscriptions;
                     model.TotalEvents = result.TotalEvents;
                     model.PageSize = result.PageSize;
+                }
+
+                if (model.Tab == "gifts")
+                {
+                    var gifts = await Api.GetFromJsonAsync<AdminNitroGiftPageVM>("api/admin/nitro/gifts?page=" + model.Page + (term.Length > 0 ? "&search=" + Uri.EscapeDataString(term) : string.Empty), new JsonSerializerOptions(JsonSerializerDefaults.Web));
+                    if (gifts is not null)
+                    {
+                        model.Gifts = gifts.Items;
+                        model.TotalGifts = gifts.Total;
+                    }
                 }
             }
             catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
@@ -63,6 +73,52 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
                 TempData["AdminWarning"] = failure;
 
             return RedirectToAction(nameof(Index), new { tab });
+        }
+
+        // a gift link nobody paid for, made by a SuperAdmin: the link is shown in the notice
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MakeGift(int days)
+        {
+            if (!User.IsInRole("SuperAdmin"))
+                return Forbid();
+
+            try
+            {
+                var response = await Api.PostAsJsonAsync("api/admin/nitro/gifts", new { days });
+                if (response.IsSuccessStatusCode)
+                {
+                    using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                    var link = document.RootElement.TryGetProperty("link", out var found) ? found.GetString() : string.Empty;
+                    TempData["AdminNotice"] = "A free gift of " + days + (days == 1 ? " day" : " days") + " was made. Send this link: " + link;
+                }
+                else
+                {
+                    TempData["AdminWarning"] = "The gift could not be made. Choose between 1 and 3650 days.";
+                }
+            }
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure) || failure is JsonException)
+            {
+                TempData["AdminWarning"] = "The gift could not be made right now. Try again in a moment.";
+            }
+
+            return RedirectToAction(nameof(Index), new { tab = "gifts" });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RevokeGift(int id)
+        {
+            if (!User.IsInRole("SuperAdmin"))
+                return Forbid();
+
+            var failure = await ApiCallAsync(() => Api.DeleteAsync("api/admin/nitro/gifts/" + id));
+            if (failure is null)
+                TempData["AdminNotice"] = "The gift was taken back.";
+            else
+                TempData["AdminWarning"] = failure;
+
+            return RedirectToAction(nameof(Index), new { tab = "gifts" });
         }
 
         [HttpPost]

@@ -30,8 +30,31 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public string ActorName { get; set; } = string.Empty;
     }
 
+    public class AdminNitroGiftVM
+    {
+        public int Id { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Link { get; set; } = string.Empty;
+        public string BuyerUserName { get; set; } = string.Empty;
+        public int Days { get; set; }
+        public int AmountCents { get; set; }
+        public bool IsFree { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string RedeemedByUserName { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public DateTime? RedeemedAt { get; set; }
+    }
+
+    public class AdminNitroGiftPageVM
+    {
+        public int Total { get; set; }
+        public List<AdminNitroGiftVM> Items { get; set; } = new();
+    }
+
     public class AdminNitroListVM
     {
+        public List<AdminNitroGiftVM> Gifts { get; set; } = new();
+        public int TotalGifts { get; set; }
         public List<AdminNitroSubscriptionVM> Subscriptions { get; set; } = new();
         public List<AdminNitroEventVM> Events { get; set; } = new();
         public int ActiveCount { get; set; }
@@ -43,6 +66,6 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public bool ActiveOnly { get; set; }
         public string Tab { get; set; } = "events";
         public string? Error { get; set; }
-        public int TotalPages => Math.Max(1, (int)Math.Ceiling((Tab == "members" ? TotalSubscriptions : TotalEvents) / (double)PageSize));
+        public int TotalPages => Math.Max(1, (int)Math.Ceiling((Tab == "members" ? TotalSubscriptions : Tab == "gifts" ? TotalGifts : TotalEvents) / (double)PageSize));
     }
 }

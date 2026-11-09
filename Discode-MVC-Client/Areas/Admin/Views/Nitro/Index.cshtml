@@ -7,7 +7,7 @@
     string KindLabel(string kind) => System.Text.RegularExpressions.Regex.Replace(kind, "(?<=[a-z])(?=[A-Z])", " ");
     string KindClass(string kind) => kind switch
     {
-        "PaymentFailed" or "Expired" or "RevokedByAdmin" => "is-banned",
+        "PaymentFailed" or "Expired" or "RevokedByAdmin" or "GiftRevoked" => "is-banned",
         "Canceled" => "is-timeout",
         _ => ""
     };
@@ -28,6 +28,7 @@
 <div class="adm-tabs">
     <a class="@(Model.Tab == "events" ? "on" : "")" asp-area="Admin" asp-controller="Nitro" asp-action="Index" asp-route-tab="events" asp-route-search="@Model.Search">Log <span>@Model.TotalEvents</span></a>
     <a class="@(Model.Tab == "members" ? "on" : "")" asp-area="Admin" asp-controller="Nitro" asp-action="Index" asp-route-tab="members" asp-route-search="@Model.Search">Members with Nitro <span>@Model.ActiveCount active</span></a>
+    <a class="@(Model.Tab == "gifts" ? "on" : "")" asp-area="Admin" asp-controller="Nitro" asp-action="Index" asp-route-tab="gifts" asp-route-search="@Model.Search">Gifts <span>@Model.TotalGifts</span></a>
 </div>
 
 @if (isSuper)
@@ -42,6 +43,14 @@
             <button type="submit" class="adm-btn"><i class="fa-solid fa-gift"></i> Give Nitro</button>
         </form>
     </div>
+    <div class="adm-panel">
+        <h3>Make a free gift link</h3>
+        <p class="adm-muted">Nobody pays for it. Whoever opens the link and presses Accept gets the days. You can take it back until it is claimed.</p>
+        <form method="post" class="adm-inline-form" asp-area="Admin" asp-controller="Nitro" asp-action="MakeGift">
+            <input type="number" name="days" value="30" min="1" max="3650" aria-label="Days" required>
+            <button type="submit" class="adm-btn"><i class="fa-solid fa-link"></i> Make a gift link</button>
+        </form>
+    </div>
 }
 
 <div class="adm-list-head">
@@ -50,7 +59,7 @@
         <i class="fa-solid fa-magnifying-glass"></i>
         <input type="search" name="search" value="@Model.Search" placeholder="Search by user name or name" autocomplete="off">
     </form>
-    <span class="adm-count">@(Model.Tab == "members" ? Model.TotalSubscriptions + " subscribers" : Model.TotalEvents + " events")</span>
+    <span class="adm-count">@(Model.Tab == "members" ? Model.TotalSubscriptions + " subscribers" : Model.Tab == "gifts" ? Model.TotalGifts + " gifts" : Model.TotalEvents + " events")</span>
 </div>
 
 <div class="adm-table-wrap">
@@ -68,12 +77,50 @@
                         <td><a class="adm-link" asp-area="Admin" asp-controller="Users" asp-action="Details" asp-route-id="@entry.UserId">@(string.IsNullOrWhiteSpace(entry.DisplayName) ? entry.UserName : entry.DisplayName)</a><small class="adm-muted"> @@@entry.UserName</small></td>
                         <td><span class="adm-chip @KindClass(entry.Kind)">@KindLabel(entry.Kind)</span> <span class="adm-muted">@entry.Details</span>@if (!string.IsNullOrEmpty(entry.ActorName)) { <small class="adm-muted"> by @entry.ActorName</small> }</td>
                         <td>@Money(entry.AmountCents, entry.Currency)</td>
-                        <td class="adm-muted">@(entry.Source == "admin" ? "Admin" : "Stripe")</td>
+                        <td class="adm-muted">@(entry.Source == "admin" ? "Admin" : entry.Source == "gift" ? "Gift" : "Stripe")</td>
                     </tr>
                 }
                 @if (Model.Events.Count == 0)
                 {
                     <tr><td colspan="5" class="adm-muted">Nothing has happened yet.</td></tr>
+                }
+            </tbody>
+        </table>
+    }
+    else if (Model.Tab == "gifts")
+    {
+        <table class="adm-table">
+            <thead>
+                <tr><th>Link</th><th>From</th><th>Days</th><th>Paid</th><th>Status</th><th>Claimed by</th><th>Made</th>@if (isSuper) { <th></th> }</tr>
+            </thead>
+            <tbody>
+                @foreach (var gift in Model.Gifts)
+                {
+                    <tr>
+                        <td><code>@(gift.Code.Substring(0, 8))...</code> <small class="adm-muted"><a class="adm-link" href="@gift.Link">open</a></small></td>
+                        <td>@gift.BuyerUserName</td>
+                        <td>@gift.Days</td>
+                        <td>@(gift.IsFree ? "Free" : Money(gift.AmountCents, "usd"))</td>
+                        <td><span class="adm-chip @(gift.Status == "revoked" ? "is-banned" : gift.Status == "redeemed" ? "" : "is-timeout")">@(gift.Status == "available" ? "Not claimed" : gift.Status == "redeemed" ? "Claimed" : "Taken back")</span></td>
+                        <td class="adm-muted">@gift.RedeemedByUserName</td>
+                        <td class="adm-muted">@gift.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        @if (isSuper)
+                        {
+                            <td>
+                                @if (gift.Status == "available")
+                                {
+                                    <form method="post" asp-area="Admin" asp-controller="Nitro" asp-action="RevokeGift">
+                                        <input type="hidden" name="id" value="@gift.Id">
+                                        <button type="submit" class="adm-btn adm-btn-danger">Take back</button>
+                                    </form>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+                @if (Model.Gifts.Count == 0)
+                {
+                    <tr><td colspan="@(isSuper ? 8 : 7)" class="adm-muted">No gifts yet.</td></tr>
                 }
             </tbody>
         </table>
@@ -99,14 +146,14 @@
                             @if (sub.IsActive && sub.CancelAtPeriodEnd) { <span class="adm-chip is-timeout">Cancelled</span> }
                             @if (sub.IsActive && sub.Status == "PastDue") { <span class="adm-chip is-timeout">Payment late</span> }
                         </td>
-                        <td class="adm-muted">@(sub.Source == "admin" ? "Admin" : "Stripe")</td>
+                        <td class="adm-muted">@(sub.Source == "admin" ? "Admin" : sub.Source == "gift" ? "Gift" : "Stripe")</td>
                         <td class="adm-muted">@sub.StartedAt.ToString("yyyy-MM-dd")</td>
                         <td class="adm-muted">@sub.CurrentPeriodEnd.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>@sub.Boosts</td>
                         @if (isSuper)
                         {
                             <td>
-                                @if (sub.IsActive && sub.Source == "admin")
+                                @if (sub.IsActive && sub.Source != "stripe")
                                 {
                                     <form method="post" asp-area="Admin" asp-controller="Nitro" asp-action="Revoke">
                                         <input type="hidden" name="userName" value="@sub.UserName">
