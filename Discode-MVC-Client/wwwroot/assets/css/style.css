@@ -3428,10 +3428,25 @@ body .conversation-sidebar .direct-messages h2 .dm-new {
     cursor: default;
 }
 
-@media screen and (max-height: 510px) {
-    body .conversation-sidebar .user-panel {
-        position: sticky;
-    }
+body .conversation-sidebar {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 8px;
+}
+
+body .conversation-sidebar > *,
+body .conversation-sidebar > section > * {
+    flex-shrink: 0;
+}
+
+body .conversation-sidebar .user-panel {
+    position: sticky;
+    left: auto;
+    right: auto;
+    bottom: 0;
+    margin: auto 8px 0;
+    width: calc(100% - 16px);
+    box-sizing: border-box;
 }
 
 .d-none {
