@@ -650,3 +650,33 @@
     document.addEventListener("DOMContentLoaded", decorate);
     document.addEventListener("discode-page-ready", decorate);
 })();
+
+// the badges (staff, Nitro, boost) also show in the small card of my own profile
+(function () {
+    function paint() {
+        var handle = document.querySelector("#me-pop .me-handle");
+        if (!handle || !window.discodeBadges) return;
+        var state = window.discodeNitro || {};
+        var key = [!!state.hasNitro, !!state.isBooster, state.staffRole || ""].join("|");
+        var holder = handle.querySelector(":scope > .nitro-badges");
+        if (holder && holder.getAttribute("data-key") === key) return;
+        if (!holder) {
+            holder = document.createElement("span");
+            holder.className = "nitro-badges nitro-badges-small";
+            handle.appendChild(holder);
+        }
+        holder.setAttribute("data-key", key);
+        window.discodeBadges(holder, !!state.hasNitro, !!state.isBooster, state.staffRole || "");
+    }
+
+    var queued = false;
+    new MutationObserver(function () {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(function () { queued = false; paint(); });
+    }).observe(document.documentElement, { childList: true, subtree: true });
+    document.addEventListener("discode-nitro-state", paint);
+    document.addEventListener("DOMContentLoaded", paint);
+    document.addEventListener("discode-page-ready", paint);
+    paint();
+})();
