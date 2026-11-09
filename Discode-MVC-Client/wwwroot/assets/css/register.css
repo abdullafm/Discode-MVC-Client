@@ -536,9 +536,9 @@
 }
 
 @keyframes logo-float {
-    0% { transform: translate3d(-1.5%, 1%, 0) rotate(-2.5deg) scale(1); }
-    50% { transform: translate3d(1.5%, -2%, 0) rotate(2.5deg) scale(1.04); }
-    100% { transform: translate3d(-1.5%, 1%, 0) rotate(-2.5deg) scale(1); }
+    0% { transform: translate3d(-3%, 2%, 0) rotate(-4deg) scale(1); }
+    50% { transform: translate3d(3%, -3%, 0) rotate(4deg) scale(1.07); }
+    100% { transform: translate3d(-3%, 2%, 0) rotate(-4deg) scale(1); }
 }
 
 .background-x .x-logo {
@@ -546,8 +546,3 @@
     will-change: transform;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .background-x .x-logo {
-        animation: none;
-    }
-}
