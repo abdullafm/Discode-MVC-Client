@@ -232,7 +232,7 @@
     listen(document, "submit", function (event) {
         var form = event.target;
         if (!form || !form.action || (form.method && form.method.toLowerCase() === "post")) return;
-        if (form.hasAttribute("data-no-nav")) return;
+        if (form.hasAttribute("data-no-nav") || !form.getAttribute("action")) return;
         var url;
         try {
             url = new URL(form.action, location.href);
