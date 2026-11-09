@@ -2142,3 +2142,9 @@ html.theme-dark .adm-chip.is-timeout {
     gap: 16px;
     margin: 8px 0 12px;
 }
+
+/* Nitro admin: the numbers on top */
+.adm-stats { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 16px; }
+.adm-stat { flex: 1; min-width: 180px; padding: 14px 16px; border-radius: 10px; border: 1px solid rgba(128, 132, 142, 0.3); background: rgba(128, 132, 142, 0.08); }
+.adm-stat span { display: block; font-size: 12px; opacity: .7; }
+.adm-stat strong { display: block; margin-top: 4px; font-size: 22px; }

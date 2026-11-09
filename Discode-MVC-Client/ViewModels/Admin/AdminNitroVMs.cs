@@ -13,6 +13,9 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public DateTime CurrentPeriodEnd { get; set; }
         public bool CancelAtPeriodEnd { get; set; }
         public int Boosts { get; set; }
+        public long TotalPaidCents { get; set; }
+        public int Payments { get; set; }
+        public DateTime? LastPaymentAt { get; set; }
     }
 
     public class AdminNitroEventVM
@@ -60,6 +63,8 @@ namespace Discode_MVC_Client.ViewModels.Admin
         public int ActiveCount { get; set; }
         public int TotalSubscriptions { get; set; }
         public int TotalEvents { get; set; }
+        public long RevenueCents { get; set; }
+        public long RevenueThisMonthCents { get; set; }
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 20;
         public string Search { get; set; } = string.Empty;

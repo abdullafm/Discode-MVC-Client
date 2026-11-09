@@ -25,6 +25,12 @@
     <p class="adm-error"><i class="fa-solid fa-triangle-exclamation"></i> @Model.Error</p>
 }
 
+<div class="adm-stats">
+    <div class="adm-stat"><span>Nitro right now</span><strong>@Model.ActiveCount</strong></div>
+    <div class="adm-stat"><span>Money taken in all</span><strong>@Money((int)Model.RevenueCents, "usd")</strong></div>
+    <div class="adm-stat"><span>Money taken this month</span><strong>@Money((int)Model.RevenueThisMonthCents, "usd")</strong></div>
+</div>
+
 <div class="adm-tabs">
     <a class="@(Model.Tab == "events" ? "on" : "")" asp-area="Admin" asp-controller="Nitro" asp-action="Index" asp-route-tab="events" asp-route-search="@Model.Search">Log <span>@Model.TotalEvents</span></a>
     <a class="@(Model.Tab == "members" ? "on" : "")" asp-area="Admin" asp-controller="Nitro" asp-action="Index" asp-route-tab="members" asp-route-search="@Model.Search">Members with Nitro <span>@Model.ActiveCount active</span></a>
@@ -35,7 +41,7 @@
 {
     <div class="adm-panel">
         <h3>Give or take away Nitro</h3>
-        <p class="adm-muted">Nitro given here does not use Stripe. Someone who pays through Stripe has to cancel there.</p>
+        <p class="adm-muted">Nitro given here does not use Stripe. Taking Nitro away from somebody who pays through Stripe also stops their subscription there.</p>
         <form method="post" class="adm-inline-form" asp-area="Admin" asp-controller="Nitro" asp-action="Grant">
             <input type="hidden" name="tab" value="@Model.Tab">
             <input type="text" name="userName" placeholder="User name" maxlength="64" autocomplete="off" required>
@@ -129,7 +135,7 @@
     {
         <table class="adm-table">
             <thead>
-                <tr><th>Member</th><th>Status</th><th>Source</th><th>Since</th><th>Runs until</th><th>Boosts</th>@if (isSuper) { <th></th> }</tr>
+                <tr><th>Member</th><th>Status</th><th>Source</th><th>Started</th><th>Runs until</th><th>Paid in all</th><th>Payments</th><th>Last payment</th><th>Boosts</th>@if (isSuper) { <th></th> }</tr>
             </thead>
             <tbody>
                 @foreach (var sub in Model.Subscriptions)
@@ -149,13 +155,16 @@
                         <td class="adm-muted">@(sub.Source == "admin" ? "Admin" : sub.Source == "gift" ? "Gift" : "Stripe")</td>
                         <td class="adm-muted">@sub.StartedAt.ToString("yyyy-MM-dd")</td>
                         <td class="adm-muted">@sub.CurrentPeriodEnd.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@(sub.TotalPaidCents > 0 ? Money((int)sub.TotalPaidCents, "usd") : "Free")</td>
+                        <td>@sub.Payments</td>
+                        <td class="adm-muted">@(sub.LastPaymentAt is null ? "" : sub.LastPaymentAt.Value.ToString("yyyy-MM-dd"))</td>
                         <td>@sub.Boosts</td>
                         @if (isSuper)
                         {
                             <td>
-                                @if (sub.IsActive && sub.Source != "stripe")
+                                @if (sub.IsActive)
                                 {
-                                    <form method="post" asp-area="Admin" asp-controller="Nitro" asp-action="Revoke">
+                                    <form method="post" asp-area="Admin" asp-controller="Nitro" asp-action="Revoke" onsubmit="return confirm('@(sub.Source == "stripe" ? "Cancel the Nitro of " + sub.UserName + "? Their Stripe subscription is stopped and they will not be charged again." : "Take the Nitro away from " + sub.UserName + "?")');">
                                         <input type="hidden" name="userName" value="@sub.UserName">
                                         <input type="hidden" name="tab" value="members">
                                         <button type="submit" class="adm-btn adm-btn-danger">Take away</button>
@@ -167,7 +176,7 @@
                 }
                 @if (Model.Subscriptions.Count == 0)
                 {
-                    <tr><td colspan="@(isSuper ? 7 : 6)" class="adm-muted">Nobody has Nitro yet.</td></tr>
+                    <tr><td colspan="@(isSuper ? 10 : 9)" class="adm-muted">Nobody has Nitro yet.</td></tr>
                 }
             </tbody>
         </table>

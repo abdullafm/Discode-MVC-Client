@@ -33,6 +33,8 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
                     model.ActiveCount = result.ActiveCount;
                     model.TotalSubscriptions = result.TotalSubscriptions;
                     model.TotalEvents = result.TotalEvents;
+                    model.RevenueCents = result.RevenueCents;
+                    model.RevenueThisMonthCents = result.RevenueThisMonthCents;
                     model.PageSize = result.PageSize;
                 }
 
