@@ -575,3 +575,76 @@
     splitAll();
     document.addEventListener("DOMContentLoaded", splitAll);
     document.addEventListener("discode-page-ready", splitAll);
+
+// a small clipboard button after a user name (member card, own and other profiles, DM profile): copies the user name
+(function () {
+    var TARGETS = ["#me-handle-name", "#member-pop-handle", "#dm-profile-handle"];
+
+    function nameOf(target) {
+        var text = (target.textContent || "").trim();
+        if (target.id === "dm-profile-handle") text = text.split("•")[0].trim();
+        return text.replace(/^@/, "");
+    }
+
+    function copy(text, button) {
+        var done = function () {
+            var icon = button.querySelector("i");
+            icon.className = "fa-solid fa-check";
+            button.title = "Copied";
+            window.setTimeout(function () {
+                icon.className = "fa-regular fa-clipboard";
+                button.title = "Copy user name";
+            }, 1500);
+        };
+        var fallback = function () {
+            var area = document.createElement("textarea");
+            area.value = text;
+            area.style.position = "fixed";
+            area.style.opacity = "0";
+            document.body.appendChild(area);
+            area.select();
+            var ok = false;
+            try { ok = document.execCommand("copy"); } catch (error) { }
+            document.body.removeChild(area);
+            if (ok) done();
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(fallback);
+        else fallback();
+    }
+
+    function decorate() {
+        TARGETS.forEach(function (selector) {
+            var target = document.querySelector(selector);
+            if (!target) return;
+            var next = target.nextElementSibling;
+            var name = nameOf(target);
+            if (next && next.classList.contains("copy-handle")) {
+                next.hidden = !name;
+                return;
+            }
+            if (!name) return;
+            var button = document.createElement("button");
+            button.type = "button";
+            button.className = "copy-handle";
+            button.title = "Copy user name";
+            button.setAttribute("aria-label", "Copy user name");
+            button.innerHTML = '<i class="fa-regular fa-clipboard" aria-hidden="true"></i>';
+            button.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                copy(nameOf(target), button);
+            });
+            target.insertAdjacentElement("afterend", button);
+        });
+    }
+
+    var queued = false;
+    new MutationObserver(function () {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(function () { queued = false; decorate(); });
+    }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+    decorate();
+    document.addEventListener("DOMContentLoaded", decorate);
+    document.addEventListener("discode-page-ready", decorate);
+})();

@@ -1586,3 +1586,8 @@ body.server-dragging .server-tip { display: none !important; }
 /* on somebody else's profile the bubble can be hovered (it was click-through, so it never opened) */
 .me-profile.visitor-view .me-status-bubble { pointer-events: auto !important; cursor: default; }
 .bio-tools-on .bio-tools { display: inline-flex; }
+
+/* the small copy button after a user name */
+.copy-handle { display: inline-flex; align-items: center; justify-content: center; margin-left: 6px; padding: 2px 4px; border: 0; border-radius: 4px; background: transparent; color: inherit; opacity: .55; font-size: 12px; cursor: pointer; vertical-align: middle; }
+.copy-handle:hover { opacity: 1; background: rgba(128, 132, 142, 0.2); }
+.copy-handle[hidden] { display: none; }
