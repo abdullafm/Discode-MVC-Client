@@ -199,3 +199,13 @@ main.nitro-view > section.nitro-perks { display: block !important; }
 .nitro-gift-item.is-redeemed span, .nitro-gift-item.is-revoked span { opacity: .65; }
 @media (max-width: 720px) { .nitro-gift { flex-direction: column; align-items: stretch; } .nitro-gift-art { max-width: 100%; width: 100%; } }
 .nitro-gift-copy h2 { text-align: left; }
+
+/* the Nitro page scrolls, and its perk cards are plain cards like the rest of the site */
+main.friends-view.nitro-view, .nitro-view { overflow-y: auto !important; overflow-x: hidden; }
+.nitro-view .nitro-perk { gap: 6px; padding: 18px 20px; border-radius: 8px; background: #2b2d31; border: 1px solid rgba(255, 255, 255, 0.06); transition: background-color .15s ease, border-color .15s ease, transform .15s ease; cursor: default; }
+.nitro-view .nitro-perk:hover { background: #313338; border-color: #5865f2; transform: translateY(-2px); }
+.nitro-view .nitro-perk-icon, .nitro-view .nitro-perk-boost { width: auto; height: auto; justify-content: flex-start; background: transparent; border-radius: 0; color: #5865f2; font-size: 22px; }
+.nitro-view .nitro-perk h3 { margin: 4px 0 0; font-size: 15px; font-weight: 700; }
+.nitro-view .nitro-perk p { font-size: 14px; line-height: 1.45; }
+.nitro-view .nitro-perks h2 { font-size: 20px; }
+.nitro-view .nitro-gift { background: #2b2d31; border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; }
