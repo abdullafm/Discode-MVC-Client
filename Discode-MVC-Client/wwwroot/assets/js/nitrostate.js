@@ -94,3 +94,147 @@
         window.discodePaintBanners();
     });
 })();
+
+// ---------- a Nitro gift: the window that opens from a gift link or from the Claim button of a chat card
+(function () {
+    "use strict";
+    var modal = null;
+    var current = "";
+
+    function el(tag, className, text) {
+        var node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+    }
+
+    function token() {
+        var field = document.querySelector("input[name='__RequestVerificationToken']");
+        return field ? field.value : "";
+    }
+
+    function build() {
+        if (modal && modal.isConnected) return;
+        modal = el("div", "dm-modal");
+        modal.id = "gift-modal";
+        modal.setAttribute("role", "dialog");
+        modal.setAttribute("aria-modal", "true");
+        modal.setAttribute("aria-labelledby", "gift-title");
+        modal.hidden = true;
+        modal.innerHTML =
+            '<div class="dm-modal-backdrop" data-close></div>' +
+            '<div class="dm-modal-card gift-card">' +
+            '<button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>' +
+            '<img class="gift-art" src="/assets/img/nitro-gift.png" alt="">' +
+            '<h2 id="gift-title"></h2>' +
+            '<div class="gift-from" id="gift-from" hidden><img id="gift-from-avatar" alt=""><span id="gift-from-name"></span></div>' +
+            '<p class="dm-modal-text" id="gift-text"></p>' +
+            '<p class="dm-forward-error" id="gift-error" hidden></p>' +
+            '<div class="gift-actions"><button type="button" class="gift-accept" id="gift-accept" hidden>Accept</button><button type="button" class="gift-later" id="gift-later" data-close>Close</button></div>' +
+            '</div>';
+        document.body.appendChild(modal);
+        modal.addEventListener("click", function (event) {
+            if (event.target.closest("[data-close]")) modal.hidden = true;
+        });
+        modal.querySelector("#gift-accept").addEventListener("click", accept);
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && modal && !modal.hidden) modal.hidden = true;
+        });
+    }
+
+    function say(title, text) {
+        modal.querySelector("#gift-title").textContent = title;
+        modal.querySelector("#gift-text").textContent = text || "";
+    }
+
+    function problem(text) {
+        var box = modal.querySelector("#gift-error");
+        box.textContent = text || "";
+        box.hidden = !text;
+    }
+
+    function until(value) {
+        return value ? new Date(value).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" }) : "";
+    }
+
+    function readError(body, fallback) {
+        return (body && body.errors && body.errors[0]) || fallback;
+    }
+
+    function open(code) {
+        if (!code) return;
+        build();
+        current = code;
+        problem("");
+        modal.querySelector("#gift-from").hidden = true;
+        modal.querySelector("#gift-accept").hidden = true;
+        modal.querySelector("#gift-accept").disabled = false;
+        modal.querySelector("#gift-later").textContent = "Close";
+        say("Opening the gift...", "");
+        modal.hidden = false;
+        fetch("/Nitro/GiftInfo?code=" + encodeURIComponent(code), { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (body) { return { ok: response.ok, body: body }; });
+        }).then(function (result) {
+            if (current !== code) return;
+            if (!result.ok) {
+                say("This gift link is not valid.", readError(result.body, "Check the link and try again."));
+                return;
+            }
+            var info = result.body;
+            modal.querySelector("#gift-from").hidden = false;
+            modal.querySelector("#gift-from-avatar").src = info.fromAvatarUrl || "/assets/img/img-icon-profile.jpeg";
+            modal.querySelector("#gift-from-name").textContent = "from " + (info.fromDisplayName || info.fromUserName);
+            if (info.canRedeem) {
+                say("You received a Nitro gift!", info.days + " days of Nitro: longer messages, bigger files, an animated avatar and banner, and 2 server boosts. Press Accept to claim it.");
+                modal.querySelector("#gift-accept").hidden = false;
+                modal.querySelector("#gift-later").textContent = "Not now";
+            } else {
+                say(info.status === "available" ? "You can not claim this gift yet." : "This gift can not be claimed.", info.reason);
+            }
+        }).catch(function () {
+            say("The gift could not be opened.", "Try again in a moment.");
+        });
+    }
+
+    function accept() {
+        var button = modal.querySelector("#gift-accept");
+        button.disabled = true;
+        problem("");
+        fetch("/Nitro/Redeem", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "RequestVerificationToken": token(), "X-Requested-With": "XMLHttpRequest" },
+            body: JSON.stringify({ code: current })
+        }).then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (body) { return { ok: response.ok, body: body }; });
+        }).then(function (result) {
+            if (!result.ok) {
+                problem(readError(result.body, "That did not work. Try again."));
+                button.disabled = false;
+                return;
+            }
+            button.hidden = true;
+            modal.querySelector("#gift-later").textContent = "Done";
+            say("Nitro is yours!", "Your Nitro runs until " + until(result.body.expiresAt) + ". Enjoy!");
+            document.dispatchEvent(new CustomEvent("discode-nitro-changed"));
+        }).catch(function () {
+            problem("The service is unavailable right now. Try again in a moment.");
+            button.disabled = false;
+        });
+    }
+
+    window.discodeGift = { open: open };
+
+    function fromAddress() {
+        var url = new URL(window.location.href);
+        var code = url.searchParams.get("gift");
+        if (!code) return;
+        url.searchParams.delete("gift");
+        window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+        open(code);
+    }
+
+    document.addEventListener("discode-page-ready", fromAddress);
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fromAddress);
+    else fromAddress();
+})();

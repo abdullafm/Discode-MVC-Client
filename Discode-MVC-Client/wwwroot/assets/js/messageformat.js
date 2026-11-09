@@ -302,8 +302,24 @@
         }
     }
 
+    // a gift link of this site (/gift/<code>)
+    function ownGiftCode(url) {
+        try {
+            var parsed = new URL(url, window.location.origin);
+            var match = parsed.origin === window.location.origin ? /^\/gift\/([A-Za-z0-9_-]{8,64})\/?$/.exec(parsed.pathname) : null;
+            return match ? match[1] : "";
+        } catch (error) {
+            return "";
+        }
+    }
+
     function fetchPreview(url) {
         if (cache[url]) return cache[url];
+        var giftCode = ownGiftCode(url);
+        if (giftCode) {
+            cache[url] = Promise.resolve({ type: "gift", code: giftCode });
+            return cache[url];
+        }
         var postId = ownPostId(url);
         if (postId) {
             cache[url] = fetch("/Home/PostCard?id=" + postId, {
@@ -381,7 +397,37 @@
         return box;
     }
 
+    function giftEmbed(url, data) {
+        var box = document.createElement("div");
+        box.className = "dm-embed dm-gift-embed";
+        box.setAttribute("data-embed-for", url);
+        var copy = document.createElement("div");
+        copy.className = "dm-gift-copy";
+        var title = document.createElement("h3");
+        title.textContent = "You received a Nitro gift!";
+        var about = document.createElement("p");
+        about.textContent = "This link is a Nitro gift. Press the button to claim it.";
+        var claim = document.createElement("button");
+        claim.type = "button";
+        claim.className = "dm-gift-claim";
+        claim.textContent = "Claim";
+        claim.addEventListener("click", function () {
+            if (window.discodeGift) window.discodeGift.open(data.code);
+        });
+        copy.appendChild(title);
+        copy.appendChild(about);
+        copy.appendChild(claim);
+        var art = document.createElement("img");
+        art.className = "dm-gift-art";
+        art.alt = "";
+        art.src = "/assets/img/nitro-gift.png";
+        box.appendChild(copy);
+        box.appendChild(art);
+        return box;
+    }
+
     function embedNode(url, data) {
+        if (data && data.type === "gift") return giftEmbed(url, data);
         if (data && (data.type === "post" || data.type === "post-missing")) return postEmbed(url, data);
         if (!data || data.type === "none") return null;
         var box = document.createElement("div");
@@ -480,7 +526,7 @@
             var again = row.querySelector(".dm-msg-text");
             if (again && again.parentNode) again.parentNode.insertBefore(node, again.nextSibling);
             // a message that is only a shared post shows just the card
-            if (again && node.classList.contains("dm-post-embed") && again.textContent.trim() === url) again.classList.add("is-card-only");
+            if (again && (node.classList.contains("dm-post-embed") || node.classList.contains("dm-gift-embed")) && again.textContent.trim() === url) again.classList.add("is-card-only");
         });
     }
 

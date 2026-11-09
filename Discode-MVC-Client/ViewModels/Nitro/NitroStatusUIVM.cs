@@ -15,7 +15,10 @@ namespace Discode_MVC_Client.ViewModels.Nitro
         public long MaxFileBytes { get; set; } = 5L * 1024 * 1024;
         public int PriceCents { get; set; } = 299;
         public string Currency { get; set; } = "usd";
+        public int GiftPriceCents { get; set; } = 999;
+        public int GiftDays { get; set; } = 30;
 
+        public string GiftPrice => (GiftPriceCents / 100m).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
         public string Price => (PriceCents / 100m).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
     }
 }

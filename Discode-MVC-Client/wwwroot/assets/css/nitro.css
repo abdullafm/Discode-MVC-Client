@@ -179,3 +179,23 @@
 .nitro-view .nitro-perks { box-sizing: border-box; width: 100%; }
 .nitro-view .nitro-perks { display: block; }
 main.nitro-view > section.nitro-perks { display: block !important; }
+
+/* Gift Nitro: the card on the Nitro page */
+.nitro-gift { display: flex; align-items: center; gap: 28px; margin: 28px 16px 8px; padding: 22px 24px; border-radius: 14px; background: rgba(128, 132, 142, 0.14); }
+.nitro-gift-art { width: 260px; max-width: 38%; border-radius: 10px; flex: none; }
+.nitro-gift-copy { flex: 1; min-width: 0; }
+.nitro-gift-copy h2 { margin: 0 0 6px; font-size: 22px; }
+.nitro-gift-copy p { margin: 0 0 14px; opacity: .85; line-height: 1.45; }
+.nitro-gift-ready { margin-top: 16px; }
+.nitro-gift-ready label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; opacity: .75; }
+.nitro-gift-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.nitro-gift-row input { flex: 1; min-width: 200px; padding: 10px 12px; border: 1px solid rgba(128, 132, 142, 0.5); border-radius: 8px; background: transparent; color: inherit; font: inherit; font-size: 14px; }
+.nitro-gift-row button, .nitro-gift-item button { padding: 9px 14px; border: 0; border-radius: 8px; background: #5865f2; color: #fff; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.nitro-gift-row button:hover, .nitro-gift-item button:hover { background: #4752c4; }
+.nitro-gift-mine { margin-top: 20px; }
+.nitro-gift-mine h3 { margin: 0 0 8px; font-size: 15px; }
+.nitro-gift-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid rgba(128, 132, 142, 0.3); font-size: 14px; }
+.nitro-gift-item span { flex: 1; }
+.nitro-gift-item.is-redeemed span, .nitro-gift-item.is-revoked span { opacity: .65; }
+@media (max-width: 720px) { .nitro-gift { flex-direction: column; align-items: stretch; } .nitro-gift-art { max-width: 100%; width: 100%; } }
+.nitro-gift-copy h2 { text-align: left; }

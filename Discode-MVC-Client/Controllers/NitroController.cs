@@ -47,6 +47,7 @@ namespace Discode_MVC_Client.Controllers
             ViewData["Nitro"] = status;
             ViewData["NitroNotice"] = TempData["NitroNotice"];
             ViewData["NitroError"] = TempData["NitroError"];
+            ViewData["NitroGiftLink"] = TempData["NitroGiftLink"];
             return View(ToHome(fallback));
         }
 
@@ -89,6 +90,83 @@ namespace Discode_MVC_Client.Controllers
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        // ---- gifts: one month of Nitro for a friend, paid once
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> GiftCheckout()
+        {
+            var site = $"{Request.Scheme}://{Request.Host}";
+            return Forward(client => client.PostAsJsonAsync("api/nitro/gift/checkout", new
+            {
+                successUrl = site + "/Nitro/GiftSuccess",
+                cancelUrl = site + "/Nitro/Index?canceled=1"
+            }));
+        }
+
+        // Stripe sends the buyer back here after paying for a gift: the link is shown on the Nitro page
+        [HttpGet]
+        public async Task<IActionResult> GiftSuccess(string? session_id)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await client.PostAsJsonAsync("api/nitro/gift/confirm", new { sessionId = session_id ?? string.Empty });
+                if (response.IsSuccessStatusCode)
+                {
+                    using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                    TempData["NitroGiftLink"] = document.RootElement.TryGetProperty("link", out var link) ? link.GetString() : null;
+                    TempData["NitroNotice"] = "Your gift is ready. Send the link to your friend.";
+                }
+                else
+                {
+                    TempData["NitroError"] = await ReadErrorAsync(response);
+                }
+            }
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
+            {
+                TempData["NitroError"] = "We could not check the payment right now. If you were charged, your gift is under Your gifts in a moment.";
+            }
+            catch (JsonException)
+            {
+                TempData["NitroError"] = "That did not work. Your gift, if you paid, is under Your gifts.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> Gifts()
+        {
+            return Forward(client => client.GetAsync("api/nitro/gifts"));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> GiftInfo(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code) || code.Length > 64)
+                return Task.FromResult<IActionResult>(NotFound(new { errors = new[] { "This gift link is not valid." } }));
+
+            return Forward(client => client.GetAsync("api/nitro/gift/" + Uri.EscapeDataString(code.Trim())));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Redeem([FromBody] RedeemGiftUIVM model)
+        {
+            if (model is null || string.IsNullOrWhiteSpace(model.Code) || model.Code.Length > 64)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "This gift link is not valid." } }));
+
+            return Forward(client => client.PostAsJsonAsync("api/nitro/gift/" + Uri.EscapeDataString(model.Code.Trim()) + "/redeem", new { }));
+        }
+
+        // the link people send each other: it opens the page with the gift window
+        [HttpGet("/gift/{code}")]
+        public IActionResult Gift(string code)
+        {
+            return Redirect("/Home/Index?gift=" + Uri.EscapeDataString(code ?? string.Empty));
         }
 
         // Stripe's own page to change the card, cancel or resume

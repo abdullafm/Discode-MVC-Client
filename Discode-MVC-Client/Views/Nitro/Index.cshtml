@@ -5,6 +5,7 @@
     var nitro = ViewData["Nitro"] as NitroStatusUIVM ?? new NitroStatusUIVM();
     var notice = ViewData["NitroNotice"] as string;
     var error = ViewData["NitroError"] as string;
+    var giftLink = ViewData["NitroGiftLink"] as string;
     var canceled = Context.Request.Query["canceled"].Count > 0;
     string Until(DateTime? when) => when is null ? "" : when.Value.ToLocalTime().ToString("MMM d, yyyy", System.Globalization.CultureInfo.InvariantCulture);
 }
@@ -34,6 +35,10 @@
                         @if (nitro.Source == "admin")
                         {
                             <text>Given to you by an admin. It runs until @Until(nitro.ExpiresAt).</text>
+                        }
+                        else if (nitro.Source == "gift")
+                        {
+                            <text>A gift. It runs until @Until(nitro.ExpiresAt).</text>
                         }
                         else if (nitro.CancelAtPeriodEnd)
                         {
@@ -100,6 +105,32 @@
                 <h3>Nitro badge</h3>
                 <p>A badge on your profile, and a second one when you boost a server.</p>
             </article>
+        </div>
+        <div class="nitro-gift" id="nitro-gift">
+            <img class="nitro-gift-art" src="~/assets/img/nitro-gift.png" alt="">
+            <div class="nitro-gift-copy">
+                <h2>Gift Nitro to a friend</h2>
+                <p>Pay once for @(nitro.GiftDays) days of Nitro and get a link. Your friend opens the link, presses Accept and has Nitro.</p>
+                <button class="nitro-btn nitro-btn-subscribe" type="button" id="nitro-gift-buy">
+                    <span class="nitro-mark"><i class="fa-solid fa-gift"></i></span>
+                    Buy a gift for $@nitro.GiftPrice
+                </button>
+                @if (!string.IsNullOrEmpty(giftLink))
+                {
+                    <div class="nitro-gift-ready" id="nitro-gift-ready">
+                        <label for="nitro-gift-link">Your gift link</label>
+                        <div class="nitro-gift-row">
+                            <input type="text" id="nitro-gift-link" value="@giftLink" readonly>
+                            <button type="button" id="nitro-gift-copy">Copy</button>
+                            <button type="button" id="nitro-gift-send"><i class="fa-solid fa-paper-plane"></i> Send to a friend</button>
+                        </div>
+                    </div>
+                }
+                <div class="nitro-gift-mine" id="nitro-gift-mine" hidden>
+                    <h3>Your gifts</h3>
+                    <div id="nitro-gift-list"></div>
+                </div>
+            </div>
         </div>
         @if (nitro.HasNitro)
         {

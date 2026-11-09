@@ -1552,3 +1552,24 @@ body.server-dragging .server-tip { display: none !important; }
 .post-view-photo { width: 100%; border-radius: 10px; margin-bottom: 10px; }
 .post-view-meta { margin: 0; font-size: 13px; opacity: .7; }
 .dm-msg-text.is-card-only { display: none; }
+
+/* Nitro gift: the window and the card in a chat */
+.gift-card { width: min(440px, calc(100vw - 32px)); text-align: center; }
+.gift-art { width: 100%; border-radius: 10px; margin-bottom: 14px; }
+.gift-card h2 { margin: 0 0 8px; }
+.gift-from { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 5px 12px 5px 6px; border-radius: 20px; background: rgba(128, 132, 142, 0.2); font-weight: 600; }
+.gift-from img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
+.gift-card .dm-modal-text { margin: 0 0 14px; line-height: 1.45; }
+.gift-actions { display: flex; justify-content: center; gap: 10px; margin-top: 6px; }
+.gift-accept { padding: 11px 26px; border: 0; border-radius: 8px; background: #23a559; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.gift-accept:hover:not(:disabled) { background: #1a8745; }
+.gift-accept:disabled { opacity: .6; cursor: default; }
+.gift-later { padding: 11px 20px; border: 0; border-radius: 8px; background: rgba(128, 132, 142, 0.28); color: inherit; font: inherit; font-weight: 600; cursor: pointer; }
+.dm-gift-embed { display: grid; grid-template-columns: 1fr 190px; gap: 12px; align-items: stretch; max-width: 520px; padding: 16px 16px 16px 18px; border-radius: 10px; border: 1px solid rgba(128, 132, 142, 0.35); background: rgba(128, 132, 142, 0.12); }
+.dm-gift-copy { display: flex; flex-direction: column; gap: 8px; }
+.dm-gift-copy h3 { margin: 0; font-size: 17px; }
+.dm-gift-copy p { margin: 0; font-size: 13px; line-height: 1.4; opacity: .85; }
+.dm-gift-claim { align-self: flex-start; margin-top: auto; padding: 9px 22px; border: 0; border-radius: 8px; background: #5865f2; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.dm-gift-claim:hover { background: #4752c4; }
+.dm-gift-art { width: 100%; height: 100%; min-height: 110px; border-radius: 8px; object-fit: cover; }
+@media (max-width: 520px) { .dm-gift-embed { grid-template-columns: 1fr; } .dm-gift-art { max-height: 140px; } }
