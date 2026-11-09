@@ -63,7 +63,7 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
         // giving and taking Nitro away by hand is for the SuperAdmin only (the API refuses everybody else too)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Grant(string? userName, int days, string? tab)
+        public async Task<IActionResult> Grant(string? userName, int days, string? tab, string? back)
         {
             if (!User.IsInRole("SuperAdmin"))
                 return Forbid();
@@ -74,7 +74,7 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
             else
                 TempData["AdminWarning"] = failure;
 
-            return RedirectToAction(nameof(Index), new { tab });
+            return Back(back, tab);
         }
 
         // a gift link nobody paid for, made by a SuperAdmin: the link is shown in the notice
@@ -125,7 +125,7 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Revoke(string? userName, string? tab)
+        public async Task<IActionResult> Revoke(string? userName, string? tab, string? back)
         {
             if (!User.IsInRole("SuperAdmin"))
                 return Forbid();
@@ -135,6 +135,31 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
                 TempData["AdminNotice"] = "Nitro was taken away from " + (userName ?? string.Empty).Trim() + ".";
             else
                 TempData["AdminWarning"] = failure;
+
+            return Back(back, tab);
+        }
+
+        // the wait before a person can move a boost: longer (hours above 0) or shorter (below 0)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BoostTime(string? userName, int hours, string? back)
+        {
+            if (!User.IsInRole("SuperAdmin"))
+                return Forbid();
+
+            var failure = await ApiCallAsync(() => Api.PostAsJsonAsync("api/admin/nitro/boost-time", new { userName = (userName ?? string.Empty).Trim(), hours }));
+            if (failure is null)
+                TempData["AdminNotice"] = "The wait on the boosts of " + (userName ?? string.Empty).Trim() + " was made " + (hours > 0 ? "longer" : "shorter") + " by " + Math.Abs(hours) + (Math.Abs(hours) == 1 ? " hour." : " hours.");
+            else
+                TempData["AdminWarning"] = failure;
+
+            return Back(back, "members");
+        }
+
+        private IActionResult Back(string? back, string? tab)
+        {
+            if (!string.IsNullOrEmpty(back) && Url.IsLocalUrl(back))
+                return LocalRedirect(back);
 
             return RedirectToAction(nameof(Index), new { tab });
         }
