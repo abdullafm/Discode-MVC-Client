@@ -1579,3 +1579,6 @@ body.server-dragging .server-tip { display: none !important; }
 
 /* an opened bio bubble that is positioned absolutely keeps its width instead of shrinking to the space that is left (it grew as a thin tall column) */
 .dm-profile-bubble.bio-open, .member-pop-chip.bio-open, .me-status-bubble.bio-open, .me-chip.bio-open { width: max-content; min-width: 140px; }
+
+/* the small profile card: the bubble starts under the banner and stays inside the card */
+.mini-profile .dm-profile-bubble:has(.bio-split) { top: 38px; bottom: auto; left: 86px; }

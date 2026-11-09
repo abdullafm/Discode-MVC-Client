@@ -486,7 +486,8 @@
         var node = bubble.parentElement;
         while (node && node !== document.body) {
             var o = getComputedStyle(node).overflowX;
-            if (o !== "visible") return node.getBoundingClientRect().right;
+            // a floating profile card is the edge too, even when it does not clip
+            if (o !== "visible" || node.matches(".mini-profile, .member-pop, .me-pop")) return node.getBoundingClientRect().right;
             node = node.parentElement;
         }
         return window.innerWidth;
