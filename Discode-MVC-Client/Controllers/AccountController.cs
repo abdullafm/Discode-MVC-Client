@@ -124,16 +124,6 @@ namespace Discode_MVC_Client.Controllers
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
                 var avatarUrl = (model?.AvatarUrl ?? string.Empty).Trim();
-                if (avatarUrl.Length == 0)
-                {
-                    var profile = await client.GetFromJsonAsync<JsonElement>("api/account/profile");
-                    var userName = profile.TryGetProperty("userName", out var name) ? name.GetString() ?? string.Empty : string.Empty;
-                    var folder = Path.Combine(_environment.WebRootPath, "uploads", "avatars");
-                    Directory.CreateDirectory(folder);
-                    await System.IO.File.WriteAllTextAsync(Path.Combine(folder, userId + ".svg"), LetterAvatar(userName));
-                    avatarUrl = "/uploads/avatars/" + userId + ".svg?v=" + DateTime.UtcNow.Ticks;
-                }
-
                 var response = await client.PostAsJsonAsync("api/account/profile-setup", new { avatarUrl });
                 var result = await ReadJsonAsync<UpdateProfileResponseUIVM>(response);
                 if (!response.IsSuccessStatusCode || result is null || !result.IsSuccess)
@@ -145,15 +135,6 @@ namespace Discode_MVC_Client.Controllers
             {
                 return StatusCode(503, new { errors = new[] { "The service is unavailable right now. Please try again later." } });
             }
-        }
-
-        private static string LetterAvatar(string userName)
-        {
-            var first = userName.Trim().Length > 0 ? char.ToUpperInvariant(userName.Trim()[0]) : '?';
-            var letter = char.IsLetterOrDigit(first) ? first.ToString() : "?";
-            return "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 128 128\"><rect width=\"128\" height=\"128\" fill=\"#5865f2\"/>"
-                + "<text x=\"64\" y=\"66\" font-family=\"Arial, Helvetica, sans-serif\" font-size=\"64\" font-weight=\"700\" fill=\"#ffffff\" text-anchor=\"middle\" dominant-baseline=\"central\">"
-                + System.Security.SecurityElement.Escape(letter) + "</text></svg>";
         }
 
         [HttpGet]

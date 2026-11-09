@@ -33,6 +33,11 @@
         return ownHandle || nodeText("#me-handle-name") || nodeText("#settings-username");
     }
 
+    function letterAvatar() {
+        var first = (meHandle() || "").trim().charAt(0);
+        return "/avatar/letter/" + (/^[A-Za-z0-9]$/.test(first) ? first.toUpperCase() : "_");
+    }
+
     function profileValue(id, fallback) {
         var el = document.getElementById(id);
         if (!el) return fallback || "";
@@ -668,7 +673,7 @@
             savedBannerUrl = "";
             if (/\.gif(\?|$)/i.test(savedAvatarUrl || "")) {
                 savedAvatarUrl = "";
-                applyOwnPhoto(DEFAULT_AVATAR);
+                applyOwnPhoto(letterAvatar());
             }
         }
         paintOwnPerks();
@@ -1210,7 +1215,7 @@
             var avatar = document.getElementById("me-edit-avatar-preview");
             if (avatar && ownPhoto) avatar.src = ownPhoto;
             var remove = document.getElementById("me-edit-avatar-remove");
-            if (remove) remove.hidden = !ownPhoto || ownPhoto.indexOf("img-icon-profile") >= 0;
+            if (remove) remove.hidden = !ownPhoto || ownPhoto.indexOf("img-icon-profile") >= 0 || ownPhoto.indexOf("/avatar/letter/") >= 0;
             var removeBanner = document.getElementById("me-edit-banner-remove");
             if (removeBanner) removeBanner.hidden = !savedBannerUrl;
             var current = (savedBannerColor || "").toLowerCase();
@@ -1261,7 +1266,7 @@
             savedAvatarUrl = "";
             var hidden = document.getElementById("Update_AvatarUrl");
             if (hidden) hidden.value = "";
-            applyOwnPhoto(DEFAULT_AVATAR);
+            applyOwnPhoto(letterAvatar());
             paintPanel();
             saveProfile();
         });
