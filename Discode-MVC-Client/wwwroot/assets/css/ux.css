@@ -1530,3 +1530,25 @@ body.server-dragging .server-tip { display: none !important; }
 .live-mute-custom input { width: 72px; padding: 7px 9px; border: 1px solid rgba(128, 132, 142, 0.5); border-radius: 6px; background: transparent; color: inherit; font: inherit; }
 .live-mute-custom select { padding: 7px 9px; border: 1px solid rgba(128, 132, 142, 0.5); border-radius: 6px; background: transparent; color: inherit; font: inherit; }
 #live-chat-input:disabled { opacity: .6; cursor: not-allowed; }
+
+/* sharing a post: the card in a chat, the friend picker note, the window a shared link opens */
+.dm-post-embed { display: flex; flex-direction: column; gap: 8px; max-width: 380px; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(128, 132, 142, 0.35); background: rgba(128, 132, 142, 0.12); }
+.dm-post-embed-head { display: flex; align-items: center; gap: 10px; }
+.dm-post-embed-head img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+.dm-post-embed-head span { display: flex; flex-direction: column; min-width: 0; }
+.dm-post-embed-head small { opacity: .7; }
+.dm-post-embed-text { margin: 0; font-size: 14px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.dm-post-embed-photo { width: 100%; max-height: 260px; border-radius: 8px; object-fit: cover; }
+.dm-post-embed-open { align-self: flex-start; padding: 6px 14px; border-radius: 6px; background: #5865f2; color: #fff !important; font-size: 13px; font-weight: 700; text-decoration: none !important; }
+.dm-post-embed-open:hover { background: #4752c4; }
+.dm-post-embed-gone { opacity: .75; font-size: 14px; }
+.post-share-note { width: 100%; margin-top: 10px; padding: 10px 12px; border: 1px solid rgba(128, 132, 142, 0.5); border-radius: 8px; background: transparent; color: inherit; font: inherit; font-size: 14px; }
+.post-view-card { width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow-y: auto; }
+.post-view-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.post-view-head img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+.post-view-head span { display: flex; flex-direction: column; }
+.post-view-head small { opacity: .7; }
+.post-view-text { margin: 0 0 10px; font-size: 16px; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }
+.post-view-photo { width: 100%; border-radius: 10px; margin-bottom: 10px; }
+.post-view-meta { margin: 0; font-size: 13px; opacity: .7; }
+.dm-msg-text.is-card-only { display: none; }

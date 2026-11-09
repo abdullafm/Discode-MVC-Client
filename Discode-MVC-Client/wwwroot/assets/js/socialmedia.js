@@ -641,6 +641,8 @@ function renderFeed() {
             repost.setAttribute("data-repost-post", post.id);
             setRepost(repost, post.reposted, post.reposts || 0);
         }
+        var share = card.querySelector("[data-share-post]");
+        if (share) share.setAttribute("data-share-post", post.id);
         var comments = card.querySelector(".comment-list");
         threadComments(post.comments || []).forEach(function (entry) {
             var comment = entry.comment;

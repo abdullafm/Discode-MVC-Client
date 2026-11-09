@@ -290,8 +290,32 @@
     var cache = {};
     var YOUTUBE = /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i;
 
+    // a link to a post of this site becomes a post card
+    function ownPostId(url) {
+        try {
+            var parsed = new URL(url, window.location.origin);
+            if (parsed.origin !== window.location.origin || !/^\/social(\/index)?\/?$/i.test(parsed.pathname)) return 0;
+            var id = Number(parsed.searchParams.get("post"));
+            return id > 0 ? id : 0;
+        } catch (error) {
+            return 0;
+        }
+    }
+
     function fetchPreview(url) {
         if (cache[url]) return cache[url];
+        var postId = ownPostId(url);
+        if (postId) {
+            cache[url] = fetch("/Home/PostCard?id=" + postId, {
+                credentials: "same-origin",
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            }).then(function (response) {
+                return response.ok ? response.json() : { type: "post-missing", postId: postId };
+            }).then(function (post) {
+                return post.type === "post-missing" ? post : { type: "post", postId: postId, post: post };
+            }).catch(function () { return null; });
+            return cache[url];
+        }
         cache[url] = fetch("/Link/Preview?url=" + encodeURIComponent(url), {
             credentials: "same-origin",
             headers: { "X-Requested-With": "XMLHttpRequest" }
@@ -301,7 +325,64 @@
         return cache[url];
     }
 
+    function postEmbed(url, data) {
+        var box = document.createElement("div");
+        box.className = "dm-embed dm-post-embed";
+        box.setAttribute("data-embed-for", url);
+        if (data.type === "post-missing") {
+            var gone = document.createElement("div");
+            gone.className = "dm-post-embed-gone";
+            gone.textContent = "This post is not available.";
+            box.appendChild(gone);
+            return box;
+        }
+        var post = data.post || {};
+        var head = document.createElement("div");
+        head.className = "dm-post-embed-head";
+        var face = document.createElement("img");
+        face.alt = "";
+        face.src = post.authorAvatarUrl || "/assets/img/img-icon-profile.jpeg";
+        var names = document.createElement("span");
+        var strong = document.createElement("strong");
+        strong.textContent = post.authorDisplayName || post.authorUserName || "";
+        var small = document.createElement("small");
+        small.textContent = "@" + (post.authorUserName || "");
+        names.appendChild(strong);
+        names.appendChild(small);
+        head.appendChild(face);
+        head.appendChild(names);
+        box.appendChild(head);
+        if (post.text) {
+            var text = document.createElement("p");
+            text.className = "dm-post-embed-text";
+            text.textContent = post.text.length > 280 ? post.text.slice(0, 277) + "..." : post.text;
+            box.appendChild(text);
+        }
+        if (post.imageUrl) {
+            var picture = document.createElement("img");
+            picture.className = "dm-post-embed-photo";
+            picture.alt = "";
+            picture.loading = "lazy";
+            picture.src = post.imageUrl;
+            picture.addEventListener("error", function () { picture.remove(); });
+            box.appendChild(picture);
+        }
+        var open = document.createElement("a");
+        open.className = "dm-post-embed-open";
+        open.href = url;
+        open.textContent = "View post";
+        open.addEventListener("click", function (event) {
+            if (window.discodeGo && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+                event.preventDefault();
+                window.discodeGo(url);
+            }
+        });
+        box.appendChild(open);
+        return box;
+    }
+
     function embedNode(url, data) {
+        if (data && (data.type === "post" || data.type === "post-missing")) return postEmbed(url, data);
         if (!data || data.type === "none") return null;
         var box = document.createElement("div");
         box.className = "dm-embed";
@@ -398,6 +479,8 @@
             if (!node) return;
             var again = row.querySelector(".dm-msg-text");
             if (again && again.parentNode) again.parentNode.insertBefore(node, again.nextSibling);
+            // a message that is only a shared post shows just the card
+            if (again && node.classList.contains("dm-post-embed") && again.textContent.trim() === url) again.classList.add("is-card-only");
         });
     }
 

@@ -408,6 +408,26 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public Task<IActionResult> SharePost([FromBody] SharePostUIVM model)
+        {
+            if (model is null || model.Id <= 0 || model.UserNames is null || model.UserNames.Count == 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Pick at least one friend." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/post/{model.Id}/share", new { userNames = model.UserNames, note = model.Note ?? string.Empty }));
+        }
+
+        // one post, for the card in a chat message and for the window a shared link opens
+        [HttpGet]
+        public Task<IActionResult> PostCard(int id)
+        {
+            if (id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
+
+            return ForwardToApi(client => client.GetAsync($"api/post/{id}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public Task<IActionResult> TogglePostRepost([FromBody] PostIdUIVM model)
         {
             if (model is null || model.Id <= 0)
