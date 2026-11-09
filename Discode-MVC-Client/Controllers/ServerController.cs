@@ -51,6 +51,12 @@ namespace Discode_MVC_Client.Controllers
                         TempData["Error"] = "This server has been banned by the administrators.";
                         return RedirectToAction("Index", "Home");
                     }
+
+                    if (check.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        TempData["Error"] = "That server does not exist any more, or you are not a member of it.";
+                        return RedirectToAction("Index", "Home");
+                    }
                 }
                 catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
                 {

@@ -498,7 +498,7 @@ function showDmPage() {
         var edited = texts[j].querySelector(".dm-msg-edited");
         var text = edited ? texts[j].firstChild.textContent : texts[j].textContent;
         FLAG_RE.lastIndex = 0;
-        if (!FLAG_RE.test(text)) continue;
+        var flagged = FLAG_RE.test(text);
         FLAG_RE.lastIndex = 0;
         if (!flagged && !(window.discodeFormat && window.discodeFormat.hasMarkup(text))) continue;
         while (texts[j].firstChild) texts[j].removeChild(texts[j].firstChild);
