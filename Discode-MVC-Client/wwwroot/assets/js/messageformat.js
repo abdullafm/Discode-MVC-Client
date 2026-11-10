@@ -497,6 +497,32 @@
         return box;
     }
 
+    var POST_LINK = /\/Social\/Index\?post=\d+/;
+
+    (function addStyle() {
+        if (document.getElementById("mf-style")) return;
+        var style = document.createElement("style");
+        style.id = "mf-style";
+        style.textContent = ".dm-msg-text > a.fmt-link[data-url*='/Social/Index?post=']:only-child{display:none}"
+            + ".dm-post-embed.is-loading{min-height:128px;pointer-events:none}"
+            + ".dm-post-embed.is-loading span{display:block;border-radius:6px;background:rgba(128,132,142,.28);animation:mf-pulse 1.1s ease-in-out infinite}"
+            + ".dm-post-embed.is-loading .sk-head{display:flex;gap:10px;align-items:center;margin-bottom:12px}"
+            + ".dm-post-embed.is-loading .sk-avatar{width:40px;height:40px;border-radius:50%}"
+            + ".dm-post-embed.is-loading .sk-name{width:110px;height:12px;margin-bottom:6px}"
+            + ".dm-post-embed.is-loading .sk-handle{width:70px;height:10px}"
+            + ".dm-post-embed.is-loading .sk-line{width:90%;height:12px;margin-bottom:8px}"
+            + ".dm-post-embed.is-loading .sk-btn{width:84px;height:30px;margin-top:6px}"
+            + "@keyframes mf-pulse{0%,100%{opacity:.55}50%{opacity:1}}";
+        document.head.appendChild(style);
+    })();
+
+    function loadingCard() {
+        var box = document.createElement("div");
+        box.className = "dm-embed dm-post-embed is-loading";
+        box.innerHTML = '<div class="sk-head"><span class="sk-avatar"></span><div><span class="sk-name"></span><span class="sk-handle"></span></div></div><span class="sk-line"></span><span class="sk-btn"></span>';
+        return box;
+    }
+
     function processRow(row) {
         var holder = row.querySelector(".dm-msg-text");
         if (!holder) return;
@@ -508,10 +534,20 @@
         if (old) old.remove();
         row.setAttribute("data-embed-url", url);
         if (!url) return;
+        var waiting = null;
+        if (POST_LINK.test(url) && holder.parentNode) {
+            if (holder.textContent.trim() === url) holder.classList.add("is-card-only");
+            waiting = loadingCard();
+            holder.parentNode.insertBefore(waiting, holder.nextSibling);
+        }
         fetchPreview(url).then(function (data) {
             if (row.getAttribute("data-embed-url") !== url || !row.isConnected) return;
             var node = embedNode(url, data);
-            if (!node) return;
+            if (waiting && waiting.parentNode) waiting.parentNode.removeChild(waiting);
+            if (!node) {
+                if (waiting) holder.classList.remove("is-card-only");
+                return;
+            }
             var again = row.querySelector(".dm-msg-text");
             if (again && again.parentNode) again.parentNode.insertBefore(node, again.nextSibling);
             if (again && (node.classList.contains("dm-post-embed") || node.classList.contains("dm-gift-embed")) && again.textContent.trim() === url) again.classList.add("is-card-only");
