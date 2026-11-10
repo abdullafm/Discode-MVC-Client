@@ -334,9 +334,11 @@
     });
     function place() {
         var rect = panel.getBoundingClientRect();
+        var dock = document.getElementById("sidebar-dock");
+        var top = dock && dock.contains(panel) ? dock.getBoundingClientRect().top : rect.top;
         pop.style.left = Math.max(8, rect.left) + "px";
         pop.style.top = "auto";
-        pop.style.bottom = (window.innerHeight - rect.top + 8) + "px";
+        pop.style.bottom = (window.innerHeight - top + 8) + "px";
     }
 
     function closeStatus() {

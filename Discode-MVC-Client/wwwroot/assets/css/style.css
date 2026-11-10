@@ -855,6 +855,10 @@ html.theme-dark .notify-box.open #notify-open {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 
+.notify-count[hidden] {
+    display: none !important;
+}
+
 .theme-dark .notify-count,
 html.theme-dark .notify-count {
     background: #da373c !important;
