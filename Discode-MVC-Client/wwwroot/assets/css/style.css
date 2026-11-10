@@ -263,6 +263,17 @@ body .conversation-sidebar .shortcut-list .shortcut-item .new-badge {
     transform: translate(0%, -50%);
 }
 
+body .conversation-sidebar .shortcut-list .shortcut-item .new-badge,
+body .conversation-sidebar .shortcut-list .shortcut-item .promo-badge {
+    max-width: 124px;
+    font-size: 10.5px;
+    letter-spacing: -0.2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
 body .conversation-sidebar .shortcut-list .shortcut-item .promo-badge {
     background-image: linear-gradient(to right, hsl(269 calc(1 * 52.7%) 52.7% / 1), hsl(325 calc(1 * 31.7%) 51.8% / 1));
     color: white;
