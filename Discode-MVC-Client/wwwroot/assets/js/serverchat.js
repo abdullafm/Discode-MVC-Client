@@ -90,6 +90,14 @@
         return have !== 0 && (have & 131072) === 131072;
     }
 
+    function canPin() {
+        var button = document.querySelector('.server-channel[data-id="' + channelId + '"]');
+        if (button && button.hasAttribute("data-manage-messages")) {
+            return button.getAttribute("data-manage-messages") === "1";
+        }
+        return (perms() & 512) === 512;
+    }
+
     function lastRow() {
         var last = box.lastElementChild;
         while (last && !last.hasAttribute("data-id")) last = last.previousElementSibling;
@@ -345,6 +353,10 @@
 
     function send() {
         if (!channelId || !canSend()) return;
+        if (slowSeconds() && slowUntil > Date.now()) {
+            showError("Slowmode is on. You can send another message in " + Math.ceil((slowUntil - Date.now()) / 1000) + " seconds.");
+            return;
+        }
         var text = window.GroupParts.text();
         var ready = window.GroupParts.takeFiles();
         if (ready === null) {
@@ -365,7 +377,10 @@
         }).then(function (message) {
             ready.forEach(function (item) { if (item.previewUrl) URL.revokeObjectURL(item.previewUrl); });
             if (sentTo === channelId) append(message, true);
+            startSlow(slowSeconds());
         }).catch(function (error) {
+            var waited = /in (\d+) second/.exec(error.message || "");
+            if (waited) startSlow(Number(waited[1]));
             showError(error.message);
             window.GroupParts.restore(text);
             window.GroupParts.giveBack(ready);
@@ -392,7 +407,7 @@
     var context = {
         edit: editMessage,
         pin: pinMessage,
-        canPin: function () { return (perms() & 512) === 512; },
+        canPin: canPin,
         onPinsChanged: function () { if (pinsOpen()) loadPins().catch(function () {}); },
         box: box,
         input: input,
@@ -436,6 +451,58 @@
         if (timeoutClock) timeoutClock.textContent = clock;
     }
 
+    var slowChip = null;
+    var slowUntil = 0;
+    var slowTimer = 0;
+
+    function slowSeconds() {
+        var button = document.querySelector('.server-channel[data-id="' + channelId + '"]');
+        if (!button || button.getAttribute("data-kind") === "voice") return 0;
+        if (button.getAttribute("data-manage-messages") === "1") return 0;
+        return Number(button.getAttribute("data-slow")) || 0;
+    }
+
+    function slowLabel(seconds) {
+        if (seconds >= 3600) return Math.round(seconds / 3600) + "h";
+        if (seconds >= 60) return Math.round(seconds / 60) + "m";
+        return seconds + "s";
+    }
+
+    function paintSlow() {
+        var every = channelId ? slowSeconds() : 0;
+        if (!every) {
+            slowUntil = 0;
+            if (slowTimer) { window.clearInterval(slowTimer); slowTimer = 0; }
+            if (slowChip) slowChip.hidden = true;
+            return;
+        }
+        if (!slowChip) {
+            slowChip = document.createElement("span");
+            slowChip.className = "slow-chip";
+            slowChip.setAttribute("role", "status");
+            compose.appendChild(slowChip);
+        }
+        slowChip.hidden = false;
+        var left = Math.ceil((slowUntil - Date.now()) / 1000);
+        if (left > 0) {
+            slowChip.className = "slow-chip is-waiting";
+            slowChip.innerHTML = '<i class="fa-solid fa-hourglass-half"></i> ' + left + "s";
+            slowChip.title = "Slowmode is on. You can send another message in " + left + " seconds.";
+            return;
+        }
+        slowChip.className = "slow-chip";
+        slowChip.innerHTML = '<i class="fa-solid fa-hourglass-half"></i> ' + slowLabel(every);
+        slowChip.title = "Slowmode: one message every " + slowLabel(every);
+        if (slowTimer) { window.clearInterval(slowTimer); slowTimer = 0; }
+    }
+
+    function startSlow(seconds) {
+        if (!(seconds > 0)) return;
+        slowUntil = Date.now() + seconds * 1000;
+        paintSlow();
+        if (!slowTimer) slowTimer = window.setInterval(paintSlow, 250);
+    }
+
     function paintAccess() {
         context.canDeleteAny = (perms() & 512) === 512;
         var timedOut = timeoutLeft() > 0;
@@ -446,7 +513,8 @@
         var pollItem = document.querySelector('#group-attach-menu [data-act="poll"]');
         if (pollItem) pollItem.hidden = !canPoll();
         compose.hidden = !channelId || !allowed;
-        if (lockNote) lockNote.hidden = !channelId || allowed;
+        paintSlow();
+        if (lockNote) lockNote.hidden = !channelId || allowed || timedOut;
         if (placeholder) placeholder.textContent = "Message " + (channelKind === "announce" ? "" : "#") + channelName;
         input.setAttribute("data-placeholder", "Message " + (channelKind === "announce" ? "" : "#") + channelName);
     }
@@ -476,6 +544,7 @@
             generation += 1;
             loaded = [];
             box.textContent = "";
+            if (window.discodeChat) window.discodeChat.close();
             scroller.hidden = true;
             compose.hidden = true;
             if (lockNote) lockNote.hidden = true;
@@ -484,7 +553,6 @@
         open: function (button) {
             var id = Number(button.getAttribute("data-id")) || 0;
             if (!id) {
-            if (window.discodeChat) window.discodeChat.close();
                 channelId = 0;
                 scroller.hidden = true;
                 compose.hidden = true;
@@ -506,6 +574,7 @@
             loaded = [];
             hasMore = true;
             box.textContent = "";
+            if (window.discodeChat) window.discodeChat.open("channel", serverId + ":" + channelId, box);
             window.GroupParts.cancelReply();
             window.GroupParts.clear();
             showError("");
@@ -514,7 +583,6 @@
             if (introTitle) introTitle.textContent = channelKind === "announce" ? "Welcome to " + channelName + "!" : "Welcome to #" + channelName + "!";
             if (introText) introText.textContent = channelKind === "announce" ? "This is the start of the " + channelName + " channel." : "This is the start of the #" + channelName + " channel.";
             if (introBadge) introBadge.className = "fa-solid " + (channelKind === "announce" ? "fa-bullhorn" : "fa-hashtag");
-            if (window.discodeChat) window.discodeChat.open("channel", serverId + ":" + channelId, box);
             paintAccess();
             loadMessages(generation);
         }

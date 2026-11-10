@@ -8,5 +8,6 @@ namespace Discode_MVC_Client.ViewModels.Servers
         public int? CategoryId { get; set; }
         public bool IsPrivate { get; set; }
         public int UserLimit { get; set; }
+        public int SlowModeSeconds { get; set; }
     }
 }

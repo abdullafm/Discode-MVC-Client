@@ -16,6 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discode Admin</title>
     <link rel="stylesheet" href="~/assets/css/style.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/assets/css/servertemplate.css" asp-append-version="true">
     @RenderSection("Styles", required: false)
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
@@ -595,6 +596,8 @@
                             class="fa-solid fa-chevron-right"></i></button>
                     <h2 class="server-invite-title">Have an invite already?</h2>
                     <button type="button" class="server-join-open" id="server-join-open">Join a Server</button>
+                    <h2 class="server-invite-title">Start from a template</h2>
+                    <button type="button" class="server-join-open" id="server-template-open">Use a Template</button>
                 </section>
                 <section id="server-create" hidden>
                     <h2>Customize your server</h2>
@@ -619,6 +622,20 @@
                     <div class="server-modal-actions">
                         <button type="button" id="server-join-back">Back</button>
                         <button type="button" id="server-join-done">Join Server</button>
+                    </div>
+                </section>
+                <section id="server-template" hidden>
+                    <h2>Use a Template</h2>
+                    <p>Paste a template link to start a server with the same channels and roles.</p>
+                    <label for="server-template-code">Template Link</label>
+                    <input id="server-template-code" type="text" placeholder="https://discode/template/abc123">
+                    <div class="tpl-card" id="server-template-preview" hidden></div>
+                    <label for="server-template-name" id="server-template-name-label" hidden>Server Name</label>
+                    <input id="server-template-name" type="text" maxlength="32" hidden>
+                    <p class="server-modal-error" id="server-template-error" hidden>Enter a template link.</p>
+                    <div class="server-modal-actions">
+                        <button type="button" id="server-template-back">Back</button>
+                        <button type="button" id="server-template-go">Look Up</button>
                     </div>
                 </section>
             </div>

@@ -1,0 +1,145 @@
+.tpl-card {
+    margin: 14px 0 6px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #f2f3f5;
+    color: #060607;
+    text-align: left;
+}
+
+.tpl-card strong {
+    display: block;
+    font-size: 16px;
+}
+
+.tpl-card p {
+    margin: 4px 0 8px;
+    color: #5c5e66;
+    font-size: 13px;
+}
+
+.tpl-card ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 150px;
+    overflow: auto;
+    font-size: 13px;
+}
+
+.tpl-card li {
+    padding: 2px 0;
+    color: #4e5058;
+}
+
+.tpl-card li b {
+    color: #060607;
+}
+
+html.theme-dark .tpl-card {
+    background: #2b2d31;
+    color: #f2f3f5;
+}
+
+html.theme-dark .tpl-card p,
+html.theme-dark .tpl-card li {
+    color: #b5bac1;
+}
+
+html.theme-dark .tpl-card li b {
+    color: #f2f3f5;
+}
+
+.template-panel .template-lead {
+    margin: 0 0 18px;
+    color: #80848e;
+    line-height: 1.45;
+}
+
+.template-panel label {
+    display: block;
+    margin: 12px 0 6px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.template-panel input[type="text"],
+.template-panel textarea {
+    width: 100%;
+    max-width: 520px;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 4px;
+    background: #1e1f22;
+    color: #f2f3f5;
+    font: inherit;
+    outline: none;
+}
+
+.template-panel textarea {
+    resize: vertical;
+    min-height: 64px;
+}
+
+.template-panel .template-row {
+    display: flex;
+    gap: 8px;
+    max-width: 520px;
+}
+
+.template-panel button {
+    margin-top: 14px;
+    height: 38px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 4px;
+    background: #5865f2;
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.template-panel button.template-danger {
+    background: transparent;
+    color: #f23f43;
+    border: 1px solid #f23f43;
+}
+
+.template-panel button.template-quiet {
+    background: #4e5058;
+}
+
+.template-panel .template-row button {
+    margin-top: 0;
+}
+
+.template-panel .template-stats {
+    margin: 14px 0 0;
+    color: #80848e;
+    font-size: 13px;
+}
+
+.template-panel .template-old {
+    margin: 14px 0 0;
+    padding: 10px 12px;
+    max-width: 520px;
+    border-radius: 6px;
+    background: rgba(250, 166, 26, 0.14);
+    color: #faa61a;
+    font-size: 13px;
+}
+
+.template-panel .template-error {
+    margin: 12px 0 0;
+    color: #f23f43;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.template-panel [hidden] {
+    display: none !important;
+}

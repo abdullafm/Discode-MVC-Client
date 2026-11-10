@@ -2146,7 +2146,7 @@ function dmOpenForward(row) {
     document.getElementById("dm-forward-submit").disabled = true;
     document.getElementById("dm-forward-modal").hidden = false;
     document.getElementById("dm-forward-search").focus();
-    fetch("/Dm/ForwardTargets", {
+    fetch("/Dm/ForwardTargets?groups=true", {
         credentials: "same-origin",
         headers: { "X-Requested-With": "XMLHttpRequest" }
     }).then(function (response) {
@@ -2156,8 +2156,17 @@ function dmOpenForward(row) {
         if (dmForwardRow !== row) return;
         list.innerHTML = html;
     }).catch(function () {
-        dmForwardError("Could not load your friends. Try again.");
+        dmForwardError("Could not load your friends and groups. Try again.");
     });
+}
+
+function dmSplitTargets(values) {
+    var out = { userNames: [], groupIds: [] };
+    values.forEach(function (value) {
+        if (value.indexOf("group:") === 0) out.groupIds.push(Number(value.slice(6)));
+        else out.userNames.push(value);
+    });
+    return out;
 }
 
 function dmSubmitForward() {
@@ -2171,7 +2180,8 @@ function dmSubmitForward() {
     dmForwardError("");
     dmRequest("/Dm/Forward", "POST", {
         id: Number(row.getAttribute("data-id")),
-        userNames: names,
+        userNames: dmSplitTargets(names).userNames,
+        groupIds: dmSplitTargets(names).groupIds,
         note: document.getElementById("dm-forward-note").value.trim()
     }).then(function () {
         dmCloseForward();

@@ -32,14 +32,18 @@
         button.setAttribute("data-view", channel.isPrivate ? "0" : "1");
         button.setAttribute("data-readonly", channel.isReadOnly ? "1" : "0");
         button.setAttribute("data-limit", channel.userLimit || 0);
+        button.setAttribute("data-slow", channel.slowModeSeconds || 0);
         button.querySelector(".server-channel-name").textContent = channel.name;
         var lock = button.querySelector(".server-channel-lock");
         if (lock) lock.hidden = !channel.isPrivate && channel.kind !== "announce";
+        if (typeof channel.canManageMessages === "boolean") {
+            button.setAttribute("data-manage-messages", channel.canManageMessages ? "1" : "0");
+        }
         if (channel.kind === "voice") {
             button.setAttribute("data-join", "1");
             button.removeAttribute("data-send");
         } else {
-            button.setAttribute("data-send", channel.kind === "announce" || channel.isReadOnly ? "0" : "1");
+            button.setAttribute("data-send", channel.canSend === false || channel.kind === "announce" || channel.isReadOnly ? "0" : "1");
             var people = frag.querySelector(".server-voice-people");
             if (people) people.remove();
             var invite = frag.querySelector(".server-channel-invite");
@@ -184,7 +188,8 @@
                 kind: options.kind,
                 categoryId: options.categoryId ? Number(options.categoryId) : null,
                 isPrivate: !!options.isPrivate,
-                userLimit: Number(options.userLimit) || 0
+                userLimit: Number(options.userLimit) || 0,
+                slowModeSeconds: Number(options.slowModeSeconds) || 0
             }).then(function (channel) {
                 return reload(channel.id).then(function () { return channel; });
             });
@@ -208,6 +213,7 @@
                 name: options.name,
                 syncWithCategory: options.syncWithCategory === undefined ? null : options.syncWithCategory,
                 userLimit: options.userLimit === undefined ? null : options.userLimit,
+                slowModeSeconds: options.slowModeSeconds === undefined ? null : options.slowModeSeconds,
                 overwrites: options.overwrites || null
             }).then(function (channel) {
                 return reload().then(function () { return channel; });

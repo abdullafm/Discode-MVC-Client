@@ -2420,12 +2420,9 @@ html.theme-dark .dm-call-msg.is-missed .dm-call-text strong {
     background: rgba(242, 63, 67, 0.14);
 }
 
-body .conversation-sidebar .user-panel .user-controls > button:has(i.mute) {
-    background-color: rgba(218, 55, 60, 0.14);
-}
-
+body .conversation-sidebar .user-panel .user-controls > button:has(i.mute),
 html.theme-dark body .conversation-sidebar .user-panel .user-controls > button:has(i.mute) {
-    background-color: rgba(218, 55, 60, 0.22);
+    background-color: transparent;
 }
 
 .call-face.is-peer {
@@ -3926,4 +3923,12 @@ html.theme-dark .msg-search-item:hover {
 
 .dm-friend-menu button {
     white-space: nowrap;
+}
+
+.dm-forward-group-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(99, 102, 241, 0.22);
+    color: #c7d2fe;
 }

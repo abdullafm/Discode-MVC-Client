@@ -112,7 +112,7 @@ namespace Discode_MVC_Client.Controllers
             if (model is null || model.Id <= 0 || model.MessageId <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
 
-            return Forward(client => client.PostAsJsonAsync($"api/group/{model.Id}/messages/{model.MessageId}/forward", new { userNames = model.UserNames ?? new List<string>(), note = model.Note ?? string.Empty }));
+            return Forward(client => client.PostAsJsonAsync($"api/group/{model.Id}/messages/{model.MessageId}/forward", new { userNames = model.UserNames ?? new List<string>(), groupIds = model.GroupIds ?? new List<int>(), note = model.Note ?? string.Empty }));
         }
 
         [HttpPost]

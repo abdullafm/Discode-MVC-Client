@@ -54,6 +54,7 @@
     window.discodeSetBanner = function (element, cssUrl, color) {
         if (!element) return;
         if (cssUrl) element.style.setProperty("background", cssUrl + " center / cover no-repeat", "important");
+        else if (color && /^#[0-9a-fA-F]{6}$/.test(color)) element.style.setProperty("background", color, "important");
         else element.style.removeProperty("background");
     };
 

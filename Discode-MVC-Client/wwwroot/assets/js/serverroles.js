@@ -189,22 +189,17 @@
             dot.style.background = colorOf(role.color);
             row.appendChild(dot);
             row.appendChild(element("span", "role-label", role.name));
-            if (role.canManage !== false && can(4)) {
-                var moves = element("span", "role-moves");
-                var up = element("span", "role-move", "");
-                up.setAttribute("data-move", "up");
-                up.setAttribute("data-id", role.id);
-                up.setAttribute("aria-label", "Move up");
-                up.innerHTML = "<i class=\"fa-solid fa-chevron-up\"></i>";
-                var down = element("span", "role-move", "");
-                down.setAttribute("data-move", "down");
-                down.setAttribute("data-id", role.id);
-                down.setAttribute("aria-label", "Move down");
-                down.innerHTML = "<i class=\"fa-solid fa-chevron-down\"></i>";
-                moves.appendChild(up);
-                moves.appendChild(down);
-                row.appendChild(moves);
+
+            var canDrag = !role.isEveryone && role.canManage !== false && can(4);
+            if (canDrag) {
+                row.setAttribute("draggable", "true");
+                row.classList.add("can-drag");
+                var grip = element("span", "role-grip");
+                grip.innerHTML = "<i class=\"fa-solid fa-grip-vertical\"></i>";
+                grip.setAttribute("aria-hidden", "true");
+                row.appendChild(grip);
             }
+
             list.appendChild(row);
         });
     }
@@ -572,6 +567,135 @@
         return request(has ? "/ServerRole/Unassign" : "/ServerRole/Assign", { serverId: Number(serverId), roleId: roleId, userId: userId }).then(function () {
             loadRoleMembers();
             document.dispatchEvent(new CustomEvent("discode-server-roles-changed", { detail: { serverId: Number(serverId), local: true } }));
+        });
+    }
+
+    var draggedRoleId = null;
+
+    function clearDropStyles(exceptRow) {
+        if (!list) return;
+        [].forEach.call(list.querySelectorAll(".role-row"), function (row) {
+            if (row !== exceptRow) {
+                row.classList.remove("drop-above", "drop-below", "is-dragging");
+            }
+        });
+    }
+
+    function reorderRoleTo(fromId, toId, before) {
+        var nonEveryone = roles.filter(function (r) { return !r.isEveryone; });
+        var everyone = roles.filter(function (r) { return r.isEveryone; })[0];
+
+        var fromIndex = -1;
+        var toIndex = -1;
+        for (var i = 0; i < nonEveryone.length; i++) {
+            if (nonEveryone[i].id === fromId) fromIndex = i;
+            if (nonEveryone[i].id === toId) toIndex = i;
+        }
+
+        if (fromIndex === -1) return;
+
+        if (toIndex === -1 && everyone && everyone.id === toId) {
+            toIndex = nonEveryone.length;
+            before = true;
+        }
+
+        if (toIndex === -1) return;
+
+        var item = nonEveryone.splice(fromIndex, 1)[0];
+        if (fromIndex < toIndex) toIndex--;
+        if (!before) toIndex++;
+
+        nonEveryone.splice(toIndex, 0, item);
+
+        roles = nonEveryone.concat(everyone ? [everyone] : []);
+        renderList();
+
+        request("/ServerRole/Reorder", {
+            serverId: Number(serverId),
+            roleIds: nonEveryone.map(function (r) { return r.id; })
+        }).then(function () {
+            return loadRoles(true);
+        }).catch(function (error) {
+            loadRoles(true);
+            if (window.discodeServerFlash) window.discodeServerFlash(error.message);
+        });
+    }
+
+    if (list) {
+        list.addEventListener("dragstart", function (e) {
+            var row = e.target.closest(".role-row.can-drag");
+            if (!row) { e.preventDefault(); return; }
+            draggedRoleId = Number(row.getAttribute("data-id"));
+            row.classList.add("is-dragging");
+            e.dataTransfer.effectAllowed = "move";
+            try {
+                e.dataTransfer.setData("text/plain", String(draggedRoleId));
+            } catch (err) {}
+        });
+
+        list.addEventListener("dragend", function () {
+            draggedRoleId = null;
+            clearDropStyles();
+        });
+
+        list.addEventListener("dragover", function (e) {
+            if (!draggedRoleId) return;
+            var targetRow = e.target.closest(".role-row");
+            if (!targetRow || Number(targetRow.getAttribute("data-id")) === draggedRoleId) {
+                return;
+            }
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+
+            clearDropStyles(targetRow);
+
+            var rect = targetRow.getBoundingClientRect();
+            var isAbove = (e.clientY - rect.top) < (rect.height / 2);
+            var targetId = Number(targetRow.getAttribute("data-id"));
+            var targetRole = roles.filter(function (r) { return r.id === targetId; })[0];
+
+            if (targetRole && targetRole.isEveryone && !isAbove) {
+                targetRow.classList.add("drop-above");
+                return;
+            }
+
+            if (isAbove) {
+                targetRow.classList.add("drop-above");
+            } else {
+                targetRow.classList.add("drop-below");
+            }
+        });
+
+        list.addEventListener("dragleave", function (e) {
+            var targetRow = e.target.closest(".role-row");
+            if (targetRow && !targetRow.contains(e.relatedTarget)) {
+                targetRow.classList.remove("drop-above", "drop-below");
+            }
+        });
+
+        list.addEventListener("drop", function (e) {
+            if (!draggedRoleId) return;
+            var targetRow = e.target.closest(".role-row");
+            if (!targetRow) return;
+            e.preventDefault();
+
+            var targetId = Number(targetRow.getAttribute("data-id"));
+            if (targetId === draggedRoleId) {
+                clearDropStyles();
+                return;
+            }
+
+            var rect = targetRow.getBoundingClientRect();
+            var isAbove = (e.clientY - rect.top) < (rect.height / 2);
+            var targetRole = roles.filter(function (r) { return r.id === targetId; })[0];
+            if (targetRole && targetRole.isEveryone) {
+                isAbove = true;
+            }
+
+            var fId = draggedRoleId;
+            draggedRoleId = null;
+            clearDropStyles();
+            reorderRoleTo(fId, targetId, isAbove);
         });
     }
 

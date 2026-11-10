@@ -119,7 +119,8 @@ namespace Discode_MVC_Client.Controllers
                 kind = model.Kind,
                 categoryId = model.CategoryId,
                 isPrivate = model.IsPrivate,
-                userLimit = model.UserLimit
+                userLimit = model.UserLimit,
+                slowModeSeconds = model.SlowModeSeconds
             }));
         }
 
@@ -143,6 +144,7 @@ namespace Discode_MVC_Client.Controllers
                 name = model.Name ?? string.Empty,
                 syncWithCategory = model.SyncWithCategory,
                 userLimit = model.UserLimit,
+                slowModeSeconds = model.SlowModeSeconds,
                 overwrites = model.Overwrites
             }));
         }
@@ -249,6 +251,59 @@ namespace Discode_MVC_Client.Controllers
         public Task<IActionResult> Kick([FromBody] ServerMemberActionUIVM model)
         {
             return Forward(client => client.DeleteAsync($"api/server/{model.ServerId}/members/{Uri.EscapeDataString(model.UserId ?? string.Empty)}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> TransferOwner([FromBody] ServerMemberActionUIVM model)
+        {
+            return Forward(client => client.PostAsJsonAsync($"api/server/{model.ServerId}/owner", new { userId = model.UserId ?? string.Empty }));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> Template(int id)
+        {
+            return Forward(client => client.GetAsync($"api/server/{id}/template"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> SaveTemplate([FromBody] SaveServerTemplateUIVM model)
+        {
+            return Forward(client => client.PostAsJsonAsync($"api/server/{model.ServerId}/template", new { title = model.Title ?? string.Empty, description = model.Description ?? string.Empty }));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> SyncTemplate([FromBody] ServerTemplateActionUIVM model)
+        {
+            return Forward(client => client.PostAsync($"api/server/{model.ServerId}/template/sync", null));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> DeleteTemplate([FromBody] ServerTemplateActionUIVM model)
+        {
+            return Forward(client => client.DeleteAsync($"api/server/{model.ServerId}/template"));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> TemplateInfo(string code)
+        {
+            return Forward(client => client.GetAsync($"api/template/{Uri.EscapeDataString(code ?? string.Empty)}"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> UseTemplate([FromBody] UseServerTemplateUIVM model)
+        {
+            return Forward(client => client.PostAsJsonAsync($"api/template/{Uri.EscapeDataString(model.Code ?? string.Empty)}/use", new { name = model.Name ?? string.Empty }));
+        }
+
+        [HttpGet("/template/{code}")]
+        public IActionResult OpenTemplate(string code)
+        {
+            return RedirectToAction("Index", "Home", new { template = code });
         }
 
         [HttpPost]
