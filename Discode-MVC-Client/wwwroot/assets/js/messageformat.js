@@ -27,6 +27,7 @@
         a.rel = "noopener noreferrer nofollow ugc";
         a.setAttribute("data-url", url);
         if (noEmbed) a.setAttribute("data-noembed", "1");
+        else if (ownGiftCode(url) || ownTemplateCode(url) || ownPostId(url)) a.setAttribute("data-own-embed", "1");
         a.textContent = label;
         return a;
     }
@@ -281,10 +282,14 @@
     var cache = {};
     var YOUTUBE = /^(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i;
 
+    function sameSite(parsed) {
+        return parsed.origin === window.location.origin || parsed.hostname === window.location.hostname;
+    }
+
     function ownPostId(url) {
         try {
             var parsed = new URL(url, window.location.origin);
-            if (parsed.origin !== window.location.origin || !/^\/social(\/index)?\/?$/i.test(parsed.pathname)) return 0;
+            if (!sameSite(parsed) || !/^\/social(\/index)?\/?$/i.test(parsed.pathname)) return 0;
             var id = Number(parsed.searchParams.get("post"));
             return id > 0 ? id : 0;
         } catch (error) {
@@ -295,7 +300,7 @@
     function ownGiftCode(url) {
         try {
             var parsed = new URL(url, window.location.origin);
-            var match = parsed.origin === window.location.origin ? /^\/gift\/([A-Za-z0-9_-]{8,64})\/?$/.exec(parsed.pathname) : null;
+            var match = sameSite(parsed) ? /^\/gift\/([A-Za-z0-9_-]{8,64})\/?$/.exec(parsed.pathname) : null;
             return match ? match[1] : "";
         } catch (error) {
             return "";
@@ -305,7 +310,7 @@
     function ownTemplateCode(url) {
         try {
             var parsed = new URL(url, window.location.origin);
-            var match = parsed.origin === window.location.origin ? /^\/template\/([A-Za-z0-9]{6,40})\/?$/.exec(parsed.pathname) : null;
+            var match = sameSite(parsed) ? /^\/template\/([A-Za-z0-9]{6,40})\/?$/.exec(parsed.pathname) : null;
             return match ? match[1] : "";
         } catch (error) {
             return "";
@@ -580,7 +585,8 @@
         var style = document.createElement("style");
         style.id = "mf-style";
         var own = window.location.origin;
-        style.textContent = ".dm-msg-text > a.fmt-link[data-url^='" + own + "/Social/Index?post=']:only-child{display:none}"
+        style.textContent = ".dm-msg-text > a.fmt-link[data-own-embed]:only-child{display:none}"
+            + ".dm-msg-text > a.fmt-link[data-url^='" + own + "/Social/Index?post=']:only-child{display:none}"
             + ".dm-msg-text > a.fmt-link[data-url^='" + own + "/gift/']:only-child{display:none}"
             + ".dm-msg-text > a.fmt-link[data-url^='" + own + "/template/']:only-child{display:none}"
             + ".dm-tpl-embed{max-width:440px;padding:14px 16px;border-radius:10px;border:1px solid rgba(128,132,142,.35);background:rgba(128,132,142,.12)}"
