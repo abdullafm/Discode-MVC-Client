@@ -675,7 +675,12 @@
             changes.forEach(function (change) {
                 [].forEach.call(change.addedNodes, rowsIn);
             });
-        }).observe(document.body, { childList: true, subtree: true });
+        }).observe(document.documentElement, { childList: true, subtree: true });
+        scanAll();
+        document.addEventListener("discode-page-ready", scanAll);
+    }
+
+    function scanAll() {
         [].forEach.call(document.querySelectorAll(".dm-msg"), schedule);
     }
 
