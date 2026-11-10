@@ -617,7 +617,14 @@
         }
     });
 
-    if (window.matchMedia("(max-width: 1100px)").matches) setMembers(false);
+    var membersPanel = document.getElementById("group-members");
+    if (window.matchMedia("(max-width: 1100px)").matches) {
+        membersPanel.classList.add("no-motion");
+        setMembers(false);
+    }
+    window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(function () { membersPanel.classList.remove("no-motion"); });
+    });
     paintGroup();
     loadMessages().then(function () {
         var pending = "";
