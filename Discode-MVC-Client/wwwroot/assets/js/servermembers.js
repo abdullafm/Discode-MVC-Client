@@ -96,19 +96,6 @@
             reason.autocomplete = "off";
             form.appendChild(reason);
         }
-        var duration = null;
-        if (options.duration) {
-            form.appendChild(element("label", "", "Duration"));
-            duration = document.createElement("select");
-            [[1, "60 secs"], [5, "5 mins"], [10, "10 mins"], [60, "1 hour"], [1440, "1 day"], [10080, "1 week"]].forEach(function (choice) {
-                var opt = document.createElement("option");
-                opt.value = choice[0];
-                opt.textContent = choice[1];
-                duration.appendChild(opt);
-            });
-            duration.value = "10";
-            form.appendChild(duration);
-        }
         var problem = element("p", "confirm-error");
         problem.hidden = true;
         form.appendChild(problem);
@@ -140,11 +127,15 @@
                 method: "POST",
                 credentials: "same-origin",
                 headers: { "Content-Type": "application/json", "RequestVerificationToken": tokenValue(), "X-Requested-With": "XMLHttpRequest" },
-                body: JSON.stringify({ serverId: Number(serverId), userId: options.member.id, reason: reason ? reason.value.trim() : "", minutes: duration ? Number(duration.value) : 0 })
+                body: JSON.stringify({ serverId: Number(serverId), userId: options.member.id, reason: reason ? reason.value.trim() : "" })
             }).then(function (response) {
                 return response.json().catch(function () { return {}; }).then(function (data) {
                     if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "Something went wrong.");
                     dismiss();
+                    if (options.reload) {
+                        window.location.reload();
+                        return;
+                    }
                     load();
                 });
             }).catch(function (error) {
@@ -368,6 +359,18 @@
                 }, true);
             }
         }
+        if (!member.isSelf && !member.isOwner && members.some(function (other) { return other.isSelf && other.isOwner; })) {
+            add("Transfer Ownership", function () {
+                confirmAction({
+                    title: "Transfer ownership to " + member.displayName,
+                    text: "They will own " + "this server and you will lose the owner rights (you keep your roles). Only they can give it back.",
+                    confirm: "Transfer Ownership",
+                    url: "/Server/TransferOwner",
+                    reload: true,
+                    member: member
+                });
+            }, true);
+        }
         menu.hidden = false;
         var rect = anchor.getBoundingClientRect();
         var width = menu.offsetWidth;
@@ -517,6 +520,11 @@
             : value + (value === 1 ? " member" : " members") + " will be removed.";
         go.disabled = value === 0;
     }
+
+    document.addEventListener("discode-server-owner-changed", function (event) {
+        var detail = event && event.detail;
+        if (detail && String(detail.serverId) === String(serverId)) window.location.reload();
+    });
 
     function loadPruneCount() {
         paintPruneCount(null);

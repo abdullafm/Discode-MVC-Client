@@ -16,6 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Discord | Server</title>
     <link rel="stylesheet" href="~/assets/css/style.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/assets/css/servertemplate.css" asp-append-version="true">
     <link rel="stylesheet" href="~/assets/css/server.css" asp-append-version="true">
     <link rel="stylesheet" href="~/assets/css/dm.css" asp-append-version="true">
     <link rel="stylesheet" href="~/assets/css/group.css" asp-append-version="true">
@@ -57,37 +58,26 @@
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
                 <div class="server-menu" id="server-menu" hidden>
-                    <button type="button"><i class="fa-solid fa-gem"></i><span>Server Boost</span></button>
-                    <button type="button" data-invite="server">
-                        <i class="fa-solid fa-user-plus"></i><span>
-                        Invite to
-                        Server
-                    </span>
-                </button>
-                <button type="button" id="server-settings-open">
-                    <i class="fa-solid fa-gear"></i><span>
-                    Server
-                    Settings
-                </span>
-            </button>
-            <button type="button" data-create="channel">
-                <i class="fa-solid fa-hashtag"></i><span>
-                Create
-                Channel
-            </span>
-        </button>
-        <button type="button" data-create="category">
-            <i class="fa-solid fa-folder-plus"></i><span>
-            Create
-            Category
-        </span>
-    </button>
-    <hr class="server-menu-divider" id="server-leave-sep">
-    <button type="button" class="server-menu-item server-menu-leave is-danger" id="server-leave-open">
-        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-        <span>Leave Server</span>
-    </button>
-</div>
+                    <button type="button" id="server-menu-boost"><i class="fa-solid fa-gem"></i><span>Server Boost</span></button>
+                    <hr class="server-menu-divider">
+                    <button type="button" data-invite="server"><i class="fa-solid fa-user-plus"></i><span>Invite to Server</span></button>
+                    <button type="button" id="server-settings-open"><i class="fa-solid fa-gear"></i><span>Server Settings</span></button>
+                    <hr class="server-menu-divider" id="server-create-sep">
+                    <button type="button" data-create="channel"><i class="fa-solid fa-hashtag"></i><span>Create Channel</span></button>
+                    <button type="button" data-create="category"><i class="fa-solid fa-folder-plus"></i><span>Create Category</span></button>
+                    <hr class="server-menu-divider" id="server-prefs-sep">
+                    <button type="button" id="server-menu-show-all"><i class="fa-solid fa-eye"></i><span>Show All Channels</span><i class="fa-solid fa-check server-menu-check" hidden></i></button>
+                    <button type="button" id="server-menu-notify"><i class="fa-solid fa-bell"></i><span>Notification Settings</span></button>
+                    <button type="button" id="server-menu-privacy"><i class="fa-solid fa-shield-halved"></i><span>Privacy Settings</span></button>
+                    <hr class="server-menu-divider">
+                    <button type="button" id="server-menu-profile"><i class="fa-solid fa-pen"></i><span>Edit Per-server Profile</span></button>
+                    <label id="server-menu-hide-muted"><i class="fa-solid fa-eye-slash"></i><span>Hide Muted Channels</span><input type="checkbox"></label>
+                    <hr class="server-menu-divider" id="server-leave-sep">
+                    <button type="button" class="server-menu-item server-menu-leave is-danger" id="server-leave-open">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        <span>Leave Server</span>
+                    </button>
+                </div>
 </div>
 <div class="server-channel-scroll" id="server-channel-scroll">
     <nav id="server-channel-list" aria-label="Channels">
@@ -159,7 +149,10 @@
 </div>
 <div class="server-voice-bar" id="server-voice-bar" hidden>
     <div>
-        <strong><i class="fa-solid fa-signal"></i> Voice Connected</strong>
+        <strong>
+            <span class="vgb-live" aria-hidden="true"><span></span><span></span><span></span></span>
+            Voice Connected
+        </strong>
         <span id="server-voice-bar-where">Lounge@(string.IsNullOrEmpty(ViewData["ServerName"] as string) ? string.Empty : " / " + ViewData["ServerName"])</span>
     </div>
     <button type="button" id="server-voice-bar-leave" aria-label="Disconnect">
@@ -242,6 +235,11 @@
                     <i class="fa-solid fa-user-group"></i>
                     <input id="channel-limit" type="number" min="0" max="99" value="0" placeholder="No limit" autocomplete="off">
                 </div>
+                <label class="channel-kicker" id="channel-slow-label" for="channel-slow">Slowmode</label>
+                <div class="channel-name" id="channel-slow-wrap">
+                    <i class="fa-solid fa-hourglass-half"></i>
+                    <select id="channel-slow" data-modern-select><option value="0">Off</option><option value="5">5s</option><option value="10">10s</option><option value="15">15s</option><option value="30">30s</option><option value="60">1m</option><option value="120">2m</option><option value="300">5m</option><option value="600">10m</option><option value="900">15m</option><option value="1800">30m</option><option value="3600">1h</option><option value="7200">2h</option><option value="21600">6h</option></select>
+                </div>
                 <div class="channel-private">
                     <i class="fa-solid fa-lock"></i>
                     <span><strong>Private Channel</strong><small>Only selected members and roles will be able to view
@@ -274,6 +272,11 @@
                 <div class="channel-name" id="channel-edit-limit-wrap" hidden>
                     <i class="fa-solid fa-user-group"></i>
                     <input id="channel-edit-limit" type="number" min="0" max="99" value="0" placeholder="No limit" autocomplete="off">
+                </div>
+                <label class="channel-kicker" id="channel-edit-slow-label" for="channel-edit-slow">Slowmode</label>
+                <div class="channel-name" id="channel-edit-slow-wrap">
+                    <i class="fa-solid fa-hourglass-half"></i>
+                    <select id="channel-edit-slow" data-modern-select><option value="0">Off</option><option value="5">5s</option><option value="10">10s</option><option value="15">15s</option><option value="30">30s</option><option value="60">1m</option><option value="120">2m</option><option value="300">5m</option><option value="600">10m</option><option value="900">15m</option><option value="1800">30m</option><option value="3600">1h</option><option value="7200">2h</option><option value="21600">6h</option></select>
                 </div>
                 <div class="ow-host" id="channel-overwrites"></div>
                 <div class="channel-actions">
@@ -509,7 +512,6 @@
                         <button type="button" data-color="#e67e22" style="background:#e67e22" aria-label="Orange"></button>
                         <button type="button" data-color="#34495e" style="background:#34495e" aria-label="Slate"></button>
                         <button type="button" data-color="#000000" style="background:#000000" aria-label="Black"></button>
-                <button type="button" class="me-edit-toggle" id="me-edit-toggle" aria-label="Customize profile"><i class="fa-solid fa-palette"></i></button>
                         <label class="me-edit-custom" aria-label="Pick any color" title="Pick any color"><input type="color" id="me-edit-color-input" value="#5865f2"><i class="fa-solid fa-eye-dropper"></i></label>
                         <button type="button" class="me-edit-reset" id="me-edit-color-reset" aria-label="Default color" title="Default color"><i class="fa-solid fa-rotate-left"></i></button>
                     </div>
@@ -518,6 +520,7 @@
         </aside>
             <div class="me-profile-card" role="dialog" aria-label="Profile">
                 <div class="me-private-head" id="me-private-head" hidden><i class="fa-solid fa-lock"></i> <span>Private Profile</span></div>
+                <button type="button" class="me-edit-toggle" id="me-edit-toggle" aria-label="Customize profile"><i class="fa-solid fa-palette"></i></button>
                 <button type="button" class="me-profile-close" id="me-profile-close" aria-label="Close"><i
                         class="fa-solid fa-xmark"></i></button>
                 <div class="me-profile-side">
@@ -540,8 +543,6 @@
                             </div>
                             <button type="button" class="me-status-bubble@(string.IsNullOrWhiteSpace(Model.Profile.CustomStatus) ? "" : " has-bio")" id="me-status-bubble"><i
                                     class="fa-solid fa-plus"></i><span id="me-status-bubble-text">@(string.IsNullOrWhiteSpace(Model.Profile.CustomStatus) ? "Today I learned..." : Model.Profile.CustomStatus)</span></button>
-                            <span class="nitro-badges" id="me-badges" hidden></span>
-                        </div>
                         </div>
                         <form class="me-name-form" id="me-name-form"><input id="me-display-input" type="text"
                                 maxlength="32" value="@Model.Profile.DisplayName" aria-label="Display name"></form>
@@ -550,6 +551,8 @@
                             <p class="me-handle"><span id="me-handle-name">@Model.Profile.UserName</span> <span
                                 id="me-handle-dot">•</span> <button type="button" class="me-pronouns"
                                 id="me-pronouns">@(string.IsNullOrWhiteSpace(Model.Profile.Pronouns) ? "Add pronouns" : Model.Profile.Pronouns)</button><span id="me-view-pronouns" hidden>@Model.Profile.Pronouns</span></p>
+                            <span class="nitro-badges" id="me-badges" hidden></span>
+                        </div>
                         <div class="me-request" id="me-request" hidden>
                             <p id="me-request-text"></p>
                             <div class="me-request-buttons">
@@ -735,16 +738,6 @@
                         <div>
                             <strong class="me-display">@Model.Profile.DisplayName</strong>
                             <span>Edit Profiles</span>
-                        <p>Server Boosts</p>
-                        <ul>
-                            <li><button type="button" data-settings-tab="boosts"><svg aria-hidden="true" class="mb-nav-gem" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M11.02 1.36c.56-.48 1.4-.48 1.96 0l6.48 5.45c.34.29.54.71.54 1.16v8.23c-.05.38-.24.74-.54 1l-6.48 5.44c-.53.45-1.3.48-1.86.09l-.1-.09-6.48-5.45c-.3-.25-.49-.6-.53-1L4 16.04V7.97c0-.45.2-.87.54-1.16l6.48-5.45ZM6.36 7.89a1 1 0 0 0-.36.76v6.7c0 .29.13.57.36.76l5 4.2a1 1 0 0 0 1.28 0l5-4.2a1 1 0 0 0 .36-.77V8.65a1 1 0 0 0-.36-.76l-5-4.2a1 1 0 0 0-1.28 0l-5 4.2Z"></path><path fill="currentColor" d="M11.36 6.3a1 1 0 0 1 1.28 0l3 2.52a1 1 0 0 1 .36.76v4.84a1 1 0 0 1-.36.76l-3 2.53a1 1 0 0 1-1.28 0l-3-2.53a1 1 0 0 1-.36-.76V9.58a1 1 0 0 1 .36-.76l3-2.53Z"></path></svg>
-                                    <span>Server Boosts</span></button></li>
-                        </ul>
-                        <p>Server Boosts</p>
-                        <ul>
-                            <li><button type="button" data-settings-tab="boosts"><i class="fa-solid fa-gem"></i>
-                                    <span>Server Boosts</span></button></li>
-                        </ul>
                         </div>
                     </div>
                     <nav class="settings-tabs" aria-label="Settings">
@@ -752,6 +745,11 @@
                         <ul>
                             <li><button type="button" class="on" data-settings-tab="account"><i
                                         class="fa-solid fa-user"></i> Account Info</button></li>
+                        </ul>
+                        <p>Server Boosts</p>
+                        <ul>
+                            <li><button type="button" data-settings-tab="boosts"><svg aria-hidden="true" class="mb-nav-gem" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M11.02 1.36c.56-.48 1.4-.48 1.96 0l6.48 5.45c.34.29.54.71.54 1.16v8.23c-.05.38-.24.74-.54 1l-6.48 5.44c-.53.45-1.3.48-1.86.09l-.1-.09-6.48-5.45c-.3-.25-.49-.6-.53-1L4 16.04V7.97c0-.45.2-.87.54-1.16l6.48-5.45ZM6.36 7.89a1 1 0 0 0-.36.76v6.7c0 .29.13.57.36.76l5 4.2a1 1 0 0 0 1.28 0l5-4.2a1 1 0 0 0 .36-.77V8.65a1 1 0 0 0-.36-.76l-5-4.2a1 1 0 0 0-1.28 0l-5 4.2Z"></path><path fill="currentColor" d="M11.36 6.3a1 1 0 0 1 1.28 0l3 2.52a1 1 0 0 1 .36.76v4.84a1 1 0 0 1-.36.76l-3 2.53a1 1 0 0 1-1.28 0l-3-2.53a1 1 0 0 1-.36-.76V9.58a1 1 0 0 1 .36-.76l3-2.53Z"></path></svg>
+                                    <span>Server Boosts</span></button></li>
                         </ul>
                         <p>Experience</p>
                         <ul>
@@ -809,18 +807,18 @@
                     </section>
                     <section id="settings-messages" hidden>
                         <div class="settings-panel">
-                    <section id="settings-boosts" hidden>
-                        <div class="settings-panel mb-panel" id="mb-root">
-                            <h2>Server Boosts</h2>
-                            <p class="settings-note" id="mb-loading">Loading...</p>
-                        </div>
-                    </section>
                             <h2>Messaging Permissions</h2>
                         </div>
                     </section>
                     <section id="settings-voice" hidden>
                         <div class="settings-panel">
                             <h2>Voice &amp; Video</h2>
+                        </div>
+                    </section>
+                    <section id="settings-boosts" hidden>
+                        <div class="settings-panel mb-panel" id="mb-root">
+                            <h2>Server Boosts</h2>
+                            <p class="settings-note" id="mb-loading">Loading...</p>
                         </div>
                     </section>
                     <section id="settings-appearance" hidden>
@@ -924,6 +922,8 @@
                             class="fa-solid fa-chevron-right"></i></button>
                     <h2 class="server-invite-title">Have an invite already?</h2>
                     <button type="button" class="server-join-open" id="server-join-open">Join a Server</button>
+                    <h2 class="server-invite-title">Start from a template</h2>
+                    <button type="button" class="server-join-open" id="server-template-open">Use a Template</button>
                 </section>
                 <section id="server-create" hidden>
                     <h2>Customize your server</h2>
@@ -950,6 +950,20 @@
                         <button type="button" id="server-join-done">Join Server</button>
                     </div>
                 </section>
+                <section id="server-template" hidden>
+                    <h2>Use a Template</h2>
+                    <p>Paste a template link to start a server with the same channels and roles.</p>
+                    <label for="server-template-code">Template Link</label>
+                    <input id="server-template-code" type="text" placeholder="https://discode/template/abc123">
+                    <div class="tpl-card" id="server-template-preview" hidden></div>
+                    <label for="server-template-name" id="server-template-name-label" hidden>Server Name</label>
+                    <input id="server-template-name" type="text" maxlength="32" hidden>
+                    <p class="server-modal-error" id="server-template-error" hidden>Enter a template link.</p>
+                    <div class="server-modal-actions">
+                        <button type="button" id="server-template-back">Back</button>
+                        <button type="button" id="server-template-go">Look Up</button>
+                    </div>
+                </section>
             </div>
         </div>
         <div class="incoming-call" id="incoming-call" role="alertdialog" aria-live="assertive" aria-label="Incoming call" hidden>
@@ -973,7 +987,6 @@
         <script src="~/assets/js/emoji.js" asp-append-version="true"></script>
         <script src="~/assets/js/serverchannels.js" asp-append-version="true"></script>
         <script src="~/assets/js/servervoice.js" asp-append-version="true"></script>
-        <script src="~/assets/js/boostsettings.js" asp-append-version="true"></script>
         <script src="~/assets/js/servervoicertc.js" asp-append-version="true"></script>
         <script src="~/assets/js/serveroverwrites.js" asp-append-version="true"></script>
         <script src="~/assets/js/groupparts.js" asp-append-version="true"></script>
@@ -982,12 +995,14 @@
         <script>window.discodeSettings = { theme: "@(Model.Profile.IsDark ? "dark" : "light")", notify: { all: @(Model.Profile.NotifyAll ? "true" : "false"), dm: @(Model.Profile.NotifyDm ? "true" : "false"), friends: @(Model.Profile.NotifyFriends ? "true" : "false"), sound: @(Model.Profile.NotifySound ? "true" : "false") } };</script>
         <input type="hidden" id="Update_UserName" value="@Model.Profile.UserName">
         <script src="~/assets/js/groups.js" asp-append-version="true"></script>
+        <script src="~/assets/js/boostsettings.js" asp-append-version="true"></script>
         <script src="~/assets/js/mentions.js" asp-append-version="true"></script>
         <script src="~/assets/js/profilecard.js" asp-append-version="true"></script>
         <script src="~/assets/js/groupmenu.js" asp-append-version="true"></script>
         <script src="~/assets/js/profile.js" asp-append-version="true"></script>
         <script src="~/assets/js/script.js" asp-append-version="true"></script>
         <script src="~/assets/js/server.js" asp-append-version="true"></script>
+        <script src="~/assets/js/servertemplate.js" asp-append-version="true"></script>
         <script src="~/assets/js/serverprofile.js" asp-append-version="true"></script>
         <script src="~/assets/js/servermembers.js" asp-append-version="true"></script>
         <script src="~/assets/js/serverroles.js" asp-append-version="true"></script>

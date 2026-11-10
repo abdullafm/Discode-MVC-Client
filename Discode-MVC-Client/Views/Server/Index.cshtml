@@ -171,6 +171,7 @@
                 <p class="server-settings-kicker" id="server-settings-name">Server</p>
                 <button type="button" class="on" data-panel="profile">Server Profile</button>
                 <button type="button" data-panel="boost">Boost Perks</button>
+                <button type="button" data-panel="template">Server Template</button>
                 <p>People</p>
                 <button type="button" data-panel="members">Members</button>
                 <button type="button" data-panel="roles">Roles</button>
@@ -734,13 +735,13 @@
             <h2>Audit Log</h2>
             <label class="audit-filter">
                 <span>Filter by User</span>
-                <select id="audit-user" data-modern-select aria-label="Filter by User">
+                <select id="audit-user" aria-label="Filter by User">
                     <option value="">All Users</option>
                 </select>
             </label>
             <label class="audit-filter">
                 <span>Filter by Action</span>
-                <select id="audit-action" data-modern-select aria-label="Filter by Action">
+                <select id="audit-action" aria-label="Filter by Action">
                     <option value="">All Actions</option>
                     <option value="ServerUpdate">Server update</option>
                     <option value="InviteUpdate">Invite link update</option>
@@ -796,6 +797,32 @@
             </div>
         </div>
         <div class="ban-sentinel" id="ban-sentinel"></div>
+    </div>
+</section>
+<section id="server-settings-panel-7" data-panel="template" hidden>
+    <div class="server-settings-panel template-panel">
+        <h2>Server Template</h2>
+        <p class="template-lead">Share the setup of this server (categories, channels and roles) with a link. Anyone who opens it can start a new server from it. Members and messages are not copied.</p>
+        <label for="template-title">Template title</label>
+        <input id="template-title" type="text" maxlength="100" autocomplete="off" placeholder="My server template">
+        <label for="template-desc">Description</label>
+        <textarea id="template-desc" maxlength="120" placeholder="What is this template for?"></textarea>
+        <div id="template-form"><button type="button" id="template-create">Generate Template Link</button></div>
+        <div id="template-view" hidden>
+            <label for="template-link">Template link</label>
+            <div class="template-row">
+                <input id="template-link" type="text" readonly>
+                <button type="button" id="template-copy">Copy</button>
+            </div>
+            <p class="template-stats" id="template-stats"></p>
+            <p class="template-old" id="template-old" hidden>The server changed since the template was made. Sync it to share the latest setup.</p>
+            <div>
+                <button type="button" id="template-save" class="template-quiet">Save Title and Description</button>
+                <button type="button" id="template-sync">Sync Template</button>
+                <button type="button" id="template-delete" class="template-danger">Delete Template</button>
+            </div>
+        </div>
+        <p class="template-error" id="template-error" hidden></p>
     </div>
 </section>
 </div>

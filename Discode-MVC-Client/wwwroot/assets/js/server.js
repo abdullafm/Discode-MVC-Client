@@ -51,7 +51,9 @@
         for (var m = 0; m < manageOnly.length; m++) manageOnly[m].hidden = !isOwner;
         var settingsEntry = document.getElementById("server-settings-open");
         if (settingsEntry) settingsEntry.hidden = !open;
-
+        var createSep = document.getElementById("server-create-sep");
+        if (createSep) createSep.hidden = !isOwner;
+        if (typeof paintServerMenu === "function") paintServerMenu();
 
         if (channelList) channelList.classList.toggle("can-sort", isOwner);
         if (currentChannel) selectChannel(currentChannel, true);
@@ -139,10 +141,10 @@
     }
     document.addEventListener("discode-profile-changed", function () { refreshMembers(null); });
     document.addEventListener("discode-server-roles-changed", function () { refreshMembers(null); });
-    document.addEventListener("discode-roles-ready", function () {
-        var button = currentMemberButton();
     document.addEventListener("discode-server-boost-changed", refreshMembers);
     document.addEventListener("discode-nitro-changed", function () { window.setTimeout(function () { refreshMembers(null); }, 500); });
+    document.addEventListener("discode-roles-ready", function () {
+        var button = currentMemberButton();
         if (button) fillMemberPop(button);
     });
     document.addEventListener("discode-hub-connected", function () { window.setTimeout(function () { refreshMembers(null); }, 400); });
@@ -256,6 +258,8 @@
             for (var i = 0; i < buttons.length; i++) {
                 if (channelTitle(buttons[i]) !== channel.name) continue;
                 buttons[i].setAttribute("data-send", channel.canSend ? "1" : "0");
+                buttons[i].setAttribute("data-slow", channel.slowModeSeconds || 0);
+                if (typeof channel.canManageMessages === "boolean") buttons[i].setAttribute("data-manage-messages", channel.canManageMessages ? "1" : "0");
                 if (buttons[i].getAttribute("data-kind") === "voice") buttons[i].setAttribute("data-join", channel.canJoin ? "1" : "0");
             }
         }
@@ -295,16 +299,8 @@
     function loadMessages(button) {
         if (!button) return;
         var key = channelKey(button);
-        fetch(serverApi("/channels/" + encodeURIComponent(channelTitle(button)) + "/messages")).then(function (response) {
-            if (!response.ok) throw new Error("messages");
-            return response.json();
-        }).then(function (payload) {
-            threads[key] = messageList(payload);
-            if (currentChannel === button) paintMessages(button);
-        }).catch(function () {
-            threads[key] = [];
-            if (currentChannel === button) paintMessages(button);
-        });
+        threads[key] = [];
+        if (currentChannel === button) paintMessages(button);
     }
 
     var voiceClock = 0;
@@ -494,12 +490,12 @@
                     id: raw.id || raw.userId || "",
                     publicId: raw.publicId || "",
                     roles: raw.roles || [],
-                    self: true,
-                    voice: raw.voice,
-                    inVoice: raw.inVoice,
                     hasNitro: raw.hasNitro,
                     isBooster: raw.isBooster,
                     staffRole: raw.staffRole,
+                    self: true,
+                    voice: raw.voice,
+                    inVoice: raw.inVoice,
                     voiceChannel: raw.voiceChannel,
                     channel: raw.channel
                 };
@@ -517,14 +513,14 @@
                 status: presence,
                 owner: isServerCreator(people[p]),
                 voice: memberInVoice(people[p]),
-                nitro: people[p].hasNitro === true,
-                booster: people[p].isBooster === true,
-                staff: people[p].staffRole || "",
                 statusText: people[p].statusText || people[p].customStatus || people[p].activity || "",
                 self: people[p].self === true,
                 id: people[p].id || people[p].userId || "",
                 publicId: people[p].publicId || "",
                 roles: people[p].roles || [],
+                nitro: people[p].hasNitro === true,
+                booster: people[p].isBooster === true,
+                staff: people[p].staffRole || "",
                 handle: people[p].username || people[p].userName || people[p].handle || "",
                 about: people[p].about || people[p].bio || ""
             };
@@ -557,12 +553,12 @@
                 if (item.self) button.setAttribute("data-self", "1");
                 if (item.handle) button.setAttribute("data-handle", item.handle);
                 if (item.about) button.setAttribute("data-bio", item.about);
-                if (item.statusText) button.setAttribute("data-note", item.statusText);
-                var face = document.createElement("span");
-                face.className = "server-member-face";
                 if (item.nitro) button.setAttribute("data-nitro", "1");
                 if (item.booster) button.setAttribute("data-booster", "1");
                 if (item.staff) button.setAttribute("data-staff", item.staff);
+                if (item.statusText) button.setAttribute("data-note", item.statusText);
+                var face = document.createElement("span");
+                face.className = "server-member-face";
                 var img = document.createElement("img");
                 img.src = item.photo;
                 img.alt = "";
@@ -790,11 +786,11 @@
         if (face) face.src = photo ? photo.getAttribute("src") : "/assets/img/img-icon-profile.jpeg";
         var title = document.getElementById("member-pop-name");
         if (title) title.textContent = name;
+        var perkHolder = document.getElementById("member-pop-badges");
+        if (perkHolder && window.discodeBadges) window.discodeBadges(perkHolder, button.getAttribute("data-nitro") === "1", button.getAttribute("data-booster") === "1", button.getAttribute("data-staff") || "");
         var handleEl = document.getElementById("member-pop-handle");
         if (handleEl) handleEl.textContent = handle;
         var aboutEl = document.getElementById("member-pop-about");
-        var perkHolder = document.getElementById("member-pop-badges");
-        if (perkHolder && window.discodeBadges) window.discodeBadges(perkHolder, button.getAttribute("data-nitro") === "1", button.getAttribute("data-booster") === "1", button.getAttribute("data-staff") || "");
         if (aboutEl) {
             aboutEl.hidden = !about;
             aboutEl.textContent = about;
@@ -1105,6 +1101,29 @@
         openOnPhone();
     }
 
+    function openVoiceFromQuery() {
+        var channelId = new URLSearchParams(window.location.search).get("channel");
+        if (!channelId || !channelList) return;
+        var button = channelList.querySelector(".server-channel[data-id='" + channelId + "']");
+        if (!button) return;
+        selectChannel(button, true);
+        try {
+            var cleaned = new URL(window.location.href);
+            cleaned.searchParams.delete("channel");
+            window.history.replaceState(window.history.state, "", cleaned.pathname + cleaned.search);
+        } catch (error) {}
+    }
+
+    document.addEventListener("discode-server-channels-rendered", openVoiceFromQuery);
+    openVoiceFromQuery();
+
+    var voiceWhere = document.getElementById("server-voice-bar-where");
+    if (voiceWhere) {
+        voiceWhere.addEventListener("click", function () {
+            if (joinedVoice) selectChannel(joinedVoice, true);
+        });
+    }
+
     function sendMessage() {
         if (!currentChannel || !canPostIn(currentChannel) || !input) return;
         var text = input.textContent.replace(/\u00a0/g, " ").trim();
@@ -1217,6 +1236,48 @@
         menuOpen.setAttribute("aria-expanded", "false");
     }
 
+    function menuToken() {
+        var field = document.querySelector("input[name='__RequestVerificationToken']");
+        return field ? field.value : "";
+    }
+
+    function saveServerPref(changes) {
+        if (!currentServer || !currentServer.id) return;
+        Object.assign(currentServer, changes);
+        paintServerMenu();
+        fetch("/Server/Preferences", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "RequestVerificationToken": menuToken(), "X-Requested-With": "XMLHttpRequest" },
+            body: JSON.stringify(Object.assign({ id: currentServer.id }, changes))
+        }).then(function (response) {
+            if (!response.ok) throw new Error("preferences");
+            if (window.discodeReloadServers) window.discodeReloadServers();
+        }).catch(function () {});
+    }
+
+    function paintServerMenu() {
+        var server = currentServer || {};
+        var owner = !!server.isOwner;
+        var showAll = document.getElementById("server-menu-show-all");
+        if (showAll) {
+            showAll.hidden = owner;
+            var check = showAll.querySelector(".server-menu-check");
+            if (check) check.hidden = server.showAllChannels === false;
+        }
+        var hideMuted = document.getElementById("server-menu-hide-muted");
+        var box = hideMuted && hideMuted.querySelector("input");
+        if (box) box.checked = !!server.hideMutedChannels;
+    }
+
+    function openUserSettings(tab) {
+        closeMenu();
+        var open = document.getElementById("settings-open");
+        if (open) open.click();
+        var button = document.querySelector("[data-settings-tab='" + tab + "']");
+        if (button) button.click();
+    }
+
     if (menuOpen && menu) {
         menuOpen.addEventListener("click", function (event) {
             event.stopPropagation();
@@ -1227,6 +1288,58 @@
             event.stopPropagation();
         });
         document.addEventListener("click", closeMenu);
+    }
+
+    var boostBtn = document.getElementById("server-menu-boost");
+    if (boostBtn) {
+        boostBtn.addEventListener("click", function () {
+            var settingsBtn = document.getElementById("server-settings-open");
+            if (settingsBtn && !settingsBtn.hidden) {
+                settingsBtn.click();
+                var panel = document.querySelector(".server-settings-nav [data-panel='boost']");
+                if (panel) panel.click();
+                return;
+            }
+            closeMenu();
+            openUserSettings("boosts");
+        });
+    }
+
+    var showAllBtn = document.getElementById("server-menu-show-all");
+    if (showAllBtn) {
+        showAllBtn.addEventListener("click", function () {
+            if (!currentServer) return;
+            saveServerPref({ showAllChannels: currentServer.showAllChannels === false });
+        });
+    }
+
+    var hideMuted = document.getElementById("server-menu-hide-muted");
+    if (hideMuted) {
+        hideMuted.addEventListener("change", function () {
+            var box = hideMuted.querySelector("input");
+            saveServerPref({ hideMutedChannels: !!(box && box.checked) });
+        });
+    }
+
+    var notifyBtn = document.getElementById("server-menu-notify");
+    if (notifyBtn) {
+        notifyBtn.addEventListener("click", function () { openUserSettings(document.querySelector("[data-settings-tab='notifications']") ? "notifications" : "account"); });
+    }
+
+    var privacyBtn = document.getElementById("server-menu-privacy");
+    if (privacyBtn) {
+        privacyBtn.addEventListener("click", function () {
+            openUserSettings(document.querySelector("[data-settings-tab='privacy']") ? "privacy" : "account");
+        });
+    }
+
+    var profileBtn = document.getElementById("server-menu-profile");
+    if (profileBtn) {
+        profileBtn.addEventListener("click", function () {
+            closeMenu();
+            var handle = document.getElementById("me-handle-name");
+            if (window.openUserProfile && handle) window.openUserProfile(handle.textContent.trim(), "");
+        });
     }
 
     var channelMenu = document.getElementById("channel-menu");
@@ -1296,59 +1409,6 @@
             event.stopPropagation();
             var button = event.target.closest("button");
             if (!button) return;
-    var boostBtn = document.getElementById("server-menu-boost");
-    if (boostBtn) {
-        boostBtn.addEventListener("click", function () {
-            var settingsBtn = document.getElementById("server-settings-open");
-            if (settingsBtn && !settingsBtn.hidden) {
-                settingsBtn.click();
-                var panel = document.querySelector(".server-settings-nav [data-panel='boost']");
-                if (panel) panel.click();
-                return;
-            }
-            closeMenu();
-            if (window.discodeGo) window.discodeGo("/Nitro/Index");
-            else window.location.href = "/Nitro/Index";
-        });
-    }
-
-    var showAllBtn = document.getElementById("server-menu-show-all");
-    if (showAllBtn) {
-        showAllBtn.addEventListener("click", function () {
-            if (!currentServer) return;
-            saveServerPref({ showAllChannels: currentServer.showAllChannels === false });
-        });
-    }
-
-    var hideMuted = document.getElementById("server-menu-hide-muted");
-    if (hideMuted) {
-        hideMuted.addEventListener("change", function () {
-            var box = hideMuted.querySelector("input");
-            saveServerPref({ hideMutedChannels: !!(box && box.checked) });
-        });
-    }
-
-    var notifyBtn = document.getElementById("server-menu-notify");
-    if (notifyBtn) {
-        notifyBtn.addEventListener("click", function () { openUserSettings("notifications"); });
-    }
-
-    var privacyBtn = document.getElementById("server-menu-privacy");
-    if (privacyBtn) {
-        privacyBtn.addEventListener("click", function () {
-            openUserSettings(document.querySelector("[data-settings-tab='privacy']") ? "privacy" : "account");
-        });
-    }
-
-    var profileBtn = document.getElementById("server-menu-profile");
-    if (profileBtn) {
-        profileBtn.addEventListener("click", function () {
-            closeMenu();
-            var handle = document.getElementById("me-handle-name");
-            if (window.openUserProfile && handle) window.openUserProfile(handle.textContent.trim(), "");
-        });
-    }
-
             closeChannelMenu();
             if (isOwner && button.getAttribute("data-create") === "channel") openChannelModal();
             if (isOwner && button.getAttribute("data-create") === "category") openCategoryModal();
@@ -1449,6 +1509,10 @@
         var limitLabel = document.getElementById("channel-limit-label");
         if (limitWrap) limitWrap.hidden = kind !== "voice";
         if (limitLabel) limitLabel.hidden = kind !== "voice";
+        var slowWrap = document.getElementById("channel-slow-wrap");
+        var slowLabel = document.getElementById("channel-slow-label");
+        if (slowWrap) slowWrap.hidden = kind === "voice";
+        if (slowLabel) slowLabel.hidden = kind === "voice";
     }
 
     function syncChannelName() {
@@ -1516,6 +1580,11 @@
         if (channelPrivate) channelPrivate.checked = false;
         var limitInput = document.getElementById("channel-limit");
         if (limitInput) limitInput.value = "0";
+        var slowInput = document.getElementById("channel-slow");
+        if (slowInput) {
+            slowInput.value = "0";
+            slowInput.dispatchEvent(new Event("change", { bubbles: true }));
+        }
         if (channelName) channelName.value = "new-channel";
         syncChannelKind();
         syncChannelName();
@@ -1569,7 +1638,8 @@
                     kind: kind,
                     categoryId: chosen ? chosen.getAttribute("data-id") : null,
                     isPrivate: !!(channelPrivate && channelPrivate.checked),
-                    userLimit: kind === "voice" ? Number((document.getElementById("channel-limit") || {}).value) || 0 : 0
+                    userLimit: kind === "voice" ? Number((document.getElementById("channel-limit") || {}).value) || 0 : 0,
+                    slowModeSeconds: kind === "voice" ? 0 : Number((document.getElementById("channel-slow") || {}).value) || 0
                 }).then(function () {
                     closeChannelModal();
                     channelConfirm.disabled = false;
@@ -1667,6 +1737,15 @@
         if (editLimit) editLimit.value = channel.getAttribute("data-limit") || "0";
         if (editLimitWrap) editLimitWrap.hidden = !voiceRoom;
         if (editLimitLabel) editLimitLabel.hidden = !voiceRoom;
+        var editSlow = document.getElementById("channel-edit-slow");
+        var editSlowWrap = document.getElementById("channel-edit-slow-wrap");
+        var editSlowLabel = document.getElementById("channel-edit-slow-label");
+        if (editSlow) {
+            editSlow.value = channel.getAttribute("data-slow") || "0";
+            editSlow.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        if (editSlowWrap) editSlowWrap.hidden = voiceRoom;
+        if (editSlowLabel) editSlowLabel.hidden = voiceRoom;
         if (channelPerms.view) channelPerms.view.checked = permOn(channel, "data-view");
         if (channelPerms.send) channelPerms.send.checked = permOn(channel, "data-send");
         if (channelPerms.manage) channelPerms.manage.checked = permOn(channel, "data-manage");
@@ -1874,6 +1953,7 @@
                     name: channelEditName.value,
                     syncWithCategory: collected.sync,
                     userLimit: kind === "voice" ? Number((document.getElementById("channel-edit-limit") || {}).value) || 0 : undefined,
+                    slowModeSeconds: kind === "voice" ? undefined : Number((document.getElementById("channel-edit-slow") || {}).value) || 0,
                     overwrites: collected.overwrites
                 }).then(function () {
                     closeChannelEdit();
