@@ -364,10 +364,18 @@
             box.appendChild(text);
         }
         if (post.imageUrl) {
-            var picture = document.createElement("img");
+            var isClip = window.discodeIsVideo && window.discodeIsVideo(post.imageUrl);
+            var picture = document.createElement(isClip ? "video" : "img");
             picture.className = "dm-post-embed-photo";
-            picture.alt = "";
-            picture.loading = "lazy";
+            if (isClip) {
+                picture.controls = true;
+                picture.preload = "metadata";
+                picture.muted = true;
+                picture.playsInline = true;
+            } else {
+                picture.alt = "";
+                picture.loading = "lazy";
+            }
             picture.src = post.imageUrl;
             picture.addEventListener("error", function () { picture.remove(); });
             box.appendChild(picture);

@@ -147,10 +147,19 @@
                 card.appendChild(head);
                 if (post.text) card.appendChild(el("p", "post-view-text", post.text));
                 if (post.imageUrl) {
-                    var photo = el("img", "post-view-photo");
-                    photo.alt = "";
-                    photo.src = post.imageUrl;
-                    card.appendChild(photo);
+                    if (window.discodeIsVideo && window.discodeIsVideo(post.imageUrl)) {
+                        var clip = el("video", "post-view-photo");
+                        clip.src = post.imageUrl;
+                        clip.controls = true;
+                        clip.preload = "metadata";
+                        clip.playsInline = true;
+                        card.appendChild(clip);
+                    } else {
+                        var photo = el("img", "post-view-photo");
+                        photo.alt = "";
+                        photo.src = post.imageUrl;
+                        card.appendChild(photo);
+                    }
                 }
                 card.appendChild(el("p", "post-view-meta", post.likeCount + " likes · " + post.repostCount + " reposts · " + (post.comments || []).length + " comments"));
             }
