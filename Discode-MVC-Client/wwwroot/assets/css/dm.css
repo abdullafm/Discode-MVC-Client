@@ -3954,3 +3954,14 @@ body .conversation-sidebar .friend-item:hover > .dm-unread,
 body .conversation-sidebar .friend-item:focus-within > .dm-unread {
     display: none !important;
 }
+
+body .conversation-sidebar .direct-messages .friend-list .friend-item.pinned > .row-pin {
+    position: static;
+    flex: none;
+    margin: 0;
+}
+
+body .conversation-sidebar .direct-messages .friend-list .friend-item.pinned > .dm-unread[hidden] ~ .row-pin,
+body .conversation-sidebar .direct-messages .friend-list .friend-item.pinned:not(:has(> .dm-unread)) > .row-pin {
+    margin-left: auto;
+}
