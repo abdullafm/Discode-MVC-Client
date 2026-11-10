@@ -3949,3 +3949,8 @@ html.theme-dark .msg-search-item:hover {
     background: rgba(99, 102, 241, 0.22);
     color: #c7d2fe;
 }
+
+body .conversation-sidebar .friend-item:hover > .dm-unread,
+body .conversation-sidebar .friend-item:focus-within > .dm-unread {
+    display: none !important;
+}
