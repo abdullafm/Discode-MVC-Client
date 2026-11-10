@@ -46,6 +46,19 @@ namespace Discode_MVC_Client.Controllers
                 try
                 {
                     var check = await _httpClientFactory.CreateClient("DiscodeApi").GetAsync($"api/server/{id}");
+                    if (check.IsSuccessStatusCode)
+                    {
+                        try
+                        {
+                            var found = await check.Content.ReadFromJsonAsync<JsonElement>();
+                            if (found.TryGetProperty("name", out var serverName))
+                                ViewData["ServerName"] = serverName.GetString() ?? string.Empty;
+                        }
+                        catch (JsonException)
+                        {
+                        }
+                    }
+
                     if (check.StatusCode == System.Net.HttpStatusCode.Forbidden)
                     {
                         TempData["Error"] = "This server has been banned by the administrators.";

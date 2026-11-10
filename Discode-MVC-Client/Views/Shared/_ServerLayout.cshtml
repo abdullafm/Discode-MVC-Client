@@ -53,7 +53,7 @@
             <div class="server-banner-wrap" data-can-manage>
                 <button type="button" class="server-banner" id="server-menu-open" aria-expanded="false"
                         aria-controls="server-menu">
-                    <span id="server-title">Azaan</span>
+                    <span id="server-title">@(ViewData["ServerName"] as string ?? string.Empty)</span>
                     <i class="fa-solid fa-chevron-down"></i>
                 </button>
                 <div class="server-menu" id="server-menu" hidden>
@@ -160,7 +160,7 @@
 <div class="server-voice-bar" id="server-voice-bar" hidden>
     <div>
         <strong><i class="fa-solid fa-signal"></i> Voice Connected</strong>
-        <span id="server-voice-bar-where">Lounge / Azaan</span>
+        <span id="server-voice-bar-where">Lounge@(string.IsNullOrEmpty(ViewData["ServerName"] as string) ? string.Empty : " / " + ViewData["ServerName"])</span>
     </div>
     <button type="button" id="server-voice-bar-leave" aria-label="Disconnect">
         <i class="fa-solid fa-phone-slash"></i>
