@@ -1,6 +1,4 @@
 "use strict";
-// The part of socialmedia.js that wires the Social page itself (composer, stories, feed). It needs the Social page markup,
-// so it is only loaded there; on every other page the first lines of it threw "Cannot read properties of null".
 
 document.getElementById("post-composer").addEventListener("submit", function (event) {
     event.preventDefault();

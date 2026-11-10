@@ -94,7 +94,6 @@ document.addEventListener("error", function (event) {
     }
 }, true);
 
-// messages drawn by the server: their story thumbnail may have failed before this script ran, so look at the ones already finished
 function markGoneStoryThumbs() {
     [].forEach.call(document.querySelectorAll(".dm-story-reply img"), function (image) {
         if (image.complete && image.naturalWidth === 0 && image.parentNode) image.parentNode.classList.add("is-gone");
@@ -236,10 +235,14 @@ function dmLiveCard(message) {
     return card;
 }
 
+function formatNodes(text) {
+    return window.discodeFormat ? window.discodeFormat.nodes(text, nodesForText) : nodesForText(text);
+}
+
 function messageNodes(text) {
     var holder = document.createElement("div");
     holder.className = "dm-msg-text";
-    nodesForText(text).forEach(function (node) { holder.appendChild(node); });
+    formatNodes(text).forEach(function (node) { holder.appendChild(node); });
     return holder;
 }
 
@@ -474,7 +477,9 @@ function showDmPage() {
     var userName = chat ? chat.getAttribute("data-user-name") : "";
     if (!userName) return;
     dmPartner = { userName: userName, userId: chat.getAttribute("data-user-id") };
+    if (window.discodeChat) window.discodeChat.open("dm", userName, document.getElementById("dm-messages"));
     dmOngoingCall = Number(chat.getAttribute("data-ongoing-call")) || 0;
+    dmRefreshProfile();
     dmRefreshJoinLinks();
     dmCheckIdleNote();
     if (/[?&]call=1(&|$)/.test(location.search)) dmAutoCall(0);
@@ -493,10 +498,11 @@ function showDmPage() {
         var edited = texts[j].querySelector(".dm-msg-edited");
         var text = edited ? texts[j].firstChild.textContent : texts[j].textContent;
         FLAG_RE.lastIndex = 0;
-        if (!FLAG_RE.test(text)) continue;
+        var flagged = FLAG_RE.test(text);
         FLAG_RE.lastIndex = 0;
+        if (!flagged && !(window.discodeFormat && window.discodeFormat.hasMarkup(text))) continue;
         while (texts[j].firstChild) texts[j].removeChild(texts[j].firstChild);
-        nodesForText(text).forEach(function (node) { texts[j].appendChild(node); });
+        formatNodes(text).forEach(function (node) { texts[j].appendChild(node); });
         if (edited) texts[j].appendChild(edited);
     }
     var faces = document.querySelectorAll("#dm-messages .dm-reaction-emoji");
@@ -529,7 +535,14 @@ function focusDmInput() {
 var dmFiles = [];
 var dmFileCounter = 0;
 var DM_MAX_FILES = 10;
-var DM_MAX_BYTES = 25 * 1024 * 1024;
+function dmMaxBytes() {
+    return window.discodeNitro ? window.discodeNitro.maxFileBytes : 5 * 1024 * 1024;
+}
+
+function dmTooBigText(name) {
+    var nitro = window.discodeNitro && window.discodeNitro.hasNitro;
+    return name + " is larger than " + window.discodeBytesLabel(dmMaxBytes()) + "." + (nitro ? "" : " Nitro lets you send files up to 2 GB.");
+}
 
 function dmFileKind(type, name) {
     var kind = String(type || "").toLowerCase();
@@ -672,8 +685,8 @@ function dmAddFiles(files) {
             showDmError("You can send at most " + DM_MAX_FILES + " files at once.");
             break;
         }
-        if (file.size > DM_MAX_BYTES) {
-            showDmError(file.name + " is larger than 25 MB.");
+        if (file.size > dmMaxBytes()) {
+            showDmError(dmTooBigText(file.name));
             continue;
         }
         var item = {
@@ -1173,6 +1186,7 @@ function dmRefreshProfile() {
     }).then(function (html) {
         var holder = document.getElementById("dm-profile-info");
         if (holder) holder.innerHTML = html;
+        if (window.discodePaintBanners) window.discodePaintBanners();
         dmSyncPartnerMessages();
     }).catch(function () {});
 }
@@ -1253,7 +1267,6 @@ function dmPanelPhoto() {
 }
 
 function dmMyPhoto() {
-    // there is no /api/me endpoint (it answered 404 on every DM page): my photo is the one in my panel
     return Promise.resolve(dmPanelPhoto());
 }
 
@@ -1697,6 +1710,7 @@ function fieldValue(el) {
             if (child.nodeType === 3) parts.push(child.textContent);
             else if (child.nodeName === "IMG") parts.push(child.getAttribute("data-emoji") || "");
             else if (child.nodeName === "BR") parts.push("\n");
+            else if (child.nodeType === 1 && child.hasAttribute("data-raw")) parts.push(child.getAttribute("data-raw"));
             else if (child.nodeType === 1) {
                 if (/^(DIV|P)$/.test(child.nodeName) && parts.length && parts[parts.length - 1] !== "\n") parts.push("\n");
                 walk(child);
@@ -1881,7 +1895,7 @@ function dmStartEdit(row) {
     box.className = "dm-edit";
     box.innerHTML =
         '<div class="dm-edit-box">' +
-        '<textarea rows="1" maxlength="2000" aria-label="Edit message"></textarea>' +
+        '<textarea rows="1" maxlength="50000" aria-label="Edit message"></textarea>' +
         '<button type="button" class="dm-edit-emoji emoji-open" data-act="edit-picker" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>' +
         '</div>' +
         '<p class="dm-edit-hint">escape to <a href="#" data-edit="cancel">cancel</a> \u2022 enter to <a href="#" data-edit="save">save</a></p>';
@@ -1901,7 +1915,7 @@ function dmApplyEdit(row, message) {
     dmCancelEdit(row);
     var holder = row.querySelector(".dm-msg-text");
     while (holder.firstChild) holder.removeChild(holder.firstChild);
-    nodesForText(message.text).forEach(function (node) { holder.appendChild(node); });
+    formatNodes(message.text).forEach(function (node) { holder.appendChild(node); });
     if (message.editedAt) holder.appendChild(dmEditedLabel());
 }
 

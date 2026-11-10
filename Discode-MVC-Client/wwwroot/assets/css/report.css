@@ -129,7 +129,6 @@
     cursor: default;
 }
 
-/* Profil sekline basanda boyuk gorunus */
 #me-pop .me-avatar::after {
     content: "";
     position: absolute;
@@ -194,7 +193,6 @@
     transform: scale(1);
 }
 
-/* Baskasinin profil penceresinde avatar: ustunde boyutme ikonu */
 #me-profile.visitor-view .me-profile-avatar::after {
     content: "";
     position: absolute;
@@ -218,7 +216,6 @@
     opacity: 1;
 }
 
-/* ===== Video postlar: Reels gorunusu ===== */
 .reel {
     position: relative;
     width: min(100%, 340px);
@@ -295,7 +292,6 @@
     display: none;
 }
 
-/* ===== Log out tesdiqi ===== */
 .logout-layer {
     position: fixed;
     inset: 0;
@@ -385,7 +381,6 @@ html.theme-dark .logout-card p {
     }
 }
 
-/* ===== Adminlerden xəbərdarlıq ===== */
 .warn-layer {
     position: fixed;
     inset: 0;
@@ -470,7 +465,6 @@ html.theme-dark .warn-card {
     color: #f2f3f5;
 }
 
-/* ===== Timeout: bağlanmayan pəncərə ===== */
 .timeout-layer {
     position: fixed;
     inset: 0;

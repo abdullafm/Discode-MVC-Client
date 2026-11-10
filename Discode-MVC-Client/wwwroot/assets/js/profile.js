@@ -10,6 +10,15 @@
     var DEFAULT_AVATAR = "/assets/img/img-icon-profile.jpeg";
 
     var state = { status: "online" };
+    var pendingClear = null;
+
+    function composeStatus() {
+        var input = document.getElementById("set-status-input");
+        var text = ((input && input.value) || "").trim();
+        var emoji = state.emoji || "";
+        if (!text && !emoji) return "";
+        return emoji ? emoji + (text ? " " + text : "") : text;
+    }
 
     function nodeText(sel) {
         var el = typeof sel === "string" ? document.querySelector(sel) : sel;
@@ -22,6 +31,11 @@
 
     function meHandle() {
         return ownHandle || nodeText("#me-handle-name") || nodeText("#settings-username");
+    }
+
+    function letterAvatar() {
+        var first = (meHandle() || "").trim().charAt(0);
+        return "/avatar/letter/" + (/^[A-Za-z0-9]$/.test(first) ? first.toUpperCase() : "_");
     }
 
     function profileValue(id, fallback) {
@@ -54,6 +68,8 @@
             return;
         }
         saveInFlight = true;
+        var sentClear = pendingClear;
+        pendingClear = null;
 
         var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
         var pub = document.getElementById("account-public");
@@ -69,12 +85,16 @@
                 displayName: profileValue("me-display-input", meName()),
                 userName: profileValue("me-handle-name") || profileValue("settings-username") || meHandle(),
                 avatarUrl: savedAvatarUrl || profileValue("Update_AvatarUrl"),
+                bannerUrl: savedBannerUrl,
+                bannerColor: savedBannerColor,
                 bio: profileValue("me-bio"),
-                customStatus: profileValue("set-status-input"),
+                customStatus: composeStatus(),
+                statusClearMinutes: sentClear,
                 pronouns: profileValue("set-pronouns-input"),
                 isPublic: !!(pub && pub.classList.contains("on"))
             })
         }).then(function (res) {
+            if (!res.ok && sentClear !== null && pendingClear === null) pendingClear = sentClear;
             if (res.ok) {
                 var el = document.querySelector(".home-error");
                 if (el) el.hidden = true;
@@ -391,13 +411,40 @@
     var setEmoji = document.getElementById("set-emoji");
     var setWhen = document.getElementById("set-when");
     var setWhenBtn = document.getElementById("set-status-when");
+    var EMOJI_LEAD = /^((?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:\uFE0F|\u200D\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s*/u;
+    (function () {
+        var found = EMOJI_LEAD.exec(setInput.value);
+        if (found) {
+            state.emoji = found[1];
+            setInput.value = setInput.value.slice(found[0].length);
+        }
+        var until = Date.parse(setStatus.getAttribute("data-clear-at") || "");
+        if (until > Date.now()) {
+            state.clear = "keep";
+            state.clearAt = until;
+        }
+    })();
     var pickedEmoji = state.emoji || "😀";
     var pickedClear = state.clear || "tomorrow";
+    var emojiTouched = false;
+
+    function clearMinutes(key) {
+        if (key === "keep") return null;
+        if (key === "none") return 0;
+        if (key === "today") {
+            var end = new Date();
+            end.setHours(23, 59, 59, 999);
+            return Math.max(1, Math.ceil((end.getTime() - Date.now()) / 60000));
+        }
+        if (key === "tomorrow") return 24 * 60;
+        return Number(key) || 0;
+    }
 
     function clearLabel(key) {
         var now = new Date();
         var clock = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
         if (key === "none") return "Don't clear";
+        if (key === "keep") return "Clears at " + new Date(state.clearAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
         if (key === "30") return "Clear in 30 minutes";
         if (key === "60") return "Clear in 1 hour";
         if (key === "240") return "Clear in 4 hours";
@@ -423,6 +470,7 @@
             button.textContent = item;
             button.addEventListener("click", function () {
                 pickedEmoji = item;
+                emojiTouched = true;
                 setEmoji.classList.add("d-none");
                 previewStatus();
             });
@@ -432,6 +480,7 @@
 
     function openSetStatus() {
         pickedEmoji = state.emoji || "😀";
+        emojiTouched = false;
         pickedClear = state.clear || "tomorrow";
         previewStatus();
         fillEmoji();
@@ -442,7 +491,7 @@
     }
 
     function applyCustomStatus() {
-        var status = setInput.value.trim();
+        var status = composeStatus();
         var bubble = document.getElementById("me-status-bubble");
         var bubbleText = document.getElementById("me-status-bubble-text");
         var chip = document.getElementById("me-chip");
@@ -460,6 +509,24 @@
         document.dispatchEvent(new CustomEvent("discode-presence"));
     }
 
+    function syncOwnStatus() {
+        if (!setStatus.classList.contains("d-none")) return;
+        fetch("/Home/UserProfile?name=" + encodeURIComponent(meHandle()), { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            return response.ok ? response.json() : null;
+        }).then(function (data) {
+            if (!data || !setStatus.classList.contains("d-none")) return;
+            var saved = data.customStatus || "";
+            if (saved === composeStatus()) return;
+            var found = EMOJI_LEAD.exec(saved);
+            state.emoji = found ? found[1] : "";
+            setInput.value = found ? saved.slice(found[0].length) : saved;
+            state.clear = "";
+            applyCustomStatus();
+        }).catch(function () {});
+    }
+
+    document.addEventListener("discode-profile-changed", function () { syncOwnStatus(); });
+
     function closeSetStatus() {
         applyCustomStatus();
         setStatus.classList.add("d-none");
@@ -471,6 +538,14 @@
     document.getElementById("me-status-bubble").addEventListener("click", function () {
         if (profile.classList.contains("visitor-view")) return;
         openSetStatus();
+    });
+    document.addEventListener("discode-clear-status", function () {
+        if (profile.classList.contains("visitor-view")) return;
+        state.emoji = "";
+        state.clear = "";
+        pendingClear = null;
+        setInput.value = "";
+        closeSetStatus();
     });
     document.getElementById("set-status-close").addEventListener("click", closeSetStatus);
     setStatus.addEventListener("click", function (event) {
@@ -493,8 +568,9 @@
     });
     document.getElementById("set-status-form").addEventListener("submit", function (event) {
         event.preventDefault();
-        state.emoji = pickedEmoji;
+        if (emojiTouched || state.emoji) state.emoji = pickedEmoji;
         state.clear = pickedClear;
+        pendingClear = clearMinutes(pickedClear);
         closeSetStatus();
     });
 
@@ -558,11 +634,139 @@
 
     function applyOwnPhoto(src) {
         ownPhoto = src;
-        var faces = document.querySelectorAll("#user-panel .avatar img, #server-voice-face, #call-avatar, .call-phone-faces img, #me-pop .me-avatar img, #me-profile .me-profile-avatar img, .set-status-person > img, .settings-me img, #dm-messages .dm-msg[data-mine=\"1\"] .dm-msg-avatar");
+        var faces = document.querySelectorAll("#user-panel .avatar img, #me-edit-avatar-preview, #server-voice-face, #call-avatar, .call-phone-faces img, #me-pop .me-avatar img, #me-profile .me-profile-avatar img, .set-status-person > img, .settings-me img, #dm-messages .dm-msg[data-mine=\"1\"] .dm-msg-avatar");
         for (var i = 0; i < faces.length; i++) faces[i].src = src;
     }
 
     var savedAvatarUrl = profileValue("Update_AvatarUrl");
+    var savedBannerUrl = profile.getAttribute("data-banner") || "";
+    var savedBannerColor = profile.getAttribute("data-color") || "";
+
+    function paintBannerOf(url) {
+        var targets = document.querySelectorAll("#me-profile-banner, #me-pop .me-banner, #me-edit-banner-preview");
+        for (var i = 0; i < targets.length; i++) {
+            window.discodeSetBanner(targets[i], url ? "url('" + url.replace(/'/g, "%27") + "')" : "", savedBannerColor);
+            targets[i].classList.toggle("has-image", !!url);
+        }
+        var remove = document.getElementById("me-banner-remove");
+        if (remove) remove.hidden = !url;
+    }
+
+    function paintOwnPerks() {
+        if (profile.classList.contains("visitor-view")) return;
+        var state = window.discodeNitro || {};
+        paintBannerOf(savedBannerUrl);
+        if (window.discodeBadges) window.discodeBadges(document.getElementById("me-badges"), !!state.hasNitro, !!state.isBooster, state.staffRole || "");
+    }
+
+    function paintVisitorPerks(data) {
+        var banner = document.getElementById("me-profile-banner");
+        if (banner) {
+            window.discodeSetBanner(banner, data.bannerUrl ? "url('" + data.bannerUrl.replace(/'/g, "%27") + "')" : "", data.bannerColor || "");
+            banner.classList.toggle("has-image", !!data.bannerUrl);
+        }
+        if (window.discodeBadges) window.discodeBadges(document.getElementById("me-badges"), !!data.hasNitro, !!data.isBooster, data.staffRole || "");
+    }
+
+    document.addEventListener("discode-nitro-state", function () {
+        if (!hasNitro()) {
+            savedBannerUrl = "";
+            if (/\.gif(\?|$)/i.test(savedAvatarUrl || "")) {
+                savedAvatarUrl = "";
+                applyOwnPhoto(letterAvatar());
+            }
+        }
+        paintOwnPerks();
+    });
+    new MutationObserver(function () {
+        if (!profile.classList.contains("d-none")) paintOwnPerks();
+    }).observe(profile, { attributes: true, attributeFilter: ["class"] });
+    paintOwnPerks();
+
+    var bannerFile = document.getElementById("me-banner-file");
+    if (bannerFile) {
+        bannerFile.addEventListener("click", function (event) {
+            if (!hasNitro()) {
+                event.preventDefault();
+                goNitro();
+            }
+        });
+        bannerFile.addEventListener("change", function () {
+            var file = bannerFile.files && bannerFile.files[0];
+            bannerFile.value = "";
+            if (!file || file.type.indexOf("image/") !== 0) return;
+            if (file.size > 8 * 1024 * 1024) { showProfileError("Choose an image that is at most 8 MB."); return; }
+            var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
+            var data = new FormData();
+            data.append("file", file, file.name || "banner");
+            fetch("/Home/UploadBanner", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "RequestVerificationToken": tokenInput ? tokenInput.value : "", "X-Requested-With": "XMLHttpRequest" },
+                body: data
+            }).then(function (res) {
+                if (!res.ok) return uploadFailure(res);
+                return res.json();
+            }).then(function (body) {
+                savedBannerUrl = body.bannerUrl;
+                paintOwnPerks();
+                saveProfile();
+            }).catch(function (error) {
+                showProfileError(error && error.message && error.message !== "upload" ? error.message : "Could not save the banner.");
+            });
+        });
+    }
+
+    var bannerRemove = document.getElementById("me-banner-remove");
+    if (bannerRemove) {
+        bannerRemove.addEventListener("click", function () {
+            savedBannerUrl = "";
+            paintOwnPerks();
+            saveProfile();
+        });
+    }
+
+    function goNitro() {
+        if (window.discodeGo) window.discodeGo("/Nitro/Index");
+        else window.location.href = "/Nitro/Index";
+    }
+
+    function hasNitro() {
+        return !!(window.discodeNitro && window.discodeNitro.hasNitro);
+    }
+
+    function uploadFailure(response) {
+        return response.json().catch(function () { return {}; }).then(function (body) {
+            throw new Error((body && body.errors && body.errors[0]) || "upload");
+        });
+    }
+
+    function sendAvatar(blob, filename) {
+        var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
+        var data = new FormData();
+        data.append("file", blob, filename);
+        if (tokenInput) data.append("__RequestVerificationToken", tokenInput.value);
+        fetch("/Home/UploadAvatar", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "RequestVerificationToken": tokenInput ? tokenInput.value : "",
+                "X-Requested-With": "XMLHttpRequest"
+            },
+            body: data
+        }).then(function (res) {
+            if (!res.ok) return uploadFailure(res);
+            return res.json();
+        }).then(function (data) {
+            savedAvatarUrl = data.avatarUrl;
+            var hidden = document.getElementById("Update_AvatarUrl");
+            if (hidden) hidden.value = data.avatarUrl;
+            applyOwnPhoto(data.avatarUrl);
+            saveProfile();
+        }).catch(function (error) {
+            showProfileError(error && error.message && error.message !== "upload" ? error.message : "Could not save the photo.");
+        });
+    }
 
     var avatarFile = document.getElementById("me-avatar-file");
     if (avatarFile) {
@@ -570,6 +774,11 @@
             var file = avatarFile.files && avatarFile.files[0];
             avatarFile.value = "";
             if (!file || file.type.indexOf("image/") !== 0) return;
+            if (file.type === "image/gif" && hasNitro()) {
+                if (file.size > 8 * 1024 * 1024) { showProfileError("Choose an animated image that is at most 8 MB."); return; }
+                sendAvatar(file, "avatar.gif");
+                return;
+            }
             var reader = new FileReader();
             reader.onload = function () {
                 var image = new Image();
@@ -584,31 +793,7 @@
                     var ctx = canvas.getContext("2d");
                     ctx.drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
                     canvas.toBlob(function (blob) {
-                        if (!blob) return;
-                        var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
-                        var data = new FormData();
-                        data.append("file", blob, "avatar.jpg");
-                        if (tokenInput) data.append("__RequestVerificationToken", tokenInput.value);
-                        fetch("/Home/UploadAvatar", {
-                            method: "POST",
-                            credentials: "same-origin",
-                            headers: {
-                                "RequestVerificationToken": tokenInput ? tokenInput.value : "",
-                                "X-Requested-With": "XMLHttpRequest"
-                            },
-                            body: data
-                        }).then(function (res) {
-                            if (!res.ok) throw new Error("upload");
-                            return res.json();
-                        }).then(function (data) {
-                            savedAvatarUrl = data.avatarUrl;
-                            var hidden = document.getElementById("Update_AvatarUrl");
-                            if (hidden) hidden.value = data.avatarUrl;
-                            applyOwnPhoto(data.avatarUrl);
-                            saveProfile();
-                        }).catch(function () {
-                            showProfileError("Could not save the photo.");
-                        });
+                        if (blob) sendAvatar(blob, "avatar.jpg");
                     }, "image/jpeg", 0.85);
                 };
                 image.src = reader.result;
@@ -802,6 +987,7 @@
         if (face) face.src = data.avatarUrl || DEFAULT_AVATAR;
         var joined = formatJoined(data.memberSince);
         if (since && joined) since.textContent = joined;
+        paintVisitorPerks(data);
         paintPerson({ pronouns: data.pronouns || "", bio: data.bio || "", status: data.customStatus || "", emoji: "" });
         setPrivateView(!!data.isPrivate, displayName);
         if (!data.isPrivate && friendsPanelOpen()) renderFriends();
@@ -1011,6 +1197,116 @@
             if (nameInput) nameInput.blur();
         });
     }
+
+    (function () {
+        var panel = document.getElementById("me-edit-panel");
+        if (!panel) return;
+        var name = document.getElementById("me-edit-name");
+        var colors = document.getElementById("me-edit-colors");
+        var picker = document.getElementById("me-edit-color-input");
+        var bannerChange = document.getElementById("me-edit-banner-change");
+        var bannerSection = document.getElementById("me-edit-banner-section");
+        var colorSection = document.getElementById("me-edit-color-section");
+        var avatarHint = document.getElementById("me-edit-avatar-hint");
+
+        function paintPanel() {
+            if (profile.classList.contains("visitor-view")) return;
+            if (name && document.activeElement !== name) name.value = meName();
+            var avatar = document.getElementById("me-edit-avatar-preview");
+            if (avatar && ownPhoto) avatar.src = ownPhoto;
+            var remove = document.getElementById("me-edit-avatar-remove");
+            if (remove) remove.hidden = !ownPhoto || ownPhoto.indexOf("img-icon-profile") >= 0 || ownPhoto.indexOf("/avatar/letter/") >= 0;
+            var removeBanner = document.getElementById("me-edit-banner-remove");
+            if (removeBanner) removeBanner.hidden = !savedBannerUrl;
+            var current = (savedBannerColor || "").toLowerCase();
+            [].forEach.call(colors.querySelectorAll("button[data-color]"), function (swatch) {
+                swatch.classList.toggle("on", swatch.getAttribute("data-color") === current);
+            });
+            var reset = document.getElementById("me-edit-color-reset");
+            if (reset) reset.hidden = !current;
+            if (picker && current) picker.value = current;
+            var nitro = !!(window.discodeNitro && window.discodeNitro.hasNitro);
+            if (bannerSection) bannerSection.hidden = !nitro;
+            if (colorSection) colorSection.hidden = nitro;
+            if (avatarHint) avatarHint.hidden = nitro;
+            paintBannerOf(savedBannerUrl);
+        }
+
+        function setColor(next) {
+            savedBannerColor = next;
+            paintBannerOf(savedBannerUrl);
+            paintPanel();
+            saveProfile();
+        }
+
+        if (name) {
+            name.addEventListener("input", function () {
+                if (nameInput) nameInput.value = name.value;
+            });
+            name.addEventListener("change", function () {
+                if (nameInput) {
+                    nameInput.value = name.value;
+                    commitDisplay();
+                    name.value = meName();
+                }
+            });
+            name.addEventListener("keydown", function (event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    name.blur();
+                }
+            });
+        }
+
+        document.getElementById("me-edit-avatar-change").addEventListener("click", function () {
+            var file = document.getElementById("me-avatar-file");
+            if (file) file.click();
+        });
+        document.getElementById("me-edit-avatar-remove").addEventListener("click", function () {
+            savedAvatarUrl = "";
+            var hidden = document.getElementById("Update_AvatarUrl");
+            if (hidden) hidden.value = "";
+            applyOwnPhoto(letterAvatar());
+            paintPanel();
+            saveProfile();
+        });
+        bannerChange.addEventListener("click", function () {
+            var file = document.getElementById("me-banner-file");
+            if (file) file.click();
+        });
+        document.getElementById("me-edit-banner-remove").addEventListener("click", function () {
+            savedBannerUrl = "";
+            paintOwnPerks();
+            paintPanel();
+            saveProfile();
+        });
+        colors.addEventListener("click", function (event) {
+            var swatch = event.target.closest("button[data-color]");
+            if (swatch) setColor(swatch.getAttribute("data-color"));
+        });
+        document.getElementById("me-edit-color-reset").addEventListener("click", function () { setColor(""); });
+        if (picker) {
+            picker.addEventListener("input", function () { savedBannerColor = picker.value.toLowerCase(); paintBannerOf(savedBannerUrl); });
+            picker.addEventListener("change", function () { setColor(picker.value.toLowerCase()); });
+        }
+
+        document.getElementById("me-edit-collapse").addEventListener("click", function () {
+            profile.classList.toggle("edit-collapsed");
+            panel.classList.toggle("is-collapsed", profile.classList.contains("edit-collapsed"));
+        });
+        var toggle = document.getElementById("me-edit-toggle");
+        if (toggle) toggle.addEventListener("click", function () { profile.classList.toggle("edit-open"); });
+
+        document.addEventListener("discode-nitro-state", paintPanel);
+        var wasShown = !profile.classList.contains("d-none");
+        new MutationObserver(function () {
+            var shown = !profile.classList.contains("d-none");
+            if (shown && !wasShown && profile.classList.contains("edit-open")) profile.classList.remove("edit-open");
+            if (shown) paintPanel();
+            wasShown = shown;
+        }).observe(profile, { attributes: true, attributeFilter: ["class"] });
+        paintPanel();
+    })();
     var msgBtn = document.getElementById("me-msg");
     if (msgBtn) {
         msgBtn.addEventListener("click", function () {
@@ -1070,6 +1366,7 @@
             if (nameInput) nameInput.value = meName();
             if (viewName) viewName.hidden = true;
         } else if (viewName) {
+        if (!self) paintVisitorPerks({}); else paintOwnPerks();
             viewName.hidden = false;
             viewName.textContent = viewing;
         }

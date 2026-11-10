@@ -105,7 +105,6 @@
         });
     }
 
-    // what I chose for each person (volume, mute): heard only by me, kept in memory while the page stays open
     var userAudio = {};
 
     function getUserAudio(userId) {

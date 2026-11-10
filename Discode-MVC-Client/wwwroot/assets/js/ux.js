@@ -1,8 +1,6 @@
 (function () {
     "use strict";
 
-    // Pəncərələrdə (server yarat, ad dəyiş, kanal yarat...) mətn yazıb Enter basanda əsas düymə işləsin.
-    // Hər pəncərənin öz Enter qaydası varsa ona toxunmuruq (defaultPrevented).
     var MODALS = [
         "#server-modal", "#name-modal", "#pass-modal", "#channel-modal", "#channel-edit", "#category-modal",
         "#server-delete-modal", "#group-edit-modal", "#dm-forward-modal", "#group-forward-modal",
@@ -11,7 +9,6 @@
 
     var PRIMARY = /(done|create|confirm|save|submit|post|invite|join|apply|continue|ok)/i;
     var NOT_PRIMARY = /(cancel|close|back|copy|emoji|eye|-open|reset|search)/i;
-    // Enter bu sahələrdə ya yeni sətir yazır, ya da axtarış edir
     var SKIP_TYPES = /^(search|file|checkbox|radio|range|color|hidden|button|submit)$/i;
 
     function visible(node) {
@@ -30,7 +27,6 @@
         });
         if (!buttons.length) return null;
 
-        // iki panel varsa (server yarat / server qoşul) girişə ən yaxın paneldəki düyməni seç
         var panel = input.parentElement;
         while (panel && panel !== root) {
             var near = buttons.filter(function (button) { return panel.contains(button); });
@@ -42,8 +38,6 @@
     }
 
 
-    // ---------- açılıb-bağlanan panellər: CSS ilə yumşalmayanlar üçün (!important gizlədənlər) ----------
-    // el.hidden = true olanda element 150 ms solaraq çəkilir, el.hidden = false olanda yumşaq gəlir
     var ANIMATED = [
         ".role-more-menu", ".color-picker", ".member-pop", ".member-pop-menu", ".member-pop-role-menu", ".server-save-bar",
         ".server-voice-dock", ".photo-preview", ".story-reply", ".live-hero", ".live-chips", ".inline-search-results-card",
@@ -130,7 +124,6 @@
         button.click();
     });
 
-    // Boş yerə vurub bağlanan pəncərələr üçün Escape: yalnız öz düyməsi olanlara
     document.addEventListener("keydown", function (event) {
         if (event.key !== "Escape" || event.defaultPrevented) return;
 
@@ -146,7 +139,6 @@
         }
     });
 
-    // Telefonda ayarlar tabları sürüşür: seçilən tab görünən yerə gəlsin
     document.addEventListener("click", function (event) {
         var tab = event.target.closest && event.target.closest(".settings-nav button, .server-settings-nav button");
         if (!tab || !window.matchMedia("(max-width: 720px)").matches) return;
@@ -156,7 +148,6 @@
             strip.scrollTo({ left: Math.max(0, offset - (strip.clientWidth - tab.offsetWidth) / 2), behavior: "smooth" });
         }
     });
-    // ---------- dar ekranda ayarlar tabları açılan siyahıya (dropdown) çevrilir ----------
     function buildTabSelect(strip, selector, inside) {
         if (!strip || strip.getAttribute("data-ux-select")) return;
         var buttons = [].slice.call(strip.querySelectorAll(selector));
@@ -261,7 +252,6 @@
         }
         refresh();
 
-        // tab başqa yerdən dəyişəndə (məsələn kod ilə) yazı da dəyişsin
         new MutationObserver(refresh).observe(strip, { attributes: true, attributeFilter: ["class"], subtree: true });
     }
 
@@ -272,9 +262,6 @@
     buildAllTabSelects();
     document.addEventListener("DOMContentLoaded", buildAllTabSelects);
 
-    // ---------- <select> yerinə müasir açılan siyahı (data-modern-select) ----------
-    // Native siyahı brauzerin standart (mavi, kobud) görünüşünü verir. Burada select gizlənir, amma dəyəri, change hadisəsi
-    // və option-ları əvvəlki kimi işləyir: server.js dəyəri kodla qoyanda da yazı yenilənir.
     function modernSelect(select) {
         if (!select || select.getAttribute("data-msel")) return;
         select.setAttribute("data-msel", "1");
@@ -431,7 +418,6 @@
             }
         });
 
-        // option-lar kodla dəyişəndə (kateqoriya siyahısı yenidən doldurulanda) və dəyər kodla qoyulanda yazı yenilənir
         new MutationObserver(refresh).observe(select, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["disabled"] });
         var native = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
         Object.defineProperty(select, "value", {
@@ -451,3 +437,223 @@
     document.addEventListener("discode-page-ready", buildModernSelects);
 })();
 
+(function () {
+    var BUBBLES = ".me-status-bubble, .me-chip, .dm-profile-bubble, .member-pop-chip";
+    var LEAD = /^((?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:️|‍\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s*/u;
+    var TEXTS = "#me-status-bubble-text, #me-chip-text, .dm-profile-bubble > span, .member-pop-chip > span";
+
+    function room(bubble) {
+    function split(span) {
+        if (span.firstElementChild && span.firstElementChild.classList.contains("bio-emoji")) return;
+        var full = span.textContent;
+        var found = LEAD.exec(full);
+        if (!found || found[0].length >= full.length) {
+            span.classList.remove("bio-split");
+            return;
+        }
+        span.textContent = "";
+        var emoji = document.createElement("span");
+        emoji.className = "bio-emoji";
+        emoji.textContent = found[1];
+        var rest = document.createElement("span");
+        rest.className = "bio-rest";
+        rest.textContent = full.slice(found[0].length);
+        span.appendChild(emoji);
+        span.appendChild(rest);
+        span.classList.add("bio-split");
+    }
+
+    function splitAll() {
+        [].forEach.call(document.querySelectorAll(TEXTS), split);
+    }
+
+        var node = bubble.parentElement;
+        while (node && node !== document.body) {
+            var o = getComputedStyle(node).overflowX;
+            if (o !== "visible" || node.matches(".mini-profile, .member-pop, .me-pop")) return node.getBoundingClientRect().right;
+            node = node.parentElement;
+        }
+        return window.innerWidth;
+    }
+
+    function open(bubble) {
+    function isCut(bubble) {
+        var line = bubble.querySelector(".bio-rest") || bubble.querySelector("span:not(.bio-tools):not(.bio-tool)");
+        return !!line && line.scrollWidth > line.clientWidth + 1;
+    }
+
+        if (bubble.classList.contains("bio-open") || bubble.classList.contains("bio-tools-on")) return;
+        if (bubble.matches(".me-status-bubble, .me-chip") && !bubble.classList.contains("has-bio")) return;
+        var available = room(bubble) - bubble.getBoundingClientRect().left - 14;
+        if (!isCut(bubble)) {
+            if (bubble.id === "me-status-bubble") bubble.classList.add("bio-tools-on");
+            return;
+        }
+        bubble.style.setProperty("--bio-max", Math.max(168, Math.min(260, available)) + "px");
+        bubble.classList.add("bio-open");
+        var before = bubble.getBoundingClientRect();
+        var pos = getComputedStyle(bubble).position;
+        var baseMargin = parseFloat(getComputedStyle(bubble).marginBottom) || 0;
+        if (pos === "absolute") {
+            var holder = bubble.offsetParent;
+            var base = holder ? holder.getBoundingClientRect().top : 0;
+            bubble.style.setProperty("top", (before.top - base) + "px", "important");
+            bubble.style.setProperty("bottom", "auto", "important");
+        } else {
+            var grew = bubble.getBoundingClientRect().height - before.height;
+            if (grew > 0) bubble.style.setProperty("margin-bottom", (baseMargin - grew) + "px", "important");
+        }
+    }
+
+        bubble.style.removeProperty("margin-bottom");
+    function close(bubble) {
+        bubble.classList.remove("bio-tools-on");
+        if (!bubble.classList.contains("bio-open")) return;
+        bubble.style.removeProperty("--bio-max");
+        bubble.style.removeProperty("top");
+        bubble.style.removeProperty("bottom");
+    function tools(bubble) {
+        bubble.classList.remove("bio-open");
+    }
+
+        if (bubble.id !== "me-status-bubble" || bubble.querySelector(".bio-tools")) return;
+        var box = document.createElement("span");
+        box.className = "bio-tools";
+        box.innerHTML = '<span class="bio-tool" data-act="edit" role="button" tabindex="0" aria-label="Edit status"><i class="fa-solid fa-pen"></i></span>' +
+            '<span class="bio-tool" data-act="clear" role="button" tabindex="0" aria-label="Clear status"><i class="fa-solid fa-trash-can"></i></span>';
+        bubble.appendChild(box);
+    }
+
+    document.addEventListener("mouseover", function (event) {
+        var bubble = event.target.closest && event.target.closest(BUBBLES);
+        if (!bubble) return;
+        tools(bubble);
+        open(bubble);
+    });
+
+    document.addEventListener("mouseout", function (event) {
+        var bubble = event.target.closest && event.target.closest(BUBBLES);
+        if (!bubble || (event.relatedTarget && bubble.contains(event.relatedTarget))) return;
+        close(bubble);
+    });
+
+    document.addEventListener("click", function (event) {
+        var tool = event.target.closest && event.target.closest(".bio-tool[data-act='clear']");
+        if (!tool) return;
+        event.preventDefault();
+        event.stopPropagation();
+        document.dispatchEvent(new CustomEvent("discode-clear-status"));
+    }, true);
+})();
+
+    var queued = false;
+    new MutationObserver(function () {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(function () { queued = false; splitAll(); });
+    }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+    splitAll();
+    document.addEventListener("DOMContentLoaded", splitAll);
+    document.addEventListener("discode-page-ready", splitAll);
+
+(function () {
+    var TARGETS = [{ sel: "#me-pop .me-handle", inside: true }, { sel: "#member-pop-handle" }, { sel: "#dm-profile-handle" }];
+
+    function nameOf(target) {
+        var text = [].filter.call(target.childNodes, function (node) { return node.nodeType === 3; }).map(function (node) { return node.textContent; }).join("").trim();
+        if (target.id === "dm-profile-handle") text = text.split("•")[0].trim();
+        return text.replace(/^@/, "");
+    }
+
+    function copy(text, button) {
+        var done = function () {
+            var icon = button.querySelector("i");
+            icon.className = "fa-solid fa-check";
+            button.title = "Copied";
+            window.setTimeout(function () {
+                icon.className = "fa-regular fa-clipboard";
+                button.title = "Copy user name";
+            }, 1500);
+        };
+        var fallback = function () {
+            var area = document.createElement("textarea");
+            area.value = text;
+            area.style.position = "fixed";
+            area.style.opacity = "0";
+            document.body.appendChild(area);
+            area.select();
+            var ok = false;
+            try { ok = document.execCommand("copy"); } catch (error) { }
+            document.body.removeChild(area);
+            if (ok) done();
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(fallback);
+        else fallback();
+    }
+
+    function decorate() {
+        TARGETS.forEach(function (entry) {
+            var target = document.querySelector(entry.sel);
+            if (!target) return;
+            var next = entry.inside ? target.querySelector(":scope > .copy-handle") : target.nextElementSibling;
+            var name = nameOf(target);
+            if (next && next.classList.contains("copy-handle")) {
+                next.hidden = !name;
+                return;
+            }
+            if (!name) return;
+            var button = document.createElement("button");
+            button.type = "button";
+            button.className = "copy-handle";
+            button.title = "Copy user name";
+            button.setAttribute("aria-label", "Copy user name");
+            button.innerHTML = '<i class="fa-regular fa-clipboard" aria-hidden="true"></i>';
+            button.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                copy(nameOf(target), button);
+            });
+            if (entry.inside) target.appendChild(button);
+            else target.insertAdjacentElement("afterend", button);
+        });
+    }
+
+    var queued = false;
+    new MutationObserver(function () {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(function () { queued = false; decorate(); });
+    }).observe(document.documentElement, { childList: true, subtree: true, characterData: true });
+    decorate();
+    document.addEventListener("DOMContentLoaded", decorate);
+    document.addEventListener("discode-page-ready", decorate);
+})();
+
+(function () {
+    function paint() {
+        var handle = document.querySelector("#me-pop .me-handle");
+        if (!handle || !window.discodeBadges) return;
+        var state = window.discodeNitro || {};
+        var key = [!!state.hasNitro, !!state.isBooster, state.staffRole || ""].join("|");
+        var holder = handle.querySelector(":scope > .nitro-badges");
+        if (holder && holder.getAttribute("data-key") === key) return;
+        if (!holder) {
+            holder = document.createElement("span");
+            holder.className = "nitro-badges nitro-badges-small";
+            handle.appendChild(holder);
+        }
+        holder.setAttribute("data-key", key);
+        window.discodeBadges(holder, !!state.hasNitro, !!state.isBooster, state.staffRole || "");
+    }
+
+    var queued = false;
+    new MutationObserver(function () {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(function () { queued = false; paint(); });
+    }).observe(document.documentElement, { childList: true, subtree: true });
+    document.addEventListener("discode-nitro-state", paint);
+    document.addEventListener("DOMContentLoaded", paint);
+    document.addEventListener("discode-page-ready", paint);
+    paint();
+})();

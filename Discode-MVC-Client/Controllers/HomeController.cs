@@ -168,8 +168,8 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RequestSizeLimit(2_000_000)]
-        public IActionResult UploadAvatar(IFormFile file)
+        [RequestSizeLimit(9_000_000)]
+        public async Task<IActionResult> UploadAvatar(IFormFile file)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
@@ -178,14 +178,85 @@ namespace Discode_MVC_Client.Controllers
             if (file is null || file.Length == 0 || !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
                 return BadRequest(new { errors = new[] { "Choose an image file." } });
 
+            var animated = string.Equals(file.ContentType, "image/gif", StringComparison.OrdinalIgnoreCase);
+            if (animated)
+            {
+                if (file.Length > 8_000_000)
+                    return BadRequest(new { errors = new[] { "Choose an animated image that is at most 8 MB." } });
+                if (!await HasNitroAsync())
+                    return StatusCode(403, new { errors = new[] { "An animated avatar needs Nitro." } });
+            }
+            else if (file.Length > 2_000_000)
+            {
+                return BadRequest(new { errors = new[] { "Choose an image that is at most 2 MB." } });
+            }
+
             var folder = Path.Combine(_environment.WebRootPath, "uploads", "avatars");
             Directory.CreateDirectory(folder);
 
-            var path = Path.Combine(folder, userId + ".jpg");
+            var extension = animated ? ".gif" : ".jpg";
+            var path = Path.Combine(folder, userId + extension);
             using (var stream = System.IO.File.Create(path))
-                file.CopyTo(stream);
+                await file.CopyToAsync(stream);
 
-            return Ok(new { avatarUrl = "/uploads/avatars/" + userId + ".jpg?v=" + DateTime.UtcNow.Ticks });
+            var other = Path.Combine(folder, userId + (animated ? ".jpg" : ".gif"));
+            if (System.IO.File.Exists(other))
+                System.IO.File.Delete(other);
+
+            return Ok(new { avatarUrl = "/uploads/avatars/" + userId + extension + "?v=" + DateTime.UtcNow.Ticks });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(9_000_000)]
+        public async Task<IActionResult> UploadBanner(IFormFile file)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            if (file is null || file.Length == 0 || !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+                return BadRequest(new { errors = new[] { "Choose an image file." } });
+
+            if (file.Length > 8_000_000)
+                return BadRequest(new { errors = new[] { "Choose an image that is at most 8 MB." } });
+
+            if (!await HasNitroAsync())
+                return StatusCode(403, new { errors = new[] { "A profile banner needs Nitro." } });
+
+            var extension = file.ContentType.ToLowerInvariant() switch
+            {
+                "image/gif" => ".gif",
+                "image/png" => ".png",
+                "image/webp" => ".webp",
+                _ => ".jpg"
+            };
+
+            var folder = Path.Combine(_environment.WebRootPath, "uploads", "banners");
+            Directory.CreateDirectory(folder);
+            var fileName = userId + "-" + Guid.NewGuid().ToString("N") + extension;
+            using (var stream = System.IO.File.Create(Path.Combine(folder, fileName)))
+                await file.CopyToAsync(stream);
+
+            return Ok(new { bannerUrl = "/uploads/banners/" + fileName });
+        }
+
+        private async Task<bool> HasNitroAsync()
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var limits = await client.GetFromJsonAsync<ViewModels.Nitro.NitroLimitsUIVM>("api/nitro/limits");
+                return limits?.HasNitro == true;
+            }
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
+            {
+                return false;
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
         }
 
         [HttpGet]
@@ -275,7 +346,6 @@ namespace Discode_MVC_Client.Controllers
             return GetPosts("api/post/user/" + Uri.EscapeDataString(name.Trim()));
         }
 
-        // theme and notification switches belong to the account, not to the browser
         [HttpPost]
         [ValidateAntiForgeryToken]
         public Task<IActionResult> SaveSettings([FromBody] SaveSettingsUIVM model)
@@ -290,7 +360,6 @@ namespace Discode_MVC_Client.Controllers
             }));
         }
 
-        // people pinned to the top of the DM list
         [HttpGet]
         public Task<IActionResult> Pins()
         {
@@ -330,6 +399,25 @@ namespace Discode_MVC_Client.Controllers
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Choose a user." } }));
 
             return GetPosts("api/post/reposts/" + Uri.EscapeDataString(name.Trim()));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> SharePost([FromBody] SharePostUIVM model)
+        {
+            if (model is null || model.Id <= 0 || model.UserNames is null || model.UserNames.Count == 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Pick at least one friend." } }));
+
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/post/{model.Id}/share", new { userNames = model.UserNames, note = model.Note ?? string.Empty }));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> PostCard(int id)
+        {
+            if (id <= 0)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Post not found." } }));
+
+            return ForwardToApi(client => client.GetAsync($"api/post/{id}"));
         }
 
         [HttpPost]

@@ -4,7 +4,6 @@ var GROUP_LIMIT = 10;
 var picked = [];
 var already = [];
 
-// Settings, pins: everything that used to sit in the browser's localStorage lives on the account now
 function postJson(url, body) {
     var tokenInput = document.querySelector("input[name='__RequestVerificationToken']");
     return fetch(url, {
@@ -30,7 +29,6 @@ function loadPins() {
     return pinKeys;
 }
 
-// a pinned person is identified by their user name, the display name is not unique
 function pinKey(item) {
     return String(item.getAttribute("data-dm") || rowName(item)).toLowerCase();
 }
@@ -598,7 +596,6 @@ document.addEventListener("visibilitychange", function () {
         paintNotify();
     });
 
-    // the page is already drawn in the saved theme by the server; here only the switch is set and a change is saved
     function applyTheme(theme, animate) {
         var dark = theme === "dark";
         if (animate && window.discodeSetTheme) window.discodeSetTheme(dark);
@@ -895,6 +892,7 @@ document.addEventListener("visibilitychange", function () {
             face.alt = "";
             face.src = server.iconUrl;
             face.className = "server-chip-icon";
+            face.draggable = false;
             button.appendChild(face);
         } else {
             button.textContent = name.trim().charAt(0).toUpperCase();
@@ -955,6 +953,99 @@ document.addEventListener("visibilitychange", function () {
         if (window.discodeGo) window.discodeGo(url);
         else window.location.href = url;
     }
+
+    (function enableServerDrag() {
+        var nav = list.closest(".server-nav") || list.parentElement;
+        var drag = null;
+        var suppress = false;
+        var bar = document.createElement("div");
+        bar.className = "server-drop-bar";
+
+        function chips() {
+            return [].filter.call(list.children, function (child) {
+                return child.classList && child.classList.contains("server-chip") && child._server;
+            });
+        }
+
+        function finish() {
+            if (!drag) return;
+            if (drag.ghost && drag.ghost.parentNode) drag.ghost.parentNode.removeChild(drag.ghost);
+            if (bar.parentNode) bar.parentNode.removeChild(bar);
+            drag.chip.classList.remove("is-dragging");
+            document.body.classList.remove("server-dragging");
+            drag = null;
+        }
+
+        function place(y) {
+            var others = chips().filter(function (c) { return c !== drag.chip; });
+            var before = null;
+            for (var i = 0; i < others.length; i++) {
+                var r = others[i].getBoundingClientRect();
+                if (y < r.top + r.height / 2) { before = others[i]; break; }
+            }
+            drag.before = before;
+            if (before) list.insertBefore(bar, before);
+            else if (others.length) list.insertBefore(bar, others[others.length - 1].nextSibling);
+        }
+
+        list.addEventListener("pointerdown", function (event) {
+            if (event.button !== 0 || event.pointerType === "touch") return;
+            var target = event.target.closest ? event.target.closest(".server-chip") : null;
+            if (!target || !target._server) return;
+            drag = { chip: target, x: event.clientX, y: event.clientY, active: false, before: null, ghost: null };
+        });
+
+        document.addEventListener("pointermove", function (event) {
+            if (!drag) return;
+            if (!drag.chip.parentNode) { finish(); return; }
+            if (!drag.active) {
+                if (Math.abs(event.clientX - drag.x) + Math.abs(event.clientY - drag.y) < 8) return;
+                drag.active = true;
+                hideServerTip();
+                var box = drag.chip.getBoundingClientRect();
+                drag.ghost = drag.chip.cloneNode(true);
+                drag.ghost.className = drag.chip.className + " server-drag-ghost";
+                drag.ghost.style.width = box.width + "px";
+                drag.ghost.style.height = box.height + "px";
+                document.body.appendChild(drag.ghost);
+                drag.chip.classList.add("is-dragging");
+                document.body.classList.add("server-dragging");
+            }
+            event.preventDefault();
+            drag.ghost.style.left = (event.clientX - drag.ghost.offsetWidth / 2) + "px";
+            drag.ghost.style.top = (event.clientY - drag.ghost.offsetHeight / 2) + "px";
+            if (nav) {
+                var edge = nav.getBoundingClientRect();
+                if (event.clientY < edge.top + 48) nav.scrollTop -= 10;
+                else if (event.clientY > edge.bottom - 48) nav.scrollTop += 10;
+            }
+            place(event.clientY);
+        });
+
+        document.addEventListener("pointerup", function () {
+            if (!drag) return;
+            if (!drag.active) { drag = null; return; }
+            var moved = drag.chip;
+            var before = drag.before;
+            finish();
+            suppress = true;
+            setTimeout(function () { suppress = false; }, 0);
+            if (before) list.insertBefore(moved, before);
+            else list.appendChild(moved);
+            var ids = chips().map(function (c) { return c._server.id; });
+            sendServer("/Server/Reorder", { serverIds: ids }).catch(loadServers);
+        });
+
+        document.addEventListener("pointercancel", finish);
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && drag) finish();
+        });
+        list.addEventListener("click", function (event) {
+            if (!suppress) return;
+            event.stopPropagation();
+            event.preventDefault();
+        }, true);
+    })();
 
     window.discodeMoveServer = function (id, where) {
         var ids = [].map.call(list.children, function (child) { return child._server ? child._server.id : null; }).filter(function (value) { return value !== null; });

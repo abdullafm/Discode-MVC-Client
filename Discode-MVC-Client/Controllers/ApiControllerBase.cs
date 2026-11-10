@@ -33,7 +33,6 @@ namespace Discode_MVC_Client.Controllers
             }
             catch (TaskCanceledException) when (!HttpContext.RequestAborted.IsCancellationRequested)
             {
-                // the API did not answer in time: same as unreachable, the page shows its offline state
                 return (null, null);
             }
             catch (JsonException)

@@ -313,10 +313,8 @@ window.discodeReel = function (url) {
     return reel;
 };
 
-// nav.js removes page listeners on every in-app navigation and runs this file again, so register them every run
 (function () {
 
-    // Own confirm dialog: the browser one can be switched off by the page, which made Log out do nothing
     var logoutLayer = null;
 
     function logoutNow() {
@@ -348,7 +346,6 @@ window.discodeReel = function (url) {
         if (confirmButton) confirmButton.focus();
     }
 
-    // capture phase: another handler stopping the click can no longer swallow it
     document.addEventListener("click", function (event) {
         if (!event.target.closest("#me-logout")) return;
         event.preventDefault();
@@ -364,7 +361,6 @@ window.discodeReel = function (url) {
     }, true);
 })();
 
-// Admin actions that reach the signed-in user (nav.js re-registers these on every in-app navigation)
 (function () {
     var queue = [];
     var layer = null;
@@ -417,7 +413,6 @@ window.discodeReel = function (url) {
     });
 })();
 
-// Timeout: a modal nobody can close until the timeout is over (the layer lives on <body>, so it survives in-app navigation)
 (function () {
     function close(layer) {
         clearInterval(layer._timer);
@@ -425,7 +420,6 @@ window.discodeReel = function (url) {
         document.documentElement.classList.remove("is-timed-out");
     }
 
-    // The red hourglass turns into a green check, then the window leaves
     function hide() {
         var layer = document.querySelector(".timeout-layer");
         if (!layer || layer._finishing) return;
@@ -487,7 +481,6 @@ window.discodeReel = function (url) {
 
     document.addEventListener("discode-account-timeout", function (event) { show(event.detail); });
 
-    // A timeout can also change outside the admin panel: ask the server again every few seconds
     clearInterval(window.discodeTimeoutSync);
     window.discodeTimeoutSync = setInterval(function () {
         if (document.hidden || !window.discodePresence) return;
@@ -495,7 +488,6 @@ window.discodeReel = function (url) {
     }, 8000);
 })();
 
-// An admin closed the stream: tell the streamer why
 (function () {
     document.addEventListener("discode-live-closed", function (event) {
         var data = event.detail || {};

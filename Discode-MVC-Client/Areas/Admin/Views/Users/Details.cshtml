@@ -166,6 +166,37 @@ else
                     </form>
                 </details>
             }
+            @if (User.IsInRole("SuperAdmin") && !Model.IsDeleted)
+            {
+                var back = Url.Action("Details", "Users", new { area = "Admin", id = Model.Id });
+                <details class="adm-action">
+                    <summary><i class="fa-solid fa-gem"></i> Give Nitro</summary>
+                    <form method="post" asp-area="Admin" asp-controller="Nitro" asp-action="Grant" data-confirm="Nitro starts at once and runs for the days you typed. It does not use Stripe." data-confirm-title="Give Nitro?" data-confirm-button="Give Nitro" data-confirm-tone="success" data-confirm-icon="fa-gem">
+                        <input type="hidden" name="userName" value="@Model.UserName">
+                        <input type="hidden" name="back" value="@back">
+                        <input type="number" name="days" value="30" min="1" max="3650" class="adm-input" aria-label="Days" required>
+                        <button type="submit" class="adm-btn"><i class="fa-solid fa-gift"></i> Give Nitro</button>
+                    </form>
+                </details>
+                <details class="adm-action is-danger">
+                    <summary><i class="fa-solid fa-gem"></i> Cancel Nitro</summary>
+                    <form method="post" asp-area="Admin" asp-controller="Nitro" asp-action="Revoke" data-confirm="Nitro ends now and their boosts go. If they pay through Stripe, the subscription is stopped there too and they are not charged again." data-confirm-title="Cancel the Nitro of this member?" data-confirm-button="Cancel Nitro" data-confirm-tone="danger" data-confirm-icon="fa-gem">
+                        <input type="hidden" name="userName" value="@Model.UserName">
+                        <input type="hidden" name="back" value="@back">
+                        <button type="submit" class="adm-btn is-danger"><i class="fa-solid fa-ban"></i> Cancel Nitro</button>
+                    </form>
+                </details>
+                <details class="adm-action">
+                    <summary><i class="fa-solid fa-rocket"></i> Boost wait</summary>
+                    <form method="post" asp-area="Admin" asp-controller="Nitro" asp-action="BoostTime" data-confirm="This moves the time at which their boosts (and places that wait) can be used again." data-confirm-title="Change the boost wait?" data-confirm-button="Change" data-confirm-tone="warning" data-confirm-icon="fa-rocket">
+                        <input type="hidden" name="userName" value="@Model.UserName">
+                        <input type="hidden" name="back" value="@back">
+                        <p class="adm-muted">Hours above 0 make the wait longer, below 0 shorter (for example -24 lets a boost move now).</p>
+                        <input type="number" name="hours" value="-24" min="-720" max="720" class="adm-input" aria-label="Hours" required>
+                        <button type="submit" class="adm-btn is-amber"><i class="fa-solid fa-hourglass-half"></i> Change the wait</button>
+                    </form>
+                </details>
+            }
             @if (Model.IsDeleted)
             {
                 <p class="adm-empty-small">This account was deleted. Nothing more can be done to it.</p>

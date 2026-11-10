@@ -146,3 +146,73 @@
         opacity: 0.35;
     }
 }
+
+.nitro-view { overflow-y: auto; flex-direction: column; }
+.nitro-view #nitro-hero { flex: none; display: flex; }
+.nitro-flash { margin: 14px 0 0; padding: 10px 14px; border-radius: 8px; background: rgba(255, 255, 255, 0.12); color: #fff; font-size: 14px; max-width: 460px; }
+.nitro-flash.is-ok { background: rgba(35, 165, 89, 0.3); }
+.nitro-flash.is-error { background: rgba(218, 55, 60, 0.35); }
+.nitro-flash[hidden] { display: none; }
+.nitro-btn:disabled { opacity: 0.6; cursor: default; }
+.nitro-perks { padding: 36px 24px 48px; color: #f2f3f5; }
+.nitro-perks h2 { margin: 0 0 18px; font-size: 22px; text-align: center; }
+.nitro-perk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; max-width: 1000px; margin: 0 auto; }
+.nitro-perk { padding: 18px; border-radius: 14px; background: #17121f; border: 1px solid rgba(255, 255, 255, 0.08); }
+.nitro-perk h3 { margin: 10px 0 6px; font-size: 16px; }
+.nitro-perk p { margin: 0; color: #b5bac1; font-size: 14px; line-height: 1.4; }
+.nitro-perk-icon { display: inline-flex; width: 40px; height: 40px; align-items: center; justify-content: center; border-radius: 12px; background: linear-gradient(135deg, #5865f2, #a855f7); color: #fff; font-size: 18px; }
+.nitro-perk-boost { background: linear-gradient(135deg, #ff8bf2, #a855f7); }
+.nitro-boost-line { margin: 22px auto 0; max-width: 1000px; text-align: center; color: #b5bac1; }
+
+.nitro-view, html.theme-dark .nitro-view { background: #07040c !important; }
+.nitro-view .nitro-perks { background: #07040c; padding: 56px 24px 64px; }
+.nitro-view .nitro-perks h2 { margin: 0 0 24px; color: #fff; }
+.nitro-view .nitro-perk-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); max-width: 1200px; gap: 18px; }
+.nitro-view .nitro-perk { display: flex; flex-direction: column; gap: 8px; padding: 20px; background: #15101f; border: 1px solid rgba(255, 255, 255, 0.08); }
+.nitro-view .nitro-perk h3 { margin: 6px 0 0; color: #fff; font-size: 16px; }
+.nitro-view .nitro-perk p { color: #b9bcc4; }
+.nitro-view .nitro-boost-line { color: #b9bcc4; }
+.nitro-view .nitro-hero { flex: none; height: 420px; min-height: 0; }
+.nitro-view #nitro-hero { display: block; }
+.nitro-view .nitro-perks { margin-top: 0; }
+.nitro-view .nitro-perks { box-sizing: border-box; width: 100%; }
+.nitro-view .nitro-perks { display: block; }
+main.nitro-view > section.nitro-perks { display: block !important; }
+
+.nitro-gift { display: flex; align-items: center; gap: 28px; margin: 28px 16px 8px; padding: 22px 24px; border-radius: 14px; background: rgba(128, 132, 142, 0.14); }
+.nitro-gift-art { width: 260px; max-width: 38%; border-radius: 10px; flex: none; }
+.nitro-gift-copy { flex: 1; min-width: 0; }
+.nitro-gift-copy h2 { margin: 0 0 6px; font-size: 22px; }
+.nitro-gift-copy p { margin: 0 0 14px; opacity: .85; line-height: 1.45; }
+.nitro-gift-ready { margin-top: 16px; }
+.nitro-gift-ready label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; opacity: .75; }
+.nitro-gift-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.nitro-gift-row input { flex: 1; min-width: 200px; padding: 10px 12px; border: 1px solid rgba(128, 132, 142, 0.5); border-radius: 8px; background: transparent; color: inherit; font: inherit; font-size: 14px; }
+.nitro-gift-row button, .nitro-gift-item button { padding: 9px 14px; border: 0; border-radius: 8px; background: #5865f2; color: #fff; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.nitro-gift-row button:hover, .nitro-gift-item button:hover { background: #4752c4; }
+.nitro-gift-mine { margin-top: 20px; }
+.nitro-gift-mine h3 { margin: 0 0 8px; font-size: 15px; }
+.nitro-gift-item { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-top: 1px solid rgba(128, 132, 142, 0.3); font-size: 14px; }
+.nitro-gift-item span { flex: 1; }
+.nitro-gift-item.is-redeemed span, .nitro-gift-item.is-revoked span { opacity: .65; }
+@media (max-width: 720px) { .nitro-gift { flex-direction: column; align-items: stretch; } .nitro-gift-art { max-width: 100%; width: 100%; } }
+.nitro-gift-copy h2 { text-align: left; }
+
+main.friends-view.nitro-view, .nitro-view { overflow-y: auto !important; overflow-x: hidden; }
+.nitro-view .nitro-perk { gap: 6px; padding: 18px 20px; border-radius: 8px; background: #2b2d31; border: 1px solid rgba(255, 255, 255, 0.06); transition: background-color .15s ease, border-color .15s ease, transform .15s ease; cursor: default; }
+.nitro-view .nitro-perk:hover { background: #313338; border-color: #5865f2; transform: translateY(-2px); }
+.nitro-view .nitro-perk-icon, .nitro-view .nitro-perk-boost { width: auto; height: auto; justify-content: flex-start; background: transparent; border-radius: 0; color: #5865f2; font-size: 22px; }
+.nitro-view .nitro-perk h3 { margin: 4px 0 0; font-size: 15px; font-weight: 700; }
+.nitro-view .nitro-perk p { font-size: 14px; line-height: 1.45; }
+.nitro-view .nitro-perks h2 { font-size: 20px; }
+.nitro-view .nitro-gift { background: #2b2d31; border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; }
+
+/* phones: the top of the live window has two rows, the Nitro gift card lines up with the perk cards, the astronaut stays off the text */
+@media (max-width: 520px) {
+    .watch-top { flex-wrap: wrap; row-gap: 10px; padding: 12px 12px 40px !important; }
+    .watch-host { flex: 1 1 100%; }
+    .watch-host > div { min-width: 0; }
+    .watch-top-right { width: 100%; justify-content: flex-end; }
+    .nitro-wumpus { display: none; }
+}
+.nitro-view .nitro-gift { margin-left: auto; margin-right: auto; max-width: 1200px; box-sizing: border-box; }

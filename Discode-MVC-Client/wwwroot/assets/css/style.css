@@ -154,14 +154,14 @@ hr {
 }
 
 body .conversation-sidebar {
-    width: clamp(200px, 18vw, 240px);
-    flex: none;
+    width: 240px;
+    flex: 0 0 240px;
     height: 100%;
-    min-width: 0;
+    min-width: 240px;
     background-color: #f2f3f5;
     position: relative;
     overflow-y: auto;
-    padding-bottom: 56px;
+    padding-bottom: 64px;
 }
 
 body .conversation-sidebar .sidebar-search {
@@ -261,6 +261,17 @@ body .conversation-sidebar .shortcut-list .shortcut-item .new-badge {
     top: 50%;
     right: 10px;
     transform: translate(0%, -50%);
+}
+
+body .conversation-sidebar .shortcut-list .shortcut-item .new-badge,
+body .conversation-sidebar .shortcut-list .shortcut-item .promo-badge {
+    max-width: 124px;
+    font-size: 10.5px;
+    letter-spacing: -0.2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    box-sizing: border-box;
 }
 
 body .conversation-sidebar .shortcut-list .shortcut-item .promo-badge {
@@ -419,14 +430,19 @@ body .conversation-sidebar .direct-messages .friend-list .group-row-text span {
     font-weight: 500;
 }
 
-body .conversation-sidebar .direct-messages .friend-list .friend-item i {
+body .conversation-sidebar .direct-messages .friend-list .friend-item > i {
     font-size: 14px;
     color: #5b5e65;
     position: absolute;
-    top: 50%;
+    top: 0;
+    bottom: 0;
     right: 8px;
-    transform: translate(0%, -50%);
+    width: 16px;
+    height: 16px;
+    margin-block: auto;
     display: none;
+    line-height: 1;
+    transform: none;
 }
 
 body .conversation-sidebar .direct-messages .friend-list .group-avatar i {
@@ -437,8 +453,23 @@ body .conversation-sidebar .direct-messages .friend-list .group-avatar i {
     font-size: 16px;
 }
 
-body .conversation-sidebar .direct-messages .friend-list .friend-item:hover>i {
-    display: block;
+body .conversation-sidebar .direct-messages .friend-list .friend-item:hover > i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: none;
+}
+
+body .conversation-sidebar .direct-messages .friend-list .friend-item > i.fa-xmark {
+    cursor: pointer;
+    background: transparent;
+    transition: color 0.15s ease;
+}
+
+body .conversation-sidebar .direct-messages .friend-list .friend-item > i.fa-xmark:hover,
+html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend-item > i.fa-xmark:hover {
+    color: #f23f43;
+    background: transparent;
 }
 
 body .conversation-sidebar .direct-messages .friend-list .friend-item.pinned > .row-pin {
@@ -455,19 +486,31 @@ body .conversation-sidebar .user-panel {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    padding: 10px;
-    width: 100%;
+    gap: 4px;
+    padding: 4px 6px;
+    width: calc(100% - 16px);
     position: absolute;
-    left: 0;
-    bottom: 0;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    z-index: 10;
+}
+
+html.theme-dark body .conversation-sidebar .user-panel {
+    background-color: #0b0c0e !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
 }
 
 body .conversation-sidebar .user-panel .avatar {
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     position: relative;
     display: inline-block;
+    flex-shrink: 0;
 }
 
 body .conversation-sidebar .user-panel .avatar img {
@@ -480,34 +523,17 @@ body .conversation-sidebar .user-panel .avatar img {
 body .conversation-sidebar .user-panel .avatar::after {
     content: "";
     position: absolute;
-    bottom: 1px;
+    bottom: -1px;
     right: -1px;
-    width: 9px;
-    height: 9px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background-color: #24a55a;
-    box-shadow: 0px 0px 0px 3px #ecedef;
+    box-shadow: 0px 0px 0px 2.5px #ecedef;
 }
 
-body .conversation-sidebar .user-panel .user-identity {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    flex: 1;
-    min-width: 0;
-    gap: 10px;
-    cursor: pointer;
-    border-radius: 4px;
-    padding: 4px;
-    margin: -4px;
-}
-
-body .conversation-sidebar .user-panel .user-identity:hover {
-    background-color: #dfe0e3;
-}
-
-body .conversation-sidebar .user-panel .user-identity:hover .avatar::after {
-    box-shadow: 0px 0px 0px 3px #dfe0e3;
+html.theme-dark body .conversation-sidebar .user-panel .avatar::after {
+    box-shadow: 0px 0px 0px 2.5px #0b0c0e !important;
 }
 
 body .conversation-sidebar .user-panel[data-status="idle"] .avatar::after {
@@ -522,13 +548,36 @@ body .conversation-sidebar .user-panel[data-status="invisible"] .avatar::after {
     background-color: #80848e;
 }
 
+body .conversation-sidebar .user-panel .user-identity {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex: 1;
+    min-width: 0;
+    gap: 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    padding: 2px 4px;
+    margin: 0;
+    transition: background-color 0.15s ease;
+}
+
+body .conversation-sidebar .user-panel .user-identity:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+html.theme-dark body .conversation-sidebar .user-panel .user-identity:hover {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
 body .conversation-sidebar .user-panel .user-identity .user-details {
     display: flex;
-    align-items: start;
+    align-items: flex-start;
     justify-content: center;
     flex-direction: column;
     min-width: 0;
-    line-height: 16px;
+    flex: 1;
+    line-height: 1.25;
 }
 
 body .conversation-sidebar .user-panel .user-identity .user-details p {
@@ -537,7 +586,12 @@ body .conversation-sidebar .user-panel .user-identity .user-details p {
     text-overflow: ellipsis;
     white-space: nowrap;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 13.5px;
+    color: #060607;
+}
+
+html.theme-dark body .conversation-sidebar .user-panel .user-identity .user-details p {
+    color: #f2f3f5;
 }
 
 body .conversation-sidebar .user-panel .user-identity .user-details span {
@@ -545,8 +599,13 @@ body .conversation-sidebar .user-panel .user-identity .user-details span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-weight: 300;
-    font-size: 12px;
+    font-weight: 500;
+    font-size: 11px;
+    color: #80848e;
+}
+
+html.theme-dark body .conversation-sidebar .user-panel .user-identity .user-details span {
+    color: #949ba4;
 }
 
 body .conversation-sidebar .user-panel .user-controls {
@@ -575,17 +634,37 @@ body .conversation-sidebar .user-panel .user-controls > button {
     transition: background-color 0.15s ease;
 }
 
-body .conversation-sidebar .user-panel .user-controls > button:hover {
-    background-color: rgba(78, 80, 88, 0.2);
-}
-
+body .conversation-sidebar .user-panel .user-controls > button:hover,
 html.theme-dark body .conversation-sidebar .user-panel .user-controls > button:hover {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: transparent !important;
 }
 
 body .conversation-sidebar .user-panel .user-controls i {
     cursor: pointer;
     color: #4d5057;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+body .conversation-sidebar .user-panel .user-controls > button:hover i {
+    color: #060607;
+    transform: scale(1.15);
+}
+
+body .conversation-sidebar .user-panel .user-controls > button:hover i.mute {
+    color: #f23f43;
+}
+
+html.theme-dark body .conversation-sidebar .user-panel .user-controls i {
+    color: #b5bac1;
+}
+
+html.theme-dark body .conversation-sidebar .user-panel .user-controls > button:hover i {
+    color: #ffffff;
+    transform: scale(1.15);
+}
+
+html.theme-dark body .conversation-sidebar .user-panel .user-controls > button:hover i.mute {
+    color: #f23f43;
 }
 
 body .conversation-sidebar .user-panel .user-controls i.mute {
@@ -598,7 +677,6 @@ body .conversation-sidebar .user-panel .user-controls i.fa-headphones.mute {
     transition: all 0s;
     color: #d9373c;
     animation: tilt .2s;
-    /* inline-block + position:relative = ::after çalışır */
     display: inline-block;
     position: relative;
 }
@@ -615,7 +693,6 @@ body .conversation-sidebar .user-panel .user-controls i.fa-headphones.mute::afte
     transform: translate(-50%, -50%) rotate(-45deg);
 }
 
-/* Eski wrapper stilleri temizle */
 .headp-wrap { all: unset; }
 .headp-slash { display: none !important; }
 
@@ -624,9 +701,12 @@ body .conversation-sidebar .user-panel .user-controls i.fa-gear {
     transform: rotate(0deg);
 }
 
+body .conversation-sidebar .user-panel .user-controls > button:hover i.fa-gear,
 body .conversation-sidebar .user-panel .user-controls i.fa-gear:hover {
-    transform: rotate(180deg);
+    transform: rotate(180deg) scale(1.15);
 }
+
+
 
 @keyframes spring {
     0% {
@@ -782,7 +862,6 @@ html.theme-dark .notify-count {
     border-color: #18181b !important;
 }
 
-/* Notification Panel Container */
 .notify-panel {
     position: absolute;
     top: calc(100% + 10px);
@@ -818,7 +897,6 @@ html.theme-dark .notify-panel {
     pointer-events: auto;
 }
 
-/* Header */
 .notify-header {
     display: flex;
     align-items: center;
@@ -895,7 +973,6 @@ html.theme-dark .notify-mark-read-btn:hover {
     color: #f2f3f5;
 }
 
-/* List Wrapper & Scrollbar */
 .notify-list-wrap {
     max-height: 400px;
     overflow-y: auto;
@@ -903,34 +980,7 @@ html.theme-dark .notify-mark-read-btn:hover {
     padding: 8px;
 }
 
-.notify-list-wrap::-webkit-scrollbar {
-    width: 6px;
-}
 
-.notify-list-wrap::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.notify-list-wrap::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 3px;
-}
-
-.notify-list-wrap::-webkit-scrollbar-thumb:hover {
-    background: #9ca3af;
-}
-
-.theme-dark .notify-list-wrap::-webkit-scrollbar-thumb,
-html.theme-dark .notify-list-wrap::-webkit-scrollbar-thumb {
-    background: #1a1b1e;
-}
-
-.theme-dark .notify-list-wrap::-webkit-scrollbar-thumb:hover,
-html.theme-dark .notify-list-wrap::-webkit-scrollbar-thumb:hover {
-    background: #111214;
-}
-
-/* Notification Item */
 .notify-item {
     position: relative;
     display: flex;
@@ -971,7 +1021,6 @@ html.theme-dark .notify-item.unread:hover {
     background: rgba(88, 101, 242, 0.18);
 }
 
-/* Avatar & Mini Action Badge */
 .notify-avatar-wrap {
     position: relative;
     width: 40px;
@@ -1041,7 +1090,6 @@ html.theme-dark .notify-badge-icon {
     color: #ffffff;
 }
 
-/* Content */
 .notify-content {
     flex: 1;
     min-width: 0;
@@ -1128,7 +1176,6 @@ html.theme-dark .notify-time {
     flex: none;
 }
 
-/* Actions */
 .notify-actions {
     flex: none;
     display: flex;
@@ -1222,7 +1269,6 @@ html.theme-dark .notify-btn-dismiss:hover {
     font-size: 12px;
 }
 
-/* Empty State */
 .notify-empty {
     padding: 36px 20px;
     text-align: center;
@@ -1465,7 +1511,6 @@ html.theme-dark body .friend-badge {
     box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
 }
 
-/* Dark mode styles for friend filter */
 html.theme-dark .friend-filter-menu {
     background: transparent;
     border: none;
@@ -1511,8 +1556,6 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
     background: #059669;
     box-shadow: 0 2px 4px rgba(16, 185, 129, 0.4);
 }
-
-/* Inline Search Container (for Add Friend section) */
 
 .inline-search-header {
     margin-bottom: 16px;
@@ -1573,7 +1616,7 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
     width: 20px;
     height: 20px;
     border: none;
-    background: #40444b;
+    background: transparent;
     color: #b9bbbe;
     border-radius: 3px;
     cursor: pointer;
@@ -1581,15 +1624,16 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
     align-items: center;
     justify-content: center;
     font-size: 10px;
-    transition: all 0.15s ease;
+    outline: none;
+    transition: color 0.15s ease;
 }
 
-.inline-search-clear:hover {
-    background: #4f545c;
-    color: #fff;
+.inline-search-clear:hover,
+.inline-search-clear:focus-visible {
+    background: transparent;
+    color: #f23f43;
 }
 
-/* Inline Results Table - Single Unified Card */
 .inline-search-results-card {
     margin-top: 16px;
     width: 100%;
@@ -1655,7 +1699,6 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
     padding-right: 16px;
 }
 
-/* User cell */
 .inline-search-user-cell {
     display: flex;
     align-items: center;
@@ -1709,7 +1752,6 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
     text-overflow: ellipsis;
 }
 
-/* Status cell */
 .inline-search-status-cell {
     font-size: 12px;
     color: #b9bbbe;
@@ -1744,7 +1786,6 @@ html.theme-dark .friend-filter-menu button[data-filter="add"]:hover {
     font-weight: 500;
 }
 
-/* Action cell */
 .inline-search-action-cell button {
     display: inline-flex;
     align-items: center;
@@ -1815,7 +1856,6 @@ html.theme-dark body .inline-search-action-cell button span {
     color: #fff !important;
 }
 
-/* Loading state - inside single card */
 .inline-search-loading {
     align-items: center;
     justify-content: center;
@@ -1848,7 +1888,6 @@ html.theme-dark body .inline-search-action-cell button span {
     }
 }
 
-/* No results - inside single card */
 .inline-search-no-results {
     flex-direction: column;
     align-items: center;
@@ -1878,8 +1917,6 @@ html.theme-dark body .inline-search-action-cell button span {
     font-weight: 600;
 }
 
-/* Light mode for inline search */
-
 html:not(.theme-dark) .inline-search-header h3 {
     color: #18181b;
 }
@@ -1907,13 +1944,14 @@ html:not(.theme-dark) .inline-search-icon {
 }
 
 html:not(.theme-dark) .inline-search-clear {
-    background: #e4e4e7;
+    background: transparent;
     color: #71717a;
 }
 
-html:not(.theme-dark) .inline-search-clear:hover {
-    background: #d4d4d8;
-    color: #18181b;
+html:not(.theme-dark) .inline-search-clear:hover,
+html:not(.theme-dark) .inline-search-clear:focus-visible {
+    background: transparent;
+    color: #f23f43;
 }
 
 html:not(.theme-dark) .inline-search-results-card {
@@ -1962,7 +2000,6 @@ html:not(.theme-dark) .inline-search-no-results span {
     color: #18181b;
 }
 
-/* Dropdown Menu Header: 'Friends Online' with 2 people icon */
 .friend-menu-header {
     display: flex;
     align-items: center;
@@ -1987,7 +2024,6 @@ html:not(.theme-dark) .inline-search-no-results span {
     letter-spacing: -0.01em;
 }
 
-/* Selection list */
 .friend-menu-list {
     display: flex;
     flex-direction: column;
@@ -2036,7 +2072,6 @@ html:not(.theme-dark) .inline-search-no-results span {
     gap: 10px;
 }
 
-/* Green dot for Online */
 .friend-status-dot.online {
     width: 8px;
     height: 8px;
@@ -2060,7 +2095,6 @@ html.theme-dark .friend-status-dot.online {
     flex-shrink: 0;
 }
 
-/* Checkmark on the far right for active item */
 .friend-menu-check {
     font-size: 12px;
     color: #23a55a;
@@ -2073,7 +2107,6 @@ html.theme-dark .friend-status-dot.online {
     display: inline-block;
 }
 
-/* Blocked item with red-orange text and red-orange blocked sign */
 .friend-menu-item.blocked-item {
     color: #da373c;
 }
@@ -2096,7 +2129,6 @@ html.theme-dark .friend-status-dot.online {
     color: #da373c;
 }
 
-/* Footer: larger vibrant green rounded-rectangle button spanning width */
 .friend-menu-footer {
     margin-top: 8px;
     padding-top: 8px;
@@ -2194,10 +2226,10 @@ html.theme-dark .friend-status-dot.online {
     }
 
     .friend-filter-menu {
-        position: absolute;
+        position: fixed;
         top: calc(100% + 8px);
         left: 8px;
-        z-index: 30;
+        z-index: 80;
         display: none;
         width: min(212px, calc(100vw - 20px));
         max-width: calc(100vw - 20px);
@@ -3101,6 +3133,8 @@ body .friends-view .friends-body .active-now .active-now-message p {
     body .conversation-sidebar {
         width: auto;
         flex: 1;
+        max-width: none;
+        min-width: 0;
     }
 
     body .friends-view {
@@ -3405,10 +3439,25 @@ body .conversation-sidebar .direct-messages h2 .dm-new {
     cursor: default;
 }
 
-@media screen and (max-height: 510px) {
-    body .conversation-sidebar .user-panel {
-        position: sticky;
-    }
+body .conversation-sidebar {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 8px;
+}
+
+body .conversation-sidebar > *,
+body .conversation-sidebar > section > * {
+    flex-shrink: 0;
+}
+
+body .conversation-sidebar .user-panel {
+    position: sticky;
+    left: auto;
+    right: auto;
+    bottom: 0;
+    margin: auto 8px 0;
+    width: calc(100% - 16px);
+    box-sizing: border-box;
 }
 
 .d-none {
@@ -3683,15 +3732,29 @@ body .conversation-sidebar .direct-messages h2 .dm-new {
     border: 0;
     background: #e9e9ea;
     color: #060607;
-    border-radius: 4px;
-    padding: 8px 10px;
+    border-radius: 8px;
+    padding: 9px 12px;
     font: inherit;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
     gap: 8px;
+    transition: background 0.18s ease, transform 0.1s ease;
+}
+
+.me-edit i {
+    font-size: 13px;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.me-edit:hover i {
+    transform: rotate(-12deg) scale(1.15);
+}
+
+.me-edit:active {
+    transform: scale(0.98);
 }
 
 .me-logout {
@@ -3824,6 +3887,12 @@ body .conversation-sidebar .direct-messages h2 .dm-new {
     background: #f2f3f5;
     color: #4d5058;
     cursor: pointer;
+    transition: background-color 0.16s ease, transform 0.16s ease, color 0.16s ease;
+}
+
+.me-profile-close:hover {
+    background: #e3e5e8;
+    transform: scale(1.08);
 }
 
 .me-profile-side {
@@ -4241,6 +4310,17 @@ body .conversation-sidebar .direct-messages h2 .dm-new {
 
 .me-add[hidden] {
     display: none;
+}
+
+.me-msg,
+.me-add {
+    transition: background-color 0.16s ease, transform 0.16s ease;
+}
+
+.me-msg:hover,
+.me-add:hover {
+    background: #4752c4;
+    transform: translateY(-1px);
 }
 
 .me-profile.locked-view .me-bio-form {
@@ -5404,7 +5484,7 @@ html.theme-dark #lang-select-list button.on {
 
 html.theme-dark .user-panel .avatar::after,
 html.theme-dark .user-panel .user-identity:hover .avatar::after {
-    box-shadow: 0 0 0 3px #232428 !important;
+    box-shadow: 0 0 0 2.5px #0b0c0e !important;
 }
 
 html.theme-dark .friends-header,
@@ -5882,7 +5962,7 @@ html.theme-dark body .add-friend-discover-mark i {
 }
 
 html.theme-dark .user-panel {
-    background: #232428 !important;
+    background: #0b0c0e !important;
 }
 
 html.theme-dark .friends-empty {
@@ -7342,14 +7422,20 @@ body.call-resizing {
     }
 }
 
-/* ===== RESPONSIVE EKLERI ===== */
-@media screen and (min-width: 721px) and (max-width: 900px) {
+@media screen and (min-width: 721px) and (max-width: 1100px) {
     body .conversation-sidebar {
-        width: 200px;
+        width: min(220px, 28vw);
     }
 
     body .friends-view .friends-header {
         padding: 12px;
+        gap: 8px;
+    }
+
+    body .friends-view,
+    .server-room,
+    .server-view {
+        min-width: 0;
     }
 }
 
@@ -7369,7 +7455,6 @@ body.call-resizing {
     }
 }
 
-/* Private profile view for non-friends */
 .me-profile.private-view .me-profile-card {
     padding-top: 48px;
     box-sizing: border-box;
@@ -7433,7 +7518,6 @@ html.theme-dark body .me-profile .me-actions button span {
     color: #fff !important;
 }
 
-/* Friend request card shown on the profile of someone who sent you a request */
 .me-request {
     margin-top: 16px;
     padding: 12px 16px;
@@ -7533,7 +7617,6 @@ html.theme-dark .me-request-buttons button:hover {
     margin: 0 auto;
 }
 
-/* Direct message rows in the sidebar */
 body .conversation-sidebar .direct-messages .friend-list .friend-item[data-presence="online"] .avatar::after {
     border-color: #23a559;
 }
@@ -7828,10 +7911,6 @@ a.notify-content {
     animation: pop-fade-in 0.22s ease both;
 }
 
-main {
-    animation: pop-fade-in 0.25s ease both;
-}
-
 .stream-menu,
 .story-notice,
 .call-dock-card,
@@ -7929,7 +8008,6 @@ html.theme-dark body .server-ctx .server-ctx-check.on {
     display: block;
 }
 
-/* Tema gecisi: yumusak degissin, goz yormasin */
 ::view-transition-old(root),
 ::view-transition-new(root) {
     animation-duration: 0.45s;
@@ -7943,7 +8021,6 @@ html.theme-fade *::after {
     transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease, fill 0.4s ease, stroke 0.4s ease, box-shadow 0.4s ease !important;
 }
 
-/* Tema secimi: onizlemeli kartlar */
 .theme-choices {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 200px));
@@ -8063,7 +8140,6 @@ html.theme-dark .theme-choice:has(input:checked) > span:last-child::after {
     box-shadow: inset 0 0 0 3px #313338;
 }
 
-/* Dark rejimde Pending dugmeleri: qebul yasil, red qirmizi olsun */
 html.theme-dark .online-row:hover .request-accept:hover {
     background: #23a559 !important;
     color: #ffffff !important;
@@ -8075,7 +8151,6 @@ html.theme-dark .online-row:hover .blocked-unblock:hover {
     color: #ffffff !important;
 }
 
-/* ===== Hover animasyonlari: renk, kenar, golge ve acilis gecisleri yumusak olsun ===== */
 *,
 *::before,
 *::after {
@@ -8116,13 +8191,11 @@ li,
 .server-channel-row:focus-within .server-channel-edit,
 .server-channel-row:hover .server-channel-invite,
 .server-channel-row:focus-within .server-channel-invite,
-.friend-list .friend-item:hover > i,
 .friend-list .friend-item.pinned:hover > .row-pin,
 .me-bio-form:focus-within #me-bio-emoji {
     animation: hover-reveal 0.16s ease both;
 }
 
-/* Zeng, ses ve canli yayim panelleri yavas deyil, tez acilsin */
 .call-stage,
 .call-person,
 .call-screen-video,
@@ -8137,7 +8210,6 @@ li,
     transition-duration: 0.16s !important;
 }
 
-/* ===== Ayarlar > Account: kartli sade gorunus ve Public / Private secici ===== */
 #settings-account .settings-panel > h2 {
     margin-bottom: 6px;
     font-size: 24px;
@@ -8206,7 +8278,6 @@ html.theme-dark #settings-account .notify-row {
     font-size: 13px;
 }
 
-/* Public / Private ikili secici */
 #account-public.notify-switch,
 #account-public.notify-switch.on {
     display: flex;
@@ -8298,7 +8369,6 @@ html.theme-dark #account-public .vis-opt span {
     color: #9aa0aa;
 }
 
-/* ===== Profil pəncərəsində Geri / İrəli ===== */
 .me-profile-nav {
     position: absolute;
     top: 12px;
@@ -8336,16 +8406,17 @@ html.theme-dark #account-public .vis-opt span {
     cursor: default;
 }
 
-html.theme-dark .me-profile-nav {
+html.theme-dark .me-profile-nav,
+html.theme-dark .me-profile-close {
     background: #2b2d31;
     color: #dbdee1;
 }
 
-html.theme-dark .me-profile-nav:hover:not(:disabled) {
+html.theme-dark .me-profile-nav:hover:not(:disabled),
+html.theme-dark .me-profile-close:hover {
     background: #3a3c43;
 }
 
-/* ===== Ayarlar > Language & Time: modern gorunus ===== */
 #settings-language .settings-panel > h2 {
     margin-bottom: 6px;
     font-size: 24px;
@@ -8511,7 +8582,6 @@ html.theme-dark #settings-language .time-format label:has(input:checked) {
     color: #ffffff !important;
 }
 
-/* ===== Dil secimi: tema secimi kimi kartlar ===== */
 .lang-choices {
     grid-template-columns: repeat(auto-fit, minmax(150px, 200px));
 }
@@ -8599,7 +8669,6 @@ html #settings-language #lang-select-list.lang-choices button.lang-choice > span
     width: 100%;
 }
 
-/* ===== Dil secimi: modern dropdown ===== */
 html #settings-language .lang-picker {
     position: relative;
     max-width: 420px;
@@ -8768,7 +8837,6 @@ html.theme-dark #settings-language .lang-opt .lang-opt-sub {
     font-weight: 500;
 }
 
-/* ===== Status ikonlari: her yerde eyni dolu nöqte ===== */
 body .conversation-sidebar .direct-messages .friend-list .friend-item .avatar::after,
 html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend-item .avatar::after,
 html.theme-dark .friend-item .avatar::after {
@@ -8842,7 +8910,6 @@ html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend
     background-color: #f23f43 !important;
 }
 
-/* ===== Adminin seçdiyi logo ===== */
 .home-loader img.site-logo {
     width: 60px !important;
     height: 60px !important;
@@ -8852,4 +8919,18 @@ html.theme-dark body .conversation-sidebar .direct-messages .friend-list .friend
 
 .server-home img.site-logo {
     border-radius: 12px;
+}
+
+.server-nav .server-home:has(img.site-logo),
+html.theme-dark .server-nav .server-home:has(img.site-logo) {
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: hidden;
+}
+
+.server-nav .server-home img.site-logo {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    border-radius: inherit;
 }

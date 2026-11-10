@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Discode_MVC_Client.ViewModels.Account
 {
     public class UpdateProfileUIVM
@@ -15,5 +9,8 @@ namespace Discode_MVC_Client.ViewModels.Account
         public bool IsPublic { get; set; } = true;
         public string Pronouns { get; set; } = string.Empty;
         public string Bio { get; set; } = string.Empty;
+        public int? StatusClearMinutes { get; set; }
+        public string? BannerUrl { get; set; }
+        public string? BannerColor { get; set; }
     }
 }

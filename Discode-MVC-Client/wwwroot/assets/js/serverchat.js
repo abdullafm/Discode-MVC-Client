@@ -155,7 +155,6 @@
         if (force || atBottom || message.senderUserName === meName) scroller.scrollTop = scroller.scrollHeight;
     }
 
-    // ---------- pinned messages of this channel (the thumbtack in the bar), like the DM's pins ----------
     var pinsPopover = document.getElementById("server-pins-popover");
     var pinsToggle = document.getElementById("server-pins-toggle");
 
@@ -411,9 +410,39 @@
     };
     window.GroupParts.init(context);
 
+    var timeoutBar = document.getElementById("server-timeout-bar");
+    var timeoutClock = document.getElementById("server-timeout-clock");
+    var timeoutTimer = 0;
+
+    function timeoutLeft() {
+        return Math.max(0, Math.ceil(((window.discodeSelfTimeout || 0) - Date.now()) / 1000));
+    }
+
+    function two(n) {
+        return (n < 10 ? "0" : "") + n;
+    }
+
+    function tickTimeout() {
+        var left = timeoutLeft();
+        if (!left) {
+            window.clearInterval(timeoutTimer);
+            timeoutTimer = 0;
+            window.discodeSelfTimeout = 0;
+            paintAccess();
+            return;
+        }
+        var days = Math.floor(left / 86400);
+        var clock = (days ? days + "d " : "") + two(Math.floor(left % 86400 / 3600)) + "h " + two(Math.floor(left % 3600 / 60)) + "m " + two(left % 60) + "s";
+        if (timeoutClock) timeoutClock.textContent = clock;
+    }
+
     function paintAccess() {
         context.canDeleteAny = (perms() & 512) === 512;
-        var allowed = canSend();
+        var timedOut = timeoutLeft() > 0;
+        if (timeoutBar) timeoutBar.hidden = !channelId || !timedOut;
+        if (timedOut && !timeoutTimer) timeoutTimer = window.setInterval(tickTimeout, 1000);
+        if (timedOut) tickTimeout();
+        var allowed = canSend() && !timedOut;
         var pollItem = document.querySelector('#group-attach-menu [data-act="poll"]');
         if (pollItem) pollItem.hidden = !canPoll();
         compose.hidden = !channelId || !allowed;
@@ -442,7 +471,6 @@
         watching: function (sentServer, sentChannel) {
             return !chat.hidden && !scroller.hidden && sentServer === serverId && sentChannel === channelId;
         },
-        // the open channel is gone (deleted, last one): no messages, intro or composer of it may stay on screen
         close: function () {
             channelId = 0;
             generation += 1;
@@ -456,6 +484,7 @@
         open: function (button) {
             var id = Number(button.getAttribute("data-id")) || 0;
             if (!id) {
+            if (window.discodeChat) window.discodeChat.close();
                 channelId = 0;
                 scroller.hidden = true;
                 compose.hidden = true;
@@ -485,10 +514,13 @@
             if (introTitle) introTitle.textContent = channelKind === "announce" ? "Welcome to " + channelName + "!" : "Welcome to #" + channelName + "!";
             if (introText) introText.textContent = channelKind === "announce" ? "This is the start of the " + channelName + " channel." : "This is the start of the #" + channelName + " channel.";
             if (introBadge) introBadge.className = "fa-solid " + (channelKind === "announce" ? "fa-bullhorn" : "fa-hashtag");
+            if (window.discodeChat) window.discodeChat.open("channel", serverId + ":" + channelId, box);
             paintAccess();
             loadMessages(generation);
         }
     };
+
+    document.addEventListener("discode-self-timeout", function () { if (channelId) paintAccess(); });
 
     document.addEventListener("discode-server-mentions", function (event) {
         var data = event.detail || {};

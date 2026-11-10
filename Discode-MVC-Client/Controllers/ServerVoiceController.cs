@@ -54,7 +54,6 @@ namespace Discode_MVC_Client.Controllers
             }));
         }
 
-        // a moderator mutes / deafens somebody in voice (the API checks the permission and the role order)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public Task<IActionResult> Moderate([FromBody] ModerateServerVoiceUIVM model)

@@ -20,7 +20,7 @@
     var hostState = window.discodeHost = window.discodeHost || { current: null };
     var watching = null;
     var notice = "";
-    var capture = { camera: null, screen: null, camVideo: makeVideo(), scrVideo: makeVideo(), timer: 0 };
+    var capture = { camera: null, screen: null, mic: null, cameraHidden: false, camVideo: makeVideo(), scrVideo: makeVideo(), timer: 0 };
 
     function makeVideo() {
         var video = document.createElement("video");
@@ -116,8 +116,6 @@
     function hostName(stream) {
         return stream.hostDisplayName || stream.hostUserName;
     }
-
-    /* ---------------- list ---------------- */
 
     function refreshLive() {
         return requestJson("/Home/LiveStreams").then(function (data) {
@@ -297,8 +295,6 @@
         });
     }
 
-    /* ---------------- watch dialog ---------------- */
-
     var replyTarget = null;
     var chatMenu = null;
 
@@ -326,6 +322,18 @@
             setReply({ user: line.getAttribute("data-user"), text: line.getAttribute("data-text") });
         });
         chatMenu.appendChild(reply);
+        var author = line.getAttribute("data-user");
+        var hostUser = watching ? watching.stream.hostUserName : ME;
+        if (canModerate() && author && author !== ME && author !== hostUser) {
+            var mute = element("button", "");
+            mute.type = "button";
+            mute.innerHTML = '<i class="fa-solid fa-comment-slash"></i><span>Mute in chat</span>';
+            mute.addEventListener("click", function () {
+                closeChatMenu();
+                openMuteDialog({ userName: author, displayName: author });
+            });
+            chatMenu.appendChild(mute);
+        }
         document.body.appendChild(chatMenu);
         var rect = anchor.getBoundingClientRect();
         var width = chatMenu.offsetWidth;
@@ -442,7 +450,6 @@
             toggle.title = session.previewHidden ? "Show my preview" : "Hide my preview";
             toggle.querySelector("i").className = "fa-solid " + (session.previewHidden ? "fa-eye-slash" : "fa-eye");
         }
-        // ekranı paylaşırkən öz görüntü yenidən yayına düşə bilər (güzgü effekti): istəsən göz düyməsi ilə gizlət
         if (session.sharesScreen && session.previewHidden) {
             video.srcObject = null;
             setWait("Your preview is hidden so the stream does not repeat itself. Press the eye button to see it again.", true);
@@ -482,6 +489,8 @@
         video.srcObject = null;
         byId("live-mute-btn").querySelector("i").className = "fa-solid " + (mine ? "fa-volume-xmark" : "fa-volume-high");
         setWait(mine ? "" : "Connecting to the stream...");
+        resetMedia();
+        applyChatState();
         updateGuestButton();
         updateMinimizeButton();
     }
@@ -536,42 +545,256 @@
         byId("live-viewer-list").hidden = true;
     }
 
+    var viewerTab = "watching";
+
+    function canModerate() {
+        return isHostNow() || !!(watching && watching.isMod);
+    }
+
+    function untilText(until) {
+        if (!until) return "until taken off";
+        return "until " + new Date(until).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function personRow(person, extra) {
+        var item = element("div", "watch-viewer-item");
+        var row = element("button", "watch-viewer-row");
+        row.type = "button";
+        var face = element("img");
+        face.alt = "";
+        face.src = person.avatarUrl || DEFAULT_AVATAR;
+        var names = element("span");
+        var title = element("strong", "", person.displayName || person.userName);
+        if (person.isModerator) title.appendChild(element("em", "watch-mod-badge", "MOD"));
+        names.appendChild(title);
+        names.appendChild(element("small", "", extra || person.userName));
+        row.appendChild(face);
+        row.appendChild(names);
+        row.addEventListener("click", function () {
+            if (window.openUserProfile) window.openUserProfile(person.userName, person.avatarUrl || "");
+        });
+        item.appendChild(row);
+        return item;
+    }
+
+    function rowButton(icon, title, className, action) {
+        var button = element("button", "watch-viewer-act " + (className || ""));
+        button.type = "button";
+        button.title = title;
+        button.setAttribute("aria-label", title);
+        button.innerHTML = '<i class="fa-solid ' + icon + '"></i>';
+        button.addEventListener("click", function (event) {
+            event.stopPropagation();
+            button.disabled = true;
+            action().catch(function (err) {
+                guestNote(hubMessage(err));
+            }).then(function () {
+                button.disabled = false;
+            });
+        });
+        return button;
+    }
+
+    function renderViewerRows(viewers, id) {
+        var rows = byId("live-viewer-rows");
+        rows.textContent = "";
+        byId("live-viewer-empty").textContent = "Nobody is watching yet.";
+        byId("live-viewer-empty").hidden = viewers.length > 0;
+        var host = isHostNow();
+        viewers.forEach(function (viewer) {
+            var item = personRow(viewer, viewer.isMuted ? "Muted " + untilText(viewer.mutedUntil) : viewer.userName);
+            var mine = viewer.userName === ME;
+            if (!mine) {
+                if (host && !guest && !viewer.isMuted) {
+                    item.appendChild(rowButton("fa-user-plus", "Invite to join as a guest", "", function () {
+                        return hub("InviteLiveGuest", id, viewer.userName).then(function () {
+                            guestNote("Invitation sent to " + (viewer.displayName || viewer.userName) + ".");
+                        });
+                    }));
+                }
+                if (host && !viewer.isMuted) {
+                    item.appendChild(rowButton(viewer.isModerator ? "fa-user-shield" : "fa-shield", viewer.isModerator ? "Take the moderator role away" : "Make a moderator", viewer.isModerator ? "is-on" : "", function () {
+                        return hub("SetLiveModerator", id, viewer.userName, !viewer.isModerator).then(function () {
+                            guestNote(viewer.isModerator ? (viewer.displayName || viewer.userName) + " is not a moderator any more." : (viewer.displayName || viewer.userName) + " is a moderator now.");
+                            refreshViewerList();
+                        });
+                    }));
+                }
+                if (viewer.isMuted) {
+                    item.appendChild(rowButton("fa-comment", "Take off the mute list", "is-on", function () {
+                        return hub("UnmuteLiveViewer", id, viewer.userName).then(refreshViewerList);
+                    }));
+                } else if (host || !viewer.isModerator) {
+                    item.appendChild(rowButton("fa-comment-slash", "Mute in chat", "", function () {
+                        openMuteDialog(viewer);
+                        return Promise.resolve();
+                    }));
+                }
+            }
+            rows.appendChild(item);
+        });
+    }
+
+    function renderMutedRows(list, id) {
+        var rows = byId("live-viewer-rows");
+        rows.textContent = "";
+        byId("live-viewer-empty").textContent = "Nobody is muted.";
+        byId("live-viewer-empty").hidden = list.length > 0;
+        list.forEach(function (person) {
+            var item = personRow(person, "Muted " + untilText(person.expiresAt));
+            item.appendChild(rowButton("fa-comment", "Take off the mute list", "is-on", function () {
+                return hub("UnmuteLiveViewer", id, person.userName).then(refreshViewerList);
+            }));
+            rows.appendChild(item);
+        });
+    }
+
     function refreshViewerList() {
         var id = currentStreamId();
-        if (!hostState.current || hostState.current.streamId !== id || byId("live-viewer-list").hidden) return;
-        hub("GetLiveViewers", id).then(function (viewers) {
-            var rows = byId("live-viewer-rows");
-            rows.textContent = "";
-            byId("live-viewer-empty").hidden = viewers.length > 0;
-            viewers.forEach(function (viewer) {
-                var row = element("button", "watch-viewer-row");
-                row.type = "button";
-                var face = element("img");
-                face.alt = "";
-                face.src = viewer.avatarUrl || DEFAULT_AVATAR;
-                var names = element("span");
-                names.appendChild(element("strong", "", viewer.displayName || viewer.userName));
-                names.appendChild(element("small", "", viewer.userName));
-                row.appendChild(face);
-                row.appendChild(names);
-                row.addEventListener("click", function () {
-                    if (window.openUserProfile) window.openUserProfile(viewer.userName, viewer.avatarUrl || "");
-                });
-                rows.appendChild(row);
-            });
+        if (!id || !canModerate() || byId("live-viewer-list").hidden) return;
+        byId("live-muted-tab").hidden = false;
+        [].forEach.call(byId("live-viewer-list").querySelectorAll(".watch-viewer-tabs button"), function (tab) {
+            tab.classList.toggle("on", tab.getAttribute("data-tab") === viewerTab);
+        });
+        var load = viewerTab === "muted" ? hub("GetLiveMutes", id) : hub("GetLiveViewers", id);
+        load.then(function (data) {
+            if (currentStreamId() !== id || byId("live-viewer-list").hidden) return;
+            if (viewerTab === "muted") renderMutedRows(data, id);
+            else renderViewerRows(data, id);
         }).catch(function () {});
     }
+
+    byId("live-viewer-list").addEventListener("click", function (event) {
+        var tab = event.target.closest(".watch-viewer-tabs button");
+        if (!tab) return;
+        event.stopPropagation();
+        viewerTab = tab.getAttribute("data-tab");
+        refreshViewerList();
+    });
 
     byId("live-viewers-btn").addEventListener("click", function (event) {
         event.stopPropagation();
         var panel = byId("live-viewer-list");
-        if (!hostState.current || hostState.current.streamId !== currentStreamId()) return;
+        if (!canModerate()) return;
         panel.hidden = !panel.hidden;
+        if (!panel.hidden) viewerTab = "watching";
         refreshViewerList();
     });
 
+    var muteModal = byId("live-mute-modal");
+    var muteTarget = null;
+
+    function muteError(text) {
+        var box = byId("live-mute-error");
+        box.textContent = text || "";
+        box.hidden = !text;
+    }
+
+    function openMuteDialog(person) {
+        muteTarget = person;
+        muteError("");
+        byId("live-mute-custom").value = "";
+        [].forEach.call(byId("live-mute-options").querySelectorAll("button"), function (button) {
+            button.classList.toggle("on", button.getAttribute("data-minutes") === "10");
+        });
+        byId("live-mute-title").textContent = "Mute " + (person.displayName || person.userName) + " in chat";
+        byId("live-mute-text").textContent = "They can keep watching, but they can not chat or ask to join the stream until the time is over or you take them off the mute list.";
+        muteModal.hidden = false;
+    }
+
+    muteModal.addEventListener("click", function (event) {
+        if (event.target.closest("[data-close]")) {
+            muteModal.hidden = true;
+            return;
+        }
+        var option = event.target.closest("#live-mute-options button");
+        if (option) {
+            [].forEach.call(byId("live-mute-options").querySelectorAll("button"), function (button) { button.classList.toggle("on", button === option); });
+            byId("live-mute-custom").value = "";
+        }
+    });
+
+    byId("live-mute-custom").addEventListener("input", function () {
+        if (this.value) [].forEach.call(byId("live-mute-options").querySelectorAll("button"), function (button) { button.classList.remove("on"); });
+    });
+
+    byId("live-mute-submit").addEventListener("click", function () {
+        var id = currentStreamId();
+        if (!muteTarget || !id) return;
+        var minutes;
+        var custom = Number(byId("live-mute-custom").value);
+        if (byId("live-mute-custom").value) {
+            minutes = Math.round(custom * Number(byId("live-mute-unit").value));
+            if (!(custom >= 1) || minutes < 1) {
+                muteError("Type how long, for example 30.");
+                return;
+            }
+        } else {
+            var chosen = byId("live-mute-options").querySelector("button.on");
+            minutes = chosen ? Number(chosen.getAttribute("data-minutes")) : 10;
+        }
+        var button = this;
+        var target = muteTarget;
+        button.disabled = true;
+        muteError("");
+        hub("MuteLiveViewer", id, target.userName, minutes).then(function () {
+            muteModal.hidden = true;
+            liveNotice((target.displayName || target.userName) + " is muted in the chat.");
+            refreshViewerList();
+        }).catch(function (err) {
+            muteError(hubMessage(err));
+        }).then(function () {
+            button.disabled = false;
+        });
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !muteModal.hidden) muteModal.hidden = true;
+    });
+
+    var muteTimer = 0;
+
+    function muteActive() {
+        var mute = watching && watching.mute;
+        if (!mute) return false;
+        return !mute.until || Date.parse(mute.until) > Date.now();
+    }
+
+    function applyChatState() {
+        var input = byId("live-chat-input");
+        var send = byId("live-chat-submit");
+        clearTimeout(muteTimer);
+        var muted = muteActive();
+        input.disabled = muted;
+        send.disabled = muted;
+        input.placeholder = muted ? (watching.mute.until ? "You are muted " + untilText(watching.mute.until) : "You are muted in this chat") : "Send a message";
+        if (muted && watching.mute.until) {
+            muteTimer = setTimeout(function () {
+                applyChatState();
+                updateGuestButton();
+            }, Math.min(2147483000, Math.max(1000, Date.parse(watching.mute.until) - Date.now() + 500)));
+        }
+    }
+
+    document.addEventListener("discode-live-mute", function (event) {
+        var data = event.detail;
+        if (!watching || watching.stream.id !== data.streamId) return;
+        watching.mute = data.muted ? { until: data.until || null } : null;
+        applyChatState();
+        updateGuestButton();
+        liveNotice(data.muted ? "You were muted in this chat. You can only watch." : "You can chat again.");
+    });
+
+    document.addEventListener("discode-live-moderator", function (event) {
+        var data = event.detail;
+        if (!watching || watching.stream.id !== data.streamId) return;
+        watching.isMod = !!data.isModerator;
+        if (!watching.isMod) closeViewerList();
+        liveNotice(watching.isMod ? "You are a moderator of this stream now." : "You are not a moderator any more.");
+    });
+
     document.addEventListener("click", function (event) {
-        if (!event.target.closest("#live-viewer-list, #live-viewers-btn")) closeViewerList();
+        if (!event.target.closest("#live-viewer-list, #live-viewers-btn, #live-mute-modal")) closeViewerList();
     });
 
     function openStream(stream, attempt) {
@@ -585,11 +808,14 @@
         }
 
         leaveWatching();
-        watching = { stream: stream, pc: null, pending: [] };
+        watching = { stream: stream, pc: null, pending: [], isMod: false, mute: null };
         showWatchDialog(stream, false);
         hub("JoinLive", stream.id).then(function (join) {
             if (!watching || watching.stream.id !== stream.id) return;
             watching.stream = join.stream;
+            watching.isMod = !!join.isModerator;
+            watching.mute = join.mute ? { until: join.mute.expiresAt || null } : null;
+            applyChatState();
             byId("live-viewers-count").textContent = viewerText(join.stream.viewerCount);
             if (join.guest) {
                 guest = join.guest;
@@ -771,10 +997,10 @@
         if (replyTarget) {
             var target = replyTarget;
             setReply(null);
-            hub("SendLiveReply", id, text, target.user, target.text).catch(function () {});
+            hub("SendLiveReply", id, text, target.user, target.text).catch(function (err) { liveNotice(hubMessage(err)); });
             return;
         }
-        hub("SendLiveMessage", id, text).catch(function () {});
+        hub("SendLiveMessage", id, text).catch(function (err) { liveNotice(hubMessage(err)); });
     });
 
     byId("ig-heart-btn").addEventListener("click", function () {
@@ -787,8 +1013,6 @@
         if (hostState.current) return hostState.current.streamId;
         return 0;
     }
-
-    /* ---------------- WebRTC (signalling goes through SignalR) ---------------- */
 
     function signal(streamId, target, message) {
         return hub("SendSignal", streamId, target, JSON.stringify(message)).catch(function () {});
@@ -985,8 +1209,6 @@
         if (currentStreamId() === event.detail.streamId) spawnHeart();
     });
 
-    /* ---------------- guests ---------------- */
-
     var guest = null;
     var myGuest = null;
     var guestPending = false;
@@ -1019,7 +1241,7 @@
         byId("live-guest-tile").hidden = false;
         byId("live-guest-name").textContent = mine ? "You" : (info.displayName || info.userName || "");
         var video = byId("live-guest-video");
-        video.muted = !!mine;
+        video.muted = !!mine || media.deaf;
         if (stream) {
             video.srcObject = stream;
             video.play().catch(function () {});
@@ -1032,9 +1254,10 @@
         button.hidden = !watching || isHostNow();
         button.classList.toggle("is-pending", guestPending);
         button.classList.toggle("is-guest", !!myGuest);
-        button.disabled = guestPending || (!!guest && !myGuest);
+        button.disabled = guestPending || (!!guest && !myGuest) || (muteActive() && !myGuest);
         updateMinimizeButton();
-        button.title = myGuest ? "Leave as guest" : guestPending ? "Request sent" : guest ? "A guest is already on" : "Request to join";
+        updateMediaButton();
+        button.title = myGuest ? "Leave as guest" : muteActive() ? "You can only watch while you are muted" : guestPending ? "Request sent" : guest ? "A guest is already on" : "Request to join";
     }
 
     function clearGuest() {
@@ -1044,7 +1267,10 @@
         if (myGuest) {
             Object.keys(myGuest.peers).forEach(function (key) { myGuest.peers[key].pc.close(); });
             stopTracks(myGuest.stream);
+            stopTracks(myGuest.cam);
+            stopTracks(myGuest.screen);
             myGuest = null;
+            resetMedia();
         }
         guest = null;
         guestPending = false;
@@ -1101,7 +1327,7 @@
             pc.ontrack = function (event) {
                 var video = byId("live-guest-video");
                 video.srcObject = event.streams[0];
-                video.muted = false;
+                video.muted = media.deaf;
                 video.play().catch(function () {
                     video.muted = true;
                     video.play().catch(function () {});
@@ -1139,8 +1365,11 @@
                 stopTracks(stream);
                 return;
             }
-            myGuest.stream = stream;
-            showGuestTile(guest || {}, stream, true);
+            myGuest.cam = stream;
+            myGuest.screen = null;
+            myGuest.stream = new MediaStream(stream.getTracks());
+            showGuestTile(guest || {}, myGuest.stream, true);
+            updateMediaButton();
             myGuest.wants.splice(0).forEach(startGuestPeer);
         }).catch(function () {
             guestNote("Your camera or microphone is not available.");
@@ -1245,7 +1474,314 @@
         clearGuest();
     });
 
-    /* ---------------- Go Live: capture + preview ---------------- */
+    function removeInviteCard() {
+        var old = byId("live-guest-requests").querySelector(".watch-guest-invite");
+        if (old && old.parentNode) old.parentNode.removeChild(old);
+    }
+
+    document.addEventListener("discode-live-guest-invited", function (event) {
+        var invite = event.detail;
+        if (!watching || watching.stream.id !== invite.streamId || myGuest) return;
+        removeInviteCard();
+        var card = element("div", "watch-guest-request watch-guest-invite");
+        var face = element("img");
+        face.alt = "";
+        face.src = invite.hostAvatarUrl || DEFAULT_AVATAR;
+        var text = element("span", "", (invite.hostDisplayName || invite.hostUserName) + " invites you on stream");
+        var accept = element("button", "watch-guest-accept", "Join");
+        accept.type = "button";
+        var decline = element("button", "watch-guest-decline", "No thanks");
+        decline.type = "button";
+        accept.addEventListener("click", function () {
+            removeInviteCard();
+            hub("AnswerLiveGuestInvite", invite.streamId, true).catch(function (err) { guestNote(hubMessage(err)); });
+        });
+        decline.addEventListener("click", function () {
+            removeInviteCard();
+            hub("AnswerLiveGuestInvite", invite.streamId, false).catch(function () {});
+        });
+        card.appendChild(face);
+        card.appendChild(text);
+        card.appendChild(accept);
+        card.appendChild(decline);
+        byId("live-guest-requests").appendChild(card);
+    });
+
+    document.addEventListener("discode-live-guest-invite-answered", function (event) {
+        var data = event.detail;
+        if (!isHostNow() || hostState.current.streamId !== data.streamId) return;
+        guestNote((data.name || "The viewer") + (data.accepted ? " joined the stream." : " declined the invitation."));
+    });
+
+    var media = { deaf: false, wasMuted: false, busy: false };
+    var mediaModal = byId("live-media-modal");
+
+    function mediaRole() {
+        if (isHostNow()) return "host";
+        return myGuest ? "guest" : "";
+    }
+
+    function updateMediaButton() {
+        byId("live-media-btn").hidden = !mediaRole();
+        if (!mediaRole() && !mediaModal.hidden) mediaModal.hidden = true;
+    }
+
+    function resetMedia() {
+        if (media.deaf) setDeaf(false);
+        media.deaf = false;
+    }
+
+    function micTracks() {
+        if (isHostNow()) {
+            var source = capture.mic || capture.camera;
+            return source ? source.getAudioTracks() : [];
+        }
+        return myGuest && myGuest.cam ? myGuest.cam.getAudioTracks() : [];
+    }
+
+    function cameraTracks() {
+        if (isHostNow()) return capture.camera ? capture.camera.getVideoTracks() : [];
+        return myGuest && myGuest.cam ? myGuest.cam.getVideoTracks() : [];
+    }
+
+    function mediaState() {
+        var mics = micTracks();
+        var cams = cameraTracks();
+        var hostRole = isHostNow();
+        return {
+            mic: mics.length > 0 && mics.some(function (track) { return track.enabled; }),
+            micExists: mics.length > 0,
+            camera: cams.length > 0 && cams.some(function (track) { return track.enabled; }) && !(hostRole && capture.cameraHidden),
+            cameraExists: cams.length > 0,
+            screen: hostRole ? !!capture.screen : !!(myGuest && myGuest.screen),
+            deaf: media.deaf
+        };
+    }
+
+    function renderMedia() {
+        var state = mediaState();
+        var text = {
+            mic: state.mic ? "On" : (state.micExists ? "Muted" : "Off"),
+            deaf: state.deaf ? "You hear nothing" : "You hear the stream",
+            camera: state.camera ? "On" : "Off",
+            screen: state.screen ? "Sharing your screen" : "Off"
+        };
+        var on = { mic: state.mic, deaf: !state.deaf, camera: state.camera, screen: state.screen };
+        var icons = { mic: state.mic ? "fa-microphone" : "fa-microphone-slash", deaf: state.deaf ? "fa-headphones-simple" : "fa-headphones", camera: state.camera ? "fa-video" : "fa-video-slash", screen: "fa-display" };
+        [].forEach.call(mediaModal.querySelectorAll(".live-media-row"), function (row) {
+            var key = row.getAttribute("data-media");
+            row.classList.toggle("is-on", !!on[key]);
+            row.setAttribute("aria-pressed", on[key] ? "true" : "false");
+            row.querySelector("[data-state]").textContent = text[key];
+            row.querySelector("i").className = "fa-solid " + icons[key];
+            row.disabled = media.busy;
+        });
+        byId("live-media-sub").textContent = isHostNow() ? "What the people watching your stream see and hear." : "What the stream sees and hears from you.";
+    }
+
+    function mediaError(text) {
+        var box = byId("live-media-error");
+        box.textContent = text || "";
+        box.hidden = !text;
+    }
+
+    function setDeaf(on) {
+        var stream = byId("live-stream-video");
+        var other = byId("live-guest-video");
+        if (on) {
+            media.wasMuted = stream.muted;
+            stream.muted = true;
+            other.muted = true;
+        } else {
+            stream.muted = media.wasMuted;
+            other.muted = !!myGuest;
+        }
+        media.deaf = on;
+        if (!isHostNow()) byId("live-mute-btn").querySelector("i").className = "fa-solid " + (stream.muted ? "fa-volume-xmark" : "fa-volume-high");
+    }
+
+    function rebuildBroadcast() {
+        var session = hostState.current;
+        if (!session) return;
+        var oldStream = session.stream;
+        var oldMixer = session.mixer;
+        var wasDirect = session.direct;
+        notice = capture.camera || capture.screen ? "" : "Sharing is paused for a moment";
+        var out = buildOutputStream();
+        session.stream = out.stream;
+        session.mixer = out.mixer;
+        session.direct = !!out.direct;
+        session.sources = [capture.camera, capture.screen, capture.mic].filter(Boolean);
+        session.sharesScreen = !!capture.screen;
+        ensureDrawing();
+        drawFrame();
+        Object.keys(session.peers).forEach(function (key) {
+            dropPeer(key);
+            startPeerFor(key);
+        });
+        if (oldMixer) oldMixer.close();
+        if (!wasDirect) stopTracks(oldStream);
+        if (out.direct) {
+            var track = out.stream.getVideoTracks()[0];
+            if (track) track.addEventListener("ended", function () {
+                if (hostState.current === session && session.stream === out.stream && capture.camera) endBroadcast();
+            });
+        }
+        showHostPreview();
+    }
+
+    function hostToggle(kind) {
+        if (kind === "mic") {
+            var tracks = micTracks();
+            if (tracks.length) {
+                var on = tracks.some(function (track) { return track.enabled; });
+                tracks.forEach(function (track) { track.enabled = !on; });
+                return Promise.resolve();
+            }
+            var devices = navigator.mediaDevices;
+            if (!devices || !devices.getUserMedia) return Promise.reject(new Error("no mic"));
+            return devices.getUserMedia({ audio: true }).then(function (stream) {
+                capture.mic = stream;
+                rebuildBroadcast();
+            });
+        }
+        if (kind === "camera") {
+            if (capture.camera) {
+                var hide = !capture.cameraHidden;
+                capture.cameraHidden = hide;
+                capture.camera.getVideoTracks().forEach(function (track) { track.enabled = !hide; });
+                return Promise.resolve();
+            }
+            var micWasOn = micTracks().some(function (track) { return track.enabled; });
+            return acquireCamera().then(function (stream) {
+                if (capture.mic && stream.getAudioTracks().length) {
+                    stopTracks(capture.mic);
+                    capture.mic = null;
+                    stream.getAudioTracks().forEach(function (track) { track.enabled = micWasOn; });
+                }
+                attach("camera", stream);
+                rebuildBroadcast();
+            });
+        }
+        if (kind === "screen") {
+            if (capture.screen) {
+                releaseSource("screen");
+                rebuildBroadcast();
+                return Promise.resolve();
+            }
+            return acquireScreen().then(function (stream) {
+                attach("screen", stream);
+                rebuildBroadcast();
+            });
+        }
+        return Promise.resolve();
+    }
+
+    function guestVideoSwap(track) {
+        Object.keys(myGuest.peers).forEach(function (key) {
+            myGuest.peers[key].pc.getSenders().forEach(function (sender) {
+                if (sender.track && sender.track.kind === "video") sender.replaceTrack(track).catch(function () {});
+            });
+        });
+    }
+
+    function stopGuestScreen() {
+        if (!myGuest || !myGuest.screen) return;
+        var shared = myGuest.screen;
+        myGuest.screen = null;
+        var camera = myGuest.cam ? myGuest.cam.getVideoTracks()[0] : null;
+        shared.getVideoTracks().forEach(function (track) { myGuest.stream.removeTrack(track); });
+        if (camera) {
+            myGuest.stream.addTrack(camera);
+            guestVideoSwap(camera);
+        }
+        stopTracks(shared);
+        renderMedia();
+    }
+
+    function guestToggle(kind) {
+        if (kind === "mic") {
+            var tracks = micTracks();
+            if (!tracks.length) return Promise.reject(new Error("no mic"));
+            var on = tracks.some(function (track) { return track.enabled; });
+            tracks.forEach(function (track) { track.enabled = !on; });
+            return Promise.resolve();
+        }
+        if (kind === "camera") {
+            var cams = cameraTracks();
+            if (!cams.length) return Promise.reject(new Error("no camera"));
+            var live = cams.some(function (track) { return track.enabled; });
+            cams.forEach(function (track) { track.enabled = !live; });
+            return Promise.resolve();
+        }
+        if (kind === "screen") {
+            if (myGuest.screen) {
+                stopGuestScreen();
+                return Promise.resolve();
+            }
+            return acquireScreen().then(function (stream) {
+                if (!myGuest) {
+                    stopTracks(stream);
+                    return;
+                }
+                var track = stream.getVideoTracks()[0];
+                myGuest.screen = stream;
+                (myGuest.cam ? myGuest.cam.getVideoTracks() : []).forEach(function (cam) { myGuest.stream.removeTrack(cam); });
+                myGuest.stream.addTrack(track);
+                guestVideoSwap(track);
+                track.addEventListener("ended", stopGuestScreen);
+            });
+        }
+        return Promise.resolve();
+    }
+
+    function mediaProblem(kind, err) {
+        var reason = err && err.name;
+        if (reason === "NotAllowedError" || reason === "SecurityError") {
+            return kind === "screen" ? "Screen sharing was cancelled or blocked." : "The browser blocked it. Allow the " + (kind === "mic" ? "microphone" : "camera") + " in the address bar and try again.";
+        }
+        if (reason === "NotFoundError" || (err && /^no /.test(err.message || ""))) {
+            return kind === "mic" ? "No microphone was found." : kind === "camera" ? "No camera was found." : "Screen sharing is not available here.";
+        }
+        if (reason === "NotReadableError" || reason === "AbortError") return "That device is being used by another app.";
+        return "Could not do that. Try again.";
+    }
+
+    byId("live-media-btn").addEventListener("click", function () {
+        if (!mediaRole()) return;
+        mediaError("");
+        renderMedia();
+        mediaModal.hidden = false;
+    });
+
+    mediaModal.addEventListener("click", function (event) {
+        if (event.target.closest("[data-close]")) {
+            mediaModal.hidden = true;
+            return;
+        }
+        var row = event.target.closest(".live-media-row");
+        if (!row || media.busy || !mediaRole()) return;
+        var kind = row.getAttribute("data-media");
+        mediaError("");
+        if (kind === "deaf") {
+            setDeaf(!media.deaf);
+            renderMedia();
+            return;
+        }
+        media.busy = true;
+        renderMedia();
+        var done = mediaRole() === "host" ? hostToggle(kind) : guestToggle(kind);
+        done.catch(function (err) {
+            mediaError(mediaProblem(kind, err));
+        }).then(function () {
+            media.busy = false;
+            renderMedia();
+        });
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !mediaModal.hidden) mediaModal.hidden = true;
+    });
 
     var statusBox = byId("live-preview-status");
     var canvas = byId("live-create-preview-canvas");
@@ -1277,7 +1813,7 @@
         drawing.fillStyle = "#0b0b0d";
         drawing.fillRect(0, 0, W, H);
         var screenReady = capture.screen && capture.scrVideo.videoWidth > 0;
-        var cameraReady = capture.camera && capture.camVideo.videoWidth > 0;
+        var cameraReady = capture.camera && !capture.cameraHidden && capture.camVideo.videoWidth > 0;
 
         if (screenReady) {
             var size = containRect(capture.scrVideo.videoWidth, capture.scrVideo.videoHeight, W, H);
@@ -1315,7 +1851,7 @@
     }
 
     function ensureDrawing() {
-        var active = !!(capture.camera || capture.screen);
+        var active = !!(capture.camera || capture.screen || (hostState.current && !hostState.current.direct));
         if (active && !capture.timer) capture.timer = makeTicker(drawFrame, DRAW_MS);
         if (!active && capture.timer) {
             capture.timer.stop();
@@ -1344,6 +1880,7 @@
     function releaseSource(name) {
         var stream = capture[name];
         capture[name] = null;
+        if (name === "camera") capture.cameraHidden = false;
         stopTracks(stream);
         (name === "camera" ? capture.camVideo : capture.scrVideo).srcObject = null;
     }
@@ -1358,6 +1895,10 @@
                 if (capture.screen === stream) {
                     releaseSource("screen");
                     refreshSourceUi();
+                    if (hostState.current) {
+                        rebuildBroadcast();
+                        renderMedia();
+                    }
                 }
             });
         }
@@ -1432,6 +1973,8 @@
     function discardCapture() {
         releaseSource("camera");
         releaseSource("screen");
+        stopTracks(capture.mic);
+        capture.mic = null;
         ensureDrawing();
     }
 
@@ -1449,18 +1992,16 @@
     byId("explore-go-live-btn").addEventListener("click", openCreateDialog);
     byId("empty-go-live-btn").addEventListener("click", openCreateDialog);
 
-    /* ---------------- Go Live: broadcast ---------------- */
-
     function buildOutputStream() {
         var single = [capture.camera, capture.screen].filter(Boolean);
-        if (single.length === 1) {
+        if (single.length === 1 && !capture.mic) {
             var direct = new MediaStream(single[0].getTracks());
             var videoTrack = direct.getVideoTracks()[0];
             if (videoTrack && "contentHint" in videoTrack) videoTrack.contentHint = single[0] === capture.screen ? "detail" : "motion";
             return { stream: direct, mixer: null, direct: true };
         }
         var output = canvas.captureStream(30);
-        var audioStreams = [capture.camera, capture.screen].filter(function (stream) {
+        var audioStreams = [capture.camera, capture.screen, capture.mic].filter(function (stream) {
             return stream && stream.getAudioTracks().length;
         });
         var mixer = null;
@@ -1493,7 +2034,7 @@
             showHostPreview();
             if (out.direct) {
                 out.stream.getVideoTracks()[0].addEventListener("ended", function () {
-                    if (hostState.current && hostState.current.stream === out.stream) endBroadcast();
+                if (hostState.current && hostState.current.stream === out.stream && capture.camera) endBroadcast();
                 });
             }
             refreshLive();
@@ -1561,6 +2102,8 @@
         var current = hostState.current;
         hostState.current = null;
         clearGuest();
+        resetMedia();
+        updateMediaButton();
         byId("live-guest-requests").textContent = "";
         clearTimeout(current.snapshotTimer);
         removeThumbnail(current.thumbnail);

@@ -1,5 +1,4 @@
 "use strict";
-// Confirm dialog for forms with data-confirm (replaces the browser's own dialog)
 (function () {
     var layer = null;
     var pending = null;
@@ -70,7 +69,6 @@
 })();
 
 (function () {
-    // Server detail: search and page through the member list without leaving the page
     function loadMembers(box, search, page) {
         var list = box.querySelector(".adm-members-list");
         var url = box.getAttribute("data-url") + "?search=" + encodeURIComponent(search) + "&page=" + page;
@@ -137,7 +135,6 @@
         if (event.key === "Escape") pickers.forEach(close);
     });
 
-    // Dashboard: a card loads its list under the cards, the page stays the same
     var panel = document.getElementById("stat-panel");
     var activeCard = null;
     var activeUrl = "";
@@ -170,14 +167,12 @@
         activeUrl = url;
         card.classList.add("on");
         loadPanel(url).then(function () {
-            // telefonda siyahı kartların altında açılır: ekran onu göstərmək üçün özü sürüşsün
             if (window.matchMedia("(max-width: 720px)").matches && !panel.hidden) {
                 panel.scrollIntoView({ behavior: "smooth", block: "start" });
             }
         });
     }
 
-    // telefonda bölmə düymələri sürüşür: açıq olanı ortaya gətir ki, haradasan görünsün
     (function centerActiveChip() {
         var strip = document.querySelector(".admin-phone-cats");
         var current = strip && strip.querySelector(".discover-cat.on");
@@ -215,7 +210,6 @@
         });
     }
 
-    // Admins / SuperAdmins card: the dropdown swaps the number and the list it opens
     var staff = document.getElementById("stat-staff");
     if (staff) {
         var label = document.getElementById("stat-staff-label");
@@ -244,7 +238,6 @@
         });
     }
 
-    // ===== Live updates: the API pushes "AdminChanged" over SignalR, the panel refreshes what is on screen =====
     var REFRESH = { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest", "X-Admin-Refresh": "1" } };
 
     function setText(selector, value) {
@@ -300,7 +293,6 @@
     }
 
     function refreshList(root, url) {
-        // a list that holds forms (the live streams) is left alone while somebody is writing in it
         var forms = root.querySelector(".adm-live-list, .adm-content-list");
         if (forms) {
             var typing = [].some.call(forms.querySelectorAll("textarea"), function (field) { return field.value.trim().length > 0; });
@@ -317,7 +309,6 @@
         }).catch(function () {});
     }
 
-    // the Logos page: swap every card nobody is working on, then wire the new ones
     function refreshBranding(root, url) {
         fetch(url, REFRESH).then(function (response) {
             if (!response.ok) throw new Error("branding");
@@ -341,7 +332,6 @@
         }).then(function (html) {
             var doc = new DOMParser().parseFromString(html, "text/html");
             if (!doc.querySelector(".adm-detail-head")) {
-                // the server is gone (deleted): go back to the list
                 var back = root.querySelector(".adm-back-link");
                 if (back) {
                     if (!panel || root !== panel) window.location.href = back.getAttribute("href");
@@ -353,17 +343,14 @@
             swapParts(root, doc, [".adm-metrics", ".adm-detail-chips", ".adm-history"]);
             if (metricsOnly) return;
 
-            // who they are (name, photo, bio...) can change too
             swapParts(root, doc, [".adm-banner", ".adm-person", ".adm-dl"]);
 
-            // every banner (ban, timeout) is rebuilt in front of the counters
             root.querySelectorAll(".adm-ban-banner").forEach(function (node) { node.remove(); });
             var anchor = root.querySelector(".adm-metrics");
             doc.querySelectorAll(".adm-ban-banner").forEach(function (node) {
                 if (anchor) anchor.parentNode.insertBefore(node, anchor);
             });
 
-            // the actions card holds forms: leave it alone while somebody is using it
             var oldActions = root.querySelector(".adm-detail-grid > .adm-panel:nth-child(2)");
             var freshActions = doc.querySelector(".adm-detail-grid > .adm-panel:nth-child(2)");
             if (oldActions && freshActions) {
@@ -395,7 +382,6 @@
         liveTimer = window.setTimeout(refreshLive, 500);
     }
 
-    // channels, roles and messages only move the counters of the open server: refresh just those, right away
     var counterTimer = null;
     document.addEventListener("discode-admin-changed", function (event) {
         var detail = event.detail || {};
@@ -415,9 +401,6 @@
         refreshSoon();
     });
 
-    // changes that never pass through the API (data edited in the database, missed pushes) are caught here:
-    // when the connection comes back, when the tab is shown again, and every 20 seconds while it is visible
-    // streams start, stop and gain viewers without touching the admin tables
     function onLiveMoved() {
         if (document.querySelector(".adm-live-list")) refreshSoon();
     }

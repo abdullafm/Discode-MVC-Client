@@ -1090,7 +1090,7 @@
         active[dto.groupId] = dto;
         ringing = dto;
         ringtone.volume = 1;
-        play(ringtone);
+        if (!window.discodeSoundAllowed || window.discodeSoundAllowed()) play(ringtone);
         clearTimeout(ringTimer);
         ringTimer = setTimeout(decline, RING_MS);
         render();

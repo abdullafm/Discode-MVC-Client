@@ -149,7 +149,6 @@ html.theme-dark .server-menu hr.server-menu-divider {
     border-top-color: rgba(255, 255, 255, 0.08);
 }
 
-/* Leave Server Modal */
 .leave-server-modal {
     position: fixed;
     inset: 0;
@@ -585,7 +584,6 @@ body.is-channel-dragging {
     background: rgba(6, 6, 7, 0.08);
 }
 
-/* Shift held: the gear becomes a red trash can, a click deletes the channel */
 .shift-down .server-channel-edit .fa-gear::before {
     content: "\f2ed";
 }
@@ -1030,7 +1028,6 @@ body.is-channel-dragging {
 
 .server-voice-user::after { display: none !important; }
 
-/* İkon container — sağa yaslanmış, varsayılan gizli */
 .voice-user-icons {
     margin-left: auto;
     display: none;
@@ -1043,13 +1040,11 @@ body.is-channel-dragging {
     display: flex;
 }
 
-/* Mikrofon slash ikonu */
 .voice-mute-icon {
     font-size: 13px;
     color: #80848e;
 }
 
-/* Kulaklık container — sadece deafened iken göster */
 .voice-deaf-icon {
     display: none;
     position: relative;
@@ -1060,7 +1055,6 @@ body.is-channel-dragging {
     display: inline-block;
 }
 
-/* Kulaklık ikonu + slash overlay */
 .voice-deaf-icon i {
     font-size: 13px;
     color: #80848e;
@@ -1365,7 +1359,6 @@ body:has(.server-voice.is-full) .server-channels {
     order: -2;
 }
 
-/* the slash is a flex item laid over the headphones (not positioned from the pill's edge), so it always sits on the icon */
 .server-voice-tile.is-deafened p::after {
     content: '';
     order: -1;
@@ -4295,7 +4288,6 @@ html.theme-dark .server-voice-bar span {
         overflow-y: auto;
     }
 
-    /* Kutucuklar dikey düzende tam genişlik alsın, avatara daralmasın */
     .server-voice .server-voice-tile,
     .server-voice .server-voice-activity,
     .server-voice.is-full .server-voice-tile,
@@ -5036,7 +5028,6 @@ html.theme-dark .role-colors button.on {
     }
 }
 
-/* ===== RESPONSIVE EKLERI ===== */
 @media (pointer: coarse) {
     .server-bar-tools button,
     .server-settings .server-bar button {
@@ -6736,7 +6727,6 @@ html.theme-dark .server-voice-user.is-speaking strong {
     display: none;
 }
 
-/* Ses kanalinda uzerine gelince: devet ve ayarlar */
 .server-channel-invite {
     position: absolute;
     top: 2px;

@@ -9,8 +9,14 @@ namespace Discode_MVC_Client.ViewModels.Account
         public DateTime CreatedAt { get; set; }
         public string AvatarUrl { get; set; } = string.Empty;
         public string Bio { get; set; } = string.Empty;
+        public string BannerUrl { get; set; } = string.Empty;
+        public string BannerColor { get; set; } = string.Empty;
+        public bool HasNitro { get; set; }
+        public bool IsBooster { get; set; }
+        public string StaffRole { get; set; } = string.Empty;
         public string Pronouns { get; set; } = string.Empty;
         public string CustomStatus { get; set; } = string.Empty;
+        public DateTime? CustomStatusClearAt { get; set; }
         public bool IsPublic { get; set; } = true;
         public string Theme { get; set; } = "light";
         public bool NotifyAll { get; set; } = true;

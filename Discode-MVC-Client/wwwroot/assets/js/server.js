@@ -29,7 +29,6 @@
         if (role === "member" || owner === "false" || owner === "0") return false;
         if (role === "owner" || owner === "true" || owner === "1") return true;
 
-        // a real server: whether I may manage it comes from the API (loadServer / refreshMembers set it), until then no
         if (openId && openId.toLowerCase() !== "azaan") return false;
 
         return pageCanManage();
@@ -66,7 +65,6 @@
         return wrap.hasAttribute("data-can-manage");
     }
 
-    // Dynamic server name from query param if provided (e.g. ?name=T O P L U M #YIKILMIYOR)
     var urlServerName = new URLSearchParams(window.location.search).get("name");
     if (urlServerName) {
         var st = document.getElementById("server-title");
@@ -106,12 +104,10 @@
             if (openNow !== lastManage || manageChannelsAllowed(openNow) !== isOwner) setManage(openNow);
             serverMembers = server.members;
             paintServerMembers();
-            // a new member is not in the list of people who may see this channel yet: ask again, otherwise they stay hidden until a reload
             loadViewers(true);
         }).catch(function () {});
     }
 
-    // who can be @mentioned in this server's chat: mentions.js reads it exactly as it does for a group
     Object.defineProperty(window, "discodeGroupInfo", {
         configurable: true,
         get: function () {
@@ -120,7 +116,6 @@
             });
             return { members: people };
         },
-        // the group page assigns its own value after a page change: let it
         set: function (value) {
             Object.defineProperty(window, "discodeGroupInfo", { value: value, writable: true, configurable: true });
         }
@@ -146,6 +141,8 @@
     document.addEventListener("discode-server-roles-changed", function () { refreshMembers(null); });
     document.addEventListener("discode-roles-ready", function () {
         var button = currentMemberButton();
+    document.addEventListener("discode-server-boost-changed", refreshMembers);
+    document.addEventListener("discode-nitro-changed", function () { window.setTimeout(function () { refreshMembers(null); }, 500); });
         if (button) fillMemberPop(button);
     });
     document.addEventListener("discode-hub-connected", function () { window.setTimeout(function () { refreshMembers(null); }, 400); });
@@ -459,7 +456,18 @@
     document.addEventListener("discode-server-channels-changed", function () { window.setTimeout(function () { loadViewers(true); }, 300); });
     document.addEventListener("discode-server-roles-changed", function () { window.setTimeout(function () { loadViewers(true); }, 300); });
 
+    function publishSelfTimeout() {
+        var until = 0;
+        for (var i = 0; i < serverMembers.length; i++) {
+            if (serverMembers[i] && serverMembers[i].isSelf && serverMembers[i].timeoutUntil) until = new Date(serverMembers[i].timeoutUntil).getTime() || 0;
+        }
+        if (window.discodeSelfTimeout === until) return;
+        window.discodeSelfTimeout = until;
+        document.dispatchEvent(new CustomEvent("discode-self-timeout"));
+    }
+
     function paintServerMembers() {
+        publishSelfTimeout();
         var list = document.getElementById("server-member-list");
         if (!list) return;
         var me = localMe();
@@ -489,6 +497,9 @@
                     self: true,
                     voice: raw.voice,
                     inVoice: raw.inVoice,
+                    hasNitro: raw.hasNitro,
+                    isBooster: raw.isBooster,
+                    staffRole: raw.staffRole,
                     voiceChannel: raw.voiceChannel,
                     channel: raw.channel
                 };
@@ -506,6 +517,9 @@
                 status: presence,
                 owner: isServerCreator(people[p]),
                 voice: memberInVoice(people[p]),
+                nitro: people[p].hasNitro === true,
+                booster: people[p].isBooster === true,
+                staff: people[p].staffRole || "",
                 statusText: people[p].statusText || people[p].customStatus || people[p].activity || "",
                 self: people[p].self === true,
                 id: people[p].id || people[p].userId || "",
@@ -546,6 +560,9 @@
                 if (item.statusText) button.setAttribute("data-note", item.statusText);
                 var face = document.createElement("span");
                 face.className = "server-member-face";
+                if (item.nitro) button.setAttribute("data-nitro", "1");
+                if (item.booster) button.setAttribute("data-booster", "1");
+                if (item.staff) button.setAttribute("data-staff", item.staff);
                 var img = document.createElement("img");
                 img.src = item.photo;
                 img.alt = "";
@@ -568,6 +585,12 @@
                     crown.className = "fa-solid fa-crown server-member-crown";
                     crown.setAttribute("aria-label", "Server owner");
                     line.appendChild(crown);
+                }
+                if ((item.nitro || item.booster || item.staff) && window.discodeBadges) {
+                    var perks = document.createElement("span");
+                    perks.className = "nitro-badges nitro-badges-small";
+                    window.discodeBadges(perks, item.nitro, item.booster, item.staff);
+                    line.appendChild(perks);
                 }
                 copy.appendChild(line);
                 if (item.voice) {
@@ -750,11 +773,9 @@
             ? ((handleNode && handleNode.textContent.trim()) || "anonymou5")
             : (button.getAttribute("data-handle") || name.toLowerCase().replace(/\s+/g, ""));
         var bioInput = document.getElementById("me-bio");
-        // About (the bio): my own comes from my profile form, somebody else's from the member list
         var profileAbout = self
             ? ((bioInput && bioInput.value.trim()) || button.getAttribute("data-bio") || "")
             : (button.getAttribute("data-bio") || "");
-        // the status line above it (the chip): mine too is the status the list shows, not a value kept in the browser
         var custom = button.getAttribute("data-note") || "";
         var about = profileAbout;
         var statusLine = custom;
@@ -772,6 +793,8 @@
         var handleEl = document.getElementById("member-pop-handle");
         if (handleEl) handleEl.textContent = handle;
         var aboutEl = document.getElementById("member-pop-about");
+        var perkHolder = document.getElementById("member-pop-badges");
+        if (perkHolder && window.discodeBadges) window.discodeBadges(perkHolder, button.getAttribute("data-nitro") === "1", button.getAttribute("data-booster") === "1", button.getAttribute("data-staff") || "");
         if (aboutEl) {
             aboutEl.hidden = !about;
             aboutEl.textContent = about;
@@ -779,7 +802,6 @@
         var chip = document.getElementById("member-pop-chip");
         var chipText = document.getElementById("member-pop-chip-text");
         if (chip && chipText) {
-            // somebody who is offline shows no status bubble (their status is only for when they are around); my own stays so I can edit it
             var offline = (button.getAttribute("data-status") || "offline") === "offline";
             var showChip = self || (!!statusLine && !offline);
             chip.hidden = !showChip;
@@ -863,7 +885,6 @@
                 openMemberPop(button);
             });
         }
-        // profilin şəklinə basanda böyük profil pəncərəsi açılır (qrup və DM-dəki kimi)
         var popAvatar = document.querySelector("#member-pop .member-pop-avatar");
         if (popAvatar) {
             popAvatar.setAttribute("title", "View Full Profile");
@@ -1118,7 +1139,6 @@
             if (edit) {
                 var row = edit.closest(".server-channel-row");
                 var target = row ? row.querySelector(".server-channel") : null;
-                // holding Shift turns the gear into a trash can: delete (with the usual confirmation) instead of edit
                 if (isOwner && target) {
                     if (event.shiftKey) openRemove("channel", target);
                     else openChannelEdit(target);
@@ -1178,7 +1198,6 @@
     var memberButtons = document.querySelectorAll(".server-members-toggle");
     for (var i = 0; i < memberButtons.length; i++) memberButtons[i].addEventListener("click", toggleMembers);
 
-    // Close members panel when clicking backdrop in mobile mode
     var backdrop = document.getElementById("members-backdrop");
     if (backdrop) {
         backdrop.addEventListener("click", function () {
@@ -1247,7 +1266,6 @@
 
     if (canManage && channelSide && channelMenu) {
         channelSide.addEventListener("contextmenu", function (event) {
-            // a person in a voice channel has their own menu (servervoice.js): not the category's
             if (event.target.closest(".server-voice-user")) return;
             var row = event.target.closest(".server-channel-row");
             var channel = row ? row.querySelector(".server-channel") : null;
@@ -1278,6 +1296,59 @@
             event.stopPropagation();
             var button = event.target.closest("button");
             if (!button) return;
+    var boostBtn = document.getElementById("server-menu-boost");
+    if (boostBtn) {
+        boostBtn.addEventListener("click", function () {
+            var settingsBtn = document.getElementById("server-settings-open");
+            if (settingsBtn && !settingsBtn.hidden) {
+                settingsBtn.click();
+                var panel = document.querySelector(".server-settings-nav [data-panel='boost']");
+                if (panel) panel.click();
+                return;
+            }
+            closeMenu();
+            if (window.discodeGo) window.discodeGo("/Nitro/Index");
+            else window.location.href = "/Nitro/Index";
+        });
+    }
+
+    var showAllBtn = document.getElementById("server-menu-show-all");
+    if (showAllBtn) {
+        showAllBtn.addEventListener("click", function () {
+            if (!currentServer) return;
+            saveServerPref({ showAllChannels: currentServer.showAllChannels === false });
+        });
+    }
+
+    var hideMuted = document.getElementById("server-menu-hide-muted");
+    if (hideMuted) {
+        hideMuted.addEventListener("change", function () {
+            var box = hideMuted.querySelector("input");
+            saveServerPref({ hideMutedChannels: !!(box && box.checked) });
+        });
+    }
+
+    var notifyBtn = document.getElementById("server-menu-notify");
+    if (notifyBtn) {
+        notifyBtn.addEventListener("click", function () { openUserSettings("notifications"); });
+    }
+
+    var privacyBtn = document.getElementById("server-menu-privacy");
+    if (privacyBtn) {
+        privacyBtn.addEventListener("click", function () {
+            openUserSettings(document.querySelector("[data-settings-tab='privacy']") ? "privacy" : "account");
+        });
+    }
+
+    var profileBtn = document.getElementById("server-menu-profile");
+    if (profileBtn) {
+        profileBtn.addEventListener("click", function () {
+            closeMenu();
+            var handle = document.getElementById("me-handle-name");
+            if (window.openUserProfile && handle) window.openUserProfile(handle.textContent.trim(), "");
+        });
+    }
+
             closeChannelMenu();
             if (isOwner && button.getAttribute("data-create") === "channel") openChannelModal();
             if (isOwner && button.getAttribute("data-create") === "category") openCategoryModal();
@@ -1678,9 +1749,7 @@
             chat.classList.remove("has-room");
         }
         if (voice) voice.hidden = true;
-        // the real message list, intro and composer live in serverchat.js: they must go too
         if (window.discodeServerChat && window.discodeServerChat.close) window.discodeServerChat.close();
-        // silinən kanalın mesajları və adı ekranda qalmasın
         var staleMessages = document.getElementById("server-messages");
         if (staleMessages) staleMessages.hidden = true;
         if (roomName) roomName.textContent = "";
@@ -1690,7 +1759,6 @@
         if (emptyRoom) emptyRoom.hidden = false;
     }
 
-    // Kanal siyahısı yenilənəndə (məsələn kanal silinəndə, hətta başqası silsə də) açıq otaq hələ də var?
     function reconcileRoom() {
         if (!channelList || roomKind === "settings") return;
         var all = channelList.querySelectorAll(".server-channel");
@@ -2079,7 +2147,6 @@
         }
     }
 
-    // Shift held over a channel row: the gear shows as a trash can (see .shift-down in server.css)
     function setShiftDown(down) {
         document.body.classList.toggle("shift-down", !!down && isOwner);
     }
@@ -2160,7 +2227,7 @@
             inviteRoom.textContent = roomName ? roomName : room ? "#" + room.textContent.trim() : "the server";
         }
         if (inviteCopy) inviteCopy.textContent = "Copy";
-        if (inviteLink && currentServer && currentServer.inviteCode) inviteLink.value = window.location.origin + "/" + currentServer.inviteCode;
+        if (inviteLink && currentServer && (currentServer.customLink || currentServer.inviteCode)) inviteLink.value = window.location.origin + "/" + (currentServer.customLink || currentServer.inviteCode);
         loadInviteFriends();
         closeMenu();
         closeChannelMenu();
@@ -2171,7 +2238,7 @@
     var inviteSearch = document.getElementById("invite-search");
 
     function inviteUrl() {
-        return currentServer && currentServer.inviteCode ? window.location.origin + "/" + currentServer.inviteCode : "";
+        return currentServer && (currentServer.customLink || currentServer.inviteCode) ? window.location.origin + "/" + (currentServer.customLink || currentServer.inviteCode) : "";
     }
 
     function inviteRow(friend) {
@@ -2803,7 +2870,6 @@
         var inviteRow = closeInvite.closest(".server-voice-invite");
         if (inviteRow) {
             inviteRow.hidden = true;
-            // stays closed while I am in this channel: a mute, an unmute or anyone joining redraws the list but must not bring it back
             inviteRow.setAttribute("data-dismissed", "1");
         }
         return true;

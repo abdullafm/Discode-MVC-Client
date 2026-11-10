@@ -8,7 +8,6 @@ namespace Discode_MVC_Client.Services
         public string FaviconUrl { get; set; } = string.Empty;
     }
 
-    // The logos the administrators chose (empty = the built-in ones). Short cache: every page asks for it
     public class BrandingProvider
     {
         private const string CacheKey = "site-branding";
@@ -36,8 +35,6 @@ namespace Discode_MVC_Client.Services
             }
             catch (Exception)
             {
-                // the logos are decoration and every layout asks for them: whatever goes wrong (API down, slow, cut-off or
-                // unreadable answer) the page must still render with the built-in logos, retrying in a few seconds
             }
 
             _cache.Set(CacheKey, branding, ttl);

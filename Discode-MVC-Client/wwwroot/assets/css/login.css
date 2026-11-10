@@ -254,3 +254,121 @@ button.login-forgot:hover {
     object-fit: contain;
     opacity: 0.08;
 }
+
+@keyframes logo-float {
+    0% { transform: translate3d(-3%, 2%, 0) rotate(-4deg) scale(1); }
+    50% { transform: translate3d(3%, -3%, 0) rotate(4deg) scale(1.07); }
+    100% { transform: translate3d(-3%, 2%, 0) rotate(-4deg) scale(1); }
+}
+
+.background-x .x-logo {
+    animation: logo-float 14s ease-in-out infinite;
+    will-change: transform;
+}
+
+
+.login-card:not(.register-card),
+.x-content {
+    background: rgba(17, 18, 20, 0.32);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 32px;
+}
+
+.login-card:not(.register-card) {
+    width: min(100%, 420px);
+}
+
+.x-content {
+    flex: 0 1 460px;
+    max-width: 460px;
+}
+
+.login-card h1,
+.x-content h2 {
+    margin: 0 0 24px;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.login-card input,
+.login-card textarea,
+.register-card input,
+.register-card textarea,
+.birth-field {
+    height: 44px;
+    border: 1px solid #2b2d31;
+    border-radius: 6px;
+    background: #0b0b0d;
+    font-size: 16px;
+}
+
+.login-card textarea,
+.register-card textarea {
+    height: auto;
+}
+
+.login-card input:focus,
+.login-card textarea:focus,
+.register-card input:focus,
+.register-card textarea:focus,
+.birth-box.open .birth-field {
+    border-color: #5865f2;
+    background: #0b0b0d;
+}
+
+.login-card button[type="submit"],
+.register-card button[type="submit"] {
+    height: 44px;
+    border-radius: 6px;
+    background: #5865f2;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.login-card button[type="submit"]:hover,
+.register-card button[type="submit"]:hover {
+    background: #4752c4;
+}
+
+.login-forgot,
+.login-switch a,
+.login-switch button,
+.terms-text a {
+    color: #00a8fc;
+}
+
+.birth-list {
+    border-radius: 6px;
+    background: #111214;
+    border-color: #2b2d31;
+}
+
+.birth-list button {
+    border-radius: 4px;
+}
+
+.birth-list button:hover,
+.birth-list button.on {
+    background: #1e1f22;
+}
+
+.birth-list .fa-check {
+    color: #5865f2;
+}
+
+@media screen and (max-width: 560px) {
+    .login-card:not(.register-card),
+    .x-content {
+        padding: 24px 18px;
+    }
+
+    .login-card h1,
+    .x-content h2 {
+        font-size: 24px;
+    }
+}

@@ -211,7 +211,6 @@
                 </div>
             </div></section>
 
-            <!-- Live Watch Modal -->
             <div id="live-watch-modal" class="live-modal" hidden>
                 <div class="live-modal-backdrop" id="live-watch-backdrop"></div>
                 <div class="watch-dialog" role="dialog" aria-labelledby="live-streamer-name">
@@ -233,7 +232,10 @@
                             <div class="watch-top-right">
                                 <button type="button" class="watch-viewers" id="live-viewers-btn"><i class="fa-solid fa-eye"></i> <b id="live-viewers-count">0</b></button>
                                 <div class="watch-viewer-list" id="live-viewer-list" hidden>
-                                    <h4>Watching now</h4>
+                                    <div class="watch-viewer-tabs">
+                                        <button type="button" class="on" data-tab="watching">Watching now</button>
+                                        <button type="button" data-tab="muted" id="live-muted-tab" hidden>Muted</button>
+                                    </div>
                                     <div id="live-viewer-rows"></div>
                                     <p id="live-viewer-empty" hidden>Nobody is watching yet.</p>
                                 </div>
@@ -254,6 +256,7 @@
                         <div class="watch-guest-requests" id="live-guest-requests"></div>
                         <div class="watch-controls">
                             <button type="button" class="watch-icon-btn" id="live-mute-btn" title="Sound"><i class="fa-solid fa-volume-high"></i></button>
+                            <button type="button" class="watch-icon-btn" id="live-media-btn" title="Microphone, headphones, camera and screen" aria-label="Stream controls" hidden><i class="fa-solid fa-sliders"></i></button>
                             <button type="button" class="watch-icon-btn" id="live-guest-btn" title="Request to join" hidden><i class="fa-solid fa-user-plus"></i></button>
                             <button type="button" class="watch-icon-btn" id="live-preview-toggle" title="Hide my preview" hidden><i class="fa-solid fa-eye"></i></button>
                             <button type="button" class="watch-icon-btn" id="live-share-btn" title="Invite friends"><i class="fa-solid fa-share-nodes"></i></button>
@@ -276,7 +279,67 @@
                 </div>
             </div>
 
-            <!-- Go Live Broadcaster Modal -->
+            <div class="dm-modal" id="live-mute-modal" role="dialog" aria-modal="true" aria-labelledby="live-mute-title" hidden>
+                <div class="dm-modal-backdrop" data-close></div>
+                <div class="dm-modal-card live-mute-card">
+                    <button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>
+                    <h2 id="live-mute-title">Mute in chat</h2>
+                    <p class="dm-modal-text" id="live-mute-text"></p>
+                    <div class="live-mute-options" id="live-mute-options">
+                        <button type="button" data-minutes="10" class="on">10 minutes</button>
+                        <button type="button" data-minutes="60">1 hour</button>
+                        <button type="button" data-minutes="1440">1 day</button>
+                        <button type="button" data-minutes="10080">7 days</button>
+                        <button type="button" data-minutes="0">For good</button>
+                    </div>
+                    <div class="live-mute-custom">
+                        <label for="live-mute-custom">Or choose the time</label>
+                        <input type="number" id="live-mute-custom" min="1" max="999" placeholder="30" autocomplete="off">
+                        <select id="live-mute-unit" aria-label="Unit">
+                            <option value="1">minutes</option>
+                            <option value="60">hours</option>
+                            <option value="1440">days</option>
+                        </select>
+                    </div>
+                    <p class="dm-forward-error" id="live-mute-error" hidden></p>
+                    <div class="dm-forward-send">
+                        <button type="button" id="live-mute-submit">Mute</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dm-modal" id="live-media-modal" role="dialog" aria-modal="true" aria-labelledby="live-media-title" hidden>
+                <div class="dm-modal-backdrop" data-close></div>
+                <div class="dm-modal-card live-media-card">
+                    <button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>
+                    <h2 id="live-media-title">Stream controls</h2>
+                    <p class="dm-modal-text" id="live-media-sub"></p>
+                    <div class="live-media-list">
+                        <button type="button" class="live-media-row" data-media="mic">
+                            <i class="fa-solid fa-microphone"></i>
+                            <span><strong>Microphone</strong><small data-state></small></span>
+                            <em class="live-switch" aria-hidden="true"></em>
+                        </button>
+                        <button type="button" class="live-media-row" data-media="deaf">
+                            <i class="fa-solid fa-headphones"></i>
+                            <span><strong>Headphones</strong><small data-state></small></span>
+                            <em class="live-switch" aria-hidden="true"></em>
+                        </button>
+                        <button type="button" class="live-media-row" data-media="camera">
+                            <i class="fa-solid fa-video"></i>
+                            <span><strong>Camera</strong><small data-state></small></span>
+                            <em class="live-switch" aria-hidden="true"></em>
+                        </button>
+                        <button type="button" class="live-media-row" data-media="screen">
+                            <i class="fa-solid fa-display"></i>
+                            <span><strong>Share screen</strong><small data-state></small></span>
+                            <em class="live-switch" aria-hidden="true"></em>
+                        </button>
+                    </div>
+                    <p class="dm-forward-error" id="live-media-error" hidden></p>
+                </div>
+            </div>
+
             <div class="dm-modal" id="live-share-modal" role="dialog" aria-modal="true" aria-labelledby="live-share-title" hidden>
                 <div class="dm-modal-backdrop" data-close></div>
                 <div class="dm-modal-card dm-forward-card">
@@ -393,7 +456,7 @@
             <template id="emoji-flag"><button type="button" class="emoji-choice flag-choice"><img alt=""></button></template>
             <template id="flag-img"><img class="flag-img" alt=""></template>
             <template id="avatar-photo"><img alt=""></template>
-            <template id="post-card"><div class="post"><div class="post-author"><img alt="" hidden><span class="avatar-letter" hidden></span><div class="post-name"><strong></strong><time></time><span class="post-scope" hidden><i class="fa-solid fa-user-group"></i> Friends</span></div><div class="item-menu" hidden><button class="line-btn" type="button" aria-label="Post options"><i class="fa-solid fa-ellipsis"></i></button><div class="delete-pop" hidden><button type="button" data-edit-post>Edit</button><button type="button" data-delete-post>Delete</button><button type="button" class="menu-report" data-report-post>Report</button></div></div></div><p class="post-text" hidden></p><img class="post-photo" alt="" hidden><div class="post-actions"><button class="like-btn post-like" type="button" data-like-post aria-label="Like"><i class="fa-regular fa-heart"></i><span>0</span></button><button class="comment-open" type="button" data-comment-post aria-label="Comment"><i class="fa-regular fa-comment"></i></button><button class="comment-open post-repost" type="button" data-repost-post aria-label="Repost"><i class="fa-solid fa-retweet"></i><span>0</span></button></div><div class="comment-list"></div><div class="reply-chip" hidden><span></span><button type="button" data-reply-cancel aria-label="Cancel reply"><i class="fa-solid fa-xmark"></i></button></div><form class="comment-form" hidden><img alt="" hidden><span class="avatar-letter" hidden></span><div class="rich-text" contenteditable="true" role="textbox" data-placeholder="Add a comment..." data-maxlength="280" data-empty="1"></div><button class="emoji-open" type="button" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button><button type="submit">Send</button></form></div></template>
+            <template id="post-card"><div class="post"><div class="post-author"><img alt="" hidden><span class="avatar-letter" hidden></span><div class="post-name"><strong></strong><time></time><span class="post-scope" hidden><i class="fa-solid fa-user-group"></i> Friends</span></div><div class="item-menu" hidden><button class="line-btn" type="button" aria-label="Post options"><i class="fa-solid fa-ellipsis"></i></button><div class="delete-pop" hidden><button type="button" data-edit-post>Edit</button><button type="button" data-delete-post>Delete</button><button type="button" class="menu-report" data-report-post>Report</button></div></div></div><p class="post-text" hidden></p><img class="post-photo" alt="" hidden><div class="post-actions"><button class="like-btn post-like" type="button" data-like-post aria-label="Like"><i class="fa-regular fa-heart"></i><span>0</span></button><button class="comment-open" type="button" data-comment-post aria-label="Comment"><i class="fa-regular fa-comment"></i></button><button class="comment-open post-repost" type="button" data-repost-post aria-label="Repost"><i class="fa-solid fa-retweet"></i><span>0</span></button><button class="comment-open post-share" type="button" data-share-post aria-label="Send to friends" title="Send to friends"><i class="fa-regular fa-paper-plane"></i></button></div><div class="comment-list"></div><div class="reply-chip" hidden><span></span><button type="button" data-reply-cancel aria-label="Cancel reply"><i class="fa-solid fa-xmark"></i></button></div><form class="comment-form" hidden><img alt="" hidden><span class="avatar-letter" hidden></span><div class="rich-text" contenteditable="true" role="textbox" data-placeholder="Add a comment..." data-maxlength="280" data-empty="1"></div><button class="emoji-open" type="button" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button><button type="submit">Send</button></form></div></template>
             <template id="comment-card"><div class="comment"><img alt="" hidden><span class="avatar-letter" hidden></span><div><div class="comment-body"><strong></strong><p></p></div><div class="comment-meta"><time></time><button class="comment-reply" type="button" data-reply-comment>Reply</button><button class="like-btn" type="button" data-like data-post><i class="fa-regular fa-heart"></i><span>0</span></button><span class="item-menu" hidden><button class="line-btn" type="button" aria-label="Comment options"><i class="fa-solid fa-ellipsis"></i></button><span class="delete-pop" hidden><button type="button" data-edit-comment>Edit</button><button type="button" data-delete-comment data-post>Delete</button><button type="button" class="menu-report" data-report-comment>Report</button></span></span></div></div></div></template>
             <template id="story-mine"><button class="story-bubble mine" type="button" data-story=""><span class="story-ring"><img alt=""></span><span class="story-add" id="story-add" title="Add story"><i class="fa-solid fa-plus"></i></span><span class="story-label">Your story</span></button></template>
             <template id="story-friend"><button class="story-bubble" type="button" data-story=""><span class="story-ring"><img alt=""></span><span class="story-label"></span></button></template>

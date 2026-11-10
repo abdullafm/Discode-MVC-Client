@@ -1,5 +1,6 @@
-﻿using Discode_MVC_Client.ViewModels.Account;
+using Discode_MVC_Client.ViewModels.Account;
 using Discode_MVC_Client.ViewModels.Home;
+using Discode_MVC_Client.ViewModels.Nitro;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -27,12 +28,14 @@ namespace Discode_MVC_Client.Controllers
                 Email = User.FindFirst(ClaimTypes.Email)?.Value ?? ""
             };
 
+            var status = new NitroStatusUIVM();
             try
             {
                 var client = _httpClientFactory.CreateClient("DiscodeApi");
                 var profile = await client.GetFromJsonAsync<ProfileUIVM>("api/account/profile");
                 if (profile is not null)
-                    return View(ToHome(profile));
+                    fallback = profile;
+                status = await client.GetFromJsonAsync<NitroStatusUIVM>("api/nitro") ?? status;
             }
             catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
             {
@@ -41,7 +44,165 @@ namespace Discode_MVC_Client.Controllers
             {
             }
 
+            ViewData["Nitro"] = status;
+            ViewData["NitroNotice"] = TempData["NitroNotice"];
+            ViewData["NitroError"] = TempData["NitroError"];
+            ViewData["NitroGiftLink"] = TempData["NitroGiftLink"];
             return View(ToHome(fallback));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> Status()
+        {
+            return Forward(client => client.GetAsync("api/nitro"));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Subscribe()
+        {
+            var site = $"{Request.Scheme}://{Request.Host}";
+            return Forward(client => client.PostAsJsonAsync("api/nitro/checkout", new
+            {
+                successUrl = site + "/Nitro/Success",
+                cancelUrl = site + "/Nitro/Index?canceled=1"
+            }));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Success(string? session_id)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await client.PostAsJsonAsync("api/nitro/confirm", new { sessionId = session_id ?? string.Empty });
+                if (response.IsSuccessStatusCode)
+                    TempData["NitroNotice"] = "Welcome to Nitro! Your perks are on.";
+                else
+                    TempData["NitroError"] = await ReadErrorAsync(response);
+            }
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
+            {
+                TempData["NitroError"] = "We could not check the payment right now. If you were charged, Nitro will start in a moment.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> GiftCheckout()
+        {
+            var site = $"{Request.Scheme}://{Request.Host}";
+            return Forward(client => client.PostAsJsonAsync("api/nitro/gift/checkout", new
+            {
+                successUrl = site + "/Nitro/GiftSuccess",
+                cancelUrl = site + "/Nitro/Index?canceled=1"
+            }));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GiftSuccess(string? session_id)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await client.PostAsJsonAsync("api/nitro/gift/confirm", new { sessionId = session_id ?? string.Empty });
+                if (response.IsSuccessStatusCode)
+                {
+                    using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                    TempData["NitroGiftLink"] = document.RootElement.TryGetProperty("link", out var link) ? link.GetString() : null;
+                    TempData["NitroNotice"] = "Your gift is ready. Send the link to your friend.";
+                }
+                else
+                {
+                    TempData["NitroError"] = await ReadErrorAsync(response);
+                }
+            }
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
+            {
+                TempData["NitroError"] = "We could not check the payment right now. If you were charged, your gift is under Your gifts in a moment.";
+            }
+            catch (JsonException)
+            {
+                TempData["NitroError"] = "That did not work. Your gift, if you paid, is under Your gifts.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> Gifts()
+        {
+            return Forward(client => client.GetAsync("api/nitro/gifts"));
+        }
+
+        [HttpGet]
+        public Task<IActionResult> GiftInfo(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code) || code.Length > 64)
+                return Task.FromResult<IActionResult>(NotFound(new { errors = new[] { "This gift link is not valid." } }));
+
+            return Forward(client => client.GetAsync("api/nitro/gift/" + Uri.EscapeDataString(code.Trim())));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Redeem([FromBody] RedeemGiftUIVM model)
+        {
+            if (model is null || string.IsNullOrWhiteSpace(model.Code) || model.Code.Length > 64)
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "This gift link is not valid." } }));
+
+            return Forward(client => client.PostAsJsonAsync("api/nitro/gift/" + Uri.EscapeDataString(model.Code.Trim()) + "/redeem", new { }));
+        }
+
+        [HttpGet("/gift/{code}")]
+        public IActionResult Gift(string code)
+        {
+            return Redirect("/Home/Index?gift=" + Uri.EscapeDataString(code ?? string.Empty));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> Manage()
+        {
+            var site = $"{Request.Scheme}://{Request.Host}";
+            return Forward(client => client.PostAsJsonAsync("api/nitro/portal", new { returnUrl = site + "/Nitro/Index" }));
+        }
+
+        private static async Task<string> ReadErrorAsync(HttpResponseMessage response)
+        {
+            try
+            {
+                using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+                if (document.RootElement.TryGetProperty("errors", out var errors) && errors.ValueKind == JsonValueKind.Array && errors.GetArrayLength() > 0)
+                    return errors[0].GetString() ?? "That did not work.";
+            }
+            catch (JsonException)
+            {
+            }
+
+            return "That did not work. Try again.";
+        }
+
+        private async Task<IActionResult> Forward(Func<HttpClient, Task<HttpResponseMessage>> send)
+        {
+            try
+            {
+                var client = _httpClientFactory.CreateClient("DiscodeApi");
+                var response = await send(client);
+                var payload = await response.Content.ReadAsStringAsync();
+                return new ContentResult
+                {
+                    StatusCode = (int)response.StatusCode,
+                    Content = string.IsNullOrWhiteSpace(payload) ? "{}" : payload,
+                    ContentType = "application/json"
+                };
+            }
+            catch (Exception failure) when (Filters.ApiFailure.IsTransient(failure))
+            {
+                return StatusCode(503, new { errors = new[] { "The service is unavailable right now. Please try again later." } });
+            }
         }
 
         private static HomeUIVM ToHome(ProfileUIVM profile) => new()

@@ -13,7 +13,7 @@ namespace Discode_MVC_Client.Controllers
     [Authorize]
     public class DmController : ApiControllerBase
     {
-        private const long MaxAttachmentBytes = 25L * 1024 * 1024;
+        private const long MaxUploadRequestBytes = 2L * 1024 * 1024 * 1024 + 2_000_000;
         private static readonly HashSet<string> DownloadOnlyExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
             ".html", ".htm", ".xhtml", ".svg", ".js", ".mjs"
@@ -110,15 +110,17 @@ namespace Discode_MVC_Client.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RequestSizeLimit(27_000_000)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 27_000_000)]
+        [TypeFilter(typeof(Filters.AttachmentLimitFilter))]
+        [RequestSizeLimit(MaxUploadRequestBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MaxUploadRequestBytes)]
         public IActionResult UploadAttachment(IFormFile file)
         {
             if (file is null || file.Length == 0)
                 return BadRequest(new { errors = new[] { "Choose a file." } });
 
-            if (file.Length > MaxAttachmentBytes)
-                return BadRequest(new { errors = new[] { "A file can be at most 25 MB." } });
+            var limits = HttpContext.Items[Filters.AttachmentLimitFilter.LimitKey] as ViewModels.Nitro.NitroLimitsUIVM ?? new ViewModels.Nitro.NitroLimitsUIVM();
+            if (file.Length > limits.MaxFileBytes)
+                return BadRequest(new { errors = new[] { Filters.AttachmentLimitFilter.TooBig(limits) } });
 
             var original = Path.GetFileName(file.FileName ?? string.Empty).Trim();
             if (original.Length == 0)

@@ -1,6 +1,16 @@
-﻿@model HomeUIVM
+@using Discode_MVC_Client.ViewModels.Nitro
+@model HomeUIVM
 @{
     Layout = "_HomeLayout";
+    var nitro = ViewData["Nitro"] as NitroStatusUIVM ?? new NitroStatusUIVM();
+    var notice = ViewData["NitroNotice"] as string;
+    var error = ViewData["NitroError"] as string;
+    var giftLink = ViewData["NitroGiftLink"] as string;
+    var canceled = Context.Request.Query["canceled"].Count > 0;
+    string Until(DateTime? when) => when is null ? "" : when.Value.ToLocalTime().ToString("MMM d, yyyy", System.Globalization.CultureInfo.InvariantCulture);
+}
+@section Scripts {
+    <script src="~/assets/js/nitropage.js" asp-append-version="true"></script>
 }
 <main class="friends-view nitro-view show-main">
     <section id="nitro-hero">
@@ -9,15 +19,122 @@
             <img class="nitro-key" src="~/assets/img/nitro-key.png" alt="">
             <img class="nitro-wumpus" src="~/assets/img/nitro-wumpus.png" alt="">
             <div class="nitro-hero-copy">
-                <h1>UNLOCK A WORLD<br>OF PERKS<br>WITH NITRO</h1>
-                <div class="nitro-hero-actions">
-                    <button class="nitro-btn nitro-btn-subscribe" type="button">
-                        <span class="nitro-mark"><i class="fa-brands fa-discord"></i></span>
-                        Subscribe
-                    </button>
-                </div>
-                <p class="nitro-hero-note">Plans starting at just $2.99 per month. Cancel anytime.</p>
+                @if (nitro.HasNitro)
+                {
+                    <h1>YOU HAVE<br>NITRO</h1>
+                    <div class="nitro-hero-actions">
+                        @if (nitro.CanManageBilling)
+                        {
+                            <button class="nitro-btn nitro-btn-subscribe" type="button" id="nitro-manage">
+                                <span class="nitro-mark"><i class="fa-solid fa-credit-card"></i></span>
+                                Manage subscription
+                            </button>
+                        }
+                    </div>
+                    <p class="nitro-hero-note" id="nitro-status-line">
+                        @if (nitro.Source == "admin")
+                        {
+                            <text>Given to you by an admin. It runs until @Until(nitro.ExpiresAt).</text>
+                        }
+                        else if (nitro.Source == "gift")
+                        {
+                            <text>A gift. It runs until @Until(nitro.ExpiresAt).</text>
+                        }
+                        else if (nitro.CancelAtPeriodEnd)
+                        {
+                            <text>Cancelled. Your perks stay until @Until(nitro.ExpiresAt).</text>
+                        }
+                        else
+                        {
+                            <text>Renews on @Until(nitro.ExpiresAt) for $@nitro.Price per month.</text>
+                        }
+                    </p>
+                }
+                else
+                {
+                    <h1>UNLOCK A WORLD<br>OF PERKS<br>WITH NITRO</h1>
+                    <div class="nitro-hero-actions">
+                        <button class="nitro-btn nitro-btn-subscribe" type="button" id="nitro-subscribe">
+                            <span class="nitro-mark"><i class="fa-brands fa-discord"></i></span>
+                            Subscribe
+                        </button>
+                    </div>
+                    <p class="nitro-hero-note">Just $@nitro.Price per month. Cancel anytime.</p>
+                }
+                @if (!string.IsNullOrEmpty(notice))
+                {
+                    <p class="nitro-flash is-ok" role="status"><i class="fa-solid fa-circle-check"></i> @notice</p>
+                }
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <p class="nitro-flash is-error" role="alert"><i class="fa-solid fa-triangle-exclamation"></i> @error</p>
+                }
+                @if (canceled && !nitro.HasNitro)
+                {
+                    <p class="nitro-flash" role="status">The payment was cancelled. You were not charged.</p>
+                }
+                <p class="nitro-flash is-error" id="nitro-error" role="alert" hidden></p>
             </div>
         </div>
+    </section>
+    <section class="nitro-perks" aria-label="Nitro perks">
+        <h2>What you get</h2>
+        <div class="nitro-perk-grid">
+            <article class="nitro-perk">
+                <span class="nitro-perk-icon"><i class="fa-solid fa-align-left"></i></span>
+                <h3>Messages without a limit</h3>
+                <p>Write as much as you like. Free accounts can send 2000 characters.</p>
+            </article>
+            <article class="nitro-perk">
+                <span class="nitro-perk-icon"><i class="fa-solid fa-file-arrow-up"></i></span>
+                <h3>Files up to 2 GB</h3>
+                <p>Send big files to friends, groups and servers. Free accounts can send 5 MB.</p>
+            </article>
+            <article class="nitro-perk">
+                <span class="nitro-perk-icon"><i class="fa-solid fa-user-astronaut"></i></span>
+                <h3>Animated avatar and banner</h3>
+                <p>Use a GIF as your avatar and put a banner on your profile.</p>
+            </article>
+            <article class="nitro-perk">
+                <span class="nitro-perk-icon nitro-perk-boost"><i class="fa-solid fa-rocket"></i></span>
+                <h3>2 server boosts</h3>
+                <p>Boost your servers. At 14 boosts a server gets a banner, an animated icon and its own link.</p>
+            </article>
+            <article class="nitro-perk">
+                <span class="nitro-perk-icon"><i class="fa-solid fa-gem"></i></span>
+                <h3>Nitro badge</h3>
+                <p>A badge on your profile, and a second one when you boost a server.</p>
+            </article>
+        </div>
+        <div class="nitro-gift" id="nitro-gift">
+            <img class="nitro-gift-art" src="~/assets/img/nitro-gift.png" alt="">
+            <div class="nitro-gift-copy">
+                <h2>Gift Nitro to a friend</h2>
+                <p>Pay once for @(nitro.GiftDays) days of Nitro and get a link. Your friend opens the link, presses Accept and has Nitro.</p>
+                <button class="nitro-btn nitro-btn-subscribe" type="button" id="nitro-gift-buy">
+                    <span class="nitro-mark"><i class="fa-solid fa-gift"></i></span>
+                    Buy a gift for $@nitro.GiftPrice
+                </button>
+                @if (!string.IsNullOrEmpty(giftLink))
+                {
+                    <div class="nitro-gift-ready" id="nitro-gift-ready">
+                        <label for="nitro-gift-link">Your gift link</label>
+                        <div class="nitro-gift-row">
+                            <input type="text" id="nitro-gift-link" value="@giftLink" readonly>
+                            <button type="button" id="nitro-gift-copy">Copy</button>
+                            <button type="button" id="nitro-gift-send"><i class="fa-solid fa-paper-plane"></i> Send to a friend</button>
+                        </div>
+                    </div>
+                }
+                <div class="nitro-gift-mine" id="nitro-gift-mine" hidden>
+                    <h3>Your gifts</h3>
+                    <div id="nitro-gift-list"></div>
+                </div>
+            </div>
+        </div>
+        @if (nitro.HasNitro)
+        {
+            <p class="nitro-boost-line">You are using <strong>@nitro.BoostsUsed</strong> of your <strong>@nitro.BoostSlots</strong> boosts. Open a server's settings and choose Boost Perks to use them.</p>
+        }
     </section>
 </main>

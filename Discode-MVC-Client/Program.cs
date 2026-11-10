@@ -10,6 +10,7 @@ builder.Services.AddControllersWithViews(options =>
 });
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<Discode_MVC_Client.Services.ILinkPreviewService, Discode_MVC_Client.Services.LinkPreviewService>();
 builder.Services.AddScoped<Discode_MVC_Client.Services.BrandingProvider>();
 builder.Services.AddTransient<BearerTokenHandler>();
 
@@ -52,7 +53,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// 404, 403, ... on a page request show the Discode error page; script requests keep the bare status they had
 app.UseStatusCodePagesWithReExecute("/Error/{0}");
 
 app.UseHttpsRedirection();

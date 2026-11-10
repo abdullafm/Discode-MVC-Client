@@ -7,6 +7,10 @@
     <script src="~/assets/js/nav.js"></script>
     <script src="~/assets/js/livedock.js" asp-append-version="true"></script>
     <script src="~/assets/js/timezone.js"></script>
+    <script src="~/assets/js/nitrostate.js" asp-append-version="true"></script>
+    <script src="~/assets/js/profilesetup.js" asp-append-version="true"></script>
+    <script src="~/assets/js/messageformat.js" asp-append-version="true"></script>
+    <script src="~/assets/js/chatstate.js" asp-append-version="true"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@(ViewData["Title"] ?? "Discord | Friends")</title>
@@ -46,7 +50,7 @@
             <nav class="server-nav" aria-label="Servers">
                 <button type="button" class="server-home" onclick="openToggle()" aria-label="Home">@await Component.InvokeAsync("Branding", new { kind = "logo" })</button>
                 <hr>
-                <div id="server-list"></div>
+                @await Component.InvokeAsync("ServerRail")
                 <template id="server-chip"><button type="button" class="server-chip"></button></template>
                 <button type="button" class="server-action" id="server-add" aria-label="Add a Server"><i
                         class="fa-solid fa-plus" aria-hidden="true"></i></button>
@@ -101,7 +105,7 @@
                     style="background:#80848e"></span>Invisible<small>You will appear offline</small></button>
         </div>
         <div class="me-pop d-none" id="me-pop">
-            <div class="me-banner"></div>
+            <div class="me-banner" style="@(!string.IsNullOrEmpty(Model.Profile.BannerUrl) ? "background:url('" + Model.Profile.BannerUrl + "') center / cover no-repeat !important" : !string.IsNullOrEmpty(Model.Profile.BannerColor) ? "background:" + Model.Profile.BannerColor + " !important" : "")"></div>
             <div class="me-head">
                 <div class="me-avatar">
                     <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
@@ -119,13 +123,68 @@
                         id="me-status-label">Online</span><i class="fa-solid fa-chevron-right"></i></button>
             </div>
         </div>
-        <div class="me-profile d-none" id="me-profile">
+        <div class="me-profile d-none" id="me-profile" data-color="@Model.Profile.BannerColor" data-banner="@Model.Profile.BannerUrl" data-nitro="@(Model.Profile.HasNitro ? "1" : "0")" data-booster="@(Model.Profile.IsBooster ? "1" : "0")">
+        <aside class="me-edit-panel" id="me-edit-panel" aria-label="Edit profile">
+            <header class="me-edit-head">
+                <h3>Main Profile</h3>
+                <button type="button" id="me-edit-collapse" aria-label="Hide the editor"><i class="fa-solid fa-angles-left"></i></button>
+            </header>
+            <div class="me-edit-body">
+                <div class="me-edit-sec">
+                    <h4>Display Name</h4>
+                    <input type="text" id="me-edit-name" maxlength="32" autocomplete="off" aria-label="Display name">
+                </div>
+                <div class="me-edit-sec">
+                    <h4>Avatar</h4>
+                    <div class="me-edit-row">
+                        <img id="me-edit-avatar-preview" class="me-edit-avatar" alt="" src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)">
+                        <div class="me-edit-actions">
+                            <button type="button" class="me-edit-btn" id="me-edit-avatar-change">Change Avatar</button>
+                            <button type="button" class="me-edit-link" id="me-edit-avatar-remove">Remove Avatar</button>
+                        </div>
+                    </div>
+                    <p class="me-edit-hint" id="me-edit-avatar-hint">An animated (GIF) avatar needs Nitro.</p>
+                </div>
+                <div class="me-edit-sec" id="me-edit-banner-section" hidden>
+                    <h4>Banner</h4>
+                    <div class="me-edit-banner" id="me-edit-banner-preview"></div>
+                    <div class="me-edit-actions is-row">
+                        <button type="button" class="me-edit-btn" id="me-edit-banner-change"><i class="fa-solid fa-gem"></i> Change Banner</button>
+                        <button type="button" class="me-edit-link" id="me-edit-banner-remove">Remove</button>
+                    </div>
+                </div>
+                <div class="me-edit-sec" id="me-edit-color-section">
+                    <h4>Banner Color</h4>
+                    <div class="me-edit-colors" id="me-edit-colors" role="listbox" aria-label="Banner color">
+                        <button type="button" data-color="#5865f2" style="background:#5865f2" aria-label="Blurple"></button>
+                        <button type="button" data-color="#3ba55d" style="background:#3ba55d" aria-label="Green"></button>
+                        <button type="button" data-color="#faa61a" style="background:#faa61a" aria-label="Yellow"></button>
+                        <button type="button" data-color="#ed4245" style="background:#ed4245" aria-label="Red"></button>
+                        <button type="button" data-color="#eb459e" style="background:#eb459e" aria-label="Pink"></button>
+                        <button type="button" data-color="#9b59b6" style="background:#9b59b6" aria-label="Purple"></button>
+                        <button type="button" data-color="#1abc9c" style="background:#1abc9c" aria-label="Teal"></button>
+                        <button type="button" data-color="#e67e22" style="background:#e67e22" aria-label="Orange"></button>
+                        <button type="button" data-color="#34495e" style="background:#34495e" aria-label="Slate"></button>
+                        <button type="button" data-color="#000000" style="background:#000000" aria-label="Black"></button>
+                        <label class="me-edit-custom" aria-label="Pick any color" title="Pick any color"><input type="color" id="me-edit-color-input" value="#5865f2"><i class="fa-solid fa-eye-dropper"></i></label>
+                        <button type="button" class="me-edit-reset" id="me-edit-color-reset" aria-label="Default color" title="Default color"><i class="fa-solid fa-rotate-left"></i></button>
+                    </div>
+                </div>
+            </div>
+        </aside>
             <div class="me-profile-card" role="dialog" aria-label="Profile">
                 <div class="me-private-head" id="me-private-head" hidden><i class="fa-solid fa-lock"></i> <span>Private Profile</span></div>
+                <button type="button" class="me-edit-toggle" id="me-edit-toggle" aria-label="Customize profile"><i class="fa-solid fa-palette"></i></button>
                 <button type="button" class="me-profile-close" id="me-profile-close" aria-label="Close"><i
                         class="fa-solid fa-xmark"></i></button>
                 <div class="me-profile-side">
-                    <div class="me-profile-banner"></div>
+                    <div class="me-profile-banner" id="me-profile-banner" style="@(!string.IsNullOrEmpty(Model.Profile.BannerUrl) ? "background:url('" + Model.Profile.BannerUrl + "') center / cover no-repeat !important" : !string.IsNullOrEmpty(Model.Profile.BannerColor) ? "background:" + Model.Profile.BannerColor + " !important" : "")">
+                        <label class="me-banner-edit" id="me-banner-edit" aria-label="Change banner" title="Change banner">
+                            <input id="me-banner-file" type="file" accept="image/*">
+                            <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                        </label>
+                        <button type="button" class="me-banner-remove" id="me-banner-remove" aria-label="Remove banner" title="Remove banner" hidden><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                     <div class="me-profile-id">
                         <div class="me-profile-top">
                             <div class="me-profile-avatar">
@@ -142,7 +201,10 @@
                         <form class="me-name-form" id="me-name-form"><input id="me-display-input" type="text"
                                 maxlength="32" value="@Model.Profile.DisplayName" aria-label="Display name"></form>
                         <h2 id="me-view-name" hidden>@Model.Profile.DisplayName</h2>
-                        <p class="me-handle"><span id="me-handle-name">@Model.Profile.UserName</span> <span id="me-handle-dot">•</span> <button type="button" class="me-pronouns" id="me-pronouns">@(string.IsNullOrWhiteSpace(Model.Profile.Pronouns) ? "Add pronouns" : Model.Profile.Pronouns)</button><span id="me-view-pronouns" hidden>@Model.Profile.Pronouns</span></p>
+                        <div class="handle-row">
+                            <p class="me-handle"><span id="me-handle-name">@Model.Profile.UserName</span> <span id="me-handle-dot">•</span> <button type="button" class="me-pronouns" id="me-pronouns">@(string.IsNullOrWhiteSpace(Model.Profile.Pronouns) ? "Add pronouns" : Model.Profile.Pronouns)</button><span id="me-view-pronouns" hidden>@Model.Profile.Pronouns</span></p>
+                            <span class="nitro-badges" id="me-badges" hidden></span>
+                        </div>
                         <div class="me-request" id="me-request" hidden>
                             <p id="me-request-text"></p>
                             <div class="me-request-buttons">
@@ -207,7 +269,7 @@
                 </div>
             </div>
         </div>
-        <div class="set-status d-none" id="set-status">
+        <div class="set-status d-none" id="set-status" data-clear-at="@(Model.Profile.CustomStatusClearAt?.ToUniversalTime().ToString("o"))">
             <form class="set-status-card" id="set-status-form">
                 <div class="set-status-head">
                     <h2>Set your status</h2>
@@ -328,9 +390,10 @@
                             <li><button type="button" class="on" data-settings-tab="account"><i
                                         class="fa-solid fa-user"></i> <span data-i18n="Account Info">Account Info</span></button></li>
                         </ul>
+                        <p>Server Boosts</p>
                         <ul>
-                            <li><button type="button" data-settings-tab="notifications"><i class="fa-solid fa-bell"></i>
-                                    <span data-i18n="Notifications">Notifications</span></button></li>
+                            <li><button type="button" data-settings-tab="boosts"><svg aria-hidden="true" class="mb-nav-gem" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M11.02 1.36c.56-.48 1.4-.48 1.96 0l6.48 5.45c.34.29.54.71.54 1.16v8.23c-.05.38-.24.74-.54 1l-6.48 5.44c-.53.45-1.3.48-1.86.09l-.1-.09-6.48-5.45c-.3-.25-.49-.6-.53-1L4 16.04V7.97c0-.45.2-.87.54-1.16l6.48-5.45ZM6.36 7.89a1 1 0 0 0-.36.76v6.7c0 .29.13.57.36.76l5 4.2a1 1 0 0 0 1.28 0l5-4.2a1 1 0 0 0 .36-.77V8.65a1 1 0 0 0-.36-.76l-5-4.2a1 1 0 0 0-1.28 0l-5 4.2Z"></path><path fill="currentColor" d="M11.36 6.3a1 1 0 0 1 1.28 0l3 2.52a1 1 0 0 1 .36.76v4.84a1 1 0 0 1-.36.76l-3 2.53a1 1 0 0 1-1.28 0l-3-2.53a1 1 0 0 1-.36-.76V9.58a1 1 0 0 1 .36-.76l3-2.53Z"></path></svg>
+                                    <span>Server Boosts</span></button></li>
                         </ul>
                         <p data-i18n="Appearance">Experience</p>
                         <ul>
@@ -390,37 +453,10 @@
                             <h2>Messaging Permissions</h2>
                         </div>
                     </section>
-                    <section id="settings-notifications" hidden>
-                        <div class="settings-panel">
-                            <h2 data-i18n="Notifications">Notifications</h2>
-                            <div class="notify-row">
-                                <div><strong data-i18n="Enable notifications">Enable notifications</strong>
-                                    <p>Turn all notifications on or off.</p>
-                                </div>
-                                <button type="button" class="notify-switch on" data-notify="all" aria-pressed="true"
-                                    aria-label="Enable notifications"></button>
-                            </div>
-                            <div class="notify-row">
-                                <div><strong data-i18n="Direct messages">Direct messages</strong>
-                                    <p>Notify me when someone sends a message.</p>
-                                </div>
-                                <button type="button" class="notify-switch on" data-notify="dm" aria-pressed="true"
-                                    aria-label="Direct messages"></button>
-                            </div>
-                            <div class="notify-row">
-                                <div><strong data-i18n="Friend requests">Friend requests</strong>
-                                    <p>Notify me when someone adds me.</p>
-                                </div>
-                                <button type="button" class="notify-switch on" data-notify="friends" aria-pressed="true"
-                                    aria-label="Friend requests"></button>
-                            </div>
-                            <div class="notify-row">
-                                <div><strong data-i18n="Sounds">Sounds</strong>
-                                    <p>Play a sound with notifications.</p>
-                                </div>
-                                <button type="button" class="notify-switch on" data-notify="sound" aria-pressed="true"
-                                    aria-label="Sounds"></button>
-                            </div>
+                    <section id="settings-boosts" hidden>
+                        <div class="settings-panel mb-panel" id="mb-root">
+                            <h2>Server Boosts</h2>
+                            <p class="settings-note" id="mb-loading">Loading...</p>
                         </div>
                     </section>
                     <section id="settings-appearance" hidden>
@@ -612,6 +648,7 @@
         <script src="~/assets/js/groupmenu.js" asp-append-version="true"></script>
         <script src="~/assets/js/profile.js" asp-append-version="true"></script>
         <script src="~/assets/js/call.js" asp-append-version="true"></script>
+        <script src="~/assets/js/boostsettings.js" asp-append-version="true"></script>
         <script src="~/assets/js/mentions.js" asp-append-version="true"></script>
         <script src="~/assets/js/messagesearch.js" asp-append-version="true"></script>
         <script src="~/assets/js/ignore.js" asp-append-version="true"></script>
@@ -625,6 +662,7 @@
         <script src="~/assets/js/friendactions.js" asp-append-version="true"></script>
         <script src="~/assets/js/script.js" asp-append-version="true"></script>
         <script src="~/assets/js/socialmedia.js" asp-append-version="true"></script>
+        <script src="~/assets/js/postshare.js" asp-append-version="true"></script>
         @if (string.Equals(ViewContext.RouteData.Values["controller"]?.ToString(), "Social", StringComparison.OrdinalIgnoreCase))
         {
             <script src="~/assets/js/socialpage.js" asp-append-version="true"></script>

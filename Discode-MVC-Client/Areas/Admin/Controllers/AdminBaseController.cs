@@ -66,7 +66,6 @@ namespace Discode_MVC_Client.Areas.Admin.Controllers
             }
             catch (Exception ex) when (ex is HttpRequestException || ex is JsonException || ex is TaskCanceledException)
             {
-                // the profile only decorates the header, the page still works with what the sign-in cookie knows
             }
 
             ViewData["AdminProfile"] = profile;

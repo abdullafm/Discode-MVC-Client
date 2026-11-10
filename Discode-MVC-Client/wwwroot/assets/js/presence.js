@@ -48,7 +48,16 @@
     var notifySound = new Audio("/assets/css/audio/notification.mp3");
     var lastSoundAt = 0;
 
+    function soundAllowed() {
+        var panel = document.getElementById("user-panel");
+        if (panel && panel.getAttribute("data-status") === "dnd") return false;
+        return true;
+    }
+
+    window.discodeSoundAllowed = soundAllowed;
+
     function playNotifySound() {
+        if (!soundAllowed()) return;
         var now = Date.now();
         if (now - lastSoundAt < 600) return;
         lastSoundAt = now;
@@ -62,8 +71,6 @@
     window.discodeNotifySound = playNotifySound;
 
     function playMessageSound() {
-        var panel = document.getElementById("user-panel");
-        if (panel && panel.getAttribute("data-status") === "dnd") return;
         playNotifySound();
     }
 
@@ -439,6 +446,18 @@
                     document.dispatchEvent(new CustomEvent("discode-server-voice-changed", { detail: data }));
                 });
 
+                connection.on("UserTyping", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-typing", { detail: data }));
+                });
+
+                connection.on("NitroChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-nitro-changed", { detail: data }));
+                });
+
+                connection.on("ServerBoostChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-boost-changed", { detail: data }));
+                });
+
                 connection.on("ServerRolesChanged", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-server-roles-changed", { detail: data }));
                 });
@@ -453,6 +472,22 @@
 
                 connection.on("GuestRequested", function (guest) {
                     document.dispatchEvent(new CustomEvent("discode-live-guest-requested", { detail: guest }));
+                });
+
+                connection.on("LiveModeratorChanged", function (streamId, isModerator) {
+                    document.dispatchEvent(new CustomEvent("discode-live-moderator", { detail: { streamId: streamId, isModerator: isModerator } }));
+                });
+
+                connection.on("LiveMuteChanged", function (streamId, muted, until) {
+                    document.dispatchEvent(new CustomEvent("discode-live-mute", { detail: { streamId: streamId, muted: muted, until: until } }));
+                });
+
+                connection.on("GuestInvited", function (invite) {
+                    document.dispatchEvent(new CustomEvent("discode-live-guest-invited", { detail: invite }));
+                });
+
+                connection.on("GuestInviteAnswered", function (streamId, accepted, name) {
+                    document.dispatchEvent(new CustomEvent("discode-live-guest-invite-answered", { detail: { streamId: streamId, accepted: accepted, name: name } }));
                 });
 
                 connection.on("GuestResponse", function (streamId, accepted) {

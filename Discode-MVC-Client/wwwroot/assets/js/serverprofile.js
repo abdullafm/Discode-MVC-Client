@@ -26,6 +26,7 @@
     var inviteSave = document.getElementById("boost-invite-save");
     var inviteNote = document.getElementById("boost-invite-note");
 
+    var boostInfo = null;
     var server = null;
     var dirty = false;
     var saving = false;
@@ -114,9 +115,9 @@
     function paintInvite() {
         if (!inviteInput) return;
         if (!inviteDirty) {
-            inviteInput.value = server.inviteCode || "";
+            inviteInput.value = server.customLink || "";
             if (inviteSave) inviteSave.disabled = true;
-            say(inviteNote, window.location.origin + "/" + (server.inviteCode || ""), "");
+            say(inviteNote, window.location.origin + "/" + (server.customLink || server.inviteCode || ""), "");
         }
     }
 
@@ -275,9 +276,9 @@
         inviteInput.addEventListener("input", function () {
             var cleaned = inviteInput.value.replace(/[^A-Za-z0-9_-]/g, "");
             if (cleaned !== inviteInput.value) inviteInput.value = cleaned;
-            inviteDirty = !!server && cleaned !== (server.inviteCode || "");
-            if (inviteSave) inviteSave.disabled = !inviteDirty || cleaned.length < 3;
-            say(inviteNote, cleaned ? window.location.origin + "/" + cleaned : "", "");
+            inviteDirty = !!server && cleaned !== (server.customLink || "");
+            if (inviteSave) inviteSave.disabled = !inviteDirty || (cleaned.length > 0 && cleaned.length < 3) || !perksOpen();
+            say(inviteNote, cleaned ? window.location.origin + "/" + cleaned : window.location.origin + "/" + (server && server.inviteCode || ""), "");
         });
         inviteInput.addEventListener("keydown", function (event) {
             if (event.key === "Enter") {
@@ -321,7 +322,7 @@
                 server = body;
                 inviteDirty = false;
                 paintInvite();
-                say(inviteNote, "Saved. " + window.location.origin + "/" + server.inviteCode, "ok");
+                say(inviteNote, "Saved. " + window.location.origin + "/" + (server.customLink || server.inviteCode), "ok");
             }).catch(function (error) {
                 inviteSave.disabled = false;
                 say(inviteNote, error.message, "error");
@@ -343,7 +344,12 @@
         data.append("Description", aboutInput ? aboutInput.value.trim() : "");
         data.append("BannerColor", selectedColor());
         data.append("IsPrivate", privateInput && privateInput.checked ? "true" : "false");
-        if (iconInput && iconInput.files && iconInput.files[0]) data.append("Icon", iconInput.files[0]);
+        var pickedIcon = iconInput && iconInput.files && iconInput.files[0];
+        if (pickedIcon && /gif$/i.test(pickedIcon.type) && !perksOpen()) {
+            fail("An animated server icon needs " + boostRequired() + " boosts.");
+            return;
+        }
+        if (pickedIcon) data.append("Icon", pickedIcon);
         saving = true;
         if (saveButton) saveButton.disabled = true;
         fetch("/Server/Profile", {
@@ -423,5 +429,132 @@
         presenceTimer = window.setTimeout(load, 600);
     });
 
+    var boostCount = document.getElementById("boost-count");
+    var boostState = document.getElementById("boost-state");
+    var boostFill = document.getElementById("boost-bar-fill");
+    var boostHelp = document.getElementById("boost-help");
+    var boostAdd = document.getElementById("boost-add");
+    var boostRemove = document.getElementById("boost-remove");
+    var boostPeople = document.getElementById("boost-people");
+
+    function boostRequired() {
+        return boostInfo ? boostInfo.required : 14;
+    }
+
+    function perksOpen() {
+        return !!(boostInfo && boostInfo.perksUnlocked);
+    }
+
+    function paintPerks() {
+        var open = perksOpen();
+        var perks = document.querySelectorAll(".boost-perk");
+        for (var i = 0; i < perks.length; i++) perks[i].classList.toggle("is-locked", !open);
+        if (bannerFile) bannerFile.disabled = !open;
+        if (inviteInput) inviteInput.disabled = !open;
+        if (!open && inviteSave) inviteSave.disabled = true;
+        if (boostInfo) {
+            var text = "Needs " + boostRequired() + " boosts (" + boostInfo.boosts + "/" + boostRequired() + ").";
+            if (!open) {
+                say(bannerNote, text, "error");
+            } else if (bannerNote && /^Needs /.test(bannerNote.textContent)) {
+                say(bannerNote, "", "");
+            }
+        }
+    }
+
+    function paintBoost() {
+        if (!boostInfo || !boostCount) return;
+        var need = boostRequired();
+        var nitro = window.discodeNitro || {};
+        boostCount.textContent = boostInfo.boosts + " / " + need + " boosts";
+        if (boostState) boostState.textContent = boostInfo.perksUnlocked ? "Perks unlocked" : (need - boostInfo.boosts) + " more to unlock the perks";
+        if (boostFill) boostFill.style.width = Math.min(100, boostInfo.boosts / need * 100) + "%";
+        var bar = boostFill ? boostFill.parentNode : null;
+        if (bar) bar.setAttribute("aria-valuenow", String(boostInfo.boosts));
+        if (boostAdd) {
+            boostAdd.innerHTML = nitro.hasNitro ? '<i class="fa-solid fa-rocket"></i> Boost this server' : '<i class="fa-solid fa-gem"></i> Get Nitro to boost';
+            boostAdd.disabled = !!nitro.hasNitro && !boostInfo.canBoost;
+        }
+        if (boostRemove) boostRemove.hidden = !(boostInfo.myBoosts > 0);
+        if (boostHelp) {
+            boostHelp.classList.remove("is-error");
+            if (!nitro.hasNitro) boostHelp.textContent = "Boosting a server needs Nitro. Each Nitro gives 2 boosts.";
+            else if (!boostInfo.canBoost) boostHelp.textContent = "You used both of your boosts" + (boostInfo.myBoosts > 0 ? " (" + boostInfo.myBoosts + " here)." : ".");
+            else boostHelp.textContent = "You have " + boostInfo.myBoostsLeft + " boost" + (boostInfo.myBoostsLeft === 1 ? "" : "s") + " left" + (boostInfo.myBoosts > 0 ? " (" + boostInfo.myBoosts + " already on this server)." : ".");
+        }
+        if (boostPeople) {
+            boostPeople.textContent = "";
+            boostInfo.boosters.forEach(function (person) {
+                var row = document.createElement("span");
+                row.className = "boost-person";
+                var face = document.createElement("img");
+                face.alt = "";
+                face.src = person.avatarUrl || "/assets/img/img-icon-profile.jpeg";
+                var name = document.createElement("span");
+                name.textContent = person.displayName + (person.count > 1 ? " x" + person.count : "");
+                row.appendChild(face);
+                row.appendChild(name);
+                boostPeople.appendChild(row);
+            });
+        }
+        paintPerks();
+    }
+
+    function loadBoost() {
+        return fetch("/Server/BoostInfo?id=" + encodeURIComponent(serverId), { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+            return response.ok ? response.json() : null;
+        }).then(function (info) {
+            if (!info) return;
+            boostInfo = info;
+            paintBoost();
+        }).catch(function () {});
+    }
+
+    function sendBoost(url) {
+        if (boostAdd) boostAdd.disabled = true;
+        fetch(url, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json", "RequestVerificationToken": token(), "X-Requested-With": "XMLHttpRequest" },
+            body: JSON.stringify({ id: Number(serverId) })
+        }).then(function (response) {
+            return response.json().catch(function () { return {}; }).then(function (body) {
+                if (!response.ok) throw new Error((body && body.errors && body.errors[0]) || "That did not work.");
+                return body;
+            });
+        }).then(function (info) {
+            boostInfo = info;
+            paintBoost();
+            load();
+        }).catch(function (error) {
+            if (boostHelp) {
+                boostHelp.textContent = error.message;
+                boostHelp.classList.add("is-error");
+            }
+            if (boostAdd) boostAdd.disabled = false;
+        });
+    }
+
+    if (boostAdd) {
+        boostAdd.addEventListener("click", function () {
+            if (!(window.discodeNitro && window.discodeNitro.hasNitro)) {
+                if (window.discodeGo) window.discodeGo("/Nitro/Index");
+                else window.location.href = "/Nitro/Index";
+                return;
+            }
+            sendBoost("/Server/Boost");
+        });
+    }
+    if (boostRemove) boostRemove.addEventListener("click", function () { sendBoost("/Server/Unboost"); });
+
+    document.addEventListener("discode-server-boost-changed", function (event) {
+        var detail = event && event.detail;
+        if (detail && detail.serverId && String(detail.serverId) !== String(serverId)) return;
+        loadBoost();
+        load();
+    });
+    document.addEventListener("discode-nitro-state", paintBoost);
+
     load();
+    loadBoost();
 })();

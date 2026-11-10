@@ -64,6 +64,7 @@ function fieldValue(el) {
             if (child.nodeType === 3) parts.push(child.textContent);
             else if (child.nodeName === "IMG") parts.push(child.getAttribute("data-emoji") || "");
             else if (child.nodeName === "BR") parts.push("\n");
+            else if (child.nodeType === 1 && child.hasAttribute("data-raw")) parts.push(child.getAttribute("data-raw"));
             else if (child.nodeType === 1) {
                 if (/^(DIV|P)$/.test(child.nodeName) && parts.length && parts[parts.length - 1] !== "\n") parts.push("\n");
                 walk(child);
@@ -102,6 +103,10 @@ function nodesForText(text) {
     return nodes;
 }
 
+
+function formatNodes(text) {
+    return window.discodeFormat ? window.discodeFormat.nodes(text, nodesForText) : nodesForText(text);
+}
 
 function dmFileKind(type, name) {
     var kind = String(type || "").toLowerCase();
@@ -303,7 +308,9 @@ var ctx = null;
 var files = [];
 var fileCounter = 0;
 var MAX_FILES = 10;
-var MAX_BYTES = 25 * 1024 * 1024;
+function maxFileBytes() {
+    return window.discodeNitro ? window.discodeNitro.maxFileBytes : 5 * 1024 * 1024;
+}
 var emojiField = null;
 var savedRange = null;
 var picker = { row: null };
@@ -423,8 +430,8 @@ function addFiles(list) {
             ctx.showError("You can send at most " + MAX_FILES + " files at once.");
             break;
         }
-        if (file.size > MAX_BYTES) {
-            ctx.showError(file.name + " is larger than 25 MB.");
+        if (file.size > maxFileBytes()) {
+            ctx.showError(file.name + " is larger than " + window.discodeBytesLabel(maxFileBytes()) + "." + (window.discodeNitro && window.discodeNitro.hasNitro ? "" : " Nitro lets you send files up to 2 GB."));
             continue;
         }
         var item = {
@@ -1034,10 +1041,8 @@ function showMenu(row) {
     for (var i = 0; i < gated.length; i++) gated[i].hidden = !mine;
     var others = menu.querySelectorAll("[data-other-only]");
     for (var o = 0; o < others.length; o++) others[o].hidden = row.getAttribute("data-mine") === "1";
-    // Edit: only the author, only where the chat can edit, only a message that has text
     var editable = menu.querySelectorAll("[data-needs-edit]");
     for (var e = 0; e < editable.length; e++) editable[e].hidden = !(ctx.edit && row.getAttribute("data-mine") === "1" && row.querySelector(".dm-msg-text"));
-    // Pin: only where the chat can pin and I may (Manage Messages); the label follows the message
     var pinnable = menu.querySelectorAll("[data-needs-pin]");
     for (var q = 0; q < pinnable.length; q++) {
         pinnable[q].hidden = !(ctx.pin && ctx.canPin && ctx.canPin());
@@ -1188,7 +1193,6 @@ function bindForward() {
 }
 
 
-// ---------- edit your own message (the chat gives ctx.edit(messageId, text) -> Promise<message>) ----------
 function cancelEdit(row) {
     var editor = row.querySelector(".dm-edit");
     if (editor) editor.remove();
@@ -1220,7 +1224,7 @@ function startEdit(row) {
     var box = document.createElement("div");
     box.className = "dm-edit";
     box.innerHTML =
-        '<div class="dm-edit-box"><textarea rows="1" maxlength="2000" aria-label="Edit message"></textarea></div>' +
+        '<div class="dm-edit-box"><textarea rows="1" maxlength="50000" aria-label="Edit message"></textarea></div>' +
         '<p class="dm-edit-hint">escape to <a href="#" data-edit="cancel">cancel</a> \u2022 enter to <a href="#" data-edit="save">save</a></p>';
     holder.hidden = true;
     holder.parentNode.insertBefore(box, holder.nextSibling);
@@ -1255,7 +1259,7 @@ function applyEdited(row, message) {
     var holder = row.querySelector(".dm-msg-text");
     if (!holder) return;
     while (holder.firstChild) holder.removeChild(holder.firstChild);
-    nodesForText(message.text).forEach(function (node) { holder.appendChild(node); });
+    formatNodes(message.text).forEach(function (node) { holder.appendChild(node); });
     if (message.editedAt) {
         var label = document.createElement("span");
         label.className = "dm-msg-edited";
@@ -1328,7 +1332,7 @@ window.GroupParts = {
     jump: jumpTo,
     takeFiles: takeFiles,
     giveBack: giveBack,
-    textNodes: nodesForText,
+    textNodes: formatNodes,
     decorate: function (row, body, message) {
         if (message.attachments && message.attachments.length) body.appendChild(dmBuildAttachments(message.attachments));
         if (message.isPoll && message.poll) {
@@ -1351,7 +1355,6 @@ window.GroupParts = {
         renderReactions(row, message.reactions || []);
         row.setAttribute("data-pinned", message.pinnedAt ? "1" : "0");
         if (ctx.onPinsChanged) ctx.onPinsChanged();
-        // somebody (the author, on another device) edited the text
         var holder = row.querySelector(".dm-msg-text");
         if (holder && !row.classList.contains("is-editing") && message.text !== undefined && message.text !== plainText(row)) applyEdited(row, message);
         var card = row.querySelector(".dm-poll");
