@@ -2242,8 +2242,8 @@ html.theme-dark .dm-msg-tools button.dm-tool-delete:hover {
     position: absolute;
     left: 8px;
     right: 8px;
-    bottom: 62px;
-    z-index: 2;
+    bottom: 66px;
+    z-index: 10;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -2251,10 +2251,22 @@ html.theme-dark .dm-msg-tools button.dm-tool-delete:hover {
     border: 1px solid #d7d9dc;
     border-radius: 8px;
     background: #e3e5e8;
+    box-sizing: border-box;
+    width: calc(100% - 16px);
 }
 
 .sidebar-call[hidden] {
-    display: none;
+    display: none !important;
+}
+
+.sidebar-dock .sidebar-call {
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    top: auto !important;
+    width: 100% !important;
+    margin: 0 !important;
 }
 
 .sidebar-call-info {
@@ -2318,8 +2330,13 @@ html.theme-dark .sidebar-call button {
     color: #b5bac1 !important;
 }
 
-body .conversation-sidebar.has-call {
-    padding-bottom: 132px;
+body .conversation-sidebar.has-call > #direct-messages,
+body .conversation-sidebar.has-call > section#direct-messages,
+body .conversation-sidebar.has-call .direct-messages,
+body .conversation-sidebar.has-call .friend-list,
+body .conversation-sidebar.has-call .discover-nav,
+body .conversation-sidebar.server-channels.has-call .server-channel-scroll {
+    padding-bottom: 128px;
 }
 
 #user-panel.in-call .user-details > span:not(.in-call-label) {

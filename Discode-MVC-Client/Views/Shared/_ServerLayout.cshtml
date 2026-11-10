@@ -1,4 +1,4 @@
-﻿@model HomeUIVM
+@model HomeUIVM
 <!DOCTYPE html>
 <html lang="en" class="@(Model.Profile.IsDark ? "theme-dark" : "")">
 
@@ -26,6 +26,36 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
           integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
           crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        .sidebar-dock {
+            position: absolute !important;
+            left: 8px !important;
+            right: 8px !important;
+            bottom: 8px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 8px !important;
+            z-index: 20 !important;
+            pointer-events: none !important;
+            box-sizing: border-box !important;
+            width: calc(100% - 16px) !important;
+        }
+        .sidebar-dock > * {
+            pointer-events: auto !important;
+            position: relative !important;
+            left: auto !important;
+            right: auto !important;
+            bottom: auto !important;
+            top: auto !important;
+            margin: 0 !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            flex-shrink: 0 !important;
+        }
+        .sidebar-dock > [hidden] {
+            display: none !important;
+        }
+    </style>
     @await Component.InvokeAsync("Branding", new { kind = "favicon" })
 </head>
 
@@ -147,44 +177,46 @@
     <button type="button" data-action="edit">Edit Channel</button>
     <button type="button" data-action="delete" class="is-danger">Delete Channel</button>
 </div>
-<div class="server-voice-bar" id="server-voice-bar" hidden>
-    <div>
-        <strong>
-            <span class="vgb-live" aria-hidden="true"><span></span><span></span><span></span></span>
-            Voice Connected
-        </strong>
-        <span id="server-voice-bar-where">Lounge@(string.IsNullOrEmpty(ViewData["ServerName"] as string) ? string.Empty : " / " + ViewData["ServerName"])</span>
-    </div>
-    <button type="button" id="server-voice-bar-leave" aria-label="Disconnect">
-        <i class="fa-solid fa-phone-slash"></i>
-    </button>
-</div>
-<div class="sidebar-call" id="sidebar-call" hidden>
-    <div class="sidebar-call-info">
-        <strong id="sidebar-call-status">Connecting</strong>
-        <a id="sidebar-call-name" href="#"></a>
-    </div>
-    <button type="button" id="sidebar-call-hangup" aria-label="Disconnect"><i class="fa-solid fa-phone-slash"></i></button>
-</div>
-<div class="user-panel" id="user-panel">
-    <div class="user-identity">
-        <div class="avatar">
-            <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
+<div class="sidebar-dock" id="sidebar-dock">
+    <div class="server-voice-bar" id="server-voice-bar" hidden>
+        <div>
+            <strong>
+                <span class="vgb-live" aria-hidden="true"><span></span><span></span><span></span></span>
+                Voice Connected
+            </strong>
+            <span id="server-voice-bar-where">Lounge@(string.IsNullOrEmpty(ViewData["ServerName"] as string) ? string.Empty : " / " + ViewData["ServerName"])</span>
         </div>
-        <div class="user-details">
-            <p class="me-display">@Model.Profile.DisplayName</p>
-            <span>Online</span>
-        </div>
+        <button type="button" id="server-voice-bar-leave" aria-label="Disconnect">
+            <i class="fa-solid fa-phone-slash"></i>
+        </button>
     </div>
-    <div class="user-controls">
-        <button type="button" onclick="mic()" aria-label="Mute microphone"><i class="fa-solid fa-microphone" id="mic" aria-hidden="true"></i></button>
-        <button type="button" id="headp-btn" onclick="headp()" aria-label="Deafen">
-            <i class="fa-solid fa-headphones"
-               id="head" aria-hidden="true"></i>
-        </button>
-        <button type="button" id="settings-open" aria-label="Settings">
-            <i class="fa-solid fa-gear"></i>
-        </button>
+    <div class="sidebar-call" id="sidebar-call" hidden>
+        <div class="sidebar-call-info">
+            <strong id="sidebar-call-status">Connecting</strong>
+            <a id="sidebar-call-name" href="#"></a>
+        </div>
+        <button type="button" id="sidebar-call-hangup" aria-label="Disconnect"><i class="fa-solid fa-phone-slash"></i></button>
+    </div>
+    <div class="user-panel" id="user-panel">
+        <div class="user-identity">
+            <div class="avatar">
+                <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
+            </div>
+            <div class="user-details">
+                <p class="me-display">@Model.Profile.DisplayName</p>
+                <span>Online</span>
+            </div>
+        </div>
+        <div class="user-controls">
+            <button type="button" onclick="mic()" aria-label="Mute microphone"><i class="fa-solid fa-microphone" id="mic" aria-hidden="true"></i></button>
+            <button type="button" id="headp-btn" onclick="headp()" aria-label="Deafen">
+                <i class="fa-solid fa-headphones"
+                   id="head" aria-hidden="true"></i>
+            </button>
+            <button type="button" id="settings-open" aria-label="Settings">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </div>
     </div>
 </div>
 </aside>

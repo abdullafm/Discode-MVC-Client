@@ -74,29 +74,31 @@
                     </span><span class="dm-unread" hidden></span><i class="fa fa-xmark"></i></a></template>
         </div>
     </section>
-    <div class="sidebar-call" id="sidebar-call" hidden>
-        <div class="sidebar-call-info">
-            <strong id="sidebar-call-status">Connecting</strong>
-            <a id="sidebar-call-name" href="#"></a>
-        </div>
-        <button type="button" id="sidebar-call-hangup" aria-label="Disconnect"><i class="fa-solid fa-phone-slash"></i></button>
-    </div>
-    <div class="user-panel" id="user-panel">
-        <div class="user-identity">
-            <div class="avatar">
-                <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
+    <div class="sidebar-dock" id="sidebar-dock">
+        <div class="sidebar-call" id="sidebar-call" hidden>
+            <div class="sidebar-call-info">
+                <strong id="sidebar-call-status">Connecting</strong>
+                <a id="sidebar-call-name" href="#"></a>
             </div>
-            <div class="user-details">
-                <p class="me-display">@Model.Profile.DisplayName</p>
-                <span data-i18n="Online">Online</span>
-                <span class="in-call-label" hidden><i class="fa-solid fa-phone-volume"></i> In a call</span>
-            </div>
+            <button type="button" id="sidebar-call-hangup" aria-label="Disconnect"><i class="fa-solid fa-phone-slash"></i></button>
         </div>
-        <div class="user-controls">
-            <button type="button" onclick="mic()" aria-label="Mute microphone"><i class="fa-solid fa-microphone" id="mic" aria-hidden="true"></i></button>
-            <button type="button" id="headp-btn" onclick="headp()" aria-label="Deafen"><i class="fa-solid fa-headphones" id="head" aria-hidden="true"></i></button>
-            <button type="button" id="settings-open" aria-label="Settings"><i
-                    class="fa-solid fa-gear"></i></button>
+        <div class="user-panel" id="user-panel">
+            <div class="user-identity">
+                <div class="avatar">
+                    <img src="@(string.IsNullOrWhiteSpace(Model.Profile.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : Model.Profile.AvatarUrl)" alt="">
+                </div>
+                <div class="user-details">
+                    <p class="me-display">@Model.Profile.DisplayName</p>
+                    <span data-i18n="Online">Online</span>
+                    <span class="in-call-label" hidden><i class="fa-solid fa-phone-volume"></i> In a call</span>
+                </div>
+            </div>
+            <div class="user-controls">
+                <button type="button" onclick="mic()" aria-label="Mute microphone"><i class="fa-solid fa-microphone" id="mic" aria-hidden="true"></i></button>
+                <button type="button" id="headp-btn" onclick="headp()" aria-label="Deafen"><i class="fa-solid fa-headphones" id="head" aria-hidden="true"></i></button>
+                <button type="button" id="settings-open" aria-label="Settings"><i
+                        class="fa-solid fa-gear"></i></button>
+            </div>
         </div>
     </div>
 </aside>
