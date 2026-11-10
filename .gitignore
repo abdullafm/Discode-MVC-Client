@@ -4,7 +4,4 @@ obj/
 *.user
 *.suo
 chk.tmp.js
-Discode-MVC-Client/wwwroot/uploads/*
-!Discode-MVC-Client/wwwroot/uploads/*/
-Discode-MVC-Client/wwwroot/uploads/*/*
-!Discode-MVC-Client/wwwroot/uploads/*/.gitkeep
+Discode-MVC-Client/wwwroot/uploads/dm/*.bin
