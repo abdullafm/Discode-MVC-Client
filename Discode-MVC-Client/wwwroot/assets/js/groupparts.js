@@ -1095,6 +1095,7 @@ function bindMenu() {
         else if (action === "delete") deleteMessage(row);
         else if (action === "edit") startEdit(row);
         else if (action === "pin") {
+            if (ctx.canPin && !ctx.canPin()) return;
             ctx.pin(Number(row.getAttribute("data-id")), row.getAttribute("data-pinned") !== "1").catch(function (error) { ctx.showError(error.message); });
         }
         else if (action === "copy-text") {
@@ -1142,7 +1143,7 @@ function openForward(row) {
     document.getElementById("group-forward-submit").disabled = true;
     document.getElementById("group-forward-modal").hidden = false;
     document.getElementById("group-forward-search").focus();
-    fetch("/Dm/ForwardTargets", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+    fetch("/Dm/ForwardTargets?groups=true", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
         if (!response.ok) throw new Error("targets");
         return response.text();
     }).then(function (html) {
@@ -1151,6 +1152,15 @@ function openForward(row) {
     }).catch(function () {
         forwardError("Could not load your friends. Try again.");
     });
+}
+
+function splitForwardTargets(values) {
+    var out = { userNames: [], groupIds: [] };
+    values.forEach(function (value) {
+        if (value.indexOf("group:") === 0) out.groupIds.push(Number(value.slice(6)));
+        else out.userNames.push(value);
+    });
+    return out;
 }
 
 function bindForward() {
@@ -1183,7 +1193,8 @@ function bindForward() {
         ctx.request("/Group/ForwardMessage", "POST", {
             id: ctx.groupId,
             messageId: Number(row.getAttribute("data-id")),
-            userNames: names,
+            userNames: splitForwardTargets(names).userNames,
+            groupIds: splitForwardTargets(names).groupIds,
             note: document.getElementById("group-forward-note").value.trim()
         }).then(closeForward).catch(function (error) {
             forwardError(error.message);

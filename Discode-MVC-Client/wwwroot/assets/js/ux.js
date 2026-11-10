@@ -264,6 +264,7 @@
 
     function modernSelect(select) {
         if (!select || select.getAttribute("data-msel")) return;
+        if (select.closest(".audit-filter")) return;
         select.setAttribute("data-msel", "1");
 
         var wrap = document.createElement("div");
@@ -439,10 +440,9 @@
 
 (function () {
     var BUBBLES = ".me-status-bubble, .me-chip, .dm-profile-bubble, .member-pop-chip";
-    var LEAD = /^((?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:️|‍\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s*/u;
     var TEXTS = "#me-status-bubble-text, #me-chip-text, .dm-profile-bubble > span, .member-pop-chip > span";
+    var LEAD = /^((?:\p{Extended_Pictographic}|\p{Regional_Indicator})(?:️|‍\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s*/u;
 
-    function room(bubble) {
     function split(span) {
         if (span.firstElementChild && span.firstElementChild.classList.contains("bio-emoji")) return;
         var full = span.textContent;
@@ -467,6 +467,7 @@
         [].forEach.call(document.querySelectorAll(TEXTS), split);
     }
 
+    function room(bubble) {
         var node = bubble.parentElement;
         while (node && node !== document.body) {
             var o = getComputedStyle(node).overflowX;
@@ -476,24 +477,24 @@
         return window.innerWidth;
     }
 
-    function open(bubble) {
     function isCut(bubble) {
         var line = bubble.querySelector(".bio-rest") || bubble.querySelector("span:not(.bio-tools):not(.bio-tool)");
         return !!line && line.scrollWidth > line.clientWidth + 1;
     }
 
+    function open(bubble) {
         if (bubble.classList.contains("bio-open") || bubble.classList.contains("bio-tools-on")) return;
         if (bubble.matches(".me-status-bubble, .me-chip") && !bubble.classList.contains("has-bio")) return;
-        var available = room(bubble) - bubble.getBoundingClientRect().left - 14;
         if (!isCut(bubble)) {
             if (bubble.id === "me-status-bubble") bubble.classList.add("bio-tools-on");
             return;
         }
+        var available = room(bubble) - bubble.getBoundingClientRect().left - 14;
         bubble.style.setProperty("--bio-max", Math.max(168, Math.min(260, available)) + "px");
-        bubble.classList.add("bio-open");
         var before = bubble.getBoundingClientRect();
         var pos = getComputedStyle(bubble).position;
         var baseMargin = parseFloat(getComputedStyle(bubble).marginBottom) || 0;
+        bubble.classList.add("bio-open");
         if (pos === "absolute") {
             var holder = bubble.offsetParent;
             var base = holder ? holder.getBoundingClientRect().top : 0;
@@ -505,17 +506,17 @@
         }
     }
 
-        bubble.style.removeProperty("margin-bottom");
     function close(bubble) {
         bubble.classList.remove("bio-tools-on");
         if (!bubble.classList.contains("bio-open")) return;
         bubble.style.removeProperty("--bio-max");
+        bubble.style.removeProperty("margin-bottom");
         bubble.style.removeProperty("top");
         bubble.style.removeProperty("bottom");
-    function tools(bubble) {
         bubble.classList.remove("bio-open");
     }
 
+    function tools(bubble) {
         if (bubble.id !== "me-status-bubble" || bubble.querySelector(".bio-tools")) return;
         var box = document.createElement("span");
         box.className = "bio-tools";
@@ -544,7 +545,6 @@
         event.stopPropagation();
         document.dispatchEvent(new CustomEvent("discode-clear-status"));
     }, true);
-})();
 
     var queued = false;
     new MutationObserver(function () {
@@ -555,6 +555,7 @@
     splitAll();
     document.addEventListener("DOMContentLoaded", splitAll);
     document.addEventListener("discode-page-ready", splitAll);
+})();
 
 (function () {
     var TARGETS = [{ sel: "#me-pop .me-handle", inside: true }, { sel: "#member-pop-handle" }, { sel: "#dm-profile-handle" }];
@@ -657,3 +658,4 @@
     document.addEventListener("discode-page-ready", paint);
     paint();
 })();
+

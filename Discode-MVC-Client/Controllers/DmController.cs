@@ -216,7 +216,7 @@ namespace Discode_MVC_Client.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ForwardTargets()
+        public async Task<IActionResult> ForwardTargets(bool groups = false)
         {
             var (friends, status) = await GetAsync<List<FriendRequestUIVM>>("api/friend");
             if (status == System.Net.HttpStatusCode.Unauthorized)
@@ -229,6 +229,20 @@ namespace Discode_MVC_Client.Controllers
                     .Select(friend => new ForwardTargetUIVM { Kind = "user", Key = friend.UserName, Name = friend.Name, Subtitle = friend.UserName, AvatarUrl = friend.AvatarUrl })
                     .ToList()
             };
+
+            if (groups)
+            {
+                var (mine, _) = await GetAsync<List<Discode_MVC_Client.ViewModels.Groups.GroupUIVM>>("api/group");
+                model.People.AddRange((mine ?? new()).OrderBy(group => group.Name, StringComparer.OrdinalIgnoreCase).Select(group => new ForwardTargetUIVM
+                {
+                    Kind = "group",
+                    Key = "group:" + group.Id,
+                    Name = group.Name,
+                    Subtitle = group.MemberCount + (group.MemberCount == 1 ? " member" : " members"),
+                    AvatarUrl = group.IconUrl
+                }));
+            }
+
             return PartialView("_ForwardTargets", model);
         }
 
@@ -239,7 +253,7 @@ namespace Discode_MVC_Client.Controllers
             if (model is null || model.Id <= 0)
                 return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Message not found." } }));
 
-            return ForwardToApi(client => client.PostAsJsonAsync($"api/dm/messages/{model.Id}/forward", new { userNames = model.UserNames ?? new List<string>(), note = model.Note ?? string.Empty }));
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/dm/messages/{model.Id}/forward", new { userNames = model.UserNames ?? new List<string>(), groupIds = model.GroupIds ?? new List<int>(), note = model.Note ?? string.Empty }));
         }
 
         [HttpGet]

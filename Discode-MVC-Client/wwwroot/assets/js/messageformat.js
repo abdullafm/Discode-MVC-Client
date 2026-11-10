@@ -302,8 +302,30 @@
         }
     }
 
+    function ownTemplateCode(url) {
+        try {
+            var parsed = new URL(url, window.location.origin);
+            var match = parsed.origin === window.location.origin ? /^\/template\/([A-Za-z0-9]{6,40})\/?$/.exec(parsed.pathname) : null;
+            return match ? match[1] : "";
+        } catch (error) {
+            return "";
+        }
+    }
+
     function fetchPreview(url) {
         if (cache[url]) return cache[url];
+        var templateCode = ownTemplateCode(url);
+        if (templateCode) {
+            cache[url] = fetch("/Server/TemplateInfo?code=" + encodeURIComponent(templateCode), {
+                credentials: "same-origin",
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            }).then(function (response) {
+                return response.ok ? response.json() : null;
+            }).then(function (info) {
+                return info ? { type: "template", code: templateCode, info: info } : { type: "template-missing", code: templateCode };
+            }).catch(function () { return { type: "template-missing", code: templateCode }; });
+            return cache[url];
+        }
         var giftCode = ownGiftCode(url);
         if (giftCode) {
             cache[url] = Promise.resolve({ type: "gift", code: giftCode });
@@ -423,7 +445,53 @@
         return box;
     }
 
+    function templateEmbed(url, data) {
+        var box = document.createElement("div");
+        box.className = "dm-embed dm-tpl-embed";
+        box.setAttribute("data-embed-for", url);
+        var kicker = document.createElement("p");
+        kicker.className = "tpl-kicker";
+        kicker.textContent = "Server template";
+        box.appendChild(kicker);
+        var info = data.info;
+        if (!info) {
+            var gone = document.createElement("p");
+            gone.textContent = "This template does not exist any more.";
+            box.appendChild(gone);
+            return box;
+        }
+        var title = document.createElement("h3");
+        title.textContent = info.title;
+        box.appendChild(title);
+        var about = document.createElement("p");
+        about.textContent = (info.description ? info.description + " · " : "") + info.categoryCount + " categories · " + info.channelCount + " channels · " + info.roleCount + " roles";
+        box.appendChild(about);
+        var list = document.createElement("ul");
+        var names = [];
+        (info.loose || []).forEach(function (channel) { names.push((channel.kind === "voice" ? "Voice " : "# ") + channel.name); });
+        (info.categories || []).forEach(function (category) { (category.channels || []).forEach(function (channel) { names.push((channel.kind === "voice" ? "Voice " : "# ") + channel.name); }); });
+        names.slice(0, 5).forEach(function (text) {
+            var line = document.createElement("li");
+            line.textContent = text;
+            list.appendChild(line);
+        });
+        if (names.length > 5) {
+            var more = document.createElement("li");
+            more.textContent = "and " + (names.length - 5) + " more";
+            list.appendChild(more);
+        }
+        box.appendChild(list);
+        var use = document.createElement("button");
+        use.type = "button";
+        use.className = "dm-gift-claim";
+        use.textContent = "Use Template";
+        use.addEventListener("click", function () { window.location.href = "/template/" + data.code; });
+        box.appendChild(use);
+        return box;
+    }
+
     function embedNode(url, data) {
+        if (data && (data.type === "template" || data.type === "template-missing")) return templateEmbed(url, data);
         if (data && data.type === "gift") return giftEmbed(url, data);
         if (data && (data.type === "post" || data.type === "post-missing")) return postEmbed(url, data);
         if (!data || data.type === "none") return null;
@@ -511,7 +579,16 @@
         if (document.getElementById("mf-style")) return;
         var style = document.createElement("style");
         style.id = "mf-style";
-        style.textContent = ".dm-msg-text > a.fmt-link[data-url*='/Social/Index?post=']:only-child{display:none}"
+        var own = window.location.origin;
+        style.textContent = ".dm-msg-text > a.fmt-link[data-url^='" + own + "/Social/Index?post=']:only-child{display:none}"
+            + ".dm-msg-text > a.fmt-link[data-url^='" + own + "/gift/']:only-child{display:none}"
+            + ".dm-msg-text > a.fmt-link[data-url^='" + own + "/template/']:only-child{display:none}"
+            + ".dm-tpl-embed{max-width:440px;padding:14px 16px;border-radius:10px;border:1px solid rgba(128,132,142,.35);background:rgba(128,132,142,.12)}"
+            + ".dm-tpl-embed h3{margin:0 0 2px;font-size:16px}"
+            + ".dm-tpl-embed .tpl-kicker{margin:0 0 6px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.7}"
+            + ".dm-tpl-embed p{margin:0 0 8px;font-size:13px;opacity:.85}"
+            + ".dm-tpl-embed ul{list-style:none;margin:0 0 10px;padding:0;font-size:13px;opacity:.9}"
+            + ".dm-tpl-embed li{padding:1px 0}"
             + ".dm-post-embed.is-loading{min-height:128px;pointer-events:none}"
             + ".dm-post-embed.is-loading span{display:block;border-radius:6px;background:rgba(128,132,142,.28);animation:mf-pulse 1.1s ease-in-out infinite}"
             + ".dm-post-embed.is-loading .sk-head{display:flex;gap:10px;align-items:center;margin-bottom:12px}"
@@ -558,7 +635,7 @@
             }
             var again = row.querySelector(".dm-msg-text");
             if (again && again.parentNode) again.parentNode.insertBefore(node, again.nextSibling);
-            if (again && (node.classList.contains("dm-post-embed") || node.classList.contains("dm-gift-embed")) && again.textContent.trim() === url) again.classList.add("is-card-only");
+            if (again && (node.classList.contains("dm-post-embed") || node.classList.contains("dm-gift-embed") || node.classList.contains("dm-tpl-embed")) && again.textContent.trim() === url) again.classList.add("is-card-only");
         });
     }
 

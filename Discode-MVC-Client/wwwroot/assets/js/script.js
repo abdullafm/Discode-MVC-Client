@@ -106,11 +106,27 @@ function openToggle() {
     var glide = menu ? menu.querySelector(".friend-filter-glide") : null;
     if (!menu || !filters || !pick || !label) return;
     function isCompactFilter() {
-        return window.matchMedia("(max-width: 640px)").matches;
+        return window.getComputedStyle(pick).display !== "none";
+    }
+    function placeCompactFilter() {
+        if (!isCompactFilter() || !filters.classList.contains("open")) return;
+        var box = pick.getBoundingClientRect();
+        var width = Math.min(212, window.innerWidth - 20);
+        var left = Math.min(Math.max(10, box.left), window.innerWidth - width - 10);
+        menu.style.position = "fixed";
+        menu.style.top = Math.round(box.bottom + 8) + "px";
+        menu.style.left = Math.round(left) + "px";
+        menu.style.width = width + "px";
+        menu.style.zIndex = "80";
     }
     function closeCompactFilter() {
         filters.classList.remove("open");
         pick.setAttribute("aria-expanded", "false");
+        menu.style.position = "";
+        menu.style.top = "";
+        menu.style.left = "";
+        menu.style.width = "";
+        menu.style.zIndex = "";
     }
     function syncGlide(button) {
         if (!glide || !button || button.getAttribute("data-filter") === "add" || isCompactFilter()) {
@@ -274,6 +290,8 @@ function openToggle() {
         var open = !filters.classList.contains("open");
         filters.classList.toggle("open", open);
         pick.setAttribute("aria-expanded", open ? "true" : "false");
+        if (open) placeCompactFilter();
+        else closeCompactFilter();
     });
     menu.addEventListener("click", function (event) {
         var button = event.target.closest("button");
@@ -326,6 +344,7 @@ function openToggle() {
     });
     window.addEventListener("resize", function () {
         if (!isCompactFilter()) closeCompactFilter();
+        else placeCompactFilter();
         syncGlide(menu.querySelector("button.active"));
     });
 

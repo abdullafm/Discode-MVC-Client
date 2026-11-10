@@ -1084,6 +1084,8 @@ document.addEventListener("visibilitychange", function () {
         pick.hidden = step !== "pick";
         create.hidden = step !== "create";
         join.hidden = step !== "join";
+        var templateStep = document.getElementById("server-template");
+        if (templateStep) templateStep.hidden = step !== "template";
         if (createError) createError.hidden = true;
         if (joinError) joinError.hidden = true;
     }
@@ -1098,6 +1100,127 @@ document.addEventListener("visibilitychange", function () {
     }
 
     loadServers();
+    (function templateStep() {
+        var open = document.getElementById("server-template-open");
+        var input = document.getElementById("server-template-code");
+        var preview = document.getElementById("server-template-preview");
+        var nameLabel = document.getElementById("server-template-name-label");
+        var nameInput = document.getElementById("server-template-name");
+        var failure = document.getElementById("server-template-error");
+        var go = document.getElementById("server-template-go");
+        var back = document.getElementById("server-template-back");
+        if (!open || !input || !go || !back) return;
+        var found = "";
+
+        function codeOf(text) {
+            var value = String(text || "").trim();
+            var match = /template\/([A-Za-z0-9]+)/.exec(value);
+            return match ? match[1] : value.replace(/[^A-Za-z0-9]/g, "");
+        }
+
+        function reset() {
+            found = "";
+            preview.hidden = true;
+            preview.textContent = "";
+            nameLabel.hidden = true;
+            nameInput.hidden = true;
+            go.textContent = "Look Up";
+            failure.hidden = true;
+        }
+
+        function line(parent, tag, text, strong) {
+            var node = document.createElement(tag);
+            if (strong) {
+                var bold = document.createElement("b");
+                bold.textContent = text;
+                node.appendChild(bold);
+            } else {
+                node.textContent = text;
+            }
+            parent.appendChild(node);
+            return node;
+        }
+
+        function paint(info) {
+            preview.textContent = "";
+            line(preview, "strong", info.title);
+            line(preview, "p", (info.description ? info.description + " · " : "") + info.categoryCount + " categories · " + info.channelCount + " channels · " + info.roleCount + " roles · made by " + (info.creatorName || "someone"));
+            var list = document.createElement("ul");
+            (info.loose || []).forEach(function (channel) { line(list, "li", (channel.kind === "voice" ? "Voice " : "# ") + channel.name); });
+            (info.categories || []).forEach(function (category) {
+                line(list, "li", category.name.toUpperCase(), true);
+                category.channels.forEach(function (channel) { line(list, "li", "   " + (channel.kind === "voice" ? "Voice " : "# ") + channel.name); });
+            });
+            preview.appendChild(list);
+            preview.hidden = false;
+            nameLabel.hidden = false;
+            nameInput.hidden = false;
+            nameInput.value = info.serverName || "";
+            go.textContent = "Create Server";
+            failure.hidden = true;
+            nameInput.focus();
+        }
+
+        function lookup() {
+            var code = codeOf(input.value);
+            if (!code) {
+                failure.textContent = "Enter a template link.";
+                failure.hidden = false;
+                return;
+            }
+            fetch("/Server/TemplateInfo?code=" + encodeURIComponent(code), { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+                return response.json().catch(function () { return {}; }).then(function (data) {
+                    if (!response.ok) throw new Error((data && data.errors && data.errors[0]) || "That template does not exist any more.");
+                    found = data.code;
+                    paint(data);
+                });
+            }).catch(function (error) {
+                failure.textContent = error.message;
+                failure.hidden = false;
+            });
+        }
+
+        open.addEventListener("click", function () {
+            reset();
+            input.value = "";
+            showStep("template");
+            input.focus();
+        });
+        back.addEventListener("click", function () { showStep("pick"); });
+        input.addEventListener("input", reset);
+        go.addEventListener("click", function () {
+            if (!found) {
+                lookup();
+                return;
+            }
+            var name = nameInput.value.trim();
+            if (!name) {
+                failure.textContent = "Enter a server name.";
+                failure.hidden = false;
+                return;
+            }
+            go.disabled = true;
+            sendServer("/Server/UseTemplate", { code: found, name: name }).then(function (server) {
+                go.disabled = false;
+                closeModal();
+                loadServers();
+                openServer(server);
+            }).catch(function (error) {
+                go.disabled = false;
+                failure.textContent = error.message;
+                failure.hidden = false;
+            });
+        });
+
+        var wanted = new URLSearchParams(window.location.search).get("template");
+        if (wanted) {
+            reset();
+            modal.hidden = false;
+            showStep("template");
+            input.value = wanted;
+            lookup();
+        }
+    })();
     add.addEventListener("click", openModal);
     document.getElementById("server-modal-close").addEventListener("click", closeModal);
     modal.addEventListener("click", function (event) {

@@ -1,12 +1,19 @@
 @model ForwardTargetsUIVM
 @if (Model.People.Count == 0)
 {
-    <p class="dm-forward-empty">You don't have anyone to forward to yet. Add some friends first.</p>
+    <p class="dm-forward-empty">You don't have anyone to send to yet. Add some friends first.</p>
 }
 @foreach (var target in Model.People)
 {
     <label class="dm-forward-item" data-kind="@target.Kind" data-key="@target.Key" data-name="@target.Name.ToLowerInvariant()">
-        <img class="dm-forward-avatar" alt="" src="@(string.IsNullOrWhiteSpace(target.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : target.AvatarUrl)">
+        @if (target.Kind == "group" && string.IsNullOrWhiteSpace(target.AvatarUrl))
+        {
+            <span class="dm-forward-avatar dm-forward-group-icon" aria-hidden="true"><i class="fa-solid fa-user-group"></i></span>
+        }
+        else
+        {
+            <img class="dm-forward-avatar" alt="" src="@(string.IsNullOrWhiteSpace(target.AvatarUrl) ? Url.Content("~/assets/img/img-icon-profile.jpeg") : target.AvatarUrl)">
+        }
         <span class="dm-forward-body">
             <strong>@target.Name</strong>
             <small>@target.Subtitle</small>

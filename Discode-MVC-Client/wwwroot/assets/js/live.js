@@ -903,7 +903,7 @@
         shareSubmit.disabled = true;
         shareModal.hidden = false;
         byId("live-share-search").focus();
-        fetch("/Dm/ForwardTargets", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+        fetch("/Dm/ForwardTargets?groups=true", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
             if (!response.ok) throw new Error("targets");
             return response.text();
         }).then(function (html) {
@@ -935,7 +935,7 @@
         if (!id || !names.length) return;
         shareSubmit.disabled = true;
         shareError("");
-        requestJson("/Home/InviteToLive", "POST", { id: id, userNames: names }).then(function () {
+        requestJson("/Home/InviteToLive", "POST", { id: id, userNames: names.filter(function (v) { return v.indexOf("group:") !== 0; }), groupIds: names.filter(function (v) { return v.indexOf("group:") === 0; }).map(function (v) { return Number(v.slice(6)); }) }).then(function () {
             closeShare();
             liveNotice("Invitation sent.");
         }).catch(function (error) {

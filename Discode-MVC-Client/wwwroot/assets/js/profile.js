@@ -1227,7 +1227,7 @@
             if (picker && current) picker.value = current;
             var nitro = !!(window.discodeNitro && window.discodeNitro.hasNitro);
             if (bannerSection) bannerSection.hidden = !nitro;
-            if (colorSection) colorSection.hidden = nitro;
+            if (colorSection) colorSection.hidden = false;
             if (avatarHint) avatarHint.hidden = nitro;
             paintBannerOf(savedBannerUrl);
         }
@@ -1310,10 +1310,19 @@
     var msgBtn = document.getElementById("me-msg");
     if (msgBtn) {
         msgBtn.addEventListener("click", function () {
-            if (!isMe(viewing)) return;
-            profile.classList.add("d-none");
-            var settings = document.getElementById("settings");
-            if (settings) settings.hidden = false;
+            if (isMe(viewing)) {
+                profile.classList.add("d-none");
+                var settings = document.getElementById("settings");
+                if (settings) settings.hidden = false;
+                return;
+            }
+            var add = document.getElementById("me-add");
+            var userName = (add && add.getAttribute("data-username")) || nodeText("#me-handle-name") || viewing;
+            if (!userName || isMe(userName)) return;
+            closeProfile();
+            var url = "/Dm/Index?name=" + encodeURIComponent(userName);
+            if (window.discodeGo) window.discodeGo(url);
+            else window.location.href = url;
         });
     }
     if (nameInput) {
@@ -1357,6 +1366,7 @@
         setPrivateView(false, "");
         setRequestCard(false);
         viewingUserId = "";
+        if (!self) paintVisitorPerks({}); else paintOwnPerks();
         if (window.discodePresence) window.discodePresence.unwatchProfile();
         var title = profile.querySelector(".me-profile-id h2");
         if (title) title.textContent = self ? meName() : viewing;
@@ -1366,7 +1376,6 @@
             if (nameInput) nameInput.value = meName();
             if (viewName) viewName.hidden = true;
         } else if (viewName) {
-        if (!self) paintVisitorPerks({}); else paintOwnPerks();
             viewName.hidden = false;
             viewName.textContent = viewing;
         }
@@ -1423,16 +1432,18 @@
     var note = row ? row.querySelector("p") : null;
     if (title) {
         title.removeAttribute("data-i18n");
-        title.textContent = "Account visibility";
     }
+
+    function tr(text) { return window.DiscodeLang ? window.DiscodeLang.t(text) : text; }
 
     function paint() {
         var isPublic = control.classList.contains("on");
         control.setAttribute("data-state", isPublic ? "public" : "private");
-        control.setAttribute("aria-label", "Account visibility: " + (isPublic ? "Public" : "Private"));
-        if (note) note.textContent = isPublic
+        control.setAttribute("aria-label", tr("Account visibility") + ": " + tr(isPublic ? "Public" : "Private"));
+        if (title) title.textContent = tr("Account visibility");
+        if (note) note.textContent = tr(isPublic
             ? "Anyone can find you and see your bio, status and posts."
-            : "Only your friends can see your bio, status and posts.";
+            : "Only your friends can see your bio, status and posts.");
     }
 
     control.addEventListener("click", function (event) {
@@ -1443,6 +1454,7 @@
     }, true);
 
     document.addEventListener("discode-privacy", paint);
+    window.addEventListener("discode:langchange", paint);
     paint();
 })();
 

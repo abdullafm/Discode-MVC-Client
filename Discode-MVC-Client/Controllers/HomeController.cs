@@ -405,10 +405,10 @@ namespace Discode_MVC_Client.Controllers
         [ValidateAntiForgeryToken]
         public Task<IActionResult> SharePost([FromBody] SharePostUIVM model)
         {
-            if (model is null || model.Id <= 0 || model.UserNames is null || model.UserNames.Count == 0)
-                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Pick at least one friend." } }));
+            if (model is null || model.Id <= 0 || ((model.UserNames?.Count ?? 0) == 0 && (model.GroupIds?.Count ?? 0) == 0))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Pick at least one friend or group." } }));
 
-            return ForwardToApi(client => client.PostAsJsonAsync($"api/post/{model.Id}/share", new { userNames = model.UserNames, note = model.Note ?? string.Empty }));
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/post/{model.Id}/share", new { userNames = model.UserNames ?? new List<string>(), groupIds = model.GroupIds ?? new List<int>(), note = model.Note ?? string.Empty }));
         }
 
         [HttpGet]
@@ -681,10 +681,10 @@ namespace Discode_MVC_Client.Controllers
         [ValidateAntiForgeryToken]
         public Task<IActionResult> InviteToLive([FromBody] InviteToLiveUIVM model)
         {
-            if (model is null || model.Id <= 0 || model.UserNames is null || model.UserNames.Count == 0)
-                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Pick at least one friend." } }));
+            if (model is null || model.Id <= 0 || ((model.UserNames?.Count ?? 0) == 0 && (model.GroupIds?.Count ?? 0) == 0))
+                return Task.FromResult<IActionResult>(BadRequest(new { errors = new[] { "Pick at least one friend or group." } }));
 
-            return ForwardToApi(client => client.PostAsJsonAsync($"api/live/{model.Id}/invite", new { userNames = model.UserNames }));
+            return ForwardToApi(client => client.PostAsJsonAsync($"api/live/{model.Id}/invite", new { userNames = model.UserNames ?? new List<string>(), groupIds = model.GroupIds ?? new List<int>() }));
         }
 
         [HttpPost]

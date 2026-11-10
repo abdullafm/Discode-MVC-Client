@@ -430,6 +430,10 @@
                     document.dispatchEvent(new CustomEvent("discode-server-bans-changed", { detail: data }));
                 });
 
+                connection.on("ServerOwnerChanged", function (data) {
+                    document.dispatchEvent(new CustomEvent("discode-server-owner-changed", { detail: data }));
+                });
+
                 connection.on("ServerAuditChanged", function (data) {
                     document.dispatchEvent(new CustomEvent("discode-server-audit-changed", { detail: data }));
                 });

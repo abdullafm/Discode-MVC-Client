@@ -31,8 +31,8 @@
             '<div class="dm-modal-backdrop" data-close></div>' +
             '<div class="dm-modal-card dm-forward-card">' +
             '<button type="button" class="dm-modal-x" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>' +
-            '<h2 id="post-share-title">Send to friends</h2>' +
-            '<p class="dm-modal-text">Pick the friends who get this post in their messages.</p>' +
+            '<h2 id="post-share-title">Send to friends and groups</h2>' +
+            '<p class="dm-modal-text">Pick the friends and groups who get this post.</p>' +
             '<label class="dm-forward-search"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="post-share-search" placeholder="Search" aria-label="Search" autocomplete="off"></label>' +
             '<div class="dm-forward-list" id="post-share-list"></div>' +
             '<input type="text" class="post-share-note" id="post-share-note" maxlength="500" placeholder="Write a message..." aria-label="Message" autocomplete="off">' +
@@ -77,7 +77,7 @@
         modal.querySelector("#post-share-note").value = "";
         modal.querySelector("#post-share-submit").disabled = true;
         modal.hidden = false;
-        fetch("/Dm/ForwardTargets", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
+        fetch("/Dm/ForwardTargets?groups=true", { credentials: "same-origin", headers: { "X-Requested-With": "XMLHttpRequest" } }).then(function (response) {
             if (!response.ok) throw new Error("targets");
             return response.text();
         }).then(function (html) {
@@ -94,9 +94,9 @@
         var button = modal.querySelector("#post-share-submit");
         button.disabled = true;
         error("");
-        requestJson("/Home/SharePost", "POST", { id: postId, userNames: names, note: modal.querySelector("#post-share-note").value.trim() }).then(function () {
+        requestJson("/Home/SharePost", "POST", { id: postId, userNames: names.filter(function (v) { return v.indexOf("group:") !== 0; }), groupIds: names.filter(function (v) { return v.indexOf("group:") === 0; }).map(function (v) { return Number(v.slice(6)); }), note: modal.querySelector("#post-share-note").value.trim() }).then(function () {
             close();
-            notice(names.length === 1 ? "Sent." : "Sent to " + names.length + " friends.");
+            notice(names.length === 1 ? "Sent." : "Sent to " + names.length + " chats.");
         }).catch(function (failure) {
             error((failure && failure.message) || "Could not send the post.");
             button.disabled = false;

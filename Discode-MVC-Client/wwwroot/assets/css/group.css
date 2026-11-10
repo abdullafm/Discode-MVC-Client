@@ -1912,3 +1912,42 @@ html.theme-dark .server-badge {
 .group-edit-icon i[hidden] {
     display: none !important;
 }
+
+.slow-chip {
+    position: absolute;
+    right: 46px;
+    bottom: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 10px;
+    background: rgba(128, 132, 142, 0.16);
+    color: #5c5e66;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    pointer-events: none;
+}
+
+.slow-chip[hidden] {
+    display: none;
+}
+
+.slow-chip.is-waiting {
+    background: rgba(242, 63, 67, 0.14);
+    color: #d83c3e;
+}
+
+html.theme-dark .slow-chip {
+    color: #b5bac1;
+}
+
+html.theme-dark .slow-chip.is-waiting {
+    color: #f23f43;
+}
+
+.channel-name[hidden],
+.channel-kicker[hidden] {
+    display: none !important;
+}
