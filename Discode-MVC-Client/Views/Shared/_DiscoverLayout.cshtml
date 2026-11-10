@@ -51,7 +51,7 @@
             <nav class="server-nav" aria-label="Servers">
                 <a class="server-home" href="@Url.Action("Index", "Home")" aria-label="Home">@await Component.InvokeAsync("Branding", new { kind = "logo" })</a>
                 <hr>
-                <div id="server-list"></div>
+                @await Component.InvokeAsync("ServerRail")
                 <template id="server-chip"><button type="button" class="server-chip"></button></template>
                 <button type="button" class="server-action" id="server-add" aria-label="Add a Server"><i
                         class="fa-solid fa-plus" aria-hidden="true"></i></button>

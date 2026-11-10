@@ -38,7 +38,7 @@
                     <button type="button" id="group-add" aria-label="Invite"><i class="fa-solid fa-user-plus"></i></button>
                     <label class="group-search">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="search" id="group-search" placeholder="Search" aria-label="Search">
+                        <input type="search" id="group-search" placeholder="Search @group.Name" aria-label="Search">
                     </label>
                 </div>
             </div>
@@ -103,7 +103,10 @@
         </div></section>
         <section id="group-members"><div class="group-members">
             <h2>Members — <span id="group-count">@group.MemberCount</span></h2>
-            <div id="group-member-list"></div>
+            <div id="group-member-list">@foreach (var member in group.Members)
+                {
+                    <div class="group-member" data-user="@member.UserName"><div class="avatar"><img alt="" src="@(string.IsNullOrEmpty(member.AvatarUrl) ? "/assets/img/img-icon-profile.jpeg" : member.AvatarUrl)"></div><p>@member.Name@if (member.IsOwner){<i class="fa-solid fa-crown crown" title="Group owner"></i>}</p>@if (group.OwnerUserName == Model.Profile.UserName && member.UserName != Model.Profile.UserName){<button type="button" class="group-kick" aria-label="Remove @member.UserName" data-kick="@member.UserName"><i class="fa-solid fa-xmark"></i></button>}</div>
+                }</div>
         </div></section>
     }
 </main>

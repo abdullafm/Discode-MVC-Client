@@ -36,7 +36,7 @@
                     @await Component.InvokeAsync("Branding", new { kind = "logo" })
                 </a>
                 <hr>
-                <div id="server-list"></div>
+                @await Component.InvokeAsync("ServerRail")
                 <template id="server-chip"><button type="button" class="server-chip"></button></template>
                 <button type="button" class="server-action" id="server-add" aria-label="Add a Server">
                     <i class="fa-solid fa-plus" aria-hidden="true"></i>
