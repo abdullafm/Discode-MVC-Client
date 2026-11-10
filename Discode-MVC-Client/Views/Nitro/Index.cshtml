@@ -34,19 +34,19 @@
                     <p class="nitro-hero-note" id="nitro-status-line">
                         @if (nitro.Source == "admin")
                         {
-                            <text>Given to you by an admin. It runs until @Until(nitro.ExpiresAt).</text>
+                            <span data-i18n-fmt="Given to you by an admin. It runs until {0}." data-i18n-args="@Until(nitro.ExpiresAt)">Given to you by an admin. It runs until @Until(nitro.ExpiresAt).</span>
                         }
                         else if (nitro.Source == "gift")
                         {
-                            <text>A gift. It runs until @Until(nitro.ExpiresAt).</text>
+                            <span data-i18n-fmt="A gift. It runs until {0}." data-i18n-args="@Until(nitro.ExpiresAt)">A gift. It runs until @Until(nitro.ExpiresAt).</span>
                         }
                         else if (nitro.CancelAtPeriodEnd)
                         {
-                            <text>Cancelled. Your perks stay until @Until(nitro.ExpiresAt).</text>
+                            <span data-i18n-fmt="Cancelled. Your perks stay until {0}." data-i18n-args="@Until(nitro.ExpiresAt)">Cancelled. Your perks stay until @Until(nitro.ExpiresAt).</span>
                         }
                         else
                         {
-                            <text>Renews on @Until(nitro.ExpiresAt) for $@nitro.Price per month.</text>
+                            <span data-i18n-fmt="Renews on {0} for ${1} per month." data-i18n-args="@Until(nitro.ExpiresAt)|@nitro.Price">Renews on @Until(nitro.ExpiresAt) for $@nitro.Price per month.</span>
                         }
                     </p>
                 }
@@ -59,7 +59,7 @@
                             Subscribe
                         </button>
                     </div>
-                    <p class="nitro-hero-note">Just $@nitro.Price per month. Cancel anytime.</p>
+                    <p class="nitro-hero-note" data-i18n-fmt="Just ${0} per month. Cancel anytime." data-i18n-args="@nitro.Price">Just $@nitro.Price per month. Cancel anytime.</p>
                 }
                 @if (!string.IsNullOrEmpty(notice))
                 {
@@ -110,7 +110,7 @@
             <img class="nitro-gift-art" src="~/assets/img/nitro-gift.png" alt="">
             <div class="nitro-gift-copy">
                 <h2>Gift Nitro to a friend</h2>
-                <p>Pay once for @(nitro.GiftDays) days of Nitro and get a link. Your friend opens the link, presses Accept and has Nitro.</p>
+                <p data-i18n-fmt="Pay once for {0} days of Nitro and get a link. Your friend opens the link, presses Accept and has Nitro." data-i18n-args="@nitro.GiftDays">Pay once for @(nitro.GiftDays) days of Nitro and get a link. Your friend opens the link, presses Accept and has Nitro.</p>
                 <button class="nitro-btn nitro-btn-subscribe" type="button" id="nitro-gift-buy">
                     <span class="nitro-mark"><i class="fa-solid fa-gift"></i></span>
                     Buy a gift for $@nitro.GiftPrice

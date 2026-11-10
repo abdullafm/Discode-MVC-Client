@@ -61,6 +61,16 @@
         var tag = el.tagName.toLowerCase();
         if (tag === "script" || tag === "style" || tag === "svg" || tag === "code" || tag === "pre") return;
 
+        var fmtKey = el.getAttribute("data-i18n-fmt");
+        if (fmtKey && el.children.length === 0) {
+            var fmtArgs = (el.getAttribute("data-i18n-args") || "").split("|");
+            var fmtText = (targetLang === "en" ? fmtKey : translateText(fmtKey, targetLang)).replace(/\{(\d+)\}/g, function (all, index) {
+                return fmtArgs[index] !== undefined ? fmtArgs[index] : all;
+            });
+            if (el.textContent !== fmtText) el.textContent = fmtText;
+            return;
+        }
+
         var i18nAttr = el.getAttribute("data-i18n");
         if (i18nAttr) {
             var trans = (targetLang === "en") ? i18nAttr : translateText(i18nAttr, targetLang);
