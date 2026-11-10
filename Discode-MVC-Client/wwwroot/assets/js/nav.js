@@ -128,6 +128,35 @@
     var busy = false;
     var shown = location.pathname + location.search;
 
+    var fx = document.createElement("style");
+    fx.id = "navfx";
+    fx.textContent = "html.nav-busy::before{content:'';position:fixed;left:0;top:0;height:3px;width:100%;z-index:9999;pointer-events:none;background:linear-gradient(90deg,transparent,#5865f2,transparent);background-size:40% 100%;background-repeat:no-repeat;animation:navfx-bar .9s ease-in-out infinite}html.nav-busy main{opacity:.5;transition:opacity .15s ease .1s}body.nav-in main{animation:navfx-in .26s cubic-bezier(.2,.8,.2,1) both}@keyframes navfx-bar{from{background-position:-40% 0}to{background-position:140% 0}}@keyframes navfx-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}";
+    document.head.appendChild(fx);
+
+    var warm = {};
+
+    function prefetch(url) {
+        var path = url.pathname + url.search;
+        if (path === shown) return;
+        var held = warm[path];
+        if (held && Date.now() - held.t < 20000) return;
+        warm[path] = { t: Date.now(), p: fetch(url.href, { credentials: "same-origin" }) };
+        warm[path].p.catch(function () { delete warm[path]; });
+    }
+
+    listen(document, "pointerover", function (event) {
+        var link = event.target.closest && event.target.closest("a[href]");
+        if (!link || (link.target && link.target !== "_self")) return;
+        var url;
+        try {
+            url = new URL(link.href, location.href);
+        } catch (error) {
+            return;
+        }
+        if (!isAppPage(url) || /(^|[?&])call=/i.test(url.search)) return;
+        prefetch(url);
+    }, true);
+
     function go(url, replace) {
         var nextUrl;
         try {
@@ -145,7 +174,11 @@
         if (busy) return;
         busy = true;
         var mode = replace === "pop" ? "pop" : (replace ? "replace" : "push");
-        fetch(nextUrl.href, { credentials: "same-origin" }).then(function (response) {
+        var held = warm[path];
+        delete warm[path];
+        var request = held && Date.now() - held.t < 20000 ? held.p : fetch(nextUrl.href, { credentials: "same-origin" });
+        document.documentElement.classList.add("nav-busy");
+        request.then(function (response) {
             if (!response.ok) throw new Error("nav");
             if (response.redirected && !isAppPage(new URL(response.url))) throw new Error("nav");
             return response.text();
@@ -177,6 +210,9 @@
             document.body.replaceWith(document.importNode(doc.body, true));
             window.scrollTo(0, 0);
             busy = false;
+            document.documentElement.classList.remove("nav-busy");
+            document.body.classList.add("nav-in");
+            setTimeout(function () { if (document.body) document.body.classList.remove("nav-in"); }, 450);
             if (window.DiscodeLang && window.DiscodeLang.rebind) window.DiscodeLang.rebind();
             try {
                 if (window.discodeGroupCache && typeof window.paintGroupRows === "function") window.paintGroupRows(window.discodeGroupCache);
@@ -184,6 +220,7 @@
             runScripts(scripts);
         }).catch(function () {
             busy = false;
+            document.documentElement.classList.remove("nav-busy");
             location.href = nextUrl.href;
         });
     }
